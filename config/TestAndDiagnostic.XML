@@ -1,0 +1,1712 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+   Copyright [2014] [Cisco Systems, Inc.]
+
+   Licensed under the Apache License, Version 2.0 (the \"License\");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an \"AS IS\" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+-->
+
+
+<dataModelInfo>
+
+  <version>1</version>
+
+  <moduleName>TestAndDiagnostic</moduleName>
+
+  <author></author>
+
+  <description>Test and Diagnostic</description>
+
+  <library>
+
+    <path>libdmltad</path>
+
+    <func_Init>COSA_Init</func_Init>
+
+    <func_Unload>COSA_Unload</func_Unload>
+
+    <func_MemoryCheck>COSA_MemoryCheck</func_MemoryCheck>
+
+    <func_MemoryUsage>COSA_MemoryUsage</func_MemoryUsage>
+
+    <func_MemoryTable>COSA_MemoryTable</func_MemoryTable>
+
+  </library>
+
+  <objects>
+
+    <object>
+
+	      <baseObjName>Device.IP.</baseObjName>
+
+          <name>Diagnostics</name>
+
+          <objectType>object</objectType>
+
+          <objects>
+
+            <object>
+
+              <name>X_CISCO_COM_ARP</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>X_CISCO_COM_ARP_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>X_CISCO_COM_ARP_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>X_CISCO_COM_ARP_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>X_CISCO_COM_ARP_GetParamStringValue</func_GetParamStringValue>
+
+              </functions>
+
+              <parameters>
+
+				<parameter>
+
+				</parameter>
+
+              </parameters>
+
+              <objects>
+
+                <object>
+
+                  <name>ARPTable</name>
+
+                  <objectType>dynamicTable</objectType>
+
+                  <maxInstance>128</maxInstance>
+
+                  <functions>
+
+                    <func_GetEntryCount>ARPTable_GetEntryCount</func_GetEntryCount>
+
+                    <func_GetEntry>ARPTable_GetEntry</func_GetEntry>
+
+                    <func_IsUpdated>ARPTable_IsUpdated</func_IsUpdated>
+
+                    <func_Synchronize>ARPTable_Synchronize</func_Synchronize>
+
+                    <func_GetParamBoolValue>ARPTable_GetParamBoolValue</func_GetParamBoolValue>
+
+                    <func_GetParamIntValue>ARPTable_GetParamIntValue</func_GetParamIntValue>
+
+                    <func_GetParamUlongValue>ARPTable_GetParamUlongValue</func_GetParamUlongValue>
+
+                    <func_GetParamStringValue>ARPTable_GetParamStringValue</func_GetParamStringValue>
+
+                  </functions>
+
+                  <parameters>
+
+              <parameter>
+
+                <name>IPAddress</name>
+
+                <type>string</type>
+
+				<syntax>uint32/ip4_addr</syntax>
+
+              </parameter>
+
+              <parameter>
+
+                <name>MACAddress</name>
+
+                <type>string(18)</type>
+
+				<syntax>string</syntax>
+
+              </parameter>
+
+                  </parameters>
+
+                </object>
+
+              </objects>
+
+            </object>
+
+            <object>
+
+              <name>IPPing</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>IPPing_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>IPPing_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>IPPing_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>IPPing_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>IPPing_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>IPPing_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>IPPing_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>IPPing_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>IPPing_Validate</func_Validate>
+
+                <func_Commit>IPPing_Commit</func_Commit>
+
+                <func_Rollback>IPPing_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>DiagnosticsState</name>
+
+              <type>string: None(1),Requested(2),Complete(3),Error_CannotResolveHostName(4),Error_Internal(5),Error_Other(6)</type>
+
+              <syntax>uint32/mapped</syntax>
+
+              <notify>off</notify>
+
+              <writable>true</writable>
+
+            </parameter>
+            
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Host</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>NumberOfRepetitions</name>
+
+              <type>unsignedInt[1:]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Timeout</name>
+
+              <type>unsignedInt[1:]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DataBlockSize</name>
+
+              <type>unsignedInt[1:65535]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+             <parameter>
+
+              <name>DSCP</name>
+
+              <type>unsignedInt[0:63]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>SuccessCount</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>FailureCount</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>AverageResponseTime</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>MinimumResponseTime</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>MaximumResponseTime</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+            </object>
+
+            <object>
+
+              <name>TraceRoute</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>TraceRoute_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>TraceRoute_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>TraceRoute_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>TraceRoute_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>TraceRoute_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>TraceRoute_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>TraceRoute_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>TraceRoute_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>TraceRoute_Validate</func_Validate>
+
+                <func_Commit>TraceRoute_Commit</func_Commit>
+
+                <func_Rollback>TraceRoute_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>DiagnosticsState</name>
+
+              <type>string: None(1),Requested(2),Complete(3),Error_CannotResolveHostName(4),Error_MaxHopCountExceeded(5)</type>
+
+              <syntax>uint32/mapped</syntax>
+
+              <notify>off</notify>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Host</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>NumberOfTries</name>
+
+              <type>unsignedInt[1:3]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Timeout</name>
+
+              <type>unsignedInt[1:]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DataBlockSize</name>
+
+              <type>unsignedInt[1:65535]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DSCP</name>
+
+              <type>unsignedInt[0:63]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>MaxHopCount</name>
+
+              <type>unsignedInt[1:64]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>ResponseTime</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>RouteHopsNumberOfEntries</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+              <objects>
+
+                <object>
+
+                  <name>RouteHops</name>
+
+                  <objectType>dynamicTable</objectType>
+
+                  <maxInstance>128</maxInstance>
+
+                  <functions>
+
+                    <func_GetEntryCount>RouteHops_GetEntryCount</func_GetEntryCount>
+
+                    <func_GetEntry>RouteHops_GetEntry</func_GetEntry>
+
+                    <func_IsUpdated>RouteHops_IsUpdated</func_IsUpdated>
+
+                    <func_Synchronize>RouteHops_Synchronize</func_Synchronize>
+
+                    <func_GetParamBoolValue>RouteHops_GetParamBoolValue</func_GetParamBoolValue>
+
+                    <func_GetParamIntValue>RouteHops_GetParamIntValue</func_GetParamIntValue>
+
+                    <func_GetParamUlongValue>RouteHops_GetParamUlongValue</func_GetParamUlongValue>
+
+                    <func_GetParamStringValue>RouteHops_GetParamStringValue</func_GetParamStringValue>
+
+                  </functions>
+
+                  <parameters>
+
+              <parameter>
+
+                <name>Host</name>
+
+                <type>string(256)</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>HostAddress</name>
+
+                <type>string</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>ErrorCode</name>
+
+                <type>unsignedInt</type>
+
+                <syntax>uint32</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>RTTimes</name>
+
+                <type>string(16)</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+                  </parameters>
+
+                </object>
+
+              </objects>
+
+            </object>
+
+            <object>
+
+              <name>DownloadDiagnostics</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>DownloadDiagnostics_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>DownloadDiagnostics_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>DownloadDiagnostics_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>DownloadDiagnostics_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>DownloadDiagnostics_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>DownloadDiagnostics_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>DownloadDiagnostics_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>DownloadDiagnostics_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>DownloadDiagnostics_Validate</func_Validate>
+
+                <func_Commit>DownloadDiagnostics_Commit</func_Commit>
+
+                <func_Rollback>DownloadDiagnostics_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>DiagnosticsState</name>
+
+              <type>string: None(1),Requested(2),Completed(3),Error_InitConnectionFailed(4),Error_NoResponse(5),Error_TransferFailed(6),Error_PasswordRequestFailed(7),Error_LoginFailed(8),Error_NoTransferMode(9),Error_NoPASV(10),Error_IncorrectSize(11),Error_Timeout(12)</type>
+
+              <syntax>uint32/mapped</syntax>
+
+              <notify>off</notify>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DownloadURL</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DownloadTransports</name>
+			  <type>string</type>
+              <syntax>string</syntax>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DSCP</name>
+
+              <type>unsignedInt[0:63]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EthernetPriority</name>
+
+              <type>unsignedInt[0:7]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>ROMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>BOMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EOMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TestBytesReceived</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TotalBytesReceived</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TCPOpenRequestTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TCPOpenResponseTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+            </object>
+
+            <object>
+
+              <name>UploadDiagnostics</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>UploadDiagnostics_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>UploadDiagnostics_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>UploadDiagnostics_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>UploadDiagnostics_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>UploadDiagnostics_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>UploadDiagnostics_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>UploadDiagnostics_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>UploadDiagnostics_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>UploadDiagnostics_Validate</func_Validate>
+
+                <func_Commit>UploadDiagnostics_Commit</func_Commit>
+
+                <func_Rollback>UploadDiagnostics_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>DiagnosticsState</name>
+
+              <type>string: None(1),Requested(2),Completed(3),Error_InitConnectionFailed(4),Error_NoResponse(5),Error_PasswordRequestFailed(6),Error_LoginFailed(7),Error_NoTransferMode(8),Error_NoPASV(9),Error_NoCWD(10),Error_NoSTOR(11),Error_NoTransferComplete(12)</type>
+
+              <syntax>uint32/mapped</syntax>
+
+              <notify>off</notify>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>UploadURL</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>UploadTransports</name>
+
+			  <type>string</type>
+
+              <syntax>string</syntax>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DSCP</name>
+
+              <type>unsignedInt[0:63]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EthernetPriority</name>
+
+              <type>unsignedInt[0:7]</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TestFileLength</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>ROMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>BOMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EOMTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TotalBytesSent</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TCPOpenRequestTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TCPOpenResponseTime</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+            </object>
+
+            <object>
+
+              <name>UDPEchoConfig</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>UDPEchoConfig_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>UDPEchoConfig_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>UDPEchoConfig_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>UDPEchoConfig_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>UDPEchoConfig_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>UDPEchoConfig_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>UDPEchoConfig_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>UDPEchoConfig_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>UDPEchoConfig_Validate</func_Validate>
+
+                <func_Commit>UDPEchoConfig_Commit</func_Commit>
+
+                <func_Rollback>UDPEchoConfig_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>Enable</name>
+
+              <type>boolean</type>
+
+              <syntax>bool</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>SourceIPAddress</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>UDPPort</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EchoPlusEnabled</name>
+
+              <type>boolean</type>
+
+              <syntax>bool</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>EchoPlusSupported</name>
+
+              <type>boolean</type>
+
+              <syntax>bool</syntax>
+
+            </parameter>
+
+            <parameter>
+
+              <name>PacketsReceived</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>PacketsResponded</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>BytesReceived</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>BytesResponded</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TimeFirstPacketReceived</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>TimeLastPacketReceived</name>
+
+              <type>dateTime</type>
+
+              <syntax>string</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+            </object>
+
+          </objects>
+
+    </object>
+
+    <object>
+
+      <name>DNS</name>
+
+      <objectType>object</objectType>
+
+      <objects>
+
+        <object>
+
+          <name>Diagnostics</name>
+
+          <objectType>object</objectType>
+
+          <objects>
+
+            <object>
+
+              <name>NSLookupDiagnostics</name>
+
+              <objectType>object</objectType>
+
+              <functions>
+
+                <func_GetParamBoolValue>NSLookupDiagnostics_GetParamBoolValue</func_GetParamBoolValue>
+
+                <func_GetParamIntValue>NSLookupDiagnostics_GetParamIntValue</func_GetParamIntValue>
+
+                <func_GetParamUlongValue>NSLookupDiagnostics_GetParamUlongValue</func_GetParamUlongValue>
+
+                <func_GetParamStringValue>NSLookupDiagnostics_GetParamStringValue</func_GetParamStringValue>
+
+                <func_SetParamBoolValue>NSLookupDiagnostics_SetParamBoolValue</func_SetParamBoolValue>
+
+                <func_SetParamIntValue>NSLookupDiagnostics_SetParamIntValue</func_SetParamIntValue>
+
+                <func_SetParamUlongValue>NSLookupDiagnostics_SetParamUlongValue</func_SetParamUlongValue>
+
+                <func_SetParamStringValue>NSLookupDiagnostics_SetParamStringValue</func_SetParamStringValue>
+
+                <func_Validate>NSLookupDiagnostics_Validate</func_Validate>
+
+                <func_Commit>NSLookupDiagnostics_Commit</func_Commit>
+
+                <func_Rollback>NSLookupDiagnostics_Rollback</func_Rollback>
+
+              </functions>
+
+              <parameters>
+
+            <parameter>
+
+              <name>DiagnosticsState</name>
+
+              <type>string: None(1),Requested(2),Complete(3),Error_DNSServerNotResolved(4),Error_Internal(5),Error_Other(6)</type>
+
+              <syntax>uint32/mapped</syntax>
+
+              <notify>off</notify>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Interface</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>HostName</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>DNSServer</name>
+
+              <type>string(256)</type>
+
+              <syntax>string</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>Timeout</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>NumberOfRepetitions</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <writable>true</writable>
+
+            </parameter>
+
+            <parameter>
+
+              <name>SuccessCount</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+            <parameter>
+
+              <name>ResultNumberOfEntries</name>
+
+              <type>unsignedInt</type>
+
+              <syntax>uint32</syntax>
+
+              <notify>off</notify>
+
+            </parameter>
+
+              </parameters>
+
+              <objects>
+
+                <object>
+
+                  <name>Result</name>
+
+                  <objectType>dynamicTable</objectType>
+
+                  <maxInstance>128</maxInstance>
+
+                  <functions>
+
+                    <func_GetEntryCount>Result_GetEntryCount</func_GetEntryCount>
+
+                    <func_GetEntry>Result_GetEntry</func_GetEntry>
+
+                    <func_IsUpdated>Result_IsUpdated</func_IsUpdated>
+
+                    <func_Synchronize>Result_Synchronize</func_Synchronize>
+
+                    <func_GetParamBoolValue>Result_GetParamBoolValue</func_GetParamBoolValue>
+
+                    <func_GetParamIntValue>Result_GetParamIntValue</func_GetParamIntValue>
+
+                    <func_GetParamUlongValue>Result_GetParamUlongValue</func_GetParamUlongValue>
+
+                    <func_GetParamStringValue>Result_GetParamStringValue</func_GetParamStringValue>
+
+                  </functions>
+
+                  <parameters>
+
+              <parameter>
+
+                <name>Status</name>
+
+                <type>string: Success(1),Error_DNSServerNotAvailable(2),Error_HostNameNotResolved(3),Error_Timeout(4),Error_Other(5)</type>
+
+                <syntax>uint32/mapped</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>AnswerType</name>
+
+                <type>string: None(1),Authoritative(2),NonAuthoritative(3)</type>
+
+                <syntax>uint32/mapped</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>HostNameReturned</name>
+
+                <type>string(256)</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>IPAddresses</name>
+
+                <type>string(45)</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>DNSServerIP</name>
+
+                <type>string(45)</type>
+
+                <syntax>string</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+              <parameter>
+
+                <name>ResponseTime</name>
+
+                <type>unsignedInt</type>
+
+                <syntax>uint32</syntax>
+
+                <notify>off</notify>
+
+              </parameter>
+
+                  </parameters>
+
+                </object>
+
+              </objects>
+
+            </object>
+
+          </objects>
+
+        </object>
+
+      </objects>
+
+    </object>
+
+
+    <object>
+      <baseObjName>Device.</baseObjName>
+      <name>DeviceInfo</name>
+      <objectType>object</objectType>
+      <functions>
+        <func_GetParamBoolValue>DeviceInfo_GetParamBoolValue</func_GetParamBoolValue>
+        <func_GetParamIntValue>DeviceInfo_GetParamIntValue</func_GetParamIntValue>
+        <func_GetParamUlongValue>DeviceInfo_GetParamUlongValue</func_GetParamUlongValue>
+        <func_GetParamStringValue>DeviceInfo_GetParamStringValue</func_GetParamStringValue>
+        <func_SetParamBoolValue>DeviceInfo_SetParamBoolValue</func_SetParamBoolValue>
+        <func_SetParamIntValue>DeviceInfo_SetParamIntValue</func_SetParamIntValue>
+        <func_SetParamUlongValue>DeviceInfo_SetParamUlongValue</func_SetParamUlongValue>
+        <func_SetParamStringValue>DeviceInfo_SetParamStringValue</func_SetParamStringValue>
+        <func_Validate>DeviceInfo_Validate</func_Validate>
+        <func_Commit>DeviceInfo_Commit</func_Commit>
+        <func_Rollback>DeviceInfo_Rollback</func_Rollback>
+      </functions>
+      <parameters>
+
+      <!--
+      <parameter>
+        <name>SysLogMessages</name>
+        <type>string</type>
+        <syntax>string</syntax>
+      </parameter>
+      <parameter>
+        <name>PersistentFDRlogs</name>
+        <type>string</type>
+        <syntax>string</syntax>
+      </parameter>
+      <parameter>
+        <name>Manufacturer</name>
+        <type>string(64)</type>
+        <syntax>string</syntax>
+      </parameter>
+      <parameter>
+        <name>ManufacturerOUI</name>
+        <type>string(6)</type>
+        <syntax>string</syntax>
+      </parameter>
+      <parameter>
+        <name>ModelName</name>
+        <type>string(64)</type>
+        <syntax>string</syntax>
+        <notify>off</notify>
+      </parameter>
+      <parameter>
+        <name>Description</name>
+        <type>string(256)</type>
+        <syntax>string</syntax>
+        <notify>off</notify>
+      </parameter>
+      <parameter>
+        <name>ProductClass</name>
+        <type>string(64)</type>
+        <syntax>string</syntax>
+      </parameter>
+      -->
+
+        <parameter>
+          <name>SerialNumber</name>
+          <type>string(64)</type>
+          <syntax>string</syntax>
+        </parameter>
+        <parameter>
+          <name>HardwareVersion</name>
+          <type>string(64)</type>
+          <syntax>string</syntax>
+        </parameter>
+        <parameter>
+          <name>SoftwareVersion</name>
+          <type>string(64)</type>
+          <syntax>string</syntax>
+          <notify>on</notify>
+        </parameter>
+        <parameter>
+          <name>OperatingSystem</name>
+          <type>string(64)</type>
+          <syntax>string</syntax>
+          <notify>on</notify>
+        </parameter>
+
+        <!--
+        <parameter>
+          <name>AdditionalHardwareVersion</name>
+          <type>string</type>
+          <syntax>string</syntax>
+        </parameter>
+        <parameter>
+          <name>AdditionalSoftwareVersion</name>
+          <type>string</type>
+          <syntax>string</syntax>
+        </parameter>
+        <parameter>
+          <name>ProvisioningCode</name>
+          <type>string(64)</type>
+          <syntax>string</syntax>
+          <notify>on</notify>
+          <writable>true</writable>
+        </parameter>
+        -->
+
+        <parameter>
+          <name>UpTime</name>
+          <type>unsignedInt</type>
+          <syntax>uint32</syntax>
+          <notify>off</notify>
+        </parameter>
+
+        <!--
+        <parameter>
+          <name>FirstUseDate</name>
+          <type>dateTime</type>
+          <syntax>string</syntax>
+          <notify>off</notify>
+        </parameter>
+        -->
+
+      </parameters>
+      <objects>
+        <object>
+          <name>MemoryStatus</name>
+          <objectType>object</objectType>
+          <functions>
+            <func_GetParamBoolValue>MemoryStatus_GetParamBoolValue</func_GetParamBoolValue>
+            <func_GetParamIntValue>MemoryStatus_GetParamIntValue</func_GetParamIntValue>
+            <func_GetParamUlongValue>MemoryStatus_GetParamUlongValue</func_GetParamUlongValue>
+            <func_GetParamStringValue>MemoryStatus_GetParamStringValue</func_GetParamStringValue>
+          </functions>
+          <parameters>
+          <parameter>
+            <name>Total</name>
+            <type>unsignedInt</type>
+            <syntax>uint32</syntax>
+          </parameter>
+          <parameter>
+            <name>Free</name>
+            <type>unsignedInt</type>
+            <syntax>uint32</syntax>
+            <notify>off</notify>
+          </parameter>
+          </parameters>
+        </object>
+        <object>
+          <name>ProcessStatus</name>
+          <objectType>object</objectType>
+          <functions>
+            <func_GetParamBoolValue>ProcessStatus_GetParamBoolValue</func_GetParamBoolValue>
+            <func_GetParamIntValue>ProcessStatus_GetParamIntValue</func_GetParamIntValue>
+            <func_GetParamUlongValue>ProcessStatus_GetParamUlongValue</func_GetParamUlongValue>
+            <func_GetParamStringValue>ProcessStatus_GetParamStringValue</func_GetParamStringValue>
+          </functions>
+          <parameters>
+
+          <!--
+          <parameter>
+            <name>CPUUsage</name>
+            <type>unsignedInt</type>
+            <syntax>uint32</syntax>
+            <notify>off</notify>
+          </parameter>
+          -->
+
+          <parameter>
+            <name>ProcessNumberOfEntries</name>
+            <type>unsignedInt</type>
+            <syntax>uint32</syntax>
+          </parameter>
+          </parameters>
+          <objects>
+            <object>
+              <name>Process</name>
+              <objectType>dynamicTable</objectType>
+              <maxInstance>128</maxInstance>
+              <functions>
+                <func_GetEntryCount>Process_GetEntryCount</func_GetEntryCount>
+                <func_GetEntry>Process_GetEntry</func_GetEntry>
+                <func_IsUpdated>Process_IsUpdated</func_IsUpdated>
+                <func_Synchronize>Process_Synchronize</func_Synchronize>
+                <func_GetParamBoolValue>Process_GetParamBoolValue</func_GetParamBoolValue>
+                <func_GetParamIntValue>Process_GetParamIntValue</func_GetParamIntValue>
+                <func_GetParamUlongValue>Process_GetParamUlongValue</func_GetParamUlongValue>
+                <func_GetParamStringValue>Process_GetParamStringValue</func_GetParamStringValue>
+              </functions>
+              <parameters>
+            <parameter>
+              <name>PID</name>
+              <type>unsignedInt</type>
+              <syntax>uint32</syntax>
+            </parameter>
+            <parameter>
+              <name>Command</name>
+              <type>string(256)</type>
+              <syntax>string</syntax>
+            </parameter>
+            <parameter>
+              <name>Size</name>
+              <type>unsignedInt</type>
+              <syntax>uint32</syntax>
+              <notify>off</notify>
+            </parameter>
+            <parameter>
+              <name>Priority</name>
+              <type>unsignedInt[:99]</type>
+              <syntax>uint32</syntax>
+            </parameter>
+            <parameter>
+              <name>CPUTime</name>
+              <type>unsignedInt</type>
+              <syntax>uint32</syntax>
+              <notify>off</notify>
+            </parameter>
+            <parameter>
+              <name>State</name>
+              <type>string: Running(1),Sleeping(2),Stopped(3),Idle(4),Uninterruptible(5),Zombie(6)</type>
+              <syntax>uint32/mapped</syntax>
+              <notify>off</notify>
+            </parameter>
+              </parameters>
+            </object>
+          </objects>
+        </object>
+        <object>
+          <name>NetworkProperties</name>
+          <objectType>object</objectType>
+          <functions>
+            <func_GetParamBoolValue>NetworkProperties_GetParamBoolValue</func_GetParamBoolValue>
+            <func_GetParamIntValue>NetworkProperties_GetParamIntValue</func_GetParamIntValue>
+            <func_GetParamUlongValue>NetworkProperties_GetParamUlongValue</func_GetParamUlongValue>
+            <func_GetParamStringValue>NetworkProperties_GetParamStringValue</func_GetParamStringValue>
+          </functions>
+          <parameters>
+          <parameter>
+            <name>MaxTCPWindowSize</name>
+            <type>unsignedInt</type>
+            <syntax>uint32</syntax>
+          </parameter>
+          <parameter>
+            <name>TCPImplementation</name>
+            <type>string</type>
+            <syntax>string</syntax>
+          </parameter>
+          </parameters>
+        </object>
+
+        <object>
+          <name>VendorLogFile</name>
+          <objectType>staticTable</objectType>
+          <maxInstance>128</maxInstance>
+          <functions>
+            <func_GetEntryCount>VendorLogFile_GetEntryCount</func_GetEntryCount>
+            <func_GetEntry>VendorLogFile_GetEntry</func_GetEntry>
+            <func_GetParamBoolValue>VendorLogFile_GetParamBoolValue</func_GetParamBoolValue>
+            <func_GetParamIntValue>VendorLogFile_GetParamIntValue</func_GetParamIntValue>
+            <func_GetParamUlongValue>VendorLogFile_GetParamUlongValue</func_GetParamUlongValue>
+            <func_GetParamStringValue>VendorLogFile_GetParamStringValue</func_GetParamStringValue>
+            <func_SetParamBoolValue>VendorLogFile_SetParamBoolValue</func_SetParamBoolValue>
+            <func_SetParamIntValue>VendorLogFile_SetParamIntValue</func_SetParamIntValue>
+            <func_SetParamUlongValue>VendorLogFile_SetParamUlongValue</func_SetParamUlongValue>
+            <func_SetParamStringValue>VendorLogFile_SetParamStringValue</func_SetParamStringValue>
+            <func_Validate>VendorLogFile_Validate</func_Validate>
+            <func_Commit>VendorLogFile_Commit</func_Commit>
+            <func_Rollback>VendorLogFile_Rollback</func_Rollback>
+          </functions>
+          <parameters>
+            <parameter>
+              <name>Alias</name>
+              <type>string(64)</type>
+              <syntax>string</syntax>
+              <writable>true</writable>
+            </parameter>
+            <parameter>
+              <name>Name</name>
+              <type>string(64)</type>
+              <syntax>string</syntax>
+            </parameter>
+            <parameter>
+              <name>MaximumSize</name>
+              <type>unsignedInt</type>
+              <syntax>uint32</syntax>
+            </parameter>
+            <parameter>
+              <name>Persistent</name>
+              <type>boolean</type>
+              <syntax>bool</syntax>
+            </parameter>
+          </parameters>
+        </object>
+      </objects>
+    </object>
+
+
+
+
+  </objects>
+
+</dataModelInfo>
+

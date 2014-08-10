@@ -1,0 +1,67 @@
+#######################################################################
+#   Copyright [2014] [Cisco Systems, Inc.]
+# 
+#   Licensed under the Apache License, Version 2.0 (the \"License\");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+# 
+#       http://www.apache.org/licenses/LICENSE-2.0
+# 
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an \"AS IS\" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#######################################################################
+
+#
+include $(CCSP_ROOT_DIR)/arch/ccsp_common.mk
+
+target3 := $(ComponentBuildDir)/libdiagnostic.so
+source_files3 := $(call add_files_from_src,diagnostic,'*.c')
+source_files3 += $(call add_custom_files,diagnostic,'*.c')
+#source_files3 += $(call add_custom_files,dmltad,'cosa_apis_busutil.c')
+obj_files3 := $(addprefix $(ComponentBuildDir)/, $(source_files3:%.c=%.o))
+-include $(obj_files3:.o=.d)
+$(target3): $(obj_files3)
+
+
+target2 := $(ComponentBuildDir)/libdmltad.so
+source_files2 := $(call add_files_from_src,dmltad,'*.c')
+source_files2 += $(call add_custom_files,dmltad,'*.c')
+obj_files2 := $(addprefix $(ComponentBuildDir)/, $(source_files2:%.c=%.o))
+-include $(obj_files2:.o=.d)
+	
+target1 := $(ComponentBuildDir)/CcspTandDSsp
+source_files1 := $(call add_files_from_src,TandDSsp,'*.c')
+source_files1 += $(call add_custom_files,TandDSsp,'*.c')
+obj_files1 := $(addprefix $(ComponentBuildDir)/, $(source_files1:%.c=%.o))
+-include $(obj_files1:.o=.d)
+$(target1): $(obj_files1) $(target2) $(target3)
+	$(CC) $(LDFLAGS) -L$(ComponentBuildDir) -ldiagnostic -ldmltad $(obj_files1) -o $@
+
+INCPATH += $(ComponentSrcDir)/diagnostic/include
+INCPATH += $(ComponentSrcDir)/diagnostic/BbhmDiagIpPing
+INCPATH += $(ComponentSrcDir)/dmltad
+INCPATH += $(ComponentSrcDir)/TandDSsp
+INCPATH += $(call get_board_or_arch_src_path,dmltad)
+CFLAGS += $(addprefix -I, $(INCPATH))
+
+all:  $(target3) $(target2) $(target1)
+
+install_targets := $(target3) $(target2) $(target1)
+install_targets += $(wildcard $(ComponentArchCfgDir)/*.XM)
+install_targets += $(wildcard $(ComponentBoardCfgDir)/*.XML)
+
+install:
+	@echo "Installing T&D Installables"
+	@install -d -m 0755 $(CCSP_OUT_DIR)/tad
+	@cp -f $(install_targets) $(CCSP_OUT_DIR)/tad
+	
+.PHONY: all clean env_check
+
+clean:
+	rm -Rf $(ComponentBuildDir)
+    
+LDFLAGS   += -lccsp_common
+
