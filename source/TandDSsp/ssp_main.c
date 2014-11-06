@@ -161,13 +161,23 @@ int  cmd_dispatch(int  command)
 static void _print_stack_backtrace(void)
 {
 #ifdef __GNUC__
-#if (!defined _NO_EXECINFO_H_)
+#if (!defined _COSA_SIM_) && (!defined _NO_EXECINFO_H_)
         void* tracePtrs[100];
         char** funcNames = NULL;
         int i, count = 0;
 
+        int fd;
+        const char* path = "/nvram/tadssp_backtrace";
+        fd = open(path, O_RDWR | O_CREAT);
+        if (fd < 0)
+        {
+            fprintf(stderr, "failed to open backtrace file: %s", path);
+            return;
+        }
+
         count = backtrace( tracePtrs, 100 );
-        backtrace_symbols_fd( tracePtrs, count, 2 );
+        backtrace_symbols_fd( tracePtrs, count, fd );
+        close(fd);
 
         funcNames = backtrace_symbols( tracePtrs, count );
 
@@ -231,28 +241,28 @@ void sig_handler(int sig)
 {
     if ( sig == SIGINT ) {
     	signal(SIGINT, sig_handler); /* reset it to this function */
-    	CcspTraceInfo(("SIGINT received!\n"));
-	exit(0);
+    	CcspTraceError(("SIGINT received!\n"));
+        exit(0);
     }
     else if ( sig == SIGUSR1 ) {
     	signal(SIGUSR1, sig_handler); /* reset it to this function */
-    	CcspTraceInfo(("SIGUSR1 received!\n"));
+    	CcspTraceWarning(("SIGUSR1 received!\n"));
     }
     else if ( sig == SIGUSR2 ) {
-    	CcspTraceInfo(("SIGUSR2 received!\n"));
+    	CcspTraceWarning(("SIGUSR2 received!\n"));
     }
     else if ( sig == SIGCHLD ) {
     	signal(SIGCHLD, sig_handler); /* reset it to this function */
-    	CcspTraceInfo(("SIGCHLD received!\n"));
+    	CcspTraceWarning(("SIGCHLD received!\n"));
     }
     else if ( sig == SIGPIPE ) {
     	signal(SIGPIPE, sig_handler); /* reset it to this function */
-    	CcspTraceInfo(("SIGPIPE received!\n"));
+    	CcspTraceWarning(("SIGPIPE received!\n"));
     }
     else {
     	/* get stack trace first */
     	_print_stack_backtrace();
-    	CcspTraceInfo(("Signal %d received, exiting!\n", sig));
+    	CcspTraceError(("Signal %d received, exiting!\n", sig));
     	exit(0);
     }
 
@@ -266,6 +276,10 @@ int main(int argc, char* argv[])
     int                             cmdChar            = 0;
     BOOL                            bRunAsDaemon       = TRUE;
     int                             idx                = 0;
+
+#if defined(_DEBUG) && defined(_COSA_SIM_)
+    AnscSetTraceLevel(CCSP_TRACE_LEVEL_INFO);
+#endif
 
     for (idx = 1; idx < argc; idx++)
     {
