@@ -72,6 +72,7 @@
 #include "ssp_global.h"
 #include "ccsp_trace.h"
 #include <time.h>
+#include "cosa_plugin_api.h"
 
 extern ULONG                            g_ulAllocatedSizePeak;
 
@@ -106,6 +107,9 @@ static  COMPONENT_COMMON_DM             CommonDm = {0};
 #define  COSA_DIAG_PLUGIN_EXPORTFUNC_PROC          "COSA_Diag_ExportFunc"
 
 COSA_DIAG_PLUGIN_INFO                               g_CosaDiagPluginInfo;
+
+COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc   = NULL;
+
 
 ANSC_STATUS
 ssp_create_tad
@@ -421,6 +425,17 @@ ssp_engage_tad
             }
 
             g_DslhDataModelAgent->RegisterInternalApi(g_DslhDataModelAgent, "COSAGetDiagPluginInfo", COSAGetDiagPluginInfo);
+        }
+    }
+
+    if ( g_GetParamValueByPathNameProc == NULL )
+    {
+        g_GetParamValueByPathNameProc = 
+            (COSAGetParamValueByPathNameProc)COSAAcquireFunction("COSAGetParamValueByPathName");
+
+        if ( !g_GetParamValueByPathNameProc )
+        {
+            printf("Test and Diagnostic - failed to load the function COSAGetParamValueByPathName!\n");
         }
     }
 

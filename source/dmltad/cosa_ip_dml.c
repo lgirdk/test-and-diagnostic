@@ -57,9 +57,8 @@
 #include "ansc_platform.h"
 #include "cosa_diagnostic_apis.h"
 #include "plugin_main_apis.h"
-/*#include "cosa_ip_apis.h"*/
 #include "cosa_ip_dml.h"
-/*#include "cosa_ip_internal.h"*/
+#include "diag.h"
 
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
@@ -73,6 +72,10 @@ static ULONG last_tick;
 #ifndef _COSA_SIM_
 BOOL CosaIpifGetSetSupported(char * pParamName);
 #endif
+
+extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
+extern  ANSC_HANDLE                         bus_handle;
+
 /***********************************************************************
  IMPORTANT NOTE:
 
@@ -889,184 +892,72 @@ IPPing_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
+    diag_state_t                    state;
+    diag_err_t                      err;
+    diag_cfg_t                      cfg;
+    diag_stat_t                     statis;
 
-    /* check the parameter name and return the corresponding value */
+    if (diag_getstate(DIAG_MD_PING, &state) != DIAG_ERR_OK
+            || diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK
+            || diag_getstatis(DIAG_MD_PING, &statis) != DIAG_ERR_OK
+            || diag_geterr(DIAG_MD_PING, &err) != DIAG_ERR_OK)
+        return FALSE;
+
     if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
     {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->DiagnosticState + 1;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping DiagnosticsState parameter!\n"));
-            *puLong = 0;
-            return FALSE;
+        switch (state) {
+            case DIAG_ST_NONE:
+                *puLong = DSLH_DIAG_STATE_TYPE_None + 1;
+                break;
+            case DIAG_ST_ACTING:
+                *puLong = DSLH_DIAG_STATE_TYPE_Requested + 1;
+                break;
+            case DIAG_ST_COMPLETE:
+                *puLong = DSLH_DIAG_STATE_TYPE_Complete + 1;
+                break;
+            case DIAG_ST_ERROR:
+                switch (err) {
+                    case DIAG_ERR_RESOLVE:
+                        *puLong = DSLH_DIAG_STATE_TYPE_PING_Error_HostName + 1;
+                        break;
+                    case DIAG_ERR_INTERNAL:
+                        *puLong = DSLH_DIAG_STATE_TYPE_PING_Error_Internal + 1;
+                        break;
+                    case DIAG_ERR_OTHER:
+                    default:
+                        *puLong = DSLH_DIAG_STATE_TYPE_PING_Error_Other + 1;
+                        break;
+                }
+                break;
+            default:
+                return FALSE;
         }
 
         return TRUE;
     }
 
     if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
-    {
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->NumberOfRepetitions;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping NumberOfRepetitions parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
+        *puLong = cfg.cnt;
+    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+        *puLong = cfg.timo * 1000;
+    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+        *puLong = cfg.size;
+    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+        *puLong = cfg.tos >> 2;
+    else if( AnscEqualString(ParamName, "SuccessCount", TRUE))
+        *puLong = statis.u.ping.success;
+    else if( AnscEqualString(ParamName, "FailureCount", TRUE))
+        *puLong = statis.u.ping.failure;
+    else if( AnscEqualString(ParamName, "AverageResponseTime", TRUE))
+        *puLong = statis.u.ping.rtt_avg;
+    else if( AnscEqualString(ParamName, "MinimumResponseTime", TRUE))
+        *puLong = statis.u.ping.rtt_min;
+    else if( AnscEqualString(ParamName, "MaximumResponseTime", TRUE))
+        *puLong = statis.u.ping.rtt_max;
+    else
+        return FALSE;
 
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
-    {
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->Timeout;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping Timeout parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-    {
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->DataBlockSize;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping DataBlockSize parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DSCP", TRUE))
-    {
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->DSCP;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping DSCP parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "SuccessCount", TRUE))
-    {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->SuccessCount;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping SuccessCount parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "FailureCount", TRUE))
-    {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->FailureCount;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping FailureCount parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "AverageResponseTime", TRUE))
-    {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->AverageResponseTime;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping AverageResponseTime parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "MinimumResponseTime", TRUE))
-    {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->MinimumResponseTime;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping MinimumResponseTime parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "MaximumResponseTime", TRUE))
-    {
-        pDiagPingInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagPingInfo )
-        {
-            *puLong = pDiagPingInfo->MaximumResponseTime;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Ping MaximumResponseTime parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -1116,52 +1007,49 @@ IPPing_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
+    diag_cfg_t                      cfg;
+
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return -1;
 
     if( AnscEqualString(ParamName, "Interface", TRUE))
     {
-        if ( pDiagPingInfo && AnscSizeOfString(pDiagPingInfo->Interface) < *pUlSize )
+        /*
+         *  Revert to TR-181 definition -- object reference
+         *
+        if (*pUlSize <= strlen(cfg.ifname))
         {
-            AnscCopyString(pValue, pDiagPingInfo->Interface);
+            *pUlSize = strlen(cfg.ifname) + 1;
+            return 1;
+        }
+
+        strncpy(pValue, cfg.ifname, *pUlSize);
+         */
+        if ( *pUlSize <= _ansc_strlen(cfg.Interface) )
+        {
+            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
+            return 1;
         }
         else
         {
-            if ( AnscSizeOfString(pDiagPingInfo->Interface) >= *pUlSize )
-            {
-                *pUlSize = AnscSizeOfString(pDiagPingInfo->Interface) + 1;
-            }
-
-            AnscTraceWarning(("Failed to get Ping Interface parameter!\n"));
-
-            return -1;
+            _ansc_strncpy(pValue, cfg.Interface, *pUlSize);
+            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
-        return 0;
     }
-
-    /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Host", TRUE))
+    else if( AnscEqualString(ParamName, "Host", TRUE))
     {
-        if ( pDiagPingInfo && AnscSizeOfString(pDiagPingInfo->Host) < *pUlSize )
+        if (*pUlSize <= strlen(cfg.host))
         {
-            AnscCopyString(pValue, pDiagPingInfo->Host);
-        }
-        else
-        {
-            if ( AnscSizeOfString(pDiagPingInfo->Host) >= *pUlSize )
-            {
-                *pUlSize = AnscSizeOfString(pDiagPingInfo->Host) + 1;
-            }
-
-            AnscTraceWarning(("Failed to get Ping Host parameter!\n"));
-            return -1;
+            *pUlSize = strlen(cfg.host) + 1;
+            return 1;
         }
 
-        return 0;
+        strncpy(pValue, cfg.host, *pUlSize);
     }
+    else
+        return -1;
 
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return -1;
+    return 0;
 }
 
 /**********************************************************************
@@ -1290,81 +1178,35 @@ IPPing_SetParamUlongValue
         ULONG                       uValue
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
-    PDSLH_PING_INFO                 pDiagInfo           = NULL;
+    diag_cfg_t                      cfg;
 
-    /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
-    {
-        if ( (uValue - 1) != (ULONG)DSLH_DIAG_STATE_TYPE_Requested )
-        {
-            return FALSE;
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return FALSE;
+
+    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE)) {
+        if (uValue == DSLH_DIAG_STATE_TYPE_Requested + 1) {
+            if (diag_start(DIAG_MD_PING) != 0)
+                return FALSE;
+            return TRUE;
         }
-
-        pDiagPingInfo->DiagnosticState = uValue - 1;
-
-        return TRUE;
+        return FALSE;
     }
 
     if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
-    {
-        pDiagPingInfo->NumberOfRepetitions = uValue;
+        cfg.cnt = uValue;
+    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+        cfg.timo = uValue / 1000;
+    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+        cfg.size = uValue;
+    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+        cfg.tos = uValue;
+    else 
+        return FALSE;
 
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
+    if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
-    {
-        pDiagPingInfo->Timeout             = uValue;
-
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-    {
-        pDiagPingInfo->DataBlockSize       = uValue;
-
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DSCP", TRUE))
-    {
-        pDiagPingInfo->DSCP                = uValue;
-
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -1405,41 +1247,57 @@ IPPing_SetParamStringValue
         char*                       pString
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
-    PDSLH_PING_INFO                 pDiagInfo           = NULL;
+    diag_cfg_t cfg;
 
-    /* check the parameter name and set the corresponding value */
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return FALSE;
+
     if( AnscEqualString(ParamName, "Interface", TRUE))
     {
-        AnscCopyString(pDiagPingInfo->Interface, pString);
+        /*
+         *  Revert to TR-181 definition -- object reference
+         *
+        snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", pString);
+         */
+        _ansc_snprintf(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
 
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
+        /*
+         *  Fill in cfg.ifname based on Interface - Device.IP.Interface.<n>
+         */
         {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
+            ANSC_STATUS             retval  = ANSC_STATUS_FAILURE;
+            char                    IfNameParamName[DIAG_CFG_REF_STRING_LENGTH+1+5];
+            parameterValStruct_t    ParamVal;
+            int                     size = sizeof(cfg.ifname);
+
+            _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+
+            ParamVal.parameterName  = IfNameParamName;
+            ParamVal.parameterValue = cfg.ifname;
+
+            AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, IfNameParamName));
+
+            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, &size);
+
+            if ( retval != ANSC_STATUS_SUCCESS )
+            {
+                AnscTraceWarning(("%s -- failed to retrieve parameter %s\n", __FUNCTION__, IfNameParamName));
+            }
+            else
+            {
+                AnscTraceFlow(("%s -- Interface.Name is %s\n", __FUNCTION__, cfg.ifname));
+            }
         }
-
-        return TRUE;
     }
+    else if( AnscEqualString(ParamName, "Host", TRUE))
+        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    else
+        return FALSE;
 
-    if( AnscEqualString(ParamName, "Host", TRUE))
-    {
-        AnscCopyString(pDiagPingInfo->Host, pString);
+    if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
-        pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -1480,56 +1338,6 @@ IPPing_Validate
         ULONG*                      puLength
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
-
-    if ( !pDiagPingInfo )
-    {
-        return FALSE;
-    }
-
-    if ( pDiagPingInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )
-    {
-        if ( AnscSizeOfString(pDiagPingInfo->Host) == 0 )
-        {
-            AnscCopyString(pReturnParamName, "Host");
-
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagPingInfo->NumberOfRepetitions < DSLH_PING_MIN_NumberOfRepetitions )
-        {
-            AnscCopyString(pReturnParamName, "NumberOfRepetitions");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagPingInfo->Timeout < DSLH_PING_MIN_Timeout )
-        {
-            AnscCopyString(pReturnParamName, "Timeout");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagPingInfo->DataBlockSize < DSLH_PING_MIN_DataBlockSize || pDiagPingInfo->DataBlockSize > DSLH_PING_MAX_DataBlockSize )
-        {
-            AnscCopyString(pReturnParamName, "DataBlockSize");
-
-            return FALSE;
-        }
-    }
-
     return TRUE;
 }
 
@@ -1561,46 +1369,6 @@ IPPing_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
-    PDSLH_PING_INFO                 pDiagInfo           = NULL;
-    char*                           pAddrName           = NULL;
-
-    if ( !pDiagPingInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-    if ( pDiagPingInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )
-    {
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-            CosaDmlDiagCancelDiagnostic(DSLH_DIAGNOSTIC_TYPE_Ping);
-            pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Requested;
-            AnscSleep(1000);
-        }
-
-		CosaGetInferfaceAddrByNamePriv(hInsContext);
-        CosaDmlDiagScheduleDiagnostic(DSLH_DIAGNOSTIC_TYPE_Ping, (ANSC_HANDLE)pDiagPingInfo);
-
-        /*pDiagPingInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;*/
-    }
-    else
-    {
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Ping, DSLH_DIAG_STATE_TYPE_None);
-    }
-
-
-    if ( pDiagPingInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Canceled )
-    {
-        CosaDmlDiagCancelDiagnostic(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Ping, DSLH_DIAG_STATE_TYPE_None);
-    }
-
     return 0;
 }
 
@@ -1633,32 +1401,6 @@ IPPing_Rollback
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
-    PDSLH_PING_INFO                 pDiagInfo           = NULL;
-
-    if ( !pDiagPingInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    pDiagInfo = (PDSLH_PING_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Ping);
-
-    if ( pDiagInfo )
-    {
-        DslhInitPingInfo(pDiagPingInfo);
-        pDiagPingInfo->StructSize                    = sizeof(DSLH_PING_INFO);
-        AnscCopyString(pDiagPingInfo->Host           , pDiagInfo->Host     );
-        AnscCopyString(pDiagPingInfo->Interface      , pDiagInfo->Interface);
-        pDiagPingInfo->Timeout                       = pDiagInfo->Timeout;
-        pDiagPingInfo->NumberOfRepetitions           = pDiagInfo->NumberOfRepetitions;
-        pDiagPingInfo->DataBlockSize                 = pDiagInfo->DataBlockSize;
-    }
-    else
-    {
-        DslhInitPingInfo(pDiagPingInfo);
-    }
-
     return 0;
 }
 
@@ -1807,133 +1549,70 @@ TraceRoute_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
+    diag_state_t                    state;
+    diag_err_t                      err;
+    diag_cfg_t                      cfg;
+    diag_stat_t                     statis;
+
+    if (diag_getstate(DIAG_MD_TRACERT, &state) != DIAG_ERR_OK
+            || diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK
+            || diag_getstatis(DIAG_MD_TRACERT, &statis) != DIAG_ERR_OK
+            || diag_geterr(DIAG_MD_TRACERT, &err) != DIAG_ERR_OK)
+        return FALSE;
 
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
     {
-        pDiagTracerouteInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->DiagnosticState + 1;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute DiagnosticsState parameter!\n"));
-            *puLong = 0;
-            return FALSE;
+        switch (state) {
+            case DIAG_ST_NONE:
+                *puLong = DSLH_DIAG_STATE_TYPE_None + 1;
+                break;
+            case DIAG_ST_ACTING:
+                *puLong = DSLH_DIAG_STATE_TYPE_Requested + 1;
+                break;
+            case DIAG_ST_COMPLETE:
+                *puLong = DSLH_DIAG_STATE_TYPE_Complete + 1;
+                break;
+            case DIAG_ST_ERROR:
+                switch (err) {
+                case DIAG_ERR_RESOLVE:
+                    *puLong = DSLH_DIAG_STATE_TYPE_TRAC_Error_HostName + 1;
+                    break;
+                case DIAG_ERR_MAXHOPS:
+                    *puLong = DSLH_DIAG_STATE_TYPE_TRAC_Error_MaxHopCount + 1;
+                    break;
+                case DIAG_ERR_OTHER:
+                default:
+                    /*
+                     * voilate TR-181 has only two error state,
+                     * but There really some other errors.
+                     * Since UI using TR-181 values, we have to return one of them.
+                     */
+                    *puLong = DSLH_DIAG_STATE_TYPE_TRAC_Error_MaxHopCount + 1;
+                    break;
+                }
+                break;
+            default:
+                return FALSE;
         }
 
         return TRUE;
     }
 
     if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
-    {
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->NumberOfTries;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute NumberOfTries parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
-    {
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->Timeout;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute Timeout parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-    {
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->DataBlockSize;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute DataBlockSize parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DSCP", TRUE))
-    {
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->DSCP;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute DSCP parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
+        *puLong = cfg.cnt;
+    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+        *puLong = cfg.timo * 1000;
+    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+        *puLong = cfg.size;
+    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+        *puLong = cfg.tos >> 2;
     if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
-    {
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->MaxHopCount;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute MaxHopCount parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
+        *puLong = cfg.maxhop;
     if( AnscEqualString(ParamName, "ResponseTime", TRUE))
-    {
-        pDiagTracerouteInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
+        *puLong = statis.u.tracert.resptime;
 
-        if ( pDiagTracerouteInfo )
-        {
-            *puLong = pDiagTracerouteInfo->ResponseTime;
-        }
-        else
-        {
-            AnscTraceWarning(("Failed to get Traceroute ResponseTime parameter!\n"));
-            *puLong = 0;
-            return FALSE;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "NumberOfRouteHops", TRUE))
-    {
-		return CosaDmlDiagGetRouteHopsNumberPriv(hInsContext, puLong);
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -1983,52 +1662,49 @@ TraceRoute_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
+    diag_cfg_t                      cfg;
+
+    if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return -1;
 
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "Interface", TRUE))
     {
-        if ( pDiagTracerouteInfo && AnscSizeOfString(pDiagTracerouteInfo->Interface) < *pUlSize )
+        /*
+         *  Revert to TR-181 definition -- object reference
+         *
+        if (*pUlSize <= strlen(cfg.ifname))
         {
-            AnscCopyString(pValue, pDiagTracerouteInfo->Interface);
+            *pUlSize = strlen(cfg.ifname) + 1;
+            return 1;
+        }
+
+        snprintf(pValue, *pUlSize, "%s", cfg.ifname);
+         */
+        if ( *pUlSize <= _ansc_strlen(cfg.Interface) )
+        {
+            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
+            return 1;
         }
         else
         {
-            if ( AnscSizeOfString(pDiagTracerouteInfo->Interface) >= *pUlSize )
-            {
-                *pUlSize = AnscSizeOfString(pDiagTracerouteInfo->Interface) + 1;
-            }
-
-            AnscTraceWarning(("Failed to get Traceroute Interface parameter!\n"));
-            return -1;
+            _ansc_strncpy(pValue, cfg.Interface, *pUlSize);
+            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
-
-        return 0;
     }
 
     if( AnscEqualString(ParamName, "Host", TRUE))
     {
-        if ( pDiagTracerouteInfo && AnscSizeOfString(pDiagTracerouteInfo->Host) < *pUlSize )
+        if (*pUlSize <= strlen(cfg.host))
         {
-            AnscCopyString(pValue, pDiagTracerouteInfo->Host);
-        }
-        else
-        {
-            if ( AnscSizeOfString(pDiagTracerouteInfo->Host) >= *pUlSize )
-            {
-                *pUlSize = AnscSizeOfString(pDiagTracerouteInfo->Host) + 1;
-            }
-
-            AnscTraceWarning(("Failed to get Traceroute Host parameter!\n"));
-            return -1;
+            *pUlSize = strlen(cfg.host) + 1;
+            return 1;
         }
 
-        return 0;
+        snprintf(pValue, *pUlSize, "%s", cfg.host);
     }
 
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return -1;
+    return 0;
 }
 
 /**********************************************************************
@@ -2157,95 +1833,36 @@ TraceRoute_SetParamUlongValue
         ULONG                       uValue
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
+    diag_cfg_t                      cfg;
 
-    /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
     {
-        if ( (uValue - 1) != (ULONG)DSLH_DIAG_STATE_TYPE_Requested )
-        {
-            return FALSE;
-        }
-
-        pDiagTracerouteInfo->DiagnosticState = uValue - 1;
-
-        return TRUE;
+        if (uValue == DSLH_DIAG_STATE_TYPE_Requested + 1)
+            if (diag_start(DIAG_MD_TRACERT) == DIAG_ERR_OK)
+                return TRUE;
+        return FALSE;
     }
+
+    if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
     if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
-    {
-        pDiagTracerouteInfo->NumberOfTries = uValue;
+        cfg.cnt = uValue;
+    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+        cfg.timo = uValue / 1000;
+    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+        cfg.size = uValue;
+    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+        cfg.tos = uValue << 2;
+    else if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
+        cfg.maxhop = uValue;
+    else
+        return FALSE;
 
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
+    if (diag_setcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
-    {
-        pDiagTracerouteInfo->Timeout = uValue;
-
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-    {
-        pDiagTracerouteInfo->DataBlockSize = uValue;
-
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "DSCP", TRUE))
-    {
-        pDiagTracerouteInfo->DSCP = uValue;
-
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
- 
-        return TRUE;
-    }
-
-    if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
-    {
-        pDiagTracerouteInfo->MaxHopCount = uValue;
-
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -2286,41 +1903,58 @@ TraceRoute_SetParamStringValue
         char*                       pString
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
+    diag_cfg_t                      cfg;
+
+    if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
     /* check the parameter name and set the corresponding value */
     if( AnscEqualString(ParamName, "Interface", TRUE))
     {
-        AnscCopyString(pDiagTracerouteInfo->Interface, pString);
+        /*
+         *  Revert to TR-181 definition -- object reference
+         *
+        snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", pString);
+         */
+        _ansc_snprintf(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
 
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
+        /*
+         *  Fill in cfg.ifname based on Interface - Device.IP.Interface.<n>
+         */
         {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
+            ANSC_STATUS             retval  = ANSC_STATUS_FAILURE;
+            char                    IfNameParamName[DIAG_CFG_REF_STRING_LENGTH+1+5];
+            parameterValStruct_t    ParamVal;
+            int                     size = sizeof(cfg.ifname);
+
+            _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+
+            ParamVal.parameterName  = IfNameParamName;
+            ParamVal.parameterValue = cfg.ifname;
+
+            AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, IfNameParamName));
+
+            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, &size);
+
+            if ( retval != ANSC_STATUS_SUCCESS )
+            {
+                AnscTraceWarning(("%s -- failed to retrieve parameter %s\n", __FUNCTION__, IfNameParamName));
+            }
+            else
+            {
+                AnscTraceFlow(("%s -- Interface.Name is %s\n", __FUNCTION__, cfg.ifname));
+            }
         }
-   
-        return TRUE;
     }
+    else if( AnscEqualString(ParamName, "Host", TRUE))
+        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    else
+        return FALSE;
 
-    if( AnscEqualString(ParamName, "Host", TRUE))
-    {
-        AnscCopyString(pDiagTracerouteInfo->Host, pString);
+    if (diag_setcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return FALSE;
 
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-        }
-
-        return TRUE;
-    }
-
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
-    return FALSE;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -2361,64 +1995,6 @@ TraceRoute_Validate
         ULONG*                      puLength
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-
-    if ( !pDiagTracerouteInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    if ( pDiagTracerouteInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )
-    {
-        if ( AnscSizeOfString(pDiagTracerouteInfo->Host) == 0 )
-        {
-            AnscCopyString(pReturnParamName, "Host");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagTracerouteInfo->NumberOfTries < DSLH_TRACEROUTE_MIN_NumberOfTries )
-        {
-            AnscCopyString(pReturnParamName, "NumberOfTries");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagTracerouteInfo->Timeout < DSLH_TRACEROUTE_MIN_Timeout )
-        {
-            AnscCopyString(pReturnParamName, "Timeout");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagTracerouteInfo->DataBlockSize < DSLH_TRACEROUTE_MIN_DataBlockSize || pDiagTracerouteInfo->DataBlockSize > DSLH_TRACEROUTE_MAX_DataBlockSize )
-        {
-            AnscCopyString(pReturnParamName, "DataBlockSize");
-
-            return FALSE;
-        }
-    }
-
-    if ( TRUE )
-    {
-        if ( pDiagTracerouteInfo->MaxHopCount < DSLH_TRACEROUTE_MIN_MaxHopCount || pDiagTracerouteInfo->MaxHopCount > DSLH_TRACEROUTE_MAX_HOPS_COUNT )
-        {
-            AnscCopyString(pReturnParamName, "MaxHopCount");
-
-            return FALSE;
-        }
-    }
-
     return TRUE;
 }
 
@@ -2450,45 +2026,6 @@ TraceRoute_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
-    char*                           pAddrName           = NULL;
-
-    if ( !pDiagTracerouteInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( pDiagTracerouteInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )
-    {
-        if ( pDiagInfo && pDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Inprogress )
-        {
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Canceled;
-            CosaDmlDiagCancelDiagnostic(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-            pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_Requested;
-            AnscSleep(1000);
-        }
-
-		CosaGetInferfaceAddrByNamePriv(hInsContext);
-        CosaDmlDiagScheduleDiagnostic(DSLH_DIAGNOSTIC_TYPE_Traceroute, (ANSC_HANDLE)pDiagTracerouteInfo);
-
-        pDiagTracerouteInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-    }
-    else
-    {
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Traceroute, DSLH_DIAG_STATE_TYPE_None);
-    }
-
-    if ( pDiagTracerouteInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Canceled )
-    {
-        CosaDmlDiagCancelDiagnostic(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Traceroute, DSLH_DIAG_STATE_TYPE_None);
-    }
-
     return 0;
 }
 
@@ -2521,34 +2058,6 @@ TraceRoute_Rollback
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
-
-    if ( !pDiagTracerouteInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( pDiagInfo )
-    {
-        DslhInitTracerouteInfo(pDiagTracerouteInfo);
-        pDiagTracerouteInfo->StructSize                = sizeof(DSLH_TRACEROUTE_INFO);
-        AnscCopyString(pDiagTracerouteInfo->Host     , pDiagInfo->Host     );
-        AnscCopyString(pDiagTracerouteInfo->Interface, pDiagInfo->Interface);
-        pDiagTracerouteInfo->Timeout                   = pDiagInfo->Timeout;
-        pDiagTracerouteInfo->MaxHopCount               = pDiagInfo->MaxHopCount;
-        pDiagTracerouteInfo->NumberOfTries             = pDiagInfo->NumberOfTries;
-        pDiagTracerouteInfo->DataBlockSize             = pDiagInfo->DataBlockSize;
-        pDiagTracerouteInfo->UpdatedAt                 = pDiagInfo->UpdatedAt;
-    }
-    else
-    {
-        DslhInitTracerouteInfo(pDiagTracerouteInfo);
-    }
-
     return 0;
 }
 
@@ -2596,17 +2105,11 @@ RouteHops_GetEntryCount
         ANSC_HANDLE                 hInsContext
     )
 {
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = NULL;
+    diag_stat_t stat;
 
-    pDiagTracerouteInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( pDiagTracerouteInfo && pDiagTracerouteInfo->DiagnosticState != DSLH_DIAG_STATE_TYPE_None
-         && pDiagTracerouteInfo->DiagnosticState != DSLH_DIAG_STATE_TYPE_Requested )
-    {
-        return pDiagTracerouteInfo->RouteHopsNumberOfEntries;
-    }
-
-    return 0;
+    if (diag_getstatis(DIAG_MD_TRACERT, &stat) != DIAG_ERR_OK)
+        return 0;
+    return stat.u.tracert.nhop;
 }
 
 /**********************************************************************
@@ -2647,23 +2150,14 @@ RouteHops_GetEntry
         ULONG*                      pInsNumber
     )
 {
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo= NULL;
-    PDSLH_ROUTEHOPS_INFO            pRouteHop          = (PDSLH_ROUTEHOPS_INFO       )NULL;
+    diag_stat_t stat;
 
-    pDiagTracerouteInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( pDiagTracerouteInfo )
-    {
-        pRouteHop = (PDSLH_ROUTEHOPS_INFO)&pDiagTracerouteInfo->hDiagRouteHops[nIndex];
-    }
-
-    if ( !pRouteHop )
-    {
-        return  (ANSC_HANDLE)NULL;
-    }
-
+    if (diag_getstatis(DIAG_MD_TRACERT, &stat) != DIAG_ERR_OK)
+        return NULL;
+    if (nIndex >= stat.u.tracert.nhop)
+        return NULL;
     *pInsNumber  = nIndex + 1;
-    return pRouteHop;
+    return &stat.u.tracert.hops[nIndex];
 }
 
 /**********************************************************************
@@ -2694,23 +2188,7 @@ RouteHops_IsUpdated
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
-
-    if ( !pDiagTracerouteInfo )
-    {
-        return FALSE;
-    }
-
-    pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( pDiagInfo && pDiagTracerouteInfo->UpdatedAt != pDiagInfo->UpdatedAt )
-    {
-        return  TRUE;
-    }
-
-    return FALSE;
+    return  TRUE;
 }
 
 /**********************************************************************
@@ -2741,26 +2219,6 @@ RouteHops_Synchronize
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo = pMyObject->hDiagTracerouteInfo;
-    PDSLH_TRACEROUTE_INFO           pDiagInfo           = NULL;
-
-    if ( !pDiagTracerouteInfo )
-    {
-        return ANSC_STATUS_FAILURE;
-    }
-
-    pDiagInfo = (PDSLH_TRACEROUTE_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_Traceroute);
-
-    if ( !pDiagInfo )
-    {
-        AnscTraceWarning(("Failed to get Traceroute backend information!\n"));
-
-        return  ANSC_STATUS_FAILURE;
-    }
-
-    pDiagTracerouteInfo->UpdatedAt = pDiagInfo->UpdatedAt;
-
     return 0;
 }
 
@@ -2890,24 +2348,17 @@ RouteHops_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-    PDSLH_ROUTEHOPS_INFO            pRouteHop          = (PDSLH_ROUTEHOPS_INFO       )hInsContext;
+    tracert_hop_t                   *hop = (tracert_hop_t *)hInsContext;
 
-    if ( !pRouteHop )
-    {
-        AnscTraceWarning(("Failed to get route hops parameters hInsContext!\n"));
-
+    if (!hop)
         return FALSE;
-    }
 
-    /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "ErrorCode", TRUE))
     {
-        *puLong = pRouteHop->HopErrorCode;
-
+        *puLong = hop->icmperr;
         return TRUE;
     }
 
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
 
@@ -2958,67 +2409,45 @@ RouteHops_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-    PDSLH_ROUTEHOPS_INFO            pRouteHop          = (PDSLH_ROUTEHOPS_INFO       )hInsContext;
+    tracert_hop_t                   *hop = (tracert_hop_t *)hInsContext;
 
-    if ( !pRouteHop )
-    {
-        AnscTraceWarning(("Failed to get route hops parameters hInsContext!\n"));
-
+    if (!hop)
         return FALSE;
-    }
 
-    /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, ROUTEHOPS_HOST_STRING, TRUE))
+    if( AnscEqualString(ParamName, "Host", TRUE))
     {
-        if ( AnscSizeOfString(pRouteHop->HopHost) < *pUlSize )
-        {
-            AnscCopyString(pValue, pRouteHop->HopHost);
-
-            return 0;
+        if (strlen(hop->host) >= *pUlSize) {
+            *pUlSize = strlen(hop->host) + 1;
+            return 1;
         }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pRouteHop->HopHost) + 1;
 
-            return -1;
-        }
+        snprintf(pValue, *pUlSize, "%s", hop->host);
+        return 0;
     }
-
     if( AnscEqualString(ParamName, "HostAddress", TRUE))
     {
-        if ( AnscSizeOfString(pRouteHop->HopHostAddress) < *pUlSize )
-        {
-            AnscCopyString(pValue, pRouteHop->HopHostAddress);
-
-            return 0;
+        if (strlen(hop->addr) >= *pUlSize) {
+            *pUlSize = strlen(hop->addr) + 1;
+            return 1;
         }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pRouteHop->HopHostAddress) + 1;
 
-            return -1;
-        }
+        snprintf(pValue, *pUlSize, "%s", hop->addr);
+        return 0;
     }
-
     if( AnscEqualString(ParamName, "RTTimes", TRUE))
     {
-        if ( AnscSizeOfString(pRouteHop->HopRTTimes) < *pUlSize )
-        {
-            AnscCopyString(pValue, pRouteHop->HopRTTimes);
-
-            return 0;
+        if (strlen(hop->rtts) >= *pUlSize) {
+            *pUlSize = strlen(hop->rtts) + 1;
+            return 1;
         }
-        else
-        {
-            *pUlSize = AnscSizeOfString(pRouteHop->HopRTTimes) + 1;
 
-            return -1;
-        }
+        snprintf(pValue, *pUlSize, "%s", hop->rtts);
+        return 0;
     }
 
-    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return -1;
 }
+
 /***********************************************************************
 
 
@@ -3181,7 +2610,6 @@ DownloadDiagnostics_GetParamUlongValue
         if ( pDownloadDiagStats )
         {
             *puLong = pDownloadDiagStats->DiagStates + 1;
-             pDownloadInfo->DiagnosticsState = pDownloadDiagStats->DiagStates;
         }
         else
         {
@@ -3688,6 +3116,10 @@ DownloadDiagnostics_SetParamUlongValue
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
     PDSLH_TR143_DOWNLOAD_DIAG_STATS pDownloadDiagStats = NULL;
 
+	/* according to TR-181, set writable params other than DiagnosticsState,
+	 * must set DiagnosticsState to "NONE". */
+	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
+
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
     {
@@ -3698,7 +3130,6 @@ DownloadDiagnostics_SetParamUlongValue
         }
 
         pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_Requested;
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Download, DSLH_TR143_DIAGNOSTIC_Requested);
         return TRUE;
     }
 
@@ -3760,6 +3191,9 @@ DownloadDiagnostics_SetParamStringValue
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
 
+	/* according to TR-181, set writable params other than DiagnosticsState,
+	 * must set DiagnosticsState to "NONE". */
+	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Interface", TRUE))
@@ -3823,27 +3257,12 @@ DownloadDiagnostics_Validate
 {
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
-    PDSLH_TR143_DOWNLOAD_DIAG_STATS pDownloadDiagStats = NULL;
 
-    pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
-                         (
-                             DSLH_DIAGNOSTIC_TYPE_Download
-                         );
-
-    if ( pDownloadDiagStats )
+    if ( pDownloadInfo->DiagnosticsState == DSLH_TR143_DIAGNOSTIC_Requested
+      && !AnscSizeOfString(pDownloadInfo->DownloadURL) )
     {
-        if ( (pDownloadDiagStats->DiagStates == DSLH_TR143_DIAGNOSTIC_Requested)
-           && !AnscSizeOfString(pDownloadInfo->DownloadURL) )
-        {
-            AnscCopyString(pReturnParamName, "DownloadURL");
-            return FALSE;
-        }
-        
-        if ( pDownloadDiagStats->DiagStates != DSLH_TR143_DIAGNOSTIC_Requested )
-        {
-             pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None; 
-             CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Download, DSLH_TR143_DIAGNOSTIC_None);
-        }
+        AnscCopyString(pReturnParamName, "DownloadURL");
+        return FALSE;
     }
 
     return  TRUE;
@@ -3880,20 +3299,24 @@ DownloadDiagnostics_Commit
     ANSC_STATUS                     returnStatus       = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
-    char*                           pAddrName          = NULL;
+	char*							pAddrName			= NULL;
 
+    if ( pDownloadInfo->DiagnosticsState != DSLH_TR143_DIAGNOSTIC_Requested )
+    {
+        pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
+    }
 
-    if ((pAddrName = CosaGetInterfaceAddrByName(pDownloadInfo->Interface)) != NULL
-    && _ansc_strcmp(pAddrName, "::") != 0)
-    {
-        AnscCopyString(pDownloadInfo->IfAddrName, pAddrName);
-    }
-    else
-    {
-        AnscCopyString(pDownloadInfo->IfAddrName, "");
-    }
-    if (pAddrName)
-        AnscFreeMemory(pAddrName);
+	if ((pAddrName = CosaGetInterfaceAddrByName(pDownloadInfo->Interface)) != NULL
+			&& _ansc_strcmp(pAddrName, "::") != 0)
+	{
+		AnscCopyString(pDownloadInfo->IfAddrName, pAddrName);
+	}
+	else
+	{
+		AnscCopyString(pDownloadInfo->IfAddrName, "");
+	}
+	if (pAddrName)
+		AnscFreeMemory(pAddrName);
 
     returnStatus = CosaDmlDiagScheduleDiagnostic
                     (
@@ -4128,7 +3551,6 @@ UploadDiagnostics_GetParamUlongValue
         if ( pUploadDiagStats )
         {
             *puLong = pUploadDiagStats->DiagStates + 1;
-             pUploadInfo->DiagnosticsState = pUploadDiagStats->DiagStates;
         }
         else
         {
@@ -4616,6 +4038,10 @@ UploadDiagnostics_SetParamUlongValue
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
     PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
 
+	/* according to TR-181, set writable params other than DiagnosticsState,
+	 * must set DiagnosticsState to "NONE". */
+	pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
+
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
     {
@@ -4626,7 +4052,6 @@ UploadDiagnostics_SetParamUlongValue
         }
 
         pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_Requested;
-        CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Upload, DSLH_TR143_DIAGNOSTIC_Requested);        
         return TRUE;
     }
 
@@ -4699,6 +4124,10 @@ UploadDiagnostics_SetParamStringValue
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
     PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
 
+	/* according to TR-181, set writable params other than DiagnosticsState,
+	 * must set DiagnosticsState to "NONE". */
+	pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
+
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Interface", TRUE))
     {
@@ -4760,29 +4189,14 @@ UploadDiagnostics_Validate
         ULONG*                      puLength
     )
 {
-    PCOSA_DATAMODEL_DIAG            pMyObject        = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
-    PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
+    PCOSA_DATAMODEL_DIAG            pMyObject    = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+    PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo  = pMyObject->hDiagUploadInfo;
 
-    pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
-                         (
-                             DSLH_DIAGNOSTIC_TYPE_Upload
-                         );
-
-    if ( pUploadDiagStats )
+    if ( pUploadInfo->DiagnosticsState == DSLH_TR143_DIAGNOSTIC_Requested
+       && !AnscSizeOfString(pUploadInfo->UploadURL) )
     {
-        if ( (pUploadDiagStats->DiagStates == DSLH_TR143_DIAGNOSTIC_Requested)
-           && !AnscSizeOfString(pUploadInfo->UploadURL) )
-        {
-            AnscCopyString(pReturnParamName, "UploadURL");
-            return FALSE;
-        }
-        
-        if ( pUploadDiagStats->DiagStates != DSLH_TR143_DIAGNOSTIC_Requested )
-        {
-             pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None; 
-             CosaDmlDiagSetState(DSLH_DIAGNOSTIC_TYPE_Upload, DSLH_TR143_DIAGNOSTIC_None);
-        }
+        AnscCopyString(pReturnParamName, "UploadURL");
+        return FALSE;
     }
     return  TRUE;
 }
@@ -4819,19 +4233,24 @@ UploadDiagnostics_Commit
     ANSC_STATUS                     returnStatus = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject    = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo  = pMyObject->hDiagUploadInfo;
-    char                            pAddrName    = NULL;
+	char*							pAddrName			= NULL;
 
-    if ((pAddrName = CosaGetInterfaceAddrByName(pUploadInfo->Interface)) != NULL
-    && _ansc_strcmp(pAddrName, "::") != 0)
+    if ( pUploadInfo->DiagnosticsState != DSLH_TR143_DIAGNOSTIC_Requested )
     {
-        AnscCopyString(pUploadInfo->IfAddrName, pAddrName);
+        pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
     }
-    else
-    {
-        AnscCopyString(pUploadInfo->IfAddrName, "");
-    }
-    if (pAddrName)
-        AnscFreeMemory(pAddrName);
+
+	if ((pAddrName = CosaGetInterfaceAddrByName(pUploadInfo->Interface)) != NULL
+			&& _ansc_strcmp(pAddrName, "::") != 0)
+	{
+		AnscCopyString(pUploadInfo->IfAddrName, pAddrName);
+	}
+	else
+	{
+		AnscCopyString(pUploadInfo->IfAddrName, "");
+	}
+	if (pAddrName)
+		AnscFreeMemory(pAddrName);
 
 
     returnStatus = CosaDmlDiagScheduleDiagnostic
