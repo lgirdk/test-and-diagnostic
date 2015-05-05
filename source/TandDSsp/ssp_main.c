@@ -331,6 +331,10 @@ int main(int argc, char* argv[])
     signal(SIGILL, sig_handler);
     signal(SIGQUIT, sig_handler);
     signal(SIGHUP, sig_handler);
+    signal(SIGPIPE, SIG_IGN);
+
+//    if (write_pid_file("/var/tmp/CcspTandDSsp.pid") != 0)
+//        fprintf(stderr, "%s: fail to write PID file\n", argv[0]);
 
     cmd_dispatch('e');
 
