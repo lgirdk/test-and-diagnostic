@@ -64,6 +64,7 @@
 #include "ansc_load_library.h"
 #include "cosa_plugin_api.h"
 #include "plugin_main.h"
+#include "diag.h"
 /*
 #include "cosa_deviceinfo_dml.h"
 #include "cosa_softwaremodules_dml.h"
@@ -135,6 +136,19 @@ COSA_Init
     g_pDslhDmlAgent                 = pPlugInfo->hDmlAgent;
 
     /* register the back-end apis for the data model */
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamBoolValue",  X_CISCO_COM_ARP_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamIntValue",  X_CISCO_COM_ARP_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamUlongValue",  X_CISCO_COM_ARP_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamStringValue",  X_CISCO_COM_ARP_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetEntryCount",  ARPTable_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetEntry",  ARPTable_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_IsUpdated",  ARPTable_IsUpdated);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_Synchronize",  ARPTable_Synchronize);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamBoolValue",  ARPTable_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamIntValue",  ARPTable_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamUlongValue",  ARPTable_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamStringValue",  ARPTable_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamBoolValue",  IPPing_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamIntValue",  IPPing_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamUlongValue",  IPPing_GetParamUlongValue);
@@ -165,7 +179,60 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamIntValue",  RouteHops_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamUlongValue",  RouteHops_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamStringValue",  RouteHops_GetParamStringValue);
-	COSA_RegisterAdditionalDmApis(pPlugInfo);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamBoolValue",  DownloadDiagnostics_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamIntValue",  DownloadDiagnostics_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamUlongValue",  DownloadDiagnostics_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamStringValue",  DownloadDiagnostics_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamBoolValue",  DownloadDiagnostics_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamIntValue",  DownloadDiagnostics_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamUlongValue",  DownloadDiagnostics_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamStringValue",  DownloadDiagnostics_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Validate",  DownloadDiagnostics_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Commit",  DownloadDiagnostics_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Rollback",  DownloadDiagnostics_Rollback);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamBoolValue",  UploadDiagnostics_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamIntValue",  UploadDiagnostics_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamUlongValue",  UploadDiagnostics_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamStringValue",  UploadDiagnostics_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_SetParamBoolValue",  UploadDiagnostics_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_SetParamIntValue",  UploadDiagnostics_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_SetParamUlongValue",  UploadDiagnostics_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_SetParamStringValue",  UploadDiagnostics_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_Validate",  UploadDiagnostics_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_Commit",  UploadDiagnostics_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_Rollback",  UploadDiagnostics_Rollback);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_GetParamBoolValue",  UDPEchoConfig_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_GetParamIntValue",  UDPEchoConfig_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_GetParamUlongValue",  UDPEchoConfig_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_GetParamStringValue",  UDPEchoConfig_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_SetParamBoolValue",  UDPEchoConfig_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_SetParamIntValue",  UDPEchoConfig_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_SetParamUlongValue",  UDPEchoConfig_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_SetParamStringValue",  UDPEchoConfig_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Validate",  UDPEchoConfig_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Commit",  UDPEchoConfig_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamUlongValue",  NSLookupDiagnostics_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamStringValue",  NSLookupDiagnostics_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_SetParamBoolValue",  NSLookupDiagnostics_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_SetParamIntValue",  NSLookupDiagnostics_SetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_SetParamUlongValue",  NSLookupDiagnostics_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_SetParamStringValue",  NSLookupDiagnostics_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_Validate",  NSLookupDiagnostics_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_Commit",  NSLookupDiagnostics_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_Rollback",  NSLookupDiagnostics_Rollback);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetEntryCount",  Result_GetEntryCount);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetEntry",  Result_GetEntry);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_IsUpdated",  Result_IsUpdated);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_Synchronize",  Result_Synchronize);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamBoolValue",  Result_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamIntValue",  Result_GetParamIntValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamUlongValue",  Result_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamStringValue",  Result_GetParamStringValue);
 
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
 
@@ -295,6 +362,9 @@ COSA_Init
         g_pCosaBEManager->Initialize   ((ANSC_HANDLE)g_pCosaBEManager);
     }
 
+    if (diag_init() != DIAG_ERR_OK)
+        goto EXIT;
+
     return  0;
 
 EXIT:
@@ -388,6 +458,7 @@ COSA_Unload
     ANSC_STATUS                     returnStatus            = ANSC_STATUS_SUCCESS;
 
     /* unload the memory here */
+    diag_term();
 
     returnStatus  =  CosaBackEndManagerRemove(g_pCosaBEManager);
 
