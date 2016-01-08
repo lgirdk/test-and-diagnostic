@@ -16,7 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = source
+
+if CCSP_ARCH_ARM
+OPT_SRCS=source-arm/diagnostic/BbhmDiagIpPing source-arm/dmltad
+EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/diagnostic/BbhmDiagIpPing/libdiagprivarm.la
+endif
+if CCSP_ARCH_PC
+noinst_LTLIBRARIES = libdiagprivpc.la libdmlpc.la
+libdiagprivpc_la_SOURCES = $(top_srcdir)/source/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation_priv.c
+libdmlpc_la_SOURCES = $(top_srcdir)/source/dmltad/cosa_diagnostic_apis_priv.c $(top_srcdir)/source/dmltad/plugin_main_priv.c
+EXTRA_DEPENDENCIES = libdiagprivpc.la libdmlpc.la
+endif
+
+SUBDIRS = $(OPT_SRCS) source
+
 
 lib_LTLIBRARIES=libdiagnostic.la
 libdiagnostic_la_CPPFLAGS= -D_ANSC_LINUX -D_ANSC_USER -D_ANSC_LITTLE_ENDIAN_ -D_COSA_SIM_ -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
@@ -56,7 +69,6 @@ libdiagnostic_la_SOURCES= \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation.c \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_sink_base.c \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_interface.c \
-	source-arm/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation_priv.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_interface.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_action.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_base.c \
@@ -71,5 +83,5 @@ libdiagnostic_la_SOURCES= \
 	source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_operation.c \
 	source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_xsink_states.c \
 	source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_states.c
-libdiagnostic_la_DEPENDENCIES=
+libdiagnostic_la_DEPENDENCIES=$(EXTRA_DEPENDENCIES)
 libdiagnostic_la_LIBADD=$(libdiagnostic_la_DEPENDENCIES)
