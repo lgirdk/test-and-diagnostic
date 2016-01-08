@@ -56,7 +56,7 @@ libdiagnostic_la_SOURCES= \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation.c \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_sink_base.c \
 	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_interface.c \
-	source/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation_priv.c \
+	source-arm/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation_priv.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_interface.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_action.c \
 	source/diagnostic/BbhmDiagUpload/bbhm_upload_base.c \
