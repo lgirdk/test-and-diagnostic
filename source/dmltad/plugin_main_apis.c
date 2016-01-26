@@ -106,6 +106,7 @@
 #include "cosa_interfacestack_internal.h"
 */
 #include "cosa_diagnostic_apis.h"
+#include "cosa_selfheal_apis.h"
 
 PCOSA_DIAG_PLUGIN_INFO             g_pCosaDiagPluginInfo;
 COSAGetParamValueStringProc        g_GetParamValueString;
@@ -214,6 +215,7 @@ CosaBackEndManagerInitialize
     /* Create all object */
     /*pMyObject->hNat           = (ANSC_HANDLE)CosaNatCreate();*/
     pMyObject->hDiag          = (ANSC_HANDLE)CosaDiagCreate();
+    pMyObject->hSelfHeal          = (ANSC_HANDLE)CosaSelfHealCreate();
     pMyObject->hProcStatus    = (ANSC_HANDLE)CosaProcStatusCreate();
      /*
    pMyObject->hDeviceInfo    = (ANSC_HANDLE)CosaDeviceInfoCreate();

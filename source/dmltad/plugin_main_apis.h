@@ -152,6 +152,7 @@ extern char*                              g_Subsystem;
     ANSC_HANDLE                  hIP;                                                       \
     ANSC_HANDLE                  hHosts;                                                    \
     ANSC_HANDLE                  hProcStatus;                                               \
+    ANSC_HANDLE                  hSelfHeal;                                               \
     ANSC_HANDLE                  hDNS;                                                      \
     PCOSA_PLUGIN_INFO            hCosaPluginInfo;
 
