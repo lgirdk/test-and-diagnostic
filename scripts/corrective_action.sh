@@ -72,12 +72,11 @@ checkConditionsbeforeAction()
 	 fi
 			
 
-
+	printOnce=1
 	while : ; do
 
 		#xhs traffic implementation pending 
 		xhsTraffic=1		
-		printOnce=1
 		/usr/bin/XconfHttpDl http_reboot_status
 		voicecall_status=$?
 		if [ "$voicecall_status" -eq 0 ]
