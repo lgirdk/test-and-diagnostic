@@ -32,7 +32,7 @@ source /fss/gw/usr/ccsp/tad/corrective_action.sh
 		timestamp=`getDate`
 
 		echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
-		
+		touch $HAVECRASH		
 		rebootNeeded RM "PSM"
 	fi
 
