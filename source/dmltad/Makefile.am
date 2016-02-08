@@ -18,7 +18,6 @@
 ##########################################################################
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 AM_LDFLAGS = -lccsp_common -lsyscfg
 
 AM_CPPFLAGS = -Wall -Werror
@@ -26,10 +25,15 @@ ACLOCAL_AMFLAGS = -I m4
 hardware_platform = i686-linux-gnu
 
 if CCSP_ARCH_ARM
+AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/dmltad/libdmlarm.la
 endif
 if CCSP_ARCH_PC
+AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 EXTRA_DEPENDENCIES = $(top_builddir)/libdmlpc.la
+endif
+if CCSP_ARCH_MIPS
+EXTRA_DEPENDENCIES = $(top_builddir)/source-mips/dmltad/libdmlarm.la
 endif
 
 lib_LTLIBRARIES = libdmltad.la
