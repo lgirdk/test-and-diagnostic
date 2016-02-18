@@ -6,7 +6,7 @@ source /fss/gw/usr/ccsp/tad/task_health_monitor.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
-DELAY=1
+DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 
@@ -64,79 +64,116 @@ do
 #Record the start statistics
 
 	STARTSTAT=$(getstat)
+	
+	user_ini=`echo $STARTSTAT | cut -d 'x' -f 1`
+	system_ini=`echo $STARTSTAT | cut -d 'x' -f 3`
+	idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
+	iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
 
+#echo "RDKB_SELFHEAL : Initial CPU stats are"
+#echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
 	sleep $DELAY
 
 #Record the end statistics
 	ENDSTAT=$(getstat)
 
-	USR=$(change 1)
-	SYS=$(change 3)
-	IDLE=$(change 4)
-	IOW=$(change 5)
+	user_end=`echo $ENDSTAT | cut -d 'x' -f 1`
+	system_end=`echo $ENDSTAT | cut -d 'x' -f 3`
+	idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
+	iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
 
+#echo "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
+#echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
+	
+	user_diff=$(change 1)
+	system_diff=$(change 3)
+	idle_diff=$(change 4)
+	iowait_diff=$(change 5)
 
-	ACTIVE=$(( $USR + $SYS + $IOW ))
+#echo "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
+#echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
 
-	TOTAL=$(($ACTIVE + $IDLE))
+	active=$(( $user_diff + $system_diff + $iowait_diff))
+	total=$(($active + $idle_diff))
+	Curr_CPULoad=$(( $active * 100 / $total ))
 
-	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
-
+	echo "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
 	CPU_THRESHOLD=`syscfg get avg_cpu_threshold`
 
-	count_val=1
+	count_val=0
 	if [ "$Curr_CPULoad" -ge "$CPU_THRESHOLD" ]
 	then
 
-		echo "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+		echo "RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
+	        Curr_CPULoad=0
 		# Calculating CPU avg in 5 mins window		
 		while [ "$count_val" -lt 10 ]
 		do
-			sleep 30
+
 			count_val=$(($count_val + 1))
 
-		#Record the start statistics
+			#Record the start statistics
 			STARTSTAT=$(getstat)
+	
+			user_ini=`echo $STARTSTAT | cut -d 'x' -f 1`
+			system_ini=`echo $STARTSTAT | cut -d 'x' -f 3`
+			idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
+			iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
+
+			echo "RDKB_SELFHEAL : Initial CPU stats are"
+			echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
 
 			sleep $DELAY
 
-		#Record the end statistics
+			#Record the end statistics
 			ENDSTAT=$(getstat)
 
-			USR=$(change 1)
-			SYS=$(change 3)
-			IDLE=$(change 4)
-			IOW=$(change 5)
+			user_end=`echo $ENDSTAT | cut -d 'x' -f 1`
+			system_end=`echo $ENDSTAT | cut -d 'x' -f 3`
+			idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
+			iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
 
+			echo "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
+			echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
+	
+			user_diff=$(change 1)
+			system_diff=$(change 3)
+			idle_diff=$(change 4)
+			iowait_diff=$(change 5)
 
-			ACTIVE=$(( $USR + $SYS + $IOW ))
-			TOTAL=$(($ACTIVE + $IDLE))
-			Curr_CPULoad_calc=$(( $ACTIVE * 100 / $TOTAL ))
+			echo "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
+			echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
 
+			active=$(( $user_diff + $system_diff + $iowait_diff))
+			total=$(($active + $idle_diff))
+			Curr_CPULoad_calc=$(( $active * 100 / $total ))
+			echo "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
 			Curr_CPULoad=$(($Curr_CPULoad + $Curr_CPULoad_calc))
 			
 		done
 
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
-		echo "RDKB_SELFHEAL : Avg CPU usage after 5 minutes window is $Curr_CPULoad_Avg"
-		if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ]
-		then
-			vendor=`getVendorName`
-			modelName=`getModelName`
-			CMMac=`getCMMac`
-			timestamp=`getDate`
 
-			echo "<$level>CABLEMODEM[$vendor]:<99000005><$timestamp><$CMMac><$modelName> RM CPU threshold reached"
-		
-			threshold_reached=1
-			rebootNeeded RM CPU
-		fi
+		echo "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
+
+		LOAD_AVG=`cat /proc/loadavg`
+		echo "RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
+#		if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ]
+#		then
+#			vendor=`getVendorName`
+#			modelName=`getModelName`
+#			CMMac=`getCMMac`
+#			timestamp=`getDate`
+#
+#			echo "<$level>CABLEMODEM[$vendor]:<99000005><$timestamp><$CMMac><$modelName> RM CPU threshold reached"
+#		
+#			threshold_reached=1
+#			rebootNeeded RM CPU
+#		fi
 	fi
 
 	sh /fss/gw/usr/ccsp/tad/task_health_monitor.sh
-	# Need some clarification on Task/Process health, implementation pending
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
-	# ping -I $WAN_INTERFACE -c $PINGCOUNT 
 		
 done
