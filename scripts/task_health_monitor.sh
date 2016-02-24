@@ -164,3 +164,9 @@ source /fss/gw/usr/ccsp/tad/corrective_action.sh
 	
 	fi
 
+	DROPBEAR_PID=`pidof dropbear`
+	if [ "$DROPBEAR_PID" = "" ]; then
+		echo "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
+		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+	fi
+
