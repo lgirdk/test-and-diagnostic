@@ -79,13 +79,13 @@ source /fss/gw/usr/ccsp/tad/corrective_action.sh
 	fi
 
 	# Checking RebootManager's PID
-	Rm_PID=`pidof CcspRmSsp`
-	if [ "$Rm_PID" = "" ]; then
+#	Rm_PID=`pidof CcspRmSsp`
+#	if [ "$Rm_PID" = "" ]; then
 	#	echo "RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
-		echo "RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
-		resetNeeded "rm" CcspRmSsp
+#		echo "RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
+#		resetNeeded "rm" CcspRmSsp
 
-	fi
+#	fi
 
 	# Checking TR69's PID
 	TR69_PID=`pidof CcspTr069PaSsp`

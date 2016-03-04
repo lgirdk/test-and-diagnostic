@@ -58,7 +58,7 @@ max_count=12
 	else
 		echo "RDKB_PROC_MEM_LOG: Ccsp Process Memory log at $timestamp is"
 		echo ""
-		top_cmd="top -m -b n 1 | grep -e Mem -e Swap -e PID -e CcspCrSsp -e PsmSsp -e CcspPandMSsp -e CcspWecbController -e CcspHomeSecurity -e CcspMtaAgentSsp -e CcspCMAgentSsp -e CcspRmSsp -e CcspTr069PaSsp -e CcspTandDSsp -e CcspLMLite -e webpa"
+		top_cmd="top -m -b n 1 | grep -e Mem -e Swap -e PID -e CcspCrSsp -e PsmSsp -e CcspPandMSsp -e CcspWecbController -e CcspHomeSecurity -e CcspMtaAgentSsp -e CcspCMAgentSsp -e CcspTr069PaSsp -e CcspTandDSsp -e CcspLMLite -e webpa"
 		eval $top_cmd
 		syscfg set process_memory_log_count $count	
 		syscfg commit
