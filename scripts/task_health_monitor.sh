@@ -6,6 +6,8 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
 
+LIGHTTPD_CONF="/var/lighttpd.conf"
+
 	# Checking PandM's PID
 	PAM_PID=`pidof CcspPandMSsp`
 	if [ "$PAM_PID" = "" ]; then
@@ -168,5 +170,12 @@ source /fss/gw/usr/ccsp/tad/corrective_action.sh
 	if [ "$DROPBEAR_PID" = "" ]; then
 		echo "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
 		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+	fi
+
+	# Checking lighttpd PID
+	LIGHTTPD_PID=`pidof lighttpd`
+	if [ "$LIGHTTPD_PID" = "" ]; then
+		echo "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+		lighttpd -f $LIGHTTPD_CONF
 	fi
 
