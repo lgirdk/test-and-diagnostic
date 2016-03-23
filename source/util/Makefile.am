@@ -16,4 +16,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = TandDSsp dmltad util
+
+AM_CFLAGS = -D_ANSC_LINUX
+AM_CFLAGS += -D_ANSC_USER
+AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
+
+ACLOCAL_AMFLAGS = -I m4
+AM_CPPFLAGS = -Wall -Werror
+
+AM_LDFLAGS =  -lpthread -lz
+
+bin_PROGRAMS = Sub64
+Sub64_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util $(CPPFLAGS)
+Sub64_SOURCES = sub64.c
