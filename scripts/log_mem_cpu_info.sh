@@ -2,7 +2,7 @@
 
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
 max_count=12
-
+DELAY=30
 	timestamp=`getDate`
 
 	totalMemSys=`free | awk 'FNR == 2 {print $2}'`
