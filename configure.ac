@@ -82,6 +82,7 @@ AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
 AC_CONFIG_FILES(
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
+	source/util/Makefile
 	source/Makefile
     source-arm/diagnostic/BbhmDiagIpPing/Makefile
     source-arm/dmltad/Makefile
