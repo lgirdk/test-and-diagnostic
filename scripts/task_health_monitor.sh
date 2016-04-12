@@ -139,17 +139,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	then
 	
    		HOTSPOTDAEMON_PID=`pidof hotspotfd`
-   		if [ "$HOTSPOTDAEMON_PID" = "" ]; then
+        if [ "$HOTSPOTDAEMON_PID" = "" ] && [ -f /tmp/hotspotfd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
 			resetNeeded "" hotspotfd 
    		fi   
  		DHCP_SNOOPERD_PID=`pidof dhcp_snooperd`
-   		if [ "$DHCP_SNOOPERD_PID" = "" ]; then
+        if [ "$DHCP_SNOOPERD_PID" = "" ] && [ -f /tmp/dhcp_snooperd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : DhcpSnooper_process is not running, need restart"
 			resetNeeded "" dhcp_snooperd 
    		fi 
 		DHCP_ARP_PID=`pidof hotspot_arpd`
-   		if [ "$DHCP_ARP_PID" = "" ]; then
+        if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 			resetNeeded "" hotspot_arpd 
    		fi
@@ -179,3 +179,58 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		lighttpd -f $LIGHTTPD_CONF
 	fi
 
+	ifconfig | grep brlan1
+	if [ $? == 1 ]; then
+		echo "[RKDB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
+		rebootNeededforbrlan1=1
+		rebootDeviceNeeded=1
+	fi
+
+	ifconfig | grep brlan0
+	if [ $? == 1 ]; then
+		echo "[RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
+		echo "RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
+		rebootNeeded RM ""
+	fi
+
+	dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
+	if [ $? == 1 ]; then
+		echo "[RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off, resetting WiFi now"
+		dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
+	fi
+
+	iptables-save -t nat | grep "A PREROUTING -i"
+	if [ $? == 1 ]; then
+		echo "[RDKB_PLATFORM_ERROR] : iptable corrupted. Restarting firewall"
+		sysevent set firewall-restart
+	fi
+
+	if [ "$rebootDeviceNeeded" -eq 1 ]
+	then
+		cur_hr=`date +"%H"`
+		cur_min=`date +"%M"`
+		if [ $cur_hr -ge 02 ] && [ $cur_hr -le 03 ]
+		then
+			if [ $cur_hr -eq 03 ] && [ $cur_min -ne 00 ]
+			then
+				echo "Maintanance window for the current day is over , unit will be rebooted in next Maintanance window "
+			else
+			#Check if we have already flagged reboot is needed
+				if [ ! -e $FLAG_REBOOT ]
+				then
+					if [ "$rebootNeededforbrlan1" -eq 1 ]
+					then
+						echo "rebootNeededforbrlan1"
+						echo "RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
+						sh /etc/calc_random_time_to_reboot_dev.sh "" &
+					else 
+						echo "rebootDeviceNeeded"
+						sh /etc/calc_random_time_to_reboot_dev.sh "" &
+					fi
+					touch $FLAG_REBOOT
+				else
+					echo "Already waiting for reboot"
+				fi					
+			fi
+		fi
+	fi
