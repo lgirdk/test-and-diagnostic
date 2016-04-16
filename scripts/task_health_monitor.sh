@@ -139,17 +139,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	then
 	
    		HOTSPOTDAEMON_PID=`pidof hotspotfd`
-   		if [ "$HOTSPOTDAEMON_PID" = "" ]; then
+        if [ "$HOTSPOTDAEMON_PID" = "" ] && [ -f /tmp/hotspotfd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
 			resetNeeded "" hotspotfd 
    		fi   
  		DHCP_SNOOPERD_PID=`pidof dhcp_snooperd`
-   		if [ "$DHCP_SNOOPERD_PID" = "" ]; then
+        if [ "$DHCP_SNOOPERD_PID" = "" ] && [ -f /tmp/dhcp_snooperd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : DhcpSnooper_process is not running, need restart"
 			resetNeeded "" dhcp_snooperd 
    		fi 
 		DHCP_ARP_PID=`pidof hotspot_arpd`
-   		if [ "$DHCP_ARP_PID" = "" ]; then
+        if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 			echo "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 			resetNeeded "" hotspot_arpd 
    		fi
