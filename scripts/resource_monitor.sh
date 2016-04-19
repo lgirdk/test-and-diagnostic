@@ -1,8 +1,10 @@
 #!/bin/sh
 
+rebootDeviceNeeded=0
+rebootNeededforbrlan1=0
+
 source /fss/gw/etc/utopia/service.d/log_env_var.sh
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
-source /fss/gw/usr/ccsp/tad/task_health_monitor.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
