@@ -8,21 +8,6 @@ source /fss/gw/usr/ccsp/tad/corrective_action.sh
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-	# Checking PandM's PID
-	PAM_PID=`pidof CcspPandMSsp`
-	if [ "$PAM_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : PAM_process is not running, need to reboot the unit now"
-		echo "RDKB_PROCESS_CRASHED : PAM_process is not running, need to reboot the unit"
-		vendor=`getVendorName`
-		modelName=`getModelName`
-		CMMac=`getCMMac`
-		timestamp=`getDate`
-
-		echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspPandMSsp process died,need reboot"
-		touch $HAVECRASH
-		rebootNeeded RM "PAM"
-	fi
-
 	# Checking PSM's PID
 	PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" = "" ]; then
@@ -54,6 +39,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		rebootNeeded RM "CR"
 	fi
 
+	PAM_PID=`pidof CcspPandMSsp`
+	if [ "$PAM_PID" = "" ]; then
+		# Remove the P&M initialized flag
+		rm -rf /tmp/pam_initialized
+		echo "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+		resetNeeded pam CcspPandMSsp
+	fi
 	
 	# Checking MTA's PID
 	MTA_PID=`pidof CcspMtaAgentSsp`
