@@ -198,6 +198,60 @@ rebootNeeded()
 
 }
 
+# This function will check if captive portal needs to be enabled or not.
+checkCaptivePortal()
+{
+
+# Get all flags from DBs
+isWiFiConfigured=`syscfg get redirection_flag`
+psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+
+#Read the http response value
+networkResponse=`cat /var/tmp/networkresponse.txt`
+
+iter=0
+max_iter=2
+while [ "$psmNotificationCP" = "" ] && [ "$iter" -le $max_iter ]
+do
+	iter=$((iter+1))
+	echo "$iter"
+	psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+done
+
+echo "RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
+echo "RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
+
+if [ "$isWiFiConfigured" = "true" ]
+then
+	if [ "$networkResponse" = "204" ] && [ "$psmNotificationCP" = "true" ]
+	then
+		# Check if P&M is up and able to find the captive portal parameter
+		while : ; do
+			echo "RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
+			CHECK_PAM_INITIALIZED=`find /tmp/ -name "pam_initialized"`
+			echo "RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
+			if [ "$CHECK_PAM_INITIALIZED" != "" ]
+			then
+				echo "RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
+				output=`dmcli eRT setvalues Device.DeviceInfo.X_RDKCENTRAL-COM_ConfigureWiFi bool TRUE`
+				check_success=`echo $output | grep  "Execution succeed."`
+				if [ "$check_success" != "" ]
+				then
+					echo "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+				fi
+				break
+			fi
+			sleep 2
+		done
+	else
+		echo "RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
+	fi
+else
+	echo "RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
+fi	
+
+}
+
 resetNeeded()
 {
 	folderName=$1
@@ -209,7 +263,7 @@ resetNeeded()
 	export LD_LIBRARY_PATH=$PWD:.:$PWD/../../lib:$PWD/../../.:/lib:/usr/lib:$LD_LIBRARY_PATH
 	export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
 
-	BINPATH="/usr/bin/"
+	BINPATH="/usr/bin"
 
 	if [ -f /tmp/cp_subsys_ert ]; then
         	Subsys="eRT."
@@ -279,7 +333,14 @@ resetNeeded()
 				cd /fss/gw/usr/ccsp/snmp/
 				sh run_subagent.sh /var/tmp/cm_snmp_ma &
 				cd -	
-			
+			elif [ "$ProcessName" == "CcspPandMSsp" ]
+			then
+				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/pam/
+				$BINPATH/CcspPandMSsp -subsys $Subsys
+				cd -
+				# We need to check whether to enable captive portal flag
+				checkCaptivePortal
 			elif [ "$ProcessName" == "CcspHomeSecurity" ]
 			then
 				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
