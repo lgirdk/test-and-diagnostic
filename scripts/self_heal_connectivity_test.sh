@@ -138,35 +138,35 @@ runPingTest()
 
 			if [ "$IPV4_SERVER_COUNT" -eq 0 ] && [ "$IPV6_SERVER_COUNT" -eq 0 ]
 			then
-				echo "RDKB_SELFHEAL : Ping server lists are empty , not taking any corrective actions"				
+				echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping server lists are empty , not taking any corrective actions"				
 
 			elif [ "$ping4_success" -ne 1 ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
 			then
-				echo "RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
+				echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
 				rebootNeeded PING
 			elif [ "$ping6_success" -ne 1 ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
 			then
-				echo "RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
+				echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
 				rebootNeeded PING
 			else
-				echo "RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
-				echo "RDKB_SELFHEAL : Connectivity Test is Successfull"
+				echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
+				echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Connectivity Test is Successfull"
 			fi	
 
 	elif [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
-		echo "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed, need to take corrective action"
+		echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed, need to take corrective action"
 		rebootNeeded PING
 	elif [ "$ping4_success" -ne 1 ]
 	then
-		echo "RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
+		echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
 		rebootNeeded PING
 	elif [ "$ping6_success" -ne 1 ]
 	then
-		echo "RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
+		echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
 		rebootNeeded PING
 	else
-		echo "RDKB_SELFHEAL : Connectivity Test is Successfull"
+		echo "[`date +%Y-%m-%d:%H:%M:%S:%6N`] RDKB_SELFHEAL : Connectivity Test is Successfull"
 	fi	
 
 	ping4_success=0
