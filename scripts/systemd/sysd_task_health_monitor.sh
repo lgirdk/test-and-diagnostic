@@ -8,14 +8,8 @@ source /usr/ccsp/tad/corrective_action.sh
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-	# Checking Lan Manager PID
-	LM_PID=`pidof CcspLMLite`
-	if [ "$LM_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
-		resetNeeded lm CcspLMLite noSubsys
-	
-	fi
-	
+rebootDeviceNeeded=0
+
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagnet`
 	if [ "$SNMP_PID" = "" ]; then
