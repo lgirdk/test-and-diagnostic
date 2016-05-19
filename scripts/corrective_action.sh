@@ -12,6 +12,7 @@ CMRegComplete=0
 level=128
 
 DELAY=1
+VERSION_FILE="/fss/gw/version.txt"
 
 getstat() {
     grep 'cpu ' /proc/stat | sed -e 's/  */x/g' -e 's/^cpux//'
@@ -305,19 +306,31 @@ resetNeeded()
 		if [ "$return_value" -eq 0 ]
 		then
 
-			# Storing Information before corrective action
-		 	storeInformation
-
 			TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
 
 			syscfg set todays_reset_count $TODAYS_RESET_COUNT
 			syscfg commit
-			vendor=`getVendorName`
-			modelName=`getModelName`
-			CMMac=`getCMMac`
+
 			timestamp=`getDate`
 
-			echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+			if [ "$ProcessName" == "CcspPandMSsp" ]
+			then
+				
+				# Storing Information before corrective action
+		 		storeInformation "pam"
+				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
+				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
+				echo "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+			else
+				# Storing Information before corrective action
+				storeInformation
+				vendor=`getVendorName`
+				modelName=`getModelName`
+				CMMac=`getCMMac`
+				echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+			fi			
+
+
 
 
 			if [ "$storedTime" == "" ] || [ "$storedTime" -eq 0 ]
@@ -385,6 +398,12 @@ resetNeeded()
 storeInformation()
 {
 
+# Check if request is for P&M Reset 
+isPAM=0
+if [ "$1" = "pam" ]
+then
+	isPAM=1
+fi
 	totalMemSys=`free | awk 'FNR == 2 {print $2}'`
 	usedMemSys=`free | awk 'FNR == 2 {print $3}'`
 	freeMemSys=`free | awk 'FNR == 2 {print $4}'`
@@ -453,23 +472,30 @@ storeInformation()
 		fi
 	done
 
-	# Need to capture MoCA stats
+	# If the crashed process is P&M, we cannot get MoCA parameters
+	if [ $isPAM -eq 0 ]
+	then
+		# Need to capture MoCA stats
 
-	PacketsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsSent | grep value | awk '{print $5}'`
-	PacketsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsReceived | grep value | awk '{print $5}'`
-	ErrorsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsSent | grep value | awk '{print $5}'`
-	ErrorsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsReceived | grep value | awk '{print $5}'`
-	DiscardPacketsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsSent | grep value | awk '{print $5}'`
-	DiscardPacketsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsReceived | grep value | awk '{print $5}'`
+		PacketsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsSent | grep value | awk '{print $5}'`
+		PacketsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsReceived | grep value | awk '{print $5}'`
+		ErrorsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsSent | grep value | awk '{print $5}'`
+		ErrorsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsReceived | grep value | awk '{print $5}'`
+		DiscardPacketsSent=`dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsSent | grep value | awk '{print $5}'`
+		DiscardPacketsReceived=`dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsReceived | grep value | awk '{print $5}'`
 
-	EgressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.EgressNumFlows | grep value | awk '{print $5}'`
-	IngressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.IngressNumFlows | grep value | awk '{print $5}'`
+		EgressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.EgressNumFlows | grep value | awk '{print $5}'`
+		IngressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.IngressNumFlows | grep value | awk '{print $5}'`
 
-	echo "RDKB_SELFHEAL : MoCA Statistics info is below"
-	echo "RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
+		echo "RDKB_SELFHEAL : MoCA Statistics info is below"
+		echo "RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
 	
-	echo "RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
-	echo "RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
+		echo "RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
+		echo "RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
+	else
+		echo "RDKB_SELFHEAL : MoCA stats are not available due to P&M crash"
+		isPAM=0
+	fi
 
 		
 }
