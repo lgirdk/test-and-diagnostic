@@ -140,7 +140,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
     fprintf(stderr, "%s: %s\n", __FUNCTION__, cmd);
 
-    if ((fp = popen(cmd, "rb")) == NULL) {
+    if ((fp = popen(cmd, "r")) == NULL) {
         return DIAG_ERR_INTERNAL;
     }
 
