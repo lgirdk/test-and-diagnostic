@@ -38,10 +38,10 @@ do
 	if [ "$AvgMemUsed" -ge "$MEM_THRESHOLD" ]
 	then
 
-		echo "RDKB_SELFHEAL : Total memory in system is $totalMemSys at timestamp $timestamp"
-		echo "RDKB_SELFHEAL : Used memory in system is $usedMemSys at timestamp $timestamp"
-		echo "RDKB_SELFHEAL : Free memory in system is $freeMemSys at timestamp $timestamp"
-		echo "RDKB_SELFHEAL : AvgMemUsed in % is  $AvgMemUsed"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Total memory in system is $totalMemSys at timestamp $timestamp"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Used memory in system is $usedMemSys at timestamp $timestamp"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Free memory in system is $freeMemSys at timestamp $timestamp"
+		echo "[`getDateTime`] RDKB_SELFHEAL : AvgMemUsed in % is  $AvgMemUsed"
 		vendor=`getVendorName`
 		modelName=`getModelName`
 		CMMac=`getCMMac`
@@ -58,10 +58,10 @@ do
 #	IdleCpuVal=`top -bn1  | head -n10 | grep "CPU:" | cut -c 34-35`
 
 #	LOAD_AVG=`cat /proc/loadavg`
-#	echo "RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG"
+#	echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG"
 
 #	AvgCpuUsed=$((100 - $IdleCpuVal))
-#	echo "RDKB_CPU_USAGE : CPU usage is $AvgCpuUsed"
+#	echo "[`getDateTime`] RDKB_CPU_USAGE : CPU usage is $AvgCpuUsed"
 
 #Record the start statistics
 
@@ -72,7 +72,7 @@ do
 	idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
 	iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
 
-#echo "RDKB_SELFHEAL : Initial CPU stats are"
+#echo "[`getDateTime`] RDKB_SELFHEAL : Initial CPU stats are"
 #echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
 	sleep $DELAY
 
@@ -84,7 +84,7 @@ do
 	idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
 	iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
 
-#echo "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
+#echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats after $DELAY sec are"
 #echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
 	
 	user_diff=$(change 1)
@@ -92,21 +92,21 @@ do
 	idle_diff=$(change 4)
 	iowait_diff=$(change 5)
 
-#echo "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
+#echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
 #echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
 
 	active=$(( $user_diff + $system_diff + $iowait_diff))
 	total=$(($active + $idle_diff))
 	Curr_CPULoad=$(( $active * 100 / $total ))
 
-	echo "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+	echo "[`getDateTime`] RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
 	CPU_THRESHOLD=`syscfg get avg_cpu_threshold`
 
 	count_val=0
 	if [ "$Curr_CPULoad" -ge "$CPU_THRESHOLD" ]
 	then
 
-		echo "RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
 	        Curr_CPULoad=0
 		# Calculating CPU avg in 5 mins window		
 		while [ "$count_val" -lt 10 ]
@@ -122,7 +122,7 @@ do
 			idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
 			iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
 
-			echo "RDKB_SELFHEAL : Initial CPU stats are"
+			echo "[`getDateTime`] RDKB_SELFHEAL : Initial CPU stats are"
 			echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
 
 			sleep $DELAY
@@ -135,7 +135,7 @@ do
 			idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
 			iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
 
-			echo "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
+			echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats after $DELAY sec are"
 			echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
 	
 			user_diff=$(change 1)
@@ -143,23 +143,23 @@ do
 			idle_diff=$(change 4)
 			iowait_diff=$(change 5)
 
-			echo "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
+			echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
 			echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
 
 			active=$(( $user_diff + $system_diff + $iowait_diff))
 			total=$(($active + $idle_diff))
 			Curr_CPULoad_calc=$(( $active * 100 / $total ))
-			echo "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
+			echo "[`getDateTime`] RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
 			Curr_CPULoad=$(($Curr_CPULoad + $Curr_CPULoad_calc))
 			
 		done
 
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
 
-		echo "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
 
 		LOAD_AVG=`cat /proc/loadavg`
-		echo "RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
+		echo "[`getDateTime`] RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
 #		if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ]
 #		then
 #			vendor=`getVendorName`
