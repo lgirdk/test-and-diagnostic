@@ -47,6 +47,12 @@ getDate()
 	echo "$dandt_now"
 }
 
+getDateTime()
+{
+	dandtwithns_now=`date +'%Y-%m-%d:%H:%M:%S:%6N'`
+	echo "$dandtwithns_now"
+}
+
 getCMMac()
 {
 	CMMac=`dmcli eRT getv Device.X_CISCO_COM_CableModem.MACAddress | grep value | awk '{print $5}'`
@@ -65,7 +71,7 @@ checkConditionsbeforeAction()
 			CMRegComplete=1
 		 else
 		   	CMRegComplete=0
-			echo "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+			echo "[`getDateTime`] RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
 			return 1			
 		 fi
 	 else
@@ -82,12 +88,12 @@ checkConditionsbeforeAction()
 		voicecall_status=$?
 		if [ "$voicecall_status" -eq 0 ]
 		then
-			echo "RDKB_SELFHEAL : No active voice call traffic currently"
+			echo "[`getDateTime`] RDKB_SELFHEAL : No active voice call traffic currently"
 			voiceCallCompleted=1
 		else
 			if [ "$printOnce" -eq 1 ]
 			then
-				echo "RDKB_SELFHEAL : Currently there is active call, wait for active call to finish"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Currently there is active call, wait for active call to finish"
 				voiceCallCompleted=0
 				printOnce=0
 			fi
@@ -133,7 +139,7 @@ rebootNeeded()
 
 	if [ "$TODAYS_REBOOT_COUNT" -ge "$MAX_REBOOT_COUNT" ]
 	then
-		echo "RDKB_SELFHEAL : Today's max reboot count already reached, please wait for reboot till next 24 hour window"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Today's max reboot count already reached, please wait for reboot till next 24 hour window"
 	else
 
 		# Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
@@ -150,25 +156,25 @@ rebootNeeded()
 				echo "RDKB_SELFHEAL : DNS Information :"
 				cat /etc/resolv.conf
 				echo "-------------------------------------------------------"
-				echo "RDKB_SELFHEAL : IPtable rules:"
+				echo "[`getDateTime`] RDKB_SELFHEAL : IPtable rules:"
 				iptables -S
 				echo "-------------------------------------------------------"
-				echo "RDKB_SELFHEAL : Ipv4 Route Information:"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv4 Route Information:"
 				ip route
 				echo "-------------------------------------------------------"
-				echo "RDKB_SELFHEAL : IProute Information:"
+				echo "[`getDateTime`] RDKB_SELFHEAL : IProute Information:"
 				route
 				echo "-------------------------------------------------------"
 	
 				echo "-------------------------------------------------------"
-				echo "RDKB_SELFHEAL : IP6table rules:"
+				echo "[`getDateTime`] RDKB_SELFHEAL : IP6table rules:"
 				ip6tables -S
 				echo "-------------------------------------------------------"
-				echo "RDKB_SELFHEAL : Ipv6 Route Information:"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv6 Route Information:"
 				ip -6 route
 				echo "-------------------------------------------------------"
 			
-				echo "RDKB_REBOOT : Rebooting due to PING connectivity test failure"
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to PING connectivity test failure"
 			fi
 
 			#touch $REBOOTNEEDED
@@ -181,7 +187,7 @@ rebootNeeded()
 			timestamp=`getDate`
 
 
-			echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000000><$timestamp><$CMMac><$modelName> $1 Rebooting device as part of corrective action"
+			echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000000><$timestamp><$CMMac><$modelName> $1 Rebooting device as part of corrective action"
 
 			if [ "$storedTime" == "" ] || [ "$storedTime" -eq 0 ]
 			then
@@ -191,7 +197,7 @@ rebootNeeded()
 			fi
 			if [ "$2" == "CPU" ] || [ "$2" == "MEM" ]
 			then
-				echo "RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
 			fi
 			/fss/gw/rdklogger/backupLogs.sh "true" "$2"
 		fi	
@@ -219,8 +225,8 @@ do
 	psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
 done
 
-echo "RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
-echo "RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
+echo "[`getDateTime`] RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
+echo "[`getDateTime`] RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
 
 if [ "$isWiFiConfigured" = "true" ]
 then
@@ -228,27 +234,27 @@ then
 	then
 		# Check if P&M is up and able to find the captive portal parameter
 		while : ; do
-			echo "RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
+			echo "[`getDateTime`] RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
 			CHECK_PAM_INITIALIZED=`find /tmp/ -name "pam_initialized"`
-			echo "RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
+			echo "[`getDateTime`] RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
 			if [ "$CHECK_PAM_INITIALIZED" != "" ]
 			then
-				echo "RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
+				echo "[`getDateTime`] RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
 				output=`dmcli eRT setvalues Device.DeviceInfo.X_RDKCENTRAL-COM_ConfigureWiFi bool TRUE`
 				check_success=`echo $output | grep  "Execution succeed."`
 				if [ "$check_success" != "" ]
 				then
-					echo "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+					echo "[`getDateTime`] RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
 				fi
 				break
 			fi
 			sleep 2
 		done
 	else
-		echo "RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
+		echo "[`getDateTime`] RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
 	fi
 else
-	echo "RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
 fi	
 
 }
@@ -296,7 +302,7 @@ resetNeeded()
 
 	if [ "$TODAYS_RESET_COUNT" -ge "$MAX_RESET_COUNT" ]
 	then
-		echo "RDKB_SELFHEAL : Today's max reset count already reached, please wait for reset till next 24 hour window"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Today's max reset count already reached, please wait for reset till next 24 hour window"
 	else
 		#touch $RESETNEEDED
 
@@ -320,14 +326,14 @@ resetNeeded()
 		 		storeInformation "pam"
 				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
 				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
-				echo "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+				echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			else
 				# Storing Information before corrective action
 				storeInformation
 				vendor=`getVendorName`
 				modelName=`getModelName`
 				CMMac=`getCMMac`
-				echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+				echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			fi			
 
 
@@ -342,13 +348,13 @@ resetNeeded()
 
 			if [ "$ProcessName" == "snmp_subagent" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd /fss/gw/usr/ccsp/snmp/
 				sh run_subagent.sh /var/tmp/cm_snmp_ma &
 				cd -	
 			elif [ "$ProcessName" == "CcspPandMSsp" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd /usr/ccsp/pam/
 				$BINPATH/CcspPandMSsp -subsys $Subsys
 				cd -
@@ -356,33 +362,33 @@ resetNeeded()
 				checkCaptivePortal
 			elif [ "$ProcessName" == "CcspHomeSecurity" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				CcspHomeSecurity 8081&
 
 			elif [ "$ProcessName" == "hotspotfd" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 	        		hotspotfd $keepalive_args  > /dev/null &
 
 			elif [ "$ProcessName" == "dhcp_snooperd" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 	        		dhcp_snooperd -q $BASEQUEUE -n 2 -e 1  > /dev/null &
 
 			elif [ "$ProcessName" == "hotspot_arpd" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
         			hotspot_arpd -q 0  > /dev/null &
 
 			elif [ "$3" == "noSubsys" ]
 			then 
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd $BINPATH
 				./$ProcessName &
 				cd -
 
 			else
-				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd $BINPATH
 				./$ProcessName -subsys $Subsys
 				cd -
@@ -410,13 +416,13 @@ fi
 
 	# AvgCpuUsed=`grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage "%"}'`
 
-#	echo "RDKB_SYS_MEM_INFO_SYS : Total memory in system is $totalMemSys"
-#	echo "RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys"
-#	echo "RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys"
+#	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Total memory in system is $totalMemSys"
+#	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys"
+#	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys"
 
-	echo "RDKB_SELFHEAL : Total memory in system is $totalMemSys"
-	echo "RDKB_SELFHEAL : Used memory in system is $usedMemSys"
-	echo "RDKB_SELFHEAL : Free memory in system is $freeMemSys"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Total memory in system is $totalMemSys"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Used memory in system is $usedMemSys"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Free memory in system is $freeMemSys"
 
 	#Record the start statistics
 	STARTSTAT=$(getstat)
@@ -438,9 +444,9 @@ fi
 
 	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
 
-	echo "RDKB_SELFHEAL : Current CPU load is $Curr_CPULoad"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Current CPU load is $Curr_CPULoad"
 
-	echo "RDKB_SELFHEAL : Top 5 tasks running on device with resource usage are below"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Top 5 tasks running on device with resource usage are below"
 	top -bn1 | head -n10 | tail -6
 
 	for index in 1 2 3 5 6
@@ -455,7 +461,7 @@ fi
 			do
 				MACADDRESS=`dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.MACAddress | grep value | awk '{print $5}'`
 				RSSI=`dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.SignalStrength | grep value | awk '{print $5}'`	
-				echo "RDKB_SELFHEAL : Device $MACADDRESS connected on AccessPoint $index and RSSI is $RSSI dBm"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Device $MACADDRESS connected on AccessPoint $index and RSSI is $RSSI dBm"
 				assocDev=$(($assocDev+1))
 			done
 		fi
@@ -466,9 +472,9 @@ fi
 		channel=`dmcli eRT getv Device.WiFi.Radio.$radio_index.Channel | grep value | awk '{print $5}'`		
 		if [ "$radio_index" -eq 1 ]
 		then
-			echo "RDKB_SELFHEAL : 2.4GHz radio is operating on $channel channel"
+			echo "[`getDateTime`] RDKB_SELFHEAL : 2.4GHz radio is operating on $channel channel"
 		else
-			echo "RDKB_SELFHEAL : 5GHz radio is operating on $channel channel"
+			echo "[`getDateTime`] RDKB_SELFHEAL : 5GHz radio is operating on $channel channel"
 		fi
 	done
 
@@ -487,13 +493,13 @@ fi
 		EgressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.EgressNumFlows | grep value | awk '{print $5}'`
 		IngressNumFlows=`dmcli eRT getv Device.MoCA.Interface.1.QoS.IngressNumFlows | grep value | awk '{print $5}'`
 
-		echo "RDKB_SELFHEAL : MoCA Statistics info is below"
-		echo "RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
+		echo "[`getDateTime`] RDKB_SELFHEAL : MoCA Statistics info is below"
+		echo "[`getDateTime`] RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
 	
-		echo "RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
-		echo "RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
+		echo "[`getDateTime`] RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
+		echo "[`getDateTime`] RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
 	else
-		echo "RDKB_SELFHEAL : MoCA stats are not available due to P&M crash"
+		echo "[`getDateTime`] RDKB_SELFHEAL : MoCA stats are not available due to P&M crash"
 		isPAM=0
 	fi
 

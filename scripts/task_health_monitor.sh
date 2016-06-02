@@ -11,14 +11,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking PSM's PID
 	PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-		echo "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
 		vendor=`getVendorName`
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
 
-		echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
+		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
 		touch $HAVECRASH		
 		rebootNeeded RM "PSM"
 	fi
@@ -26,14 +26,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking CR's PID
 	CR_PID=`pidof CcspCrSsp`
 	if [ "$CR_PID" = "" ]; then
-	#	echo "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-		echo "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+	#	echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
 		vendor=`getVendorName`
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
 
-		echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
 
 		touch $HAVECRASH
 		rebootNeeded RM "CR"
@@ -43,15 +43,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$PAM_PID" = "" ]; then
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
-		echo "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
 		resetNeeded pam CcspPandMSsp
 	fi
 	
 	# Checking MTA's PID
 	MTA_PID=`pidof CcspMtaAgentSsp`
 	if [ "$MTA_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
-		echo "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
 		resetNeeded mta CcspMtaAgentSsp
 
 	fi
@@ -59,24 +59,24 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking CM's PID
 	CM_PID=`pidof CcspCMAgentSsp`
 	if [ "$CM_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
-		echo "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
 		resetNeeded cm CcspCMAgentSsp
 	fi
 
 	# Checking WEBController's PID
 	WEBC_PID=`pidof CcspWecbController`
 	if [ "$WEBC_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
-		echo "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
 		resetNeeded wecb CcspWecbController
 	fi
 
 	# Checking RebootManager's PID
 #	Rm_PID=`pidof CcspRmSsp`
 #	if [ "$Rm_PID" = "" ]; then
-	#	echo "RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
-#		echo "RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
+	#	echo "[`getDateTime`] RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
 #		resetNeeded "rm" CcspRmSsp
 
 #	fi
@@ -84,14 +84,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking TR69's PID
 	TR69_PID=`pidof CcspTr069PaSsp`
 	if [ "$TR69_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
-		echo "RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
 		vendor=`getVendorName`
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
 
-		echo "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
+		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
 
 		touch $HAVECRASH
 		rebootNeeded RM "TR69"
@@ -100,15 +100,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking Test adn Daignostic's PID
 	TandD_PID=`pidof CcspTandDSsp`
 	if [ "$TandD_PID" = "" ]; then
-#		echo "RDKB_PROCESS_CRASHED : TandD_process is not running, restarting it"
-		echo "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TandD_process is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
 		resetNeeded tad CcspTandDSsp
 	fi
 
 	# Checking Lan Manager PID
 	LM_PID=`pidof CcspLMLite`
 	if [ "$LM_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
 		resetNeeded lm CcspLMLite noSubsys
 	
 	fi
@@ -116,13 +116,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagnet`
 	if [ "$SNMP_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
 		resetNeeded snmp snmp_subagent 
 	fi
 
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
 		resetNeeded "" CcspHomeSecurity 
 	fi
 
@@ -132,17 +132,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
    		HOTSPOTDAEMON_PID=`pidof hotspotfd`
         if [ "$HOTSPOTDAEMON_PID" = "" ] && [ -f /tmp/hotspotfd_up ]; then
-			echo "RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
 			resetNeeded "" hotspotfd 
    		fi   
  		DHCP_SNOOPERD_PID=`pidof dhcp_snooperd`
         if [ "$DHCP_SNOOPERD_PID" = "" ] && [ -f /tmp/dhcp_snooperd_up ]; then
-			echo "RDKB_PROCESS_CRASHED : DhcpSnooper_process is not running, need restart"
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpSnooper_process is not running, need restart"
 			resetNeeded "" dhcp_snooperd 
    		fi 
 		DHCP_ARP_PID=`pidof hotspot_arpd`
         if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
-			echo "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 			resetNeeded "" hotspot_arpd 
    		fi
 
@@ -152,7 +152,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$WEBPA_PID" = "" ]; then
 		ENABLEWEBPA=`cat /nvram/webpa_cfg.json | grep -r EnablePa | awk '{print $2}' | sed 's|[\"\",]||g'`
 		if [ "$ENABLEWEBPA" = "true" ];then
-		echo "RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
 			resetNeeded webpa webpa
 		fi
 	
@@ -160,40 +160,40 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	DROPBEAR_PID=`pidof dropbear`
 	if [ "$DROPBEAR_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
 		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
 	fi
 
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
 	if [ "$LIGHTTPD_PID" = "" ]; then
-		echo "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		lighttpd -f $LIGHTTPD_CONF
 	fi
 
 	ifconfig | grep brlan1
 	if [ $? == 1 ]; then
-		echo "[RKDB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
 		rebootNeededforbrlan1=1
 		rebootDeviceNeeded=1
 	fi
 
 	ifconfig | grep brlan0
 	if [ $? == 1 ]; then
-		echo "[RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
-		echo "RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
+		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		rebootNeeded RM ""
 	fi
 
 	dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
 	if [ $? == 1 ]; then
-		echo "[RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off, resetting WiFi now"
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off, resetting WiFi now"
 		dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
 	fi
 
 	iptables-save -t nat | grep "A PREROUTING -i"
 	if [ $? == 1 ]; then
-		echo "[RDKB_PLATFORM_ERROR] : iptable corrupted. Restarting firewall"
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted. Restarting firewall"
 		sysevent set firewall-restart
 	fi
 
@@ -213,7 +213,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 					if [ "$rebootNeededforbrlan1" -eq 1 ]
 					then
 						echo "rebootNeededforbrlan1"
-						echo "RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
+						echo "[`getDateTime`] RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
 						echo "rebootDeviceNeeded"
