@@ -135,11 +135,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
 			resetNeeded "" hotspotfd 
    		fi   
- 		DHCP_SNOOPERD_PID=`pidof dhcp_snooperd`
-        if [ "$DHCP_SNOOPERD_PID" = "" ] && [ -f /tmp/dhcp_snooperd_up ]; then
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpSnooper_process is not running, need restart"
-			resetNeeded "" dhcp_snooperd 
-   		fi 
 		DHCP_ARP_PID=`pidof hotspot_arpd`
         if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
