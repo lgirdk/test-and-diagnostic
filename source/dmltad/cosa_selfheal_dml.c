@@ -476,6 +476,8 @@ SelfHeal_Rollback
 
     SelfHeal.ConnectivityTest.
 
+    *  ConnectivityTest_GetParamBoolValue
+    *  ConnectivityTest_SetParamBoolValue
     *  ConnectivityTest_GetParamUlongValue
     *  ConnectivityTest_SetParamUlongValue
     *  ConnectivityTest_Validate
@@ -483,6 +485,91 @@ SelfHeal_Rollback
     *  ConnectivityTest_Rollback
 
 ***********************************************************************/
+
+
+
+BOOL ConnectivityTest_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                        bValue
+    )
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction", TRUE))
+    {
+        *bValue = pMyObject->pConnTest->CorrectiveAction;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype
+
+        BOOL
+        ConnectivityTest_SetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL                        bValue
+            );
+
+    description:
+
+        This function is called to set BOOL parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL                        bValue 
+                The buffer of returned BOOL value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL ConnectivityTest_SetParamBoolValue  
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction", TRUE))
+    {
+        if ( pMyObject->pConnTest->CorrectiveAction == bValue )
+        {
+            return  TRUE;
+        }
+	CcspTraceWarning(("%s Changing X_RDKCENTRAL-COM_CorrectiveAction state to %d \n",__FUNCTION__,bValue));
+        /* save update to backup */
+        char buf[128];
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
+		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", buf) != 0)
+		{
+			CcspTraceWarning(("%s syscfg set failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
+			return FALSE;
+		}
+    	if (syscfg_commit() != 0)
+		{
+        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
+		    return FALSE;
+        }
+        pMyObject->pConnTest->CorrectiveAction = bValue;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 
 BOOL
 ConnectivityTest_GetParamUlongValue

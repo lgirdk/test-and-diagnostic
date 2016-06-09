@@ -296,6 +296,11 @@ CosaDmlGetSelfHealCfg(
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "ConnTest_PingRespWaitTime", buf, sizeof(buf));
 	pConnTest->WaitTime = atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "ConnTest_CorrectiveAction", buf, sizeof(buf));
+	pConnTest->CorrectiveAction = (!strcmp(buf, "true")) ? TRUE : FALSE;
+
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Ipv4PingServer_Count", buf, sizeof(buf));
 	pConnTest->IPv4EntryCount = atoi(buf);
