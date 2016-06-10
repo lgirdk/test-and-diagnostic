@@ -297,10 +297,14 @@ resetNeeded()
 		
 	fi
 
+
 	MAX_RESET_COUNT=`syscfg get max_reset_count`
 	TODAYS_RESET_COUNT=`syscfg get todays_reset_count`
 
-	if [ "$TODAYS_RESET_COUNT" -ge "$MAX_RESET_COUNT" ]
+        # RDKB-6012: No need to validate today's reset count
+        TODAYS_RESET_COUNT=0
+
+	if [ "$TODAYS_RESET_COUNT" -gt "$MAX_RESET_COUNT" ]
 	then
 		echo "[`getDateTime`] RDKB_SELFHEAL : Today's max reset count already reached, please wait for reset till next 24 hour window"
 	else
@@ -311,11 +315,11 @@ resetNeeded()
 
 		if [ "$return_value" -eq 0 ]
 		then
+                        # RDKB-6012: No need to validate today's reset count
+			#TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
 
-			TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
-
-			syscfg set todays_reset_count $TODAYS_RESET_COUNT
-			syscfg commit
+			#syscfg set todays_reset_count $TODAYS_RESET_COUNT
+			#syscfg commit
 
 			timestamp=`getDate`
 
@@ -369,8 +373,7 @@ resetNeeded()
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 	        		hotspotfd $keepalive_args  > /dev/null &
-
-			elif [ "$ProcessName" == "dhcp_snooperd" ]
+                        elif [ "$ProcessName" == "dhcp_snooperd" ]
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 	        		dhcp_snooperd -q $BASEQUEUE -n 2 -e 1  > /dev/null &
@@ -379,7 +382,12 @@ resetNeeded()
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
         			hotspot_arpd -q 0  > /dev/null &
-
+                        elif [ "$ProcessName" == "CcspLMLite" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+        			cd /usr/ccsp/lm
+                                $BINPATH/$ProcessName -subsys $Subsys
+                                cd -
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
