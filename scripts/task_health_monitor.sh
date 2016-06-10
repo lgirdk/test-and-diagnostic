@@ -19,7 +19,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
-
+		echo "[`getDateTime`] Setting Last reboot reason"
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+		echo "[`getDateTime`] SET succeeded"
 		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
 		touch $HAVECRASH		
 		rebootNeeded RM "PSM"
@@ -92,7 +95,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
-
+		echo "[`getDateTime`] Setting Last reboot reason"
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string TR69_crash
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+		echo "[`getDateTime`] SET succeeded"
 		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
 
 		touch $HAVECRASH
@@ -179,6 +185,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ $? == 1 ]; then
 		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
+		echo "[`getDateTime`] Setting Last reboot reason"
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
+		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+		echo "[`getDateTime`] SET succeeded"
 		rebootNeeded RM ""
 	fi
 
@@ -248,6 +258,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 					then
 						echo "rebootNeededforbrlan1"
 						echo "[`getDateTime`] RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
+						echo "[`getDateTime`] Setting Last reboot reason"
+						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
+						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+						echo "[`getDateTime`] SET succeeded"
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
 						echo "rebootDeviceNeeded"
