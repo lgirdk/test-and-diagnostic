@@ -109,7 +109,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	LM_PID=`pidof CcspLMLite`
 	if [ "$LM_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
-		resetNeeded lm CcspLMLite noSubsys
+		resetNeeded lm CcspLMLite
 	
 	fi
 
