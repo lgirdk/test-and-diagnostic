@@ -1,6 +1,6 @@
 #!/bin/sh
 
-source /fss/gw/etc/utopia/service.d/log_env_var.sh
+source /etc/utopia/service.d/log_env_var.sh
 CM_INTERFACE=wan0
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
@@ -12,6 +12,7 @@ CMRegComplete=0
 level=128
 
 DELAY=1
+VERSION_FILE="/version.txt"
 
 getstat() {
     grep 'cpu ' /proc/stat | sed -e 's/  */x/g' -e 's/^cpux//'
@@ -127,7 +128,7 @@ rebootNeeded()
 		if [ "$diff_in_hours" -ge 24 ]
 		then
 
-			sh /fss/gw/usr/ccsp/tad/selfheal_reset_counts.sh
+			sh /usr/ccsp/tad/selfheal_reset_counts.sh
 
 		fi
 		
@@ -198,12 +199,65 @@ rebootNeeded()
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
 			fi
-			/fss/gw/rdklogger/backupLogs.sh "true" "$2"
+			/rdklogger/backupLogs.sh "true" "$2"
 		fi	
 	fi
 
 }
 
+# This function will check if captive portal needs to be enabled or not.
+checkCaptivePortal()
+{
+
+# Get all flags from DBs
+isWiFiConfigured=`syscfg get redirection_flag`
+psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+
+#Read the http response value
+networkResponse=`cat /var/tmp/networkresponse.txt`
+
+iter=0
+max_iter=2
+while [ "$psmNotificationCP" = "" ] && [ "$iter" -le $max_iter ]
+do
+	iter=$((iter+1))
+	echo "$iter"
+	psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
+done
+
+echo "[`getDateTime`] RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
+echo "[`getDateTime`] RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
+
+if [ "$isWiFiConfigured" = "true" ]
+then
+	if [ "$networkResponse" = "204" ] && [ "$psmNotificationCP" = "true" ]
+	then
+		# Check if P&M is up and able to find the captive portal parameter
+		while : ; do
+			echo "[`getDateTime`] RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
+			CHECK_PAM_INITIALIZED=`find /tmp/ -name "pam_initialized"`
+			echo "[`getDateTime`] RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
+			if [ "$CHECK_PAM_INITIALIZED" != "" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
+				output=`dmcli eRT setvalues Device.DeviceInfo.X_RDKCENTRAL-COM_ConfigureWiFi bool TRUE`
+				check_success=`echo $output | grep  "Execution succeed."`
+				if [ "$check_success" != "" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+				fi
+				break
+			fi
+			sleep 2
+		done
+	else
+		echo "[`getDateTime`] RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
+	fi
+else
+	echo "[`getDateTime`] RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
+fi	
+
+}
 resetNeeded()
 {
 	folderName=$1
@@ -215,7 +269,7 @@ resetNeeded()
 	export LD_LIBRARY_PATH=$PWD:.:$PWD/../../lib:$PWD/../../.:/lib:/usr/lib:$LD_LIBRARY_PATH
 	export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
 
-	BINPATH="/usr/bin/"
+	BINPATH="/usr/bin"
 
 	if [ -f /tmp/cp_subsys_ert ]; then
         	Subsys="eRT."
@@ -236,16 +290,20 @@ resetNeeded()
 
 		if [ "$diff_in_hours" -ge 24 ]
 		then
-			sh /fss/gw/usr/ccsp/tad/selfheal_reset_counts.sh
+			sh /usr/ccsp/tad/selfheal_reset_counts.sh
 
 		fi
 		
 	fi
 
+
 	MAX_RESET_COUNT=`syscfg get max_reset_count`
 	TODAYS_RESET_COUNT=`syscfg get todays_reset_count`
 
-	if [ "$TODAYS_RESET_COUNT" -ge "$MAX_RESET_COUNT" ]
+        # RDKB-6012: No need to validate today's reset count
+        TODAYS_RESET_COUNT=0
+
+	if [ "$TODAYS_RESET_COUNT" -gt "$MAX_RESET_COUNT" ]
 	then
 		echo "[`getDateTime`] RDKB_SELFHEAL : Today's max reset count already reached, please wait for reset till next 24 hour window"
 	else
@@ -256,20 +314,20 @@ resetNeeded()
 
 		if [ "$return_value" -eq 0 ]
 		then
+                        # RDKB-6012: No need to validate today's reset count
+			#TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
 
+			#syscfg set todays_reset_count $TODAYS_RESET_COUNT
+			#syscfg commit
+
+			timestamp=`getDate`
+			
 			# Storing Information before corrective action
-		 	storeInformation
-
-			TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
-
-			syscfg set todays_reset_count $TODAYS_RESET_COUNT
-			syscfg commit
+			storeInformation
 			vendor=`getVendorName`
 			modelName=`getModelName`
 			CMMac=`getCMMac`
-			timestamp=`getDate`
-
-			echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+			echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"		
 			
 			cd /usr/ccsp
 
@@ -307,7 +365,6 @@ resetNeeded()
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
         			hotspot_arpd -q 0  > /dev/null &
-
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
