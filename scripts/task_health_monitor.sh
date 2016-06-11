@@ -6,6 +6,8 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
 
+rebootDeviceNeeded=0
+
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	# Checking PSM's PID
@@ -179,6 +181,43 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		rebootNeeded RM ""
 	fi
+
+	 if [ ! -f /tmp/l2sd0.100logged ] ; then
+     
+          ifconfig -a | grep l2sd0.100
+        if [ $? == 1 ]; then
+                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not created"
+	      logNetworkInfo 
+	 touch /tmp/l2sd0.100logged
+	else
+		
+	   ifconfig l2sd0.100 | grep UP
+	   if [ $? == 1 ]; then
+                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
+              logNetworkInfo
+		touch /tmp/l2sd0.100logged
+	   fi
+        fi
+
+	fi
+
+	if [ ! -f /tmp/l2sd0.101logged ] ; then
+
+        ifconfig -a | grep l2sd0.101
+        if [ $? == 1 ]; then
+                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not created" 
+		touch /tmp/l2sd0.101logged
+	else
+
+           ifconfig l2sd0.101 | grep UP
+           if [ $? == 1 ]; then
+                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
+		touch /tmp/l2sd0.101logged
+     
+           fi
+        fi
+	fi
+
 
 	dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
 	if [ $? == 1 ]; then

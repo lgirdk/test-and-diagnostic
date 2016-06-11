@@ -513,3 +513,37 @@ fi
 
 		
 }
+
+logNetworkInfo()
+{
+	echo "RDKB_SELFHEAL : interface l2sd0 :"
+	ifconfig l2sd0; 
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : interface l2sd0.100 :"
+	ifconfig l2sd0.100;
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : interface l2sd0.101 :"
+	ifconfig l2sd0.101;
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : ip link :"
+	ip link | grep l2sd0
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : brctl o/p :"
+	brctl show
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : ip route list o/p :"
+	ip route list
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : ip route list table 15 o/p :"
+	ip route list table 15
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : ip route list table 14 o/p :"
+	ip route list table 14
+	echo "-------------------------------------------------------"
+	echo "RDKB_SELFHEAL : ip route list table all_lans o/p :"
+	ip route list table all_lans
+	echo "-------------------------------------------------------"
+
+	/fss/gw/rdklogger/backupLogs.sh "false"
+
+}
