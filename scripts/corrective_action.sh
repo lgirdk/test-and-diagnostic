@@ -544,6 +544,6 @@ logNetworkInfo()
 	ip route list table all_lans
 	echo "-------------------------------------------------------"
 
-	/fss/gw/rdklogger/backupLogs.sh "false"
+	/rdklogger/backupLogs.sh "false" "l2sd0"
 
 }
