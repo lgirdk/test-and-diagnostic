@@ -69,6 +69,7 @@ COSA_DML_SELFHEAL_IPv6_SERVER_TABLE,  *PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE;
 typedef  struct
 _PCOSA_DML_CONNECTIVITY_TEST
 {
+    BOOL                            CorrectiveAction;  
     ULONG                           PingInterval;  
     ULONG                           PingCount;
     ULONG                           WaitTime;

@@ -753,6 +753,8 @@
                     <name>ConnectivityTest</name>
                     <objectType>object</objectType>
                     <functions>
+           	        <func_GetParamBoolValue>ConnectivityTest_GetParamBoolValue</func_GetParamBoolValue>
+	                <func_SetParamBoolValue>ConnectivityTest_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamUlongValue>ConnectivityTest_GetParamUlongValue</func_GetParamUlongValue>
                         <func_SetParamUlongValue>ConnectivityTest_SetParamUlongValue</func_SetParamUlongValue>
                         <!--func_Validate>ConnectivityTest_Validate</func_Validate>
@@ -782,6 +784,12 @@
                             <name>X_RDKCENTRAL-COM_PingRespWaitTime</name>
                             <type>unsignedInt</type>
                             <syntax>uint32</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>X_RDKCENTRAL-COM_CorrectiveAction</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
                             <writable>true</writable>
                         </parameter>
                     </parameters>
