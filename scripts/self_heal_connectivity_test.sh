@@ -7,7 +7,7 @@ rand_num_old=""
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
 
 # Generate random time to start 
-WAN_INTERFACE=erouter0
+WAN_INTERFACE="erouter0"
 
 calcRandom=1
 ping4_server_num=0
@@ -16,6 +16,12 @@ ping4_success=0
 ping6_success=0
 ping4_failed=0
 ping6_failed=0
+
+getCorrectiveActionState() {
+    Corrective_Action=`syscfg get ConnTest_CorrectiveAction`
+    echo "$Corrective_Action"
+}
+
 calcRandTimetoStartPing()
 {
 
@@ -43,12 +49,12 @@ runPingTest()
 		PINGCOUNT=3
 	fi
 
-	MINPINGSERVER=`syscfg get ConnTest_MinNumPingServer`
+#	MINPINGSERVER=`syscfg get ConnTest_MinNumPingServer`
 
-	if [ "$MINPINGSERVER" = "" ] 
-	then
-		MINPINGSERVER=1
-	fi	
+#	if [ "$MINPINGSERVER" = "" ] 
+#	then
+#		MINPINGSERVER=1
+#	fi	
 
 	RESWAITTIME=`syscfg get ConnTest_PingRespWaitTime`
 
@@ -57,6 +63,87 @@ runPingTest()
 		RESWAITTIME=1000
 	fi
 	RESWAITTIME=$(($RESWAITTIME/1000))
+
+	RESWAITTIME=$(($RESWAITTIME*$PINGCOUNT))
+
+
+
+
+	IPv4_Gateway_addr=`ip -4 route list table 3 | grep $WAN_INTERFACE | awk '{print$3}'`
+	IPv6_Gateway_addr=`ip -6 route list table 3 | grep $WAN_INTERFACE | awk '{print$3}'`
+
+	if [ "$IPv4_Gateway_addr" != "" ]
+	then
+		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv4_Gateway_addr`
+		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+
+		if [ "$CHECK_PACKET_RECEIVED" != "" ]
+		then
+			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
+			then
+				ping4_success=1
+			else
+				ping4_failed=1
+			fi
+		else
+			ping4_failed=1
+		fi
+	fi
+
+	if [ "$IPv6_Gateway_addr" != "" ]
+	then
+		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv6_Gateway_addr`
+
+		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+
+		if [ "$CHECK_PACKET_RECEIVED" != "" ]
+		then
+			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
+			then
+				ping6_success=1
+			else
+				ping6_failed=1
+			fi
+		else
+			ping6_failed=1
+		fi
+	fi
+
+	if [ "$ping4_success" -eq 1 ] &&  [ "$ping6_success" -eq 1 ]
+	then
+
+		echo "[`getDateTime`] RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
+
+	elif [ "$ping4_success" -ne 1 ]
+	then
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+		if [ `getCorrectiveActionState` = "true" ]
+		then
+			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			rebootNeeded PING
+		fi
+	elif [ "$ping6_success" -ne 1 ]
+	then
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+		if [ `getCorrectiveActionState` = "true" ]
+		then
+			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			rebootNeeded PING
+		fi
+	else
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
+		if [ `getCorrectiveActionState` = "true" ]
+		then
+			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			rebootNeeded PING
+		fi
+	fi	
+
+	ping4_success=0
+	ping4_failed=0
+	ping6_success=0
+	ping6_failed=0
+
 
 	IPV4_SERVER_COUNT=`syscfg get Ipv4PingServer_Count`
 	IPV6_SERVER_COUNT=`syscfg get Ipv6PingServer_Count`
@@ -142,12 +229,20 @@ runPingTest()
 
 			elif [ "$ping4_success" -ne 1 ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
-				rebootNeeded PING
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed."
+				if [ `getCorrectiveActionState` = "true" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					rebootNeeded PING
+				fi
 			elif [ "$ping6_success" -ne 1 ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
-				rebootNeeded PING
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed."
+				if [ `getCorrectiveActionState` = "true" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					rebootNeeded PING
+				fi
 			else
 				echo "[`getDateTime`] RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
 				echo "[`getDateTime`] RDKB_SELFHEAL : Connectivity Test is Successfull"
@@ -155,16 +250,28 @@ runPingTest()
 
 	elif [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed, need to take corrective action"
-		rebootNeeded PING
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed."
+				if [ `getCorrectiveActionState` = "true" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					rebootNeeded PING
+				fi
 	elif [ "$ping4_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed, need to take corrective action"
-		rebootNeeded PING
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed."
+				if [ `getCorrectiveActionState` = "true" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					rebootNeeded PING
+				fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed, need to take corrective action"
-		rebootNeeded PING
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed."
+				if [ `getCorrectiveActionState` = "true" ]
+				then
+					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					rebootNeeded PING
+				fi
 	else
 		echo "[`getDateTime`] RDKB_SELFHEAL : Connectivity Test is Successfull"
 	fi	
