@@ -138,11 +138,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$HOTSPOT_ENABLE" = "true" ]
 	then
 	
-   		HOTSPOTDAEMON_PID=`pidof hotspotfd`
-        if [ "$HOTSPOTDAEMON_PID" = "" ] && [ -f /tmp/hotspotfd_up ]; then
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HotSpot_process is not running, need restart"
-			resetNeeded "" hotspotfd 
-   		fi   
 		DHCP_ARP_PID=`pidof hotspot_arpd`
         if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
