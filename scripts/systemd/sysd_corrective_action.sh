@@ -372,11 +372,11 @@ resetNeeded()
 				./$ProcessName &
 				cd -
 
-			elif [ "$ProcessName" == "wifi" ]
+			elif [ "$ProcessName" == "CcspWifiSsp" ]
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
-				cd $folderName
-				sh cosa_start_wifiagent.sh &
+				cd $BINPATH
+				./$ProcessName -subsys $Subsys
 				cd -
 			else
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
