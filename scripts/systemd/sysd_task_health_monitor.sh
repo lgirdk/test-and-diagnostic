@@ -129,7 +129,7 @@ rebootDeviceNeeded=0
 	WIFI_PID=`pidof CcspWifiSsp`
 	if [ "$WIFI_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : wifi process is not running, need restart"
-		resetNeeded wifi wifi 
+		resetNeeded wifi CcspWifiSsp 
 	fi
 	
 	if [ "$rebootDeviceNeeded" -eq 1 ]
