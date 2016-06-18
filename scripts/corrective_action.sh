@@ -1,6 +1,10 @@
 #!/bin/sh
 
-source /fss/gw/etc/utopia/service.d/log_env_var.sh
+TAD_PATH="/usr/ccsp/tad/"
+UTOPIA_PATH="/etc/utopia/service.d"
+RDKLOGGER_PATH="/rdklogger"
+
+source $UTOPIA_PATH/log_env_var.sh
 CM_INTERFACE=wan0
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
@@ -128,7 +132,7 @@ rebootNeeded()
 		if [ "$diff_in_hours" -ge 24 ]
 		then
 
-			sh /fss/gw/usr/ccsp/tad/selfheal_reset_counts.sh
+			sh $TAD_PATH/selfheal_reset_counts.sh
 
 		fi
 		
@@ -186,7 +190,7 @@ rebootNeeded()
 			CMMac=`getCMMac`
 			timestamp=`getDate`
 
-
+		        echo "[`getDateTime`] RDKB_SELFHEAL : Today's reboot count is $TODAYS_REBOOT_COUNT "
 			echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000000><$timestamp><$CMMac><$modelName> $1 Rebooting device as part of corrective action"
 
 			if [ "$storedTime" == "" ] || [ "$storedTime" -eq 0 ]
@@ -199,7 +203,7 @@ rebootNeeded()
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
 			fi
-			/fss/gw/rdklogger/backupLogs.sh "true" "$2"
+			$RDKLOGGER_PATH/backupLogs.sh "true" "$2"
 		fi	
 	fi
 
@@ -291,7 +295,7 @@ resetNeeded()
 
 		if [ "$diff_in_hours" -ge 24 ]
 		then
-			sh /fss/gw/usr/ccsp/tad/selfheal_reset_counts.sh
+			sh $TAD_PATH/selfheal_reset_counts.sh
 
 		fi
 		

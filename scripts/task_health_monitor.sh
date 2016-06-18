@@ -1,10 +1,13 @@
 #! /bin/sh
 
-source /fss/gw/etc/utopia/service.d/log_env_var.sh
+UTOPIA_PATH="/etc/utopia/service.d"
+TAD_PATH="/usr/ccsp/tad"
+
+source $UTOPIA_PATH/log_env_var.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
-source /fss/gw/usr/ccsp/tad/corrective_action.sh
+source $TAD_PATH/corrective_action.sh
 
 rebootDeviceNeeded=0
 
@@ -223,17 +226,37 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
         fi
 	fi
 
+        SSID_DISABLED=0
+        BR_MODE=0
+        dmcli eRT getv Device.WiFi.SSID.2.Enable | grep "true"
+        if [ $? == 1 ]
+        then
+            SSID_DISABLED=1
+            echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+            
+        fi
 
-	dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
-	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off, resetting WiFi now"
-		dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
-	fi
+        dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode | grep router
+        if [ $? == 1 ]
+        then
+            BR_MODE=1
+            echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
+            
+        fi
+
+        if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]
+        then
+	    dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
+	    if [ $? == 1 ]; then
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+		#dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
+	    fi
+        fi
 
 	iptables-save -t nat | grep "A PREROUTING -i"
 	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted. Restarting firewall"
-		sysevent set firewall-restart
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted."
+		#sysevent set firewall-restart
 	fi
 
 	if [ "$rebootDeviceNeeded" -eq 1 ]

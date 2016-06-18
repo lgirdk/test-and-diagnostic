@@ -1,10 +1,12 @@
 #!/bin/sh
+TAD_PATH="/usr/ccsp/tad/"
+UTOPIA_PATH="/etc/utopia/service.d"
 
-source /fss/gw/etc/utopia/service.d/log_env_var.sh
+source $UTOPIA_PATH/log_env_var.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 rand_num_old=""
-source /fss/gw/usr/ccsp/tad/corrective_action.sh
+source $TAD_PATH/corrective_action.sh
 
 # Generate random time to start 
 WAN_INTERFACE="erouter0"
