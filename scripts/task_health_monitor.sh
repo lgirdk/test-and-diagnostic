@@ -253,6 +253,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	    fi
         fi
 
+        if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]
+        then
+	    dmcli eRT getv Device.WiFi.SSID.1.Status | grep Up
+	    if [ $? == 1 ]; then
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 2G private SSID (ath0) is off."
+		#dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
+	    fi
+        fi
+
 	iptables-save -t nat | grep "A PREROUTING -i"
 	if [ $? == 1 ]; then
 		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted."
