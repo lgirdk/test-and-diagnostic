@@ -392,6 +392,14 @@ resetNeeded()
         			cd /usr/ccsp/lm
                                 $BINPATH/$ProcessName -subsys $Subsys
                                 cd -
+
+			elif [ "$ProcessName" == "PsmSsp" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp
+				$BINPATH/PsmSsp -subsys $Subsys
+				cd -
+                                
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"

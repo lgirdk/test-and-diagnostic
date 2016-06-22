@@ -17,18 +17,20 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-		vendor=`getVendorName`
-		modelName=`getModelName`
-		CMMac=`getCMMac`
-		timestamp=`getDate`
-		echo "[`getDateTime`] Setting Last reboot reason"
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
-		echo "[`getDateTime`] SET succeeded"
-		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
-		touch $HAVECRASH		
-		rebootNeeded RM "PSM"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+#		vendor=`getVendorName`
+#		modelName=`getModelName`
+#		CMMac=`getCMMac`
+#		timestamp=`getDate`
+#		echo "[`getDateTime`] Setting Last reboot reason"
+#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
+#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+#		echo "[`getDateTime`] SET succeeded"
+#		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
+#		touch $HAVECRASH		
+#		rebootNeeded RM "PSM"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
+		resetNeeded psm PsmSsp
 	fi
 
 	# Checking CR's PID
