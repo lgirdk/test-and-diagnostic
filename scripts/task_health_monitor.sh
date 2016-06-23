@@ -263,12 +263,16 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		#dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
 	    fi
         fi
-
-	iptables-save -t nat | grep "A PREROUTING -i"
-	if [ $? == 1 ]; then
+        
+	WAN_STATE=`sysevent get wan-status`
+	if [ $BR_MODE -eq 0 ] && [ "$WAN_STATE" = "started" ]
+	then
+		iptables-save -t nat | grep "A PREROUTING -i"
+		if [ $? == 1 ]; then
 		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted."
 		#sysevent set firewall-restart
-	fi
+		fi
+     fi
 
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
