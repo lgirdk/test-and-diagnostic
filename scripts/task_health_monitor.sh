@@ -211,41 +211,55 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		rebootNeeded RM ""
 	fi
 
-	 if [ ! -f /tmp/l2sd0.100logged ] ; then
-     
-          ifconfig -a | grep l2sd0.100
+	ifconfig -a | grep l2sd0.100
+    if [ $? == 1 ]; then
+        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not created try creating it"
+        sysevent set multinet_1-status stopped
+        $UTOPIA_PATH/service_multinet_exec multinet-start 1
+        ifconfig -a | grep l2sd0.100
         if [ $? == 1 ]; then
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not created"
-	      logNetworkInfo 
-	 touch /tmp/l2sd0.100logged
-	else
-		
-	   ifconfig l2sd0.100 | grep UP
-	   if [ $? == 1 ]; then
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
-              logNetworkInfo
-		touch /tmp/l2sd0.100logged
-	   fi
+           echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 is not created at First Retry, try again after 2 sec"
+           sleep 2
+           sysevent set multinet_1-status stopped
+           $UTOPIA_PATH/service_multinet_exec multinet-start 1
+		   ifconfig -a | grep l2sd0.100
+	       if [ $? == 1 ]; then
+				echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 is not created after Second Retry, no more retries !!!"
+        else
+           echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 Created at First Retry itself"
         fi
+        logNetworkInfo 
+    else
+        ifconfig l2sd0.100 | grep UP
+        if [ $? == 1 ]; then
+           echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
+           logNetworkInfo
+        fi
+    fi
 
-	fi
-
-	if [ ! -f /tmp/l2sd0.101logged ] ; then
-
+    ifconfig -a | grep l2sd0.101
+    if [ $? == 1 ]; then
+        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not created try creatig it" 
+        sysevent set multinet_2-status stopped
+        $UTOPIA_PATH/service_multinet_exec multinet-start 2
         ifconfig -a | grep l2sd0.101
         if [ $? == 1 ]; then
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not created" 
-		touch /tmp/l2sd0.101logged
-	else
-
-           ifconfig l2sd0.101 | grep UP
-           if [ $? == 1 ]; then
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
-		touch /tmp/l2sd0.101logged
-     
-           fi
+           echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 is not created at First Retry, try again after 2 sec"
+           sleep 2
+           sysevent set multinet_2-status stopped
+           $UTOPIA_PATH/service_multinet_exec multinet-start 2
+		   ifconfig -a | grep l2sd0.101
+	       if [ $? == 1 ]; then
+				echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 is not created after Second Retry, no more retries !!!"
+        else
+           echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 created at First Retry itself"
         fi
-	fi
+	else
+        ifconfig l2sd0.101 | grep UP
+        if [ $? == 1 ]; then
+           echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
+           fi
+    fi
 
         SSID_DISABLED=0
         BR_MODE=0
