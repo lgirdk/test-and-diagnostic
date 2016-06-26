@@ -225,6 +225,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		   ifconfig -a | grep l2sd0.100
 	       if [ $? == 1 ]; then
 				echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 is not created after Second Retry, no more retries !!!"
+		   fi 	
         else
            echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 Created at First Retry itself"
         fi
@@ -251,6 +252,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		   ifconfig -a | grep l2sd0.101
 	       if [ $? == 1 ]; then
 				echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 is not created after Second Retry, no more retries !!!"
+		   fi
         else
            echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 created at First Retry itself"
         fi
