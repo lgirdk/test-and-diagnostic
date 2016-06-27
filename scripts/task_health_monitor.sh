@@ -10,6 +10,37 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 source $TAD_PATH/corrective_action.sh
 
 rebootDeviceNeeded=0
+setRebootreason()
+{
+
+        echo "[`getDateTime`] Setting rebootReason to $1 and rebootCounter to $2"
+        
+        syscfg set X_RDKCENTRAL-COM_LastRebootReason $1
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] SET for Reboot Reason failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] Commit for Reboot Reason failed"
+        fi
+
+        syscfg set X_RDKCENTRAL-COM_LastRebootCounter $2
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] SET for Reboot Counter failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] Commit for Reboot Counter failed"
+        fi
+}
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
@@ -42,7 +73,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		modelName=`getModelName`
 		CMMac=`getCMMac`
 		timestamp=`getDate`
-
+	    echo "[`getDateTime`] Setting Last reboot reason"
+		reason="CR_crash"
+		rebootCount=1
+		
+		setRebootreason $reason $rebootCount
+		echo "[`getDateTime`] SET succeeded"
+		
 		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
 
 		touch $HAVECRASH
@@ -102,7 +139,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		timestamp=`getDate`
 		echo "[`getDateTime`] Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string TR69_crash
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 		echo "[`getDateTime`] SET succeeded"
 		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
 
@@ -206,7 +242,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		echo "[`getDateTime`] Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 		echo "[`getDateTime`] SET succeeded"
 		rebootNeeded RM ""
 	fi
@@ -328,7 +363,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 						echo "[`getDateTime`] RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
 						echo "[`getDateTime`] Setting Last reboot reason"
 						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
-						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 						echo "[`getDateTime`] SET succeeded"
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
