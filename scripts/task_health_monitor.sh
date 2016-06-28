@@ -334,7 +334,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	    fi
         fi
         
-	WAN_STATE=`sysevent get wan-status`
+	WAN_STATE=`sysevent get wan_service-status`
+	FIREWALL_ENABLED=`syscfg get firewall_enabled`
+
+	echo "[`getDateTime`] [RDKB_SELFHEAL] : WAN_STATE is $WAN_STATE"
+	echo "[`getDateTime`] [RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
+    echo "[`getDateTime`] [RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
+
 	if [ $BR_MODE -eq 0 ] && [ "$WAN_STATE" = "started" ]
 	then
 		iptables-save -t nat | grep "A PREROUTING -i"
