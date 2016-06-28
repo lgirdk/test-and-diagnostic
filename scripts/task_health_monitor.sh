@@ -185,6 +185,53 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			resetNeeded "" hotspot_arpd 
    		fi
 
+		#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
+        #If they are not present below code shall re-create them
+        #l2sd0.102 case 
+        ifconfig -a | grep l2sd0.102
+        if [ $? == 1 ]; then
+            echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
+            sysevent set multinet_3-status stopped
+            $UTOPIA_PATH/service_multinet_exec multinet-start 3
+            ifconfig -a | grep l2sd0.102
+            if [ $? == 1 ]; then
+                echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
+                sleep 2
+                sysevent set multinet_3-status stopped
+                $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                ifconfig -a | grep l2sd0.102
+                if [ $? == 1 ]; then
+                    echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
+                fi
+            else
+                echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
+            fi
+        else
+            echo "XfinityWifi is enabled and l2sd0.102 is present"  
+        fi
+
+        #l2sd0.103 case
+        ifconfig -a | grep l2sd0.103
+        if [ $? == 1 ]; then
+            echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
+            sysevent set multinet_4-status stopped
+            $UTOPIA_PATH/service_multinet_exec multinet-start 4
+            ifconfig -a | grep l2sd0.103
+            if [ $? == 1 ]; then
+                echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
+                sleep 2
+                sysevent set multinet_4-status stopped
+                $UTOPIA_PATH/service_multinet_exec multinet-start 4
+                ifconfig -a | grep l2sd0.103
+				if [ $? == 1 ]; then
+                    echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
+                fi
+            else
+                echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
+            fi
+        else
+            echo "Xfinitywifi is enabled and l2sd0.103 is present"
+        fi
 	fi
 	# Checking webpa PID
 	WEBPA_PID=`pidof webpa`
