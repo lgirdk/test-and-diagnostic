@@ -3,14 +3,13 @@
 rxtx_enabled=`syscfg get rxtx_enabled`
 if [ "$rxtx_enabled" != "1" ]; then
 	if [ "$rxtx_enabled" -eq "0" ] && [ -e /tmp/eblist ]; then
-		ebtables -F;
-		rm /tmp/eblist;
+		/usr/ccsp/tad/rxtx_res.sh
 	fi
 	exit 0;
 fi
-/fss/gw/usr/ccsp/tad/rxtx_cur.sh
+/usr/ccsp/tad/rxtx_cur.sh
 sleep 19
-/fss/gw/usr/ccsp/tad/rxtx_cur.sh
+/usr/ccsp/tad/rxtx_cur.sh
 seep 19
-/fss/gw/usr/ccsp/tad/rxtx_cur.sh
+/usr/ccsp/tad/rxtx_cur.sh
 
