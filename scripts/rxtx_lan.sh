@@ -1,10 +1,6 @@
 #Run rxtx_cur.sh 3 times per minute
 #!/bin/sh
-rxtx_enabled=`syscfg get rxtx_enabled`
-if [ "$rxtx_enabled" != "1" ]; then
-	if [ "$rxtx_enabled" -eq "0" ] && [ -e /tmp/eblist ]; then
-		/usr/ccsp/tad/rxtx_res.sh
-	fi
+if [ ! -e "/tmp/rxtx_enabled" ]; then
 	exit 0;
 fi
 /usr/ccsp/tad/rxtx_cur.sh
