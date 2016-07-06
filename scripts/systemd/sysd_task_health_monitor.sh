@@ -199,12 +199,17 @@ rebootDeviceNeeded=0
         SSID_DISABLED=0
         BR_MODE=0
         ssidEnable=`dmcli eRT getv Device.WiFi.SSID.2.Enable`
-        isEnabled=`echo $ssidEnable | grep "false"`
-        if [ "$isEnabled" != "" ]
+        ssidExecution=`echo $ssidEnable | grep "Execution succeed"`
+        if [ "$ssidExecution" != "" ]
         then
-            SSID_DISABLED=1
-            echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
-            
+           isEnabled=`echo $ssidEnable | grep "false"`
+           if [ "$isEnabled" != "" ]
+           then
+             SSID_DISABLED=1
+             echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+           fi
+        else
+           echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
         fi
 
         bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
@@ -244,12 +249,18 @@ rebootDeviceNeeded=0
         # Check the status if 2.4GHz Wifi SSID
         SSID_DISABLED_2G=0
         ssidEnable_2=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
-        isEnabled_2=`echo $ssidEnable_2 | grep "false"`
-        if [ "$isEnabled_2" != "" ]
+        ssidExecution_2=`echo $ssidEnable_2 | grep "Execution succeed"`
+
+        if [ "$ssidExecution_2" != "" ]
         then
-            SSID_DISABLED_2G=1
-            echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
-            
+            isEnabled_2=`echo $ssidEnable_2 | grep "false"`
+            if [ "$isEnabled_2" != "" ]
+            then
+               SSID_DISABLED_2G=1
+               echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
+            fi
+        else
+            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
         fi
 
         # If bridge mode is not set and WiFI is not disabled by user,
