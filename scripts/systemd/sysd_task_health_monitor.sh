@@ -198,38 +198,83 @@ rebootDeviceNeeded=0
 
         SSID_DISABLED=0
         BR_MODE=0
-        dmcli eRT getv Device.WiFi.SSID.2.Enable | grep "true"
-        if [ $? == 1 ]
+        ssidEnable=`dmcli eRT getv Device.WiFi.SSID.2.Enable`
+        isEnabled=`echo $ssidEnable | grep "false"`
+        if [ "$isEnabled" != "" ]
         then
             SSID_DISABLED=1
             echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
             
         fi
 
-        dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode | grep router
-        if [ $? == 1 ]
+        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        isBridging=`echo $bridgeMode | grep router`
+        if [ "$isBridging" = "" ]
         then
             BR_MODE=1
             echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
             
         fi
 
+        # If bridge mode is not set and WiFI is not disabled by user,
+        # check the status of SSID
         if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]
-        then
-	    dmcli eRT getv Device.WiFi.SSID.2.Status | grep Up
-	    if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
-		#dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
-	    fi
-        fi
+        then           
+	    ssidStatus_5=`dmcli eRT getv Device.WiFi.SSID.2.Status`
+            isExecutionSucceed=`echo $ssidStatus_5 | grep "Execution succeed"`
+            if [ "$isExecutionSucceed" != "" ]
+            then       
         
-	if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]
+	            isUp=`echo $ssidStatus_5 | grep "Up"`
+                if [ "$isUp" = "" ]
+                then
+                   # We need to verify if it was a dmcli crash or is WiFi really down
+		           isDown=`echo $ssidStatus_5 | grep "Down"`
+		           if [ "$isDown" != "" ]; then
+                      echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+                   else
+                      echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
+                   fi
+                fi
+            else
+               echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+            fi
+        fi
+
+        # Check the status if 2.4GHz Wifi SSID
+        SSID_DISABLED_2G=0
+        ssidEnable_2=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
+        isEnabled_2=`echo $ssidEnable_2 | grep "false"`
+        if [ "$isEnabled_2" != "" ]
         then
-	    dmcli eRT getv Device.WiFi.SSID.1.Status | grep Up
-	    if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 2G private SSID (ath0) is off."
-		#dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Wifi
-	    fi
+            SSID_DISABLED_2G=1
+            echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
+            
+        fi
+
+        # If bridge mode is not set and WiFI is not disabled by user,
+        # check the status of SSID
+        if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED_2G -eq 0 ]
+        then
+	        ssidStatus_2=`dmcli eRT getv Device.WiFi.SSID.1.Status`
+            isExecutionSucceed_2=`echo $ssidStatus_2 | grep "Execution succeed"`
+            if [ "$isExecutionSucceed_2" != "" ]
+            then       
+        
+	            isUp=`echo $ssidStatus_2 | grep "Up"`
+                if [ "$isUp" = "" ]
+                then
+                    # We need to verify if it was a dmcli crash or is WiFi really down
+		            isDown=`echo $ssidStatus_2 | grep "Down"`
+		            if [ "$isDown" != "" ]; then
+                        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
+                    else
+                        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
+                    fi
+                fi
+            else
+               echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+            fi
         fi
         
 	WAN_STATE=`sysevent get wan_service-status`
