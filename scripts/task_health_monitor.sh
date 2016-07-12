@@ -132,18 +132,20 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	TR69_PID=`pidof CcspTr069PaSsp`
 	if [ "$TR69_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
-		vendor=`getVendorName`
-		modelName=`getModelName`
-		CMMac=`getCMMac`
-		timestamp=`getDate`
-		echo "[`getDateTime`] Setting Last reboot reason"
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string TR69_crash
-		echo "[`getDateTime`] SET succeeded"
-		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need to reboot the unit"
+#		vendor=`getVendorName`
+#		modelName=`getModelName`
+#		CMMac=`getCMMac`
+#		timestamp=`getDate`
+#		echo "[`getDateTime`] Setting Last reboot reason"
+#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string TR69_crash
+#		echo "[`getDateTime`] SET succeeded"
+#		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspTr069PaSsp process died,need reboot"
 
-		touch $HAVECRASH
-		rebootNeeded RM "TR69"
+#		touch $HAVECRASH
+#		rebootNeeded RM "TR69"
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
+		resetNeeded TR69 CcspTr069PaSsp
 	fi
 
 	# Checking Test adn Daignostic's PID
