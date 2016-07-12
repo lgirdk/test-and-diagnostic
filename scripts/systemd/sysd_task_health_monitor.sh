@@ -109,7 +109,13 @@ rebootDeviceNeeded=0
 		 echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
 	   fi
 	else
-	   echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+	   destinationError=`echo $ssidEnable | grep "Can't find destination component"`
+       if [ "$destinationError" != "" ]
+       then
+            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+       else
+            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+       fi            
 	fi
 
 	bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
