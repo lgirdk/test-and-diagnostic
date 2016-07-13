@@ -36,7 +36,7 @@ rebootDeviceNeeded=0
         if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 			resetNeeded "" hotspot_arpd 
-   		fi
+   	fi
 	fi
 	# Checking webpa PID
 	WEBPA_PID=`pidof webpa`
@@ -194,14 +194,12 @@ rebootDeviceNeeded=0
 		fi
 	fi
         
-	WAN_STATE=`sysevent get wan_service-status`
 	FIREWALL_ENABLED=`syscfg get firewall_enabled`
 
-	echo "[`getDateTime`] [RDKB_SELFHEAL] : WAN_STATE is $WAN_STATE"
 	echo "[`getDateTime`] [RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
     echo "[`getDateTime`] [RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 
-	if [ $BR_MODE -eq 0 ] && [ "$WAN_STATE" = "started" ]
+	if [ $BR_MODE -eq 0 ] 
 	then
 		iptables-save -t nat | grep "A PREROUTING -i"
 		if [ $? == 1 ]; then
