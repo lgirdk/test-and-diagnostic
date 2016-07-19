@@ -81,6 +81,8 @@
 #include "cosa_hosts_dml.h"
 */
 #include "cosa_dns_dml.h"
+
+#include "cosa_logbackup_dml.h"
 /*
 #include "cosa_firewall_dml.h"
 #include "cosa_nat_dml.h"
@@ -233,6 +235,14 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamIntValue",  Result_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamUlongValue",  Result_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamStringValue",  Result_GetParamStringValue);
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_GetParamBoolValue",  LogBackup_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_SetParamBoolValue",  LogBackup_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_GetParamUlongValue",  LogBackup_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_SetParamUlongValue",  LogBackup_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Validate",  LogBackup_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Commit",  LogBackup_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Rollback",  LogBackup_Rollback);    
 
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
 

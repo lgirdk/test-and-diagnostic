@@ -887,6 +887,33 @@
             </object>
             </objects>
         </object>
+        <object>
+            <name>LogBackup</name>
+            <objectType>object</objectType>
+            <functions>
+             <func_GetParamBoolValue>LogBackup_GetParamBoolValue</func_GetParamBoolValue>
+             <func_SetParamBoolValue>LogBackup_SetParamBoolValue</func_SetParamBoolValue>
+			 <func_GetParamUlongValue>LogBackup_GetParamUlongValue</func_GetParamUlongValue>
+             <func_SetParamUlongValue>LogBackup_SetParamUlongValue</func_SetParamUlongValue>
+             <func_Validate>LogBackup_Validate</func_Validate>
+             <func_Commit>LogBackup_Commit</func_Commit>
+             <func_Rollback>LogBackup_Rollback</func_Rollback>
+            </functions>
+            <parameters>
+                <parameter>
+                    <name>X_RDKCENTRAL-COM_Enable</name>
+                    <type>boolean</type>
+                    <syntax>bool</syntax>
+                    <writable>true</writable>
+                </parameter>
+				<parameter>
+                    <name>X_RDKCENTRAL-COM_Interval</name>
+                    <type>unsignedInt</type>
+                    <syntax>uint32</syntax>
+                    <writable>true</writable>
+                </parameter>
+			</parameters>	
+		</object>	
     </objects>
 </dataModelInfo>
 
