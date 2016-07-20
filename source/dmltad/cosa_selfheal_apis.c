@@ -61,6 +61,7 @@
 **************************************************************************/
 #include "plugin_main_apis.h"
 #include "cosa_selfheal_apis.h"
+#include "cosa_logbackup_dml.h"
 
 static char *Ipv4_Server ="Ipv4_PingServer_%d";
 static char *Ipv6_Server ="Ipv6_PingServer_%d";
@@ -265,6 +266,7 @@ CosaDmlGetSelfHealCfg(
 	ULONG entryCountIPv6 = 0;
 
 	syscfg_init();
+	get_logbackupcfg();
 	pConnTest = (PCOSA_DML_CONNECTIVITY_TEST)AnscAllocateMemory(sizeof(COSA_DML_CONNECTIVITY_TEST));
 	pMyObject->pConnTest = pConnTest;
 	memset(buf,0,sizeof(buf));
