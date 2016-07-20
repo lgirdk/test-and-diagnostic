@@ -2,8 +2,15 @@
 
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
+RDKLOGGER_PATH="/rdklogger"
+ATOM_IP="192.168.101.3"
+ARM_RPC_INTERFACE="l2sd0.500"
+
+ping_failed=0
+ping_success=0
 
 source $UTOPIA_PATH/log_env_var.sh
+
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -458,6 +465,40 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		#sysevent set firewall-restart
 		fi
      fi
+
+## Check ATOM ip is accessible
+loop=1
+	while [ "$loop" -le 3 ]
+	do
+	PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
+	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+
+		if [ "$CHECK_PING_RES" != "" ]
+		then
+			if [ "$CHECK_PING_RES" -ne 100 ] 
+			then
+				ping_success=1
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP is success"
+				break
+			else
+				ping_failed=1
+			fi
+		else
+			ping_failed=1
+		fi
+		
+		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+		then
+			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP failed in iteration $loop"
+		else
+			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP failed after iteration $loop also ,rebooting the device"
+			echo "[`getDateTime`] RDKB_REBOOT : ATOM is not up ,Rebooting device "
+			rebootNeeded RM ""
+
+		fi
+		loop=$((loop+1))
+		sleep 5
+	done
 
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
