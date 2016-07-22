@@ -105,7 +105,7 @@ extern COSAGetSubsystemPrefixProc         g_GetSubsystemPrefix;
 extern COSAGetInterfaceByNameProc         g_GetInterfaceByName;
 extern PCCSP_CCD_INTERFACE                g_pTadCcdIf;
 extern ANSC_HANDLE                        g_MessageBusHandle;
-extern char*                              g_Subsystem;
+extern  char                              g_Subsystem[32];
 
 /* The OID for all objects s*/
 
