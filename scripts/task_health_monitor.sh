@@ -8,7 +8,7 @@ ARM_RPC_INTERFACE="l2sd0.500"
 
 ping_failed=0
 ping_success=0
-
+PING_PATH="/usr/sbin"
 source $UTOPIA_PATH/log_env_var.sh
 
 
@@ -466,11 +466,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		fi
      fi
 
+if [ -f $PING_PATH/ping_atom ]
+then
 ## Check ATOM ip is accessible
 loop=1
 	while [ "$loop" -le 3 ]
 	do
-	PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
+	#PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
+        PING_RES=`ping_atom`
 	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
 		if [ "$CHECK_PING_RES" != "" ]
@@ -499,7 +502,9 @@ loop=1
 		loop=$((loop+1))
 		sleep 5
 	done
-
+else
+   echo "[`getDateTime`] RDKB_SELFHEAL : ping_atom command not found"
+fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 		cur_hr=`date +"%H"`
