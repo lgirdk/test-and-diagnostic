@@ -13,6 +13,7 @@ isIPv6=""
 RDKLOGGER_PATH="/rdklogger"
 TAD_PATH="/usr/ccsp/tad"
 UTOPIA_PATH="/etc/utopia/service.d"
+PING_PATH="/usr/sbin"
 ping_failed=0
 ping_success=0
 
@@ -208,10 +209,13 @@ isIPv6=""
 	fi
 
 ## Check ATOM ip is accessible
+if [ -f $PING_PATH/ping_atom ]
+then
 loop=1
 	while [ "$loop" -le 3 ]
 	do
-	PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
+	#PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
+        PING_RES=`ping_atom`
 	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
 		if [ "$CHECK_PING_RES" != "" ]
@@ -246,6 +250,9 @@ loop=1
 		loop=$((loop+1))
 		sleep 5
 	done
+else
+   echo "RDKB_SELFHEAL_BOOTUP : ping_atom command not found"
+fi
 
 # Check for iptable corruption
 
