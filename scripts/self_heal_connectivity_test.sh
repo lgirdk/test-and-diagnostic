@@ -71,8 +71,8 @@ runPingTest()
 
 
 
-	IPv4_Gateway_addr=`ip -4 route list table erouter | grep $WAN_INTERFACE | awk '{print$3}'`
-	IPv6_Gateway_addr=`ip -6 route list table erouter | grep $WAN_INTERFACE | awk '{print$3}'`
+	IPv4_Gateway_addr=$(ip -4 route list table erouter | grep $WAN_INTERFACE | awk '$1 == "default" {print $3}')
+	IPv6_Gateway_addr=$(ip -6 route list table erouter | grep $WAN_INTERFACE | awk '$1 == "default" {print $3}')
 
 	if [ "$IPv4_Gateway_addr" != "" ]
 	then
