@@ -3,8 +3,6 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
-ATOM_IP="192.168.101.3"
-ARM_RPC_INTERFACE="l2sd0.500"
 
 ping_failed=0
 ping_success=0
@@ -467,14 +465,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		fi
      fi
 
-if [ -f $PING_PATH/ping_atom ]
+if [ -f $PING_PATH/ping_peer ]
 then
-## Check ATOM ip is accessible
+## Check Peer ip is accessible
 loop=1
 	while [ "$loop" -le 3 ]
 	do
-	#PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
-        PING_RES=`ping_atom`
+        PING_RES=`ping_peer`
 	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
 		if [ "$CHECK_PING_RES" != "" ]
@@ -482,7 +479,7 @@ loop=1
 			if [ "$CHECK_PING_RES" -ne 100 ] 
 			then
 				ping_success=1
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP is success"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP is success"
 				break
 			else
 				ping_failed=1
@@ -493,10 +490,10 @@ loop=1
 		
 		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP failed in iteration $loop"
+			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
 		else
-			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to ATOM IP failed after iteration $loop also ,rebooting the device"
-			echo "[`getDateTime`] RDKB_REBOOT : ATOM is not up ,Rebooting device "
+			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
 			rebootNeeded RM ""
 
 		fi
@@ -504,7 +501,7 @@ loop=1
 		sleep 5
 	done
 else
-   echo "[`getDateTime`] RDKB_SELFHEAL : ping_atom command not found"
+   echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
 fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
