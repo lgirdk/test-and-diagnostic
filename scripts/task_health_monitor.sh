@@ -282,7 +282,8 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	LIGHTTPD_PID=`pidof lighttpd`
 	if [ "$LIGHTTPD_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
-		lighttpd -f $LIGHTTPD_CONF
+		#lighttpd -f $LIGHTTPD_CONF
+		sh /etc/webgui.sh
 	fi
 
 	ifconfig | grep brlan1
