@@ -105,7 +105,7 @@ extern  char                            g_Subsystem[32];
 
 static  COMPONENT_COMMON_DM             CommonDm = {0};
 
-#define  COSA_PLUGIN_XML_FILE           "TestAndDiagnostic.XML"
+#define  COSA_PLUGIN_XML_FILE           "/usr/ccsp/tad/TestAndDiagnostic.XML"
 
 #if defined(_ANSC_WINDOWSNT)
 #define  COSA_DIAG_PLUGIN_LIBRARY_NAME             "bisga_diagnostic.dll"
