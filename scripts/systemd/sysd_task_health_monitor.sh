@@ -3,6 +3,9 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 
+ping_failed=0
+ping_success=0
+PING_PATH="/usr/sbin"
 source $UTOPIA_PATH/log_env_var.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
@@ -244,6 +247,45 @@ rebootDeviceNeeded=0
 	if [ "$WIFI_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : wifi process is not running, need restart"
 		resetNeeded wifi CcspWifiSsp 
+	fi
+	
+	if [ -f $PING_PATH/ping_peer ]
+	then
+	## Check Peer ip is accessible
+	loop=1
+		while [ "$loop" -le 3 ]
+		do
+			PING_RES=`ping_peer`
+			CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+
+			if [ "$CHECK_PING_RES" != "" ]
+			then
+				if [ "$CHECK_PING_RES" -ne 100 ] 
+				then
+					ping_success=1
+					echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP is success"
+					break
+				else
+					ping_failed=1
+				fi
+			else
+				ping_failed=1
+			fi
+
+			if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+			else
+				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+				echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
+				rebootNeeded RM ""
+
+			fi
+			loop=$((loop+1))
+			sleep 5
+		done
+	else
+	   echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
 	fi
 	
 	if [ "$rebootDeviceNeeded" -eq 1 ]

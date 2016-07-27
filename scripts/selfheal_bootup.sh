@@ -4,8 +4,6 @@ CM_INTERFACE="wan0"
 WAN_INTERFACE="erouter0"
 Check_CM_Ip=0
 Check_WAN_Ip=0
-ATOM_IP="192.168.101.3"
-ARM_RPC_INTERFACE="l2sd0.500"
 
 isIPv4=""
 isIPv6=""
@@ -208,14 +206,14 @@ isIPv6=""
 		resetNeeded CcspPandMSsp
 	fi
 
-## Check ATOM ip is accessible
-if [ -f $PING_PATH/ping_atom ]
+## Check Peer ip is accessible
+if [ -f $PING_PATH/ping_peer ]
 then
 loop=1
 	while [ "$loop" -le 3 ]
 	do
-	#PING_RES=`ping -I $ARM_RPC_INTERFACE -c 2 -w 2 $ATOM_IP`
-        PING_RES=`ping_atom`
+	
+        PING_RES=`ping_peer`
 	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
 		if [ "$CHECK_PING_RES" != "" ]
@@ -223,7 +221,7 @@ loop=1
 			if [ "$CHECK_PING_RES" -ne 100 ] 
 			then
 				ping_success=1
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to ATOM IP is success"
+				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
 				break
 			else
 				ping_failed=1
@@ -234,13 +232,13 @@ loop=1
 		
 		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to ATOM IP failed in iteration $loop"
+			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
 		else
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to ATOM IP failed after iteration $loop also ,rebooting the device"
+			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 			if [ ! -f "/nvram/self_healreboot" ]
 			then
 				touch /nvram/self_healreboot
-				echo "[`getDateTime`] RDKB_REBOOT : ATOM is not up ,Rebooting device "
+				echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
 				$RDKLOGGER_PATH/backupLogs.sh "true" ""
 			else
 				rm -rf /nvram/self_healreboot
@@ -251,7 +249,7 @@ loop=1
 		sleep 5
 	done
 else
-   echo "RDKB_SELFHEAL_BOOTUP : ping_atom command not found"
+   echo "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
 fi
 
 # Check for iptable corruption
