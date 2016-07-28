@@ -22,6 +22,7 @@ source /usr/ccsp/tad/corrective_action.sh
 
 hours=0
 days=0
+minutes=0
 isUpforDays=`uptime | grep days`
 
 if [ "$isUpforDays" = "" ]
@@ -34,9 +35,11 @@ then
     if [ "$isMoreThanHour" != "" ]
     then
         hours=`echo $isMoreThanHour | tr -d " " | cut -f1 -d:`
+        minutes=`echo $isMoreThanHour | tr -d " " | cut -f2 -d:`
     else
         echo "RDKB_UPTIME: Unit is up for less than 1 hour"
         hours=0
+        minutes=`echo $notInDays | cut -f1 -d" "`
     fi
     
 else
@@ -49,10 +52,13 @@ else
     if [ "$isHourPresent" != "" ]
     then
        hours=`echo $isHourPresent | tr -d " " | cut -f1 -d:`
+       minutes=`echo $isHourPresent | cut -f2 -d":"`
     else
        hours=0    
     fi
 fi
     
-echo "UPTIME:$days,$hours"
+echo "UPTIMEDAY:$days"
+echo "UPTIMEHR:$hours"
+echo "UPTIMEMIN:$minutes"
 
