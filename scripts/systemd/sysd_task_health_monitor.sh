@@ -151,14 +151,20 @@ rebootDeviceNeeded=0
        fi            
 	fi
 
-	bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-	isBridging=`echo $bridgeMode | grep router`
-	if [ "$isBridging" = "" ]
-	then
-		BR_MODE=1
-		echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
-
-	fi
+        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        # RDKB-6895
+        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+        if [ "$bridgeSucceed" != "" ]
+        then
+           isBridging=`echo $bridgeMode | grep router`
+           if [ "$isBridging" = "" ]
+           then
+               BR_MODE=1
+               echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
+           fi
+        else
+            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+        fi
 
 	# If bridge mode is not set and WiFI is not disabled by user,
 	# check the status of SSID
