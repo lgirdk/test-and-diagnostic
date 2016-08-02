@@ -255,14 +255,20 @@ fi
 # Check for iptable corruption
 
         bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        isBridging=`echo $bridgeMode | grep router`
-        if [ "$isBridging" != "" ]
+        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+        if [ "$bridgeSucceed" != "" ]
         then
-		Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
-		if [ "$Check_Iptable_Rules" == "" ]; then
-		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
-		#sysevent set firewall-restart
-		fi
+            isBridging=`echo $bridgeMode | grep router`
+            if [ "$isBridging" != "" ]
+            then
+                Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
+                if [ "$Check_Iptable_Rules" == "" ]; then
+                   echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
+                   #sysevent set firewall-restart
+                fi
+            fi
+        else
+            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
         fi
 
 # Check brlan0,brlan1.l2sd0.100 and l2sd0.101 interface state
