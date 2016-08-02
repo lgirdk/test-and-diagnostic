@@ -23,7 +23,7 @@ source /usr/ccsp/tad/corrective_action.sh
 hours=0
 days=0
 minutes=0
-isUpforDays=`uptime | grep days`
+isUpforDays=`uptime | grep day`
 
 if [ "$isUpforDays" = "" ]
 then
@@ -45,10 +45,17 @@ then
 else
     # Get days and uptime
     upInDays=`uptime | awk -F, '{sub(".*up ",x,$1);print $1,$2}'`
-     
-    days=`echo $upInDays | cut -f1 -d" "`
-    # Check whether we have got any hour field
-    isHourPresent=`echo $upInDays | awk -F, '{sub(".*days ",x,$1);print $1}' | grep ":"`
+    
+    days=`echo $upInDays | cut -f1 -d" "` 
+    if [ "$days" -eq 1 ]
+    then
+        # Check whether we have got any hour field
+        isHourPresent=`echo $upInDays | awk -F, '{sub(".*day ",x,$1);print $1}' | grep ":"`
+    else
+        # Check whether we have got any hour field
+        isHourPresent=`echo $upInDays | awk -F, '{sub(".*days ",x,$1);print $1}' | grep ":"`
+    fi
+
     if [ "$isHourPresent" != "" ]
     then
        hours=`echo $isHourPresent | tr -d " " | cut -f1 -d:`
