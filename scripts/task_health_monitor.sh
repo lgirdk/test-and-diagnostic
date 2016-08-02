@@ -69,26 +69,29 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		resetNeeded psm PsmSsp
 	fi
 
-	# Checking CR's PID
-	CR_PID=`pidof CcspCrSsp`
-	if [ "$CR_PID" = "" ]; then
-	#	echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-		vendor=`getVendorName`
-		modelName=`getModelName`
-		CMMac=`getCMMac`
-		timestamp=`getDate`
-	    echo "[`getDateTime`] Setting Last reboot reason"
-		reason="CR_crash"
-		rebootCount=1
-		
-		setRebootreason $reason $rebootCount
-		echo "[`getDateTime`] SET succeeded"
-		
-		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
 
-		touch $HAVECRASH
-		rebootNeeded RM "CR"
+	crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
+ 	isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
+	if [ "$isCRAlive" != "" ]; then
+		# Retest by querying some other parameter
+		crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+ 		isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
+		  if [ "$isCRAlive" != "" ]; then
+		#	echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+			vendor=`getVendorName`
+			modelName=`getModelName`
+			CMMac=`getCMMac`
+			timestamp=`getDate`
+			echo "[`getDateTime`] Setting Last reboot reason"
+			reason="CR_crash"
+			rebootCount=1
+			setRebootreason $reason $rebootCount
+			echo "[`getDateTime`] SET succeeded"
+			echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+			touch $HAVECRASH
+			rebootNeeded RM "CR"
+		 fi		
 	fi
 
 	PAM_PID=`pidof CcspPandMSsp`

@@ -85,6 +85,12 @@ BOOL LogBackup_GetParamBoolValue
         return TRUE;
     }
 
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs", TRUE))
+    {
+        *bValue = false;
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -153,6 +159,11 @@ BOOL LogBackup_SetParamBoolValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs", TRUE))
+    {
+	SyncAndUploadLogs();
+	return TRUE;
+    }
     return FALSE;
 }
 
