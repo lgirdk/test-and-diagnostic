@@ -252,7 +252,7 @@ else
    echo "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
 fi
 
-# Check for iptable corruption
+# Check for iptable corruption and brlan0 has ipv4 Address
 
         bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
         bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
@@ -261,29 +261,39 @@ fi
             isBridging=`echo $bridgeMode | grep router`
             if [ "$isBridging" != "" ]
             then
-                Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
-                if [ "$Check_Iptable_Rules" == "" ]; then
-                   echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
-                   #sysevent set firewall-restart
-                fi
+                check_brlan0=`ifconfig -a | grep brlan0`
+			    if [ "$check_brlan0" != "" ]
+			    then
+			        check_brlan0_state=`ifconfig brlan0 | grep UP`
+				    if [ "$check_brlan0_state" == "" ]
+			        then
+            			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not up" 
+					else
+						echo "Device is in router mode check whether brlan0 has IP or not"
+                		ipv4_status=`sysevent get ipv4_4-status` 
+		                ifconfig brlan0 | grep "inet addr"
+		                if [ $? == 1 -a "unconfigured" == "$ipv4_status" ]; then
+        		            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP]: brlan0 doesnt have IPV4 Addr try recovering it"
+		                    sysevent set multinet_1-status stopped
+        		            sysevent set multinet_1-status ready 
+		                else
+        		            echo "brlan0 has IPV4 Address in router mode"
+                		    Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
+		                    if [ "$Check_Iptable_Rules" == "" ]; then
+        	    	            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
+            	    	        #sysevent set firewall-restart
+		                    fi
+        		        fi						
+			        fi
+				else
+			     	echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not created" 
+    			fi
             fi
         else
             echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
         fi
 
-# Check brlan0,brlan1.l2sd0.100 and l2sd0.101 interface state
-
-	check_brlan0=`ifconfig -a | grep brlan0`
-	if [ "$check_brlan0" != "" ]
-	then
-		check_brlan0_state=`ifconfig brlan0 | grep UP`
-		if [ "$check_brlan0_state" == "" ]
-		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not up" 
-		fi
-	else
-		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not created" 
-	fi
+# Check brlan1.l2sd0.100 and l2sd0.101 interface state
 
 	check_brlan1=`ifconfig -a | grep brlan1`
 	if [ "$check_brlan1" != "" ]
