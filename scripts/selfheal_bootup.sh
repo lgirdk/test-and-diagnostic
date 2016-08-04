@@ -14,6 +14,7 @@ UTOPIA_PATH="/etc/utopia/service.d"
 PING_PATH="/usr/sbin"
 ping_failed=0
 ping_success=0
+needSelfhealReboot="/nvram/self_healreboot"
 
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
@@ -170,6 +171,43 @@ isIPv6=""
 		Check_WAN_Ip=1
 	 fi
 
+        # Check whether CR process is running
+        crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
+        isCRAlive=`echo $crTestop | grep "Execution succeed"`
+        if [ "$isCRAlive" == "" ]; then
+                # Retest by querying some other parameter
+                crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+                isCRAlive=`echo $crReTestop | grep "Execution succeed"`
+                  if [ "$isCRAlive" == "" ]; then
+                        echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+                        echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR_process is not running, need reboot"
+                        touch $HAVECRASH
+						
+                        if [ ! -f "$needSelfhealReboot" ]
+                        then
+                                touch $needSelfhealReboot
+				syscfg set X_RDKCENTRAL-COM_LastRebootReason CR_crash
+				syscfg set X_RDKCENTRAL-COM_LastRebootCounter 1
+				result=`echo $?`
+				if [ "$result" != "0" ]
+				then
+					echo "[`getDateTime`] SET for Reboot Reason failed"
+				fi
+				syscfg commit
+				result=`echo $?`
+				if [ "$result" != "0" ]
+				then
+					echo "[`getDateTime`] Commit for Reboot Reason failed"
+				fi
+
+                                $RDKLOGGER_PATH/backupLogs.sh "true" "CR"
+                        else
+                                rm -rf $needSelfhealReboot
+                        fi
+
+                 fi
+        fi
+
 
 # Check whether PSM process is running
 	# Checking PSM's PID
@@ -185,12 +223,12 @@ isIPv6=""
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
 		echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : PSM_process is not running, need reboot"
 
-			if [ ! -f "/nvram/self_healreboot" ]
+			if [ ! -f "$needSelfhealReboot" ]
 			then
-				touch /nvram/self_healreboot
+				touch $needSelfhealReboot
 				$RDKLOGGER_PATH/backupLogs.sh "true" "PSM"
 			else
-				rm -rf /nvram/self_healreboot
+				rm -rf $needSelfhealReboot
 			fi
 
 	fi
