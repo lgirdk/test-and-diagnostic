@@ -13,15 +13,22 @@ DELAY=30
 	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys at timestamp $timestamp"
 	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys at timestamp $timestamp"
 
-	LOAD_AVG=`cat /proc/loadavg`
+    # RDKB-7017	
+    echo "[`getDateTime`] USED_MEM:$usedMemSys"
+    echo "[`getDateTime`] FREE_MEM:$freeMemSys"
 
-#Record the start statistics
+    LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
+    # RDKB-7017	
+	echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG at timestamp $timestamp"
+    echo "[`getDateTime`] LOAD_AVERAGE:$LOAD_AVG"
+    
+    #Record the start statistics
 
 	STARTSTAT=$(getstat)
 
 	sleep $DELAY
 
-#Record the end statistics
+    #Record the end statistics
 	ENDSTAT=$(getstat)
 
 	USR=$(change 1)
@@ -36,12 +43,13 @@ DELAY=30
 
 	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
 
-	echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG at timestamp $timestamp"
+    # RDKB-7017	
+    echo "[`getDateTime`] RDKB_CPU_USAGE : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+    echo "[`getDateTime`] USED_CPU:$Curr_CPULoad"
 
-	echo "[`getDateTime`] RDKB_CPU_USAGE : CPU usage is $Curr_CPULoad at timestamp $timestamp"
-        CPU_INFO=`mpstat | tail -1` 
+
+    CPU_INFO=`mpstat | tail -1` 
 	echo "[`getDateTime`] RDKB_CPUINFO : Cpu Info is $CPU_INFO "
-
 
 	count=`syscfg get process_memory_log_count`
 	count=$((count + 1))
