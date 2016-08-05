@@ -310,7 +310,7 @@ fi
 						echo "Device is in router mode check whether brlan0 has IP or not"
                 		ipv4_status=`sysevent get ipv4_4-status` 
 		                ifconfig brlan0 | grep "inet addr"
-		                if [ $? == 1 -a "unconfigured" == "$ipv4_status" ]; then
+		                if [ $? == 1 -a "up" != "$ipv4_status" ]; then
         		            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP]: brlan0 doesnt have IPV4 Addr try recovering it"
 		                    sysevent set multinet_1-status stopped
         		            sysevent set multinet_1-status ready 
@@ -340,6 +340,16 @@ fi
 		if [ "$check_brlan1_state" == "" ]
 		then
 			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan1 interface is not up" 
+        else
+            ipv4_status_brlan1=`sysevent get ipv4_5-status`
+            ifconfig brlan1 | grep "inet addr"
+            if [ $? == 1 -a "up" != "$ipv4_status_brlan1" ]; then
+                echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP]: brlan1 doesnt have IPV4 Addr try recovering it"
+                sysevent set multinet_2-status stopped
+                sysevent set multinet_2-status ready 
+            else
+                echo "brlan1 is UP and has IPV4 Address"
+            fi
 		fi
 	else
 		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan1 interface is not created" 
