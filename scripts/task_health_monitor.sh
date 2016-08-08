@@ -4,6 +4,11 @@ UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
+
 ping_failed=0
 ping_success=0
 PING_PATH="/usr/sbin"
@@ -179,6 +184,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		resetNeeded snmp snmp_subagent 
 	fi
 
+
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
@@ -190,58 +196,58 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	then
 	
 		DHCP_ARP_PID=`pidof hotspot_arpd`
-        if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
-			resetNeeded "" hotspot_arpd 
-   		fi
+		if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
+		     echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
+		     resetNeeded "" hotspot_arpd 
+		fi
 
 		#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
-        #If they are not present below code shall re-create them
-        #l2sd0.102 case 
-        ifconfig -a | grep l2sd0.102
-        if [ $? == 1 ]; then
-            echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
-            sysevent set multinet_3-status stopped
-            $UTOPIA_PATH/service_multinet_exec multinet-start 3
-            ifconfig -a | grep l2sd0.102
-            if [ $? == 1 ]; then
-                echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
-                sleep 2
-                sysevent set multinet_3-status stopped
-                $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                ifconfig -a | grep l2sd0.102
-                if [ $? == 1 ]; then
-                    echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
-                fi
-            else
-                echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
-            fi
-        else
-            echo "XfinityWifi is enabled and l2sd0.102 is present"  
-        fi
+		#If they are not present below code shall re-create them
+		#l2sd0.102 case 
+		ifconfig -a | grep l2sd0.102
+		if [ $? == 1 ]; then
+		     echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
+		     sysevent set multinet_3-status stopped
+		     $UTOPIA_PATH/service_multinet_exec multinet-start 3
+		     ifconfig -a | grep l2sd0.102
+		     if [ $? == 1 ]; then
+		       echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
+		       sleep 2
+		       sysevent set multinet_3-status stopped
+		       $UTOPIA_PATH/service_multinet_exec multinet-start 3
+		       ifconfig -a | grep l2sd0.102
+		       if [ $? == 1 ]; then
+		          echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
+		       fi
+		     else
+		       echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
+		     fi
+		else
+		   echo "XfinityWifi is enabled and l2sd0.102 is present"  
+		fi
 
-        #l2sd0.103 case
-        ifconfig -a | grep l2sd0.103
-        if [ $? == 1 ]; then
-            echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
-            sysevent set multinet_4-status stopped
-            $UTOPIA_PATH/service_multinet_exec multinet-start 4
-            ifconfig -a | grep l2sd0.103
-            if [ $? == 1 ]; then
-                echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
-                sleep 2
-                sysevent set multinet_4-status stopped
-                $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                ifconfig -a | grep l2sd0.103
-				if [ $? == 1 ]; then
-                    echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
-                fi
-            else
-                echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
-            fi
-        else
-            echo "Xfinitywifi is enabled and l2sd0.103 is present"
-        fi
+		#l2sd0.103 case
+		ifconfig -a | grep l2sd0.103
+		if [ $? == 1 ]; then
+		   echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
+		   sysevent set multinet_4-status stopped
+		   $UTOPIA_PATH/service_multinet_exec multinet-start 4
+		   ifconfig -a | grep l2sd0.103
+		   if [ $? == 1 ]; then
+		      echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
+		      sleep 2
+		      sysevent set multinet_4-status stopped
+		      $UTOPIA_PATH/service_multinet_exec multinet-start 4
+		      ifconfig -a | grep l2sd0.103
+		      if [ $? == 1 ]; then
+		         echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
+		      fi
+		   else
+		        echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
+		   fi
+		else
+		   echo "Xfinitywifi is enabled and l2sd0.103 is present"
+		fi
 	fi
 	# Checking webpa PID
 	WEBPA_PID=`pidof webpa`
@@ -273,11 +279,37 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
 	fi
 
-	DROPBEAR_PID=`pidof dropbear`
+	#Check if we support rsync dropbear 
+	if [ "$ARM_INTERFACE_IP" == "" ]
+	then
+	    DROPBEAR_PID=`pidof dropbear`
+	else
+	    DROPBEAR_PID=`ps | grep dropbear | grep -v "$ARM_INTERFACE_IP" | grep -v grep`
+	fi
+
+	dropbear_flagged=0
 	if [ "$DROPBEAR_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
+		dropbear_flagged=1
 		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+		sleep 3
 	fi
+
+	#Check dropbear is alive to do rsync/scp to/fro ATOM
+	if [ "$ARM_INTERFACE_IP" != "" ]
+	then
+           DROPBEAR_ENABLE=`ps | grep dropbear | grep $ARM_INTERFACE_IP`
+           if [ "$DROPBEAR_ENABLE" == "" ]
+           then
+               # No need to print this message as we have already printed the log message
+               if [ $dropbear_flagged -eq 0 ]
+               then
+                  dropbear_flagged=0
+                  echo "[`getDateTime`] RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
+               fi
+               dropbear -E -B -p $ARM_INTERFACE_IP:22
+           fi
+        fi
 
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
