@@ -17,6 +17,9 @@ DELAY=30
     echo "[`getDateTime`] USED_MEM:$usedMemSys"
     echo "[`getDateTime`] FREE_MEM:$freeMemSys"
 
+    # RDKB-7195
+    echo "[`getDateTime`] ARENA_INFO : `iccctl mal | tail -n 1`"
+
     LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
     # RDKB-7017	
 	echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG at timestamp $timestamp"
