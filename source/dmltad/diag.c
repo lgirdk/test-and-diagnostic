@@ -208,32 +208,32 @@ static int inet_is_local(const struct in_addr *addr)
     pclose(fp);
     return 0;
 }
-
-static bool inet6_addr_equal(const struct in6_addr *a1,
-        const struct in6_addr *a2)
+static bool is_ipv6_same(const struct in6_addr *addr1,
+        const struct in6_addr *addr2)
 {
-    return ((a1->s6_addr32[0] ^ a2->s6_addr32[0]) |
-            (a1->s6_addr32[1] ^ a2->s6_addr32[1]) |
-            (a1->s6_addr32[2] ^ a2->s6_addr32[2]) |
-            (a1->s6_addr32[3] ^ a2->s6_addr32[3])) == 0;
+	int c1, c2, c3, c4;
+    c1 = addr1->s6_addr32[0] ^ addr2->s6_addr32[0];
+    c2 = addr1->s6_addr32[1] ^ addr2->s6_addr32[1];
+    c3 = addr1->s6_addr32[2] ^ addr2->s6_addr32[2];
+    c4 = addr1->s6_addr32[3] ^ addr2->s6_addr32[3];
+	return ((c1 | c2 | c3 | c4) == 0);
 }
-
-static bool inet6_prefix_equal(const struct in6_addr *addr1,
-        const struct in6_addr *addr2,
-        unsigned int prefixlen)
+static bool is_prefix_equal(const struct in6_addr *addrs1,
+        const struct in6_addr *addrs2,
+        unsigned int prelen)
 {
-    const uint32_t *a1 = addr1->s6_addr32;
-    const uint32_t *a2 = addr2->s6_addr32;
-    unsigned int pdw, pbi;
+    const uint32_t *a1 = addrs1->s6_addr32;
+    const uint32_t *a2 = addrs2->s6_addr32;
+    unsigned int pcmu, pinu;
 
     /* check complete u32 in prefix */
-    pdw = prefixlen >> 5;
-    if (pdw && memcmp(a1, a2, pdw << 2)) 
+    pcmu = prelen >> 5;
+    if (pcmu && memcmp(a1, a2, pcmu << 2)) 
         return false;
 
     /* check incomplete u32 in prefix */
-    pbi = prefixlen & 0x1f;
-    if (pbi && ((a1[pdw] ^ a2[pdw]) & htonl((0xffffffff) << (32 - pbi))))
+    pinu = prelen & 0x1f;
+    if (pinu && ((a1[pcmu] ^ a2[pcmu]) & htonl((0xffffffff) << (32 - pinu))))
         return false;
 
     return true;
@@ -290,13 +290,13 @@ static bool inet6_nexthop_not_def(const struct in6_addr *addr)
                 continue;
 
             if (!preflen) {
-                if (inet6_addr_equal(addr, &daddr)) {
+                if (is_ipv6_same(addr, &daddr)) {
                     pclose(tbl_fp);
                     pclose(rule_fp);
                     return true;
                 }
             } else {
-                if (inet6_prefix_equal(addr, &daddr, atoi(preflen))) {
+                if (is_prefix_equal(addr, &daddr, atoi(preflen))) {
                     pclose(tbl_fp);
                     pclose(rule_fp);
                     return true;
