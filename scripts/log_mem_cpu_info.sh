@@ -18,7 +18,7 @@ DELAY=30
     echo "[`getDateTime`] FREE_MEM:$freeMemSys"
 
     # RDKB-7195
-    echo "[`getDateTime`] ARENA_INFO : `iccctl mal | tail -n 1`"
+    echo "[`getDateTime`] ARENA_INFO : `iccctl mal`"
 
     LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
     # RDKB-7017	
