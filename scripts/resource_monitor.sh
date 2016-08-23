@@ -107,6 +107,8 @@ do
 	count_val=0
 	if [ "$Curr_CPULoad" -ge "$CPU_THRESHOLD" ]
 	then
+		echo "[`getDateTime`] RDKB_SELFHEAL : Interrupts"
+		echo "`cat /proc/interrupts`"
 
 		echo "[`getDateTime`] RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
 	        Curr_CPULoad=0
@@ -162,6 +164,10 @@ do
 
 		LOAD_AVG=`cat /proc/loadavg`
 		echo "[`getDateTime`] RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
+
+		echo "[`getDateTime`] RDKB_SELFHEAL : Interrupts after calculating Avg CPU usage (after 5 minutes)"
+		echo "`cat /proc/interrupts`"
+
 #		if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ]
 #		then
 #			vendor=`getVendorName`
