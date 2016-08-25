@@ -1,6 +1,11 @@
 #!/bin/sh
 
 source /fss/gw/usr/ccsp/tad/corrective_action.sh
+
+if [ -f /etc/device.properties ]; then
+   source /etc/device.properties
+fi
+
 max_count=12
 DELAY=30
 	timestamp=`getDate`
@@ -18,7 +23,9 @@ DELAY=30
     echo "[`getDateTime`] FREE_MEM:$freeMemSys"
 
     # RDKB-7195
-    echo "[`getDateTime`] ARENA_INFO : `iccctl mal`"
+    if [ "$BOX_TYPE" == "XB3" ]; then
+        echo "[`getDateTime`] ARENA_INFO : `iccctl mal`"
+    fi
 
     LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
     # RDKB-7017	
