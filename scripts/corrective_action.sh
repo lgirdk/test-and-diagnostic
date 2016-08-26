@@ -414,6 +414,13 @@ resetNeeded()
 				$BINPATH/CcspCMAgentSsp -subsys $Subsys
 				cd -
 
+			elif [ "$ProcessName" == "CcspMtaAgentSsp" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/mta
+				$BINPATH/CcspMtaAgentSsp -subsys $Subsys
+				cd -
+
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
