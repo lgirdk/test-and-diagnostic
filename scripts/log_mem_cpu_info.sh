@@ -29,8 +29,11 @@ DELAY=30
 
     LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
     # RDKB-7017	
-	echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG at timestamp $timestamp"
-    echo "[`getDateTime`] LOAD_AVERAGE:$LOAD_AVG"
+    echo "[`getDateTime`] RDKB_LOAD_AVERAGE : Load Average is $LOAD_AVG at timestamp $timestamp"
+    
+    #RDKB-7411
+    LOAD_AVG_15=`echo $LOAD_AVG | cut -f3 -d:`
+    echo "[`getDateTime`] LOAD_AVERAGE:$LOAD_AVG_15"
     
     #Record the start statistics
 
