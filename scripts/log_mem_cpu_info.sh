@@ -55,15 +55,28 @@ DELAY=30
 	TOTAL=$(($ACTIVE + $IDLE))
 
 	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
-
+	timestamp=`getDate`
     # RDKB-7017	
     echo "[`getDateTime`] RDKB_CPU_USAGE : CPU usage is $Curr_CPULoad at timestamp $timestamp"
     echo "[`getDateTime`] USED_CPU:$Curr_CPULoad"
 
+    # RDKB-7412
+   	CPU_INFO=`mpstat | tail -1 | tr -s ' ' ':' | cut -d':' -f5-`
+	MPSTAT_USR=`echo $CPU_INFO | cut -d':' -f1`
+	MPSTAT_SYS=`echo $CPU_INFO | cut -d':' -f3`
+	MPSTAT_NICE=`echo $CPU_INFO | cut -d':' -f2`
+	MPSTAT_IRQ=`echo $CPU_INFO | cut -d':' -f5`
+	MPSTAT_SOFT=`echo $CPU_INFO | cut -d':' -f6`
+	MPSTAT_IDLE=`echo $CPU_INFO | cut -d':' -f9`
 
-    CPU_INFO=`mpstat | tail -1` 
-	echo "[`getDateTime`] RDKB_CPUINFO : Cpu Info is $CPU_INFO "
+	echo "[`getDateTime`] MPSTAT_USR:$MPSTAT_USR"
+	echo "[`getDateTime`] MPSTAT_SYS:$MPSTAT_SYS"
+	echo "[`getDateTime`] MPSTAT_NICE:$MPSTAT_NICE"
+	echo "[`getDateTime`] MPSTAT_IRQ:$MPSTAT_IRQ"
+	echo "[`getDateTime`] MPSTAT_SOFT:$MPSTAT_SOFT"
+	echo "[`getDateTime`] MPSTAT_IDLE:$MPSTAT_IDLE"
 
+	USER_CPU=`echo $MPSTAT_USR | cut -d'.' -f1`
 	count=`syscfg get process_memory_log_count`
 	count=$((count + 1))
 	echo "Count is $count"
@@ -77,10 +90,13 @@ DELAY=30
 		syscfg commit
 	
 	else
-		echo "[`getDateTime`] RDKB_PROC_MEM_LOG: Ccsp Process Memory log at $timestamp is"
-		echo ""
-		top_cmd="top -m -b n 1 | grep -e Mem -e Swap -e PID -e CcspCrSsp -e PsmSsp -e CcspPandMSsp -e CcspWecbController -e CcspHomeSecurity -e CcspMtaAgentSsp -e CcspCMAgentSsp -e CcspTr069PaSsp -e CcspTandDSsp -e CcspLMLite -e webpa"
-		eval $top_cmd
+		# RDKB-6162
+		if [ "$USER_CPU" -ge "25" ]; then
+			echo "[`getDateTime`] RDKB_PROC_USAGE_LOG: Top 5 CPU USAGE Process at $timestamp is"
+			echo ""
+			top_cmd="top -bn1 | head -n10 | tail -6"
+			eval $top_cmd
+		fi
 		syscfg set process_memory_log_count $count	
 		syscfg commit
 	fi
