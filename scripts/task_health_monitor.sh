@@ -423,6 +423,23 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
            fi
         else
             echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+
+	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
+	    if [ "$pandm_timeout" != "" ]; then
+		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm parameter time out"
+		cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
+		cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
+		if [ "$cr_timeout" != "" ]; then
+			echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+			PANDM_PID=`pidof CcspPandMSsp`
+			if [ "$PANDM_PID" != "" ]; then
+				kill -9 $PANDM_PID
+			fi
+			rm -rf /tmp/pam_initialized
+			resetNeeded pam CcspPandMSsp
+		fi
+	    fi
+
         fi
 
         # If bridge mode is not set and WiFI is not disabled by user,
