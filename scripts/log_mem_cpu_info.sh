@@ -10,13 +10,13 @@ max_count=12
 DELAY=30
 	timestamp=`getDate`
 
-	totalMemSys=`free | awk 'FNR == 2 {print $2}'`
-	usedMemSys=`free | awk 'FNR == 2 {print $3}'`
-	freeMemSys=`free | awk 'FNR == 2 {print $4}'`
+    totalMemSys=`free | awk 'FNR == 2 {print $2}'`
+    usedMemSys=`free | awk 'FNR == 2 {print $3}'`
+    freeMemSys=`free | awk 'FNR == 2 {print $4}'`
 
-	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Total memory in system is $totalMemSys at timestamp $timestamp"
-	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys at timestamp $timestamp"
-	echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys at timestamp $timestamp"
+    echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Total memory in system is $totalMemSys at timestamp $timestamp"
+    echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys at timestamp $timestamp"
+    echo "[`getDateTime`] RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys at timestamp $timestamp"
 
     # RDKB-7017	
     echo "[`getDateTime`] USED_MEM:$usedMemSys"
@@ -24,7 +24,32 @@ DELAY=30
 
     # RDKB-7195
     if [ "$BOX_TYPE" == "XB3" ]; then
-        echo "[`getDateTime`] ARENA_INFO : `iccctl mal`"
+        iccctl_info=`iccctl mal`
+        echo "[`getDateTime`] ICCCTL_INFO : $iccctl_info"
+
+        #RDKB-7474
+        iccctlMemInfo=`echo $iccctl_info | sed -e 's/.*Total in use//g'`
+        inUse=`echo "$iccctlMemInfo" | cut -f2 -d: | cut -f1 -d, | tr -d " "`
+        freeMem=`echo "$iccctlMemInfo" | cut -f3 -d: | cut -f1 -d, | tr -d " "`
+        total=`echo "$iccctlMemInfo" | cut -f4 -d: | cut -f2 -d" "`
+
+        # Calculate the threshold if in use memory is greater than zero
+        if [ $inUse -ne 0 ]
+        then
+           echo "[`getDateTime`] ICCCTL_INFO:icctl in use memory is $inUse"
+           thresholdReached=$(( $inUse * 100 / $total ))
+
+           # Log a message if threshold value of 25 is reached
+           if [ $thresholdReached -gt 25 ]
+           then
+              echo "[`getDateTime`] ICCCTL_INFO:ICC Memory is above threshold $thresholdReached"
+           else
+              echo "[`getDateTime`] ICCCTL_INFO:ICC Memory is below threshold $thresholdReached"
+           fi
+        else
+            echo "[`getDateTime`] ICCCTL_INFO:icctl in use memory is 0"
+        fi
+
     fi
 
     LOAD_AVG=`uptime | awk -F'[a-z]:' '{ print $2}' | sed 's/^ *//g' | sed 's/,//g' | sed 's/ /:/g'`
@@ -37,9 +62,9 @@ DELAY=30
     
     #Record the start statistics
 
-	STARTSTAT=$(getstat)
+    STARTSTAT=$(getstat)
 
-	sleep $DELAY
+    sleep $DELAY
 
     #Record the end statistics
 	ENDSTAT=$(getstat)
