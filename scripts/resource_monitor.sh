@@ -4,6 +4,7 @@ TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 rebootDeviceNeeded=0
 rebootNeededforbrlan1=0
+batteryMode=0
 
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
@@ -182,7 +183,18 @@ do
 #		fi
 	fi
 
-	sh $TAD_PATH/task_health_monitor.sh
+#	sh $TAD_PATH/task_health_monitor.sh
+	if [ -f  /usr/bin/Selfhealutil ]
+  	then
+  		Selfhealutil power_mode
+  		batteryMode=$?
+  	        echo "[`getDateTime`] RDKB_SELFHEAL : batteryMode is  $batteryMode"
+    	fi	
+     	   
+  	if [ $batteryMode = 0 ]
+  	then
+	     sh $TAD_PATH/task_health_monitor.sh
+	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 		

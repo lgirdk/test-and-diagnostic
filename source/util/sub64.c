@@ -27,11 +27,10 @@ int main(int argc, char *argv[])
     unsigned long long ns1 = 0;
     unsigned long long ns2 = 0;
     unsigned long long result = 0;
-    char cmd[256] = {0};
     
 
     if (1 >= argc) {
-        return ;
+        return 0;
     }
    
     ns1 = strtoll(argv[1], (char **)NULL, 10);
