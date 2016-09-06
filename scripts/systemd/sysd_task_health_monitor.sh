@@ -147,13 +147,13 @@ rebootDeviceNeeded=0
 	fi
 	ifconfig | grep brlan1
 	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
 		rebootNeededforbrlan1=1
 		rebootDeviceNeeded=1
 	fi
 	ifconfig | grep brlan0
 	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not up" 
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		echo "[`getDateTime`] Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
@@ -177,9 +177,9 @@ rebootDeviceNeeded=0
 	   destinationError=`echo $ssidEnable | grep "Can't find destination component"`
        if [ "$destinationError" != "" ]
        then
-            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
        else
-            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
        fi            
 	fi
 
@@ -195,15 +195,15 @@ rebootDeviceNeeded=0
                echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
            fi
         else
-            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
 
 	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
 	    if [ "$pandm_timeout" != "" ]; then
-			echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm parameter time out"
+			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter time out"
 			cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
 			cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
 			if [ "$cr_timeout" != "" ]; then
-				echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
 				PANDM_PID=`pidof CcspPandMSsp`
 				rm -rf /tmp/pam_initialized
 				systemctl restart CcspPandMSsp.service
@@ -226,13 +226,13 @@ rebootDeviceNeeded=0
 			   # We need to verify if it was a dmcli crash or is WiFi really down
 			   isDown=`echo $ssidStatus_5 | grep "Down"`
 			   if [ "$isDown" != "" ]; then
-				  echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+				  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
 			   else
-				  echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
+				  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
 			   fi
 			fi
 		else
-		   echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+		   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
 		fi
 	fi
 
@@ -250,7 +250,7 @@ rebootDeviceNeeded=0
 		   echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
 		fi
 	else
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
 	fi
 
 	# If bridge mode is not set and WiFI is not disabled by user,
@@ -268,13 +268,13 @@ rebootDeviceNeeded=0
 				# We need to verify if it was a dmcli crash or is WiFi really down
 				isDown=`echo $ssidStatus_2 | grep "Down"`
 				if [ "$isDown" != "" ]; then
-					echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
+					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
 				else
-					echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
+					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
 				fi
 			fi
 		else
-		   echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+		   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
 		fi
 	fi
         
