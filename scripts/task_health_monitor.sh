@@ -217,10 +217,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		       $UTOPIA_PATH/service_multinet_exec multinet-start 3
 		       ifconfig -a | grep l2sd0.102
 		       if [ $? == 1 ]; then
-		          echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
+		          echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
 		       fi
 		     else
-		       echo "[RKDB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
+		       echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
 		     fi
 		else
 		   echo "XfinityWifi is enabled and l2sd0.102 is present"  
@@ -240,10 +240,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		      $UTOPIA_PATH/service_multinet_exec multinet-start 4
 		      ifconfig -a | grep l2sd0.103
 		      if [ $? == 1 ]; then
-		         echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
+		         echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
 		      fi
 		   else
-		        echo "[RKDB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
+		        echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
 		   fi
 		else
 		   echo "Xfinitywifi is enabled and l2sd0.103 is present"
@@ -321,14 +321,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	ifconfig | grep brlan1
 	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
 		rebootNeededforbrlan1=1
 		rebootDeviceNeeded=1
 	fi
 
 	ifconfig | grep brlan0
 	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : brlan0 interface is not up" 
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not up" 
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		echo "[`getDateTime`] Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
@@ -338,53 +338,53 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	ifconfig -a | grep l2sd0.100
     if [ $? == 1 ]; then
-        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not created try creating it"
+        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.100 interface is not created try creating it"
         sysevent set multinet_1-status stopped
         $UTOPIA_PATH/service_multinet_exec multinet-start 1
         ifconfig -a | grep l2sd0.100
         if [ $? == 1 ]; then
-           echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 is not created at First Retry, try again after 2 sec"
+           echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 is not created at First Retry, try again after 2 sec"
            sleep 2
            sysevent set multinet_1-status stopped
            $UTOPIA_PATH/service_multinet_exec multinet-start 1
 		   ifconfig -a | grep l2sd0.100
 	       if [ $? == 1 ]; then
-				echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 is not created after Second Retry, no more retries !!!"
+				echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 is not created after Second Retry, no more retries !!!"
 		   fi 	
         else
-           echo "[RKDB_PLATFORM_ERROR] : l2sd0.100 Created at First Retry itself"
+           echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 Created at First Retry itself"
         fi
         logNetworkInfo 
     else
         ifconfig l2sd0.100 | grep UP
         if [ $? == 1 ]; then
-           echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
+           echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
            logNetworkInfo
         fi
     fi
 
     ifconfig -a | grep l2sd0.101
     if [ $? == 1 ]; then
-        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not created try creatig it" 
+        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.101 interface is not created try creatig it" 
         sysevent set multinet_2-status stopped
         $UTOPIA_PATH/service_multinet_exec multinet-start 2
         ifconfig -a | grep l2sd0.101
         if [ $? == 1 ]; then
-           echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 is not created at First Retry, try again after 2 sec"
+           echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 is not created at First Retry, try again after 2 sec"
            sleep 2
            sysevent set multinet_2-status stopped
            $UTOPIA_PATH/service_multinet_exec multinet-start 2
 		   ifconfig -a | grep l2sd0.101
 	       if [ $? == 1 ]; then
-				echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 is not created after Second Retry, no more retries !!!"
+				echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 is not created after Second Retry, no more retries !!!"
 		   fi
         else
-           echo "[RKDB_PLATFORM_ERROR] : l2sd0.101 created at First Retry itself"
+           echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 created at First Retry itself"
         fi
 	else
         ifconfig l2sd0.101 | grep UP
         if [ $? == 1 ]; then
-           echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
+           echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
            fi
     fi
 
@@ -404,9 +404,9 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
            destinationError=`echo $ssidEnable | grep "Can't find destination component"`
            if [ "$destinationError" != "" ]
            then
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
            else
-                echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+                echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
            fi
         fi
 
@@ -422,15 +422,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
            fi
         else
-            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
 
 	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
 	    if [ "$pandm_timeout" != "" ]; then
-		echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm parameter time out"
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter time out"
 		cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
 		cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
 		if [ "$cr_timeout" != "" ]; then
-			echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
 			PANDM_PID=`pidof CcspPandMSsp`
 			if [ "$PANDM_PID" != "" ]; then
 				kill -9 $PANDM_PID
@@ -457,13 +457,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                    # We need to verify if it was a dmcli crash or is WiFi really down
 		           isDown=`echo $ssidStatus_5 | grep "Down"`
 		           if [ "$isDown" != "" ]; then
-                      echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+                      echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
                    else
-                      echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
+                      echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
                    fi
                 fi
             else
-               echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+               echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
             fi
         fi
 
@@ -481,7 +481,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             fi
         else
-            echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
         fi
 
         # If bridge mode is not set and WiFI is not disabled by user,
@@ -499,13 +499,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                     # We need to verify if it was a dmcli crash or is WiFi really down
 		            isDown=`echo $ssidStatus_2 | grep "Down"`
 		            if [ "$isDown" != "" ]; then
-                        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
+                        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
                     else
-                        echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
+                        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
                     fi
                 fi
             else
-               echo "[`getDateTime`] [RKDB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+               echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
             fi
         fi
         
