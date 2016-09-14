@@ -331,13 +331,17 @@ resetNeeded()
 			then
 				
 				# Storing Information before corrective action
-		 		storeInformation "pam"
+		 		storeInformation
 				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
 				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
 				echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			else
 				# Storing Information before corrective action
-				storeInformation
+				if [ "$ProcessName" == "CcspMoCA" ]; then
+					storeInformation "moca"
+				else
+					storeInformation
+				fi
 				vendor=`getVendorName`
 				modelName=`getModelName`
 				CMMac=`getCMMac`
@@ -421,6 +425,13 @@ resetNeeded()
 				$BINPATH/CcspMtaAgentSsp -subsys $Subsys
 				cd -
 
+			elif [ "$ProcessName" == "CcspMoCA" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/moca
+				$BINPATH/CcspMoCA -subsys $Subsys
+				cd -
+
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
@@ -446,10 +457,10 @@ storeInformation()
 {
 
 # Check if request is for P&M Reset 
-isPAM=0
-if [ "$1" = "pam" ]
+isMOCA=0
+if [ "$1" = "moca" ]
 then
-	isPAM=1
+	isMOCA=1
 fi
 	totalMemSys=`free | awk 'FNR == 2 {print $2}'`
 	usedMemSys=`free | awk 'FNR == 2 {print $3}'`
@@ -519,8 +530,8 @@ fi
 		fi
 	done
 
-	# If the crashed process is P&M, we cannot get MoCA parameters
-	if [ $isPAM -eq 0 ]
+	# If the crashed process is MoCA, we cannot get MoCA parameters
+	if [ $isMOCA -eq 0 ]
 	then
 		# Need to capture MoCA stats
 
@@ -540,8 +551,8 @@ fi
 		echo "[`getDateTime`] RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
 		echo "[`getDateTime`] RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
 	else
-		echo "[`getDateTime`] RDKB_SELFHEAL : MoCA stats are not available due to P&M crash"
-		isPAM=0
+		echo "[`getDateTime`] RDKB_SELFHEAL : MoCA stats are not available due to MoCA crash"
+		isMOCA=0
 	fi
 
 		
