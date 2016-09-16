@@ -4,6 +4,11 @@ TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
 
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
+
 source $UTOPIA_PATH/log_env_var.sh
 CM_INTERFACE=wan0
 
@@ -347,7 +352,7 @@ resetNeeded()
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd $folderName
-				sh run_subagent.sh /var/tmp/cm_snmp_ma &
+				sh run_subagent.sh $CCSP_SNMP_AGENT_COM &
 				cd -	
 			
 			elif [ "$ProcessName" == "CcspHomeSecurity" ]
@@ -490,18 +495,6 @@ storeInformation()
 
 logNetworkInfo()
 {
-	echo "RDKB_SELFHEAL : interface l2sd0 :"
-	ifconfig l2sd0; 
-	echo "-------------------------------------------------------"
-	echo "RDKB_SELFHEAL : interface l2sd0.100 :"
-	ifconfig l2sd0.100;
-	echo "-------------------------------------------------------"
-	echo "RDKB_SELFHEAL : interface l2sd0.101 :"
-	ifconfig l2sd0.101;
-	echo "-------------------------------------------------------"
-	echo "RDKB_SELFHEAL : ip link :"
-	ip link | grep l2sd0
-	echo "-------------------------------------------------------"
 	echo "RDKB_SELFHEAL : brctl o/p :"
 	brctl show
 	echo "-------------------------------------------------------"
@@ -518,6 +511,8 @@ logNetworkInfo()
 	ip route list table all_lans
 	echo "-------------------------------------------------------"
 
+	#The Parameter l2sd0 in this instance is telling the script that it's being called 
+	# for information and not due to a crashed process. This should be refactored
 	/rdklogger/backupLogs.sh "false" "l2sd0"
 
 }
