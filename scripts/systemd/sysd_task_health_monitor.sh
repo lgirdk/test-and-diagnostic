@@ -50,6 +50,7 @@ setRebootreason()
             echo "[`getDateTime`] Commit for Reboot Counter failed"
         fi
 }
+
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
 rebootDeviceNeeded=0
@@ -107,37 +108,12 @@ rebootDeviceNeeded=0
 	
 	fi
 
-	#Check if we support rsync dropbear 
-	if [ "$ARM_INTERFACE_IP" == "" ]
-	then
-	    DROPBEAR_PID=`pidof dropbear`
-	else
-	    DROPBEAR_PID=`ps | grep dropbear | grep -v "$ARM_INTERFACE_IP" | grep -v grep`
-	fi
-
-	dropbear_flagged=0
+	#Checking dropbear PID 
+	DROPBEAR_PID=`pidof dropbear`
 	if [ "$DROPBEAR_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-		dropbear_flagged=1
 		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-		sleep 3
-	fi
-
-	#Check dropbear is alive to do rsync/scp to/fro ATOM
-	if [ "$ARM_INTERFACE_IP" != "" ]
-	then
-           DROPBEAR_ENABLE=`ps | grep dropbear | grep $ARM_INTERFACE_IP`
-           if [ "$DROPBEAR_ENABLE" == "" ]
-           then
-               # No need to print this message as we have already printed the log message
-               if [ $dropbear_flagged -eq 0 ]
-               then
-                  dropbear_flagged=0
-                  echo "[`getDateTime`] RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-               fi
-               dropbear -E -B -p $ARM_INTERFACE_IP:22
-           fi
-        fi
+	fi	
 
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
