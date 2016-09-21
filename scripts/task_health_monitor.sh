@@ -565,6 +565,13 @@ loop=1
 else
    echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
 fi
+
+if [ -f $PING_PATH/arping_peer ]
+then
+    $PING_PATH/arping_peer
+else
+   echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
+fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 		cur_hr=`date +"%H"`
