@@ -188,6 +188,12 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		resetNeeded snmp snmp_subagent 
 	fi
 
+	# Checking CcspMoCA PID
+	MOCA_PID=`pidof CcspMoCA`
+	if [ "$MOCA_PID" = "" ]; then
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
+		resetNeeded moca CcspMoCA 
+	fi
 
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
