@@ -214,6 +214,8 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Validate",  UDPEchoConfig_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Commit",  UDPEchoConfig_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL-COM_SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL-COM_SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
@@ -244,6 +246,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Commit",  LogBackup_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Rollback",  LogBackup_Rollback);    
 
+    
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
 
     if( pGetCHProc != NULL)
