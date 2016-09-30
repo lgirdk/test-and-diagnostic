@@ -579,6 +579,26 @@
                         </parameter>
                     </parameters>
                 </object>
+				<object>
+					<name>X_RDKCENTRAL-COM_SpeedTest</name>
+					<objectType>object</objectType>
+					<functions>
+					<func_GetParamBoolValue>X_RDKCENTRAL-COM_SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
+					<func_SetParamBoolValue>X_RDKCENTRAL-COM_SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
+					</functions>
+					<parameters>
+					<parameter>
+						<name>Enable_Speedtest</name>
+						<type>boolean</type>
+						<syntax>bool</syntax>
+					</parameter>
+					 <parameter>
+						<name>Run</name>
+						<type>boolean</type>
+						<syntax>bool</syntax>
+					</parameter>
+					</parameters>
+				</object>
             </objects>
         </object>
         <object>
@@ -885,7 +905,7 @@
                         </parameter>
                  </parameters>
             </object>
-            </objects>
+			</objects>
         </object>
         <object>
             <name>LogBackup</name>

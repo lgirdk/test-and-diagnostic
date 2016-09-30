@@ -5212,3 +5212,117 @@ UDPEchoConfig_Rollback
 
     return 0;
 }
+
+
+/***********************************************************************
+
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.
+
+    *  SpeedTest_GetParamBoolValue
+    *  SpeedTest_GetParamBoolValue
+  
+***********************************************************************/
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_GetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL*                       pBool
+            );
+
+    description:
+
+        This function is called to retrieve Boolean parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL*                       pBool
+                The buffer of returned boolean value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+SpeedTest_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
+    {
+    } else
+    if ( AnscEqualString(ParamName, "Run", TRUE))
+    {
+    } else
+    	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_SetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL                        bValue
+            );
+
+    description:
+
+        This function is called to set BOOL parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL                        bValue
+                The updated BOOL value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+SpeedTest_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    /* check the parameter name and set the corresponding value */
+    if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
+    {
+    } else 
+    if ( AnscEqualString(ParamName, "Run", TRUE))
+    {
+    } else
+    	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
+    return FALSE;
+}
+
+
+
+

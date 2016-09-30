@@ -796,4 +796,33 @@ UDPEchoConfig_Rollback
         ANSC_HANDLE                 hInsContext
     );
 
+/***********************************************************************
+
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.
+
+    *  SpeedTest_GetParamBoolValue
+    *  SpeedTest_GetParamBoolValue
+  
+***********************************************************************/
+BOOL
+SpeedTest_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    );
+
+BOOL
+SpeedTest_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    );
+
+  
+
 #endif
