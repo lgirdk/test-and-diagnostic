@@ -6,6 +6,7 @@ if [ -f /etc/device.properties ]; then
    source /etc/device.properties
 fi
 
+TMPFS_THRESHOLD=85
 max_count=12
 DELAY=30
 	timestamp=`getDate`
@@ -133,3 +134,11 @@ DELAY=30
 	disk_usage="df"
 	eval $disk_usage
 	count=$((count + 1))
+
+	########### df related ########
+        TMPFS_CUR_USAGE=0
+	TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
+	if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
+	then
+		echo "[`getDateTime`] TMPFS_USAGE:$TMPFS_CUR_USAGE"
+	fi
