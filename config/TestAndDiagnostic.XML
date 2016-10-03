@@ -591,11 +591,13 @@
 						<name>Enable_Speedtest</name>
 						<type>boolean</type>
 						<syntax>bool</syntax>
+                        <writable>true</writable>
 					</parameter>
 					 <parameter>
 						<name>Run</name>
 						<type>boolean</type>
 						<syntax>bool</syntax>
+                        <writable>true</writable>
 					</parameter>
 					</parameters>
 				</object>

@@ -5312,12 +5312,16 @@ SpeedTest_SetParamBoolValue
         BOOL                        bValue
     )
 {
+    char cmd[128];
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
     } else 
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
+        memset(cmd, 0, sizeof(cmd));
+        AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+        system(cmd);
     } else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
     return FALSE;
