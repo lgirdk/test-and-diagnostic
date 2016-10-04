@@ -37,7 +37,7 @@ DELAY=30
         # Calculate the threshold if in use memory is greater than zero
         if [ $inUse -ne 0 ]
         then
-           echo "[`getDateTime`] ICCCTL_INFO:icctl in use memory is $inUse"
+           echo "[`getDateTime`] ICCCTL_IN_USE:$inUse"
            thresholdReached=$(( $inUse * 100 / $total ))
 
            # Log a message if threshold value of 25 is reached
@@ -48,7 +48,7 @@ DELAY=30
               echo "[`getDateTime`] ICCCTL_INFO:ICC Memory is below threshold $thresholdReached"
            fi
         else
-            echo "[`getDateTime`] ICCCTL_INFO:icctl in use memory is 0"
+            echo "[`getDateTime`] ICCCTL_IN_USE:0"
         fi
 
     fi
