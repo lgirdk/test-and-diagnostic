@@ -202,6 +202,10 @@ rebootNeeded()
 			if [ "$2" == "CPU" ] || [ "$2" == "MEM" ]
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
+			elif [ "$2" == "DS_MANAGER_HIGH_CPU" ]
+			then
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to downstream_manager process having high CPU"					
+				echo "[`getDateTime`] DS_MANAGER_HIGH_CPU : Rebooting due to downstream_manager process having high CPU"		
 			fi
 			$RDKLOGGER_PATH/backupLogs.sh "true" "$2"
 		fi	
