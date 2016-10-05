@@ -7,6 +7,7 @@ source $UTOPIA_PATH/log_env_var.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 rand_num_old=""
 source $TAD_PATH/corrective_action.sh
+source /etc/device.properties
 
 # Generate random time to start 
 WAN_INTERFACE="erouter0"
@@ -119,6 +120,17 @@ runPingTest()
 	elif [ "$ping4_success" -ne 1 ]
 	then
 		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+
+                if [ "$BOX_TYPE" = "XB3" ]
+                then
+                      dhcpStatus=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | awk '{print $5}'`
+                      wanIP=`ifconfig erouter0 | grep "inet addr" | cut -f2 -d: | cut -f1 -d" "`
+                      if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
+                      then
+                          echo "[`getDateTime`] EROUTER_DHCP_STATUS:Rebinding"
+                      fi
+                fi
+
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
