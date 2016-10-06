@@ -84,10 +84,14 @@ AC_CONFIG_FILES(
 	source/dmltad/Makefile
 	source/util/Makefile
 	source/Makefile
-    source-arm/diagnostic/BbhmDiagIpPing/Makefile
-    source-arm/dmltad/Makefile
-    source-mips/diagnostic/BbhmDiagIpPing/Makefile
-    source-mips/dmltad/Makefile
+	source-pc/TandDSsp/Makefile
+	source-pc/dmltad/Makefile
+	source-pc/util/Makefile
+	source-pc/Makefile
+        source-arm/diagnostic/BbhmDiagIpPing/Makefile
+        source-arm/dmltad/Makefile
+        source-mips/diagnostic/BbhmDiagIpPing/Makefile
+        source-mips/dmltad/Makefile
 	Makefile
 )
 
