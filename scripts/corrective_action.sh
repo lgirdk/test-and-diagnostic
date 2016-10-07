@@ -199,6 +199,12 @@ rebootNeeded()
 				syscfg set lastActiontakentime $storedTime
 				syscfg commit
 			fi
+
+			if [ "$1" == "ATOM_HANG" ]
+			then
+				SetRebootConfigForAtomHang
+			fi
+			
 			if [ "$2" == "CPU" ] || [ "$2" == "MEM" ]
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
@@ -206,6 +212,8 @@ rebootNeeded()
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to downstream_manager process having high CPU"					
 				echo "[`getDateTime`] DS_MANAGER_HIGH_CPU : Rebooting due to downstream_manager process having high CPU"		
+			else
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2"
 			fi
 			$RDKLOGGER_PATH/backupLogs.sh "true" "$2"
 		fi	
@@ -594,4 +602,38 @@ logNetworkInfo()
 
 	/rdklogger/backupLogs.sh "false" "l2sd0"
 
+}
+
+CheckRebootCretiriaForAtomHang()
+{
+	# As per requirement we need to reboot one time because of this case 
+	storedRebootTime=`syscfg get lastActiontakentimeforAtomHang`
+
+	if [ "$storedRebootTime" != "" ] || [ "$storedRebootTime" -ne 0 ]
+	then
+		currSysTime=$(date -u +"%s")
+		total_diff=$(($currSysTime-$storedRebootTime))
+		total_diff_in_minutes=$(($total_diff / 60))
+		total_diff_in_hours=$(($total_diff_in_minutes / 60))
+		if [ "$total_diff_in_hours" -ge 24 ]
+		then
+			# Reset the stored DB values
+			syscfg set todays_atom_reboot_count 0 
+			syscfg set lastActiontakentimeforAtomHang 0 
+
+			syscfg commit 
+		fi
+	fi
+}
+
+SetRebootConfigForAtomHang()
+{
+	# Set the reboot configuration for atom hang 
+	storedRebootTime=$(date -u +"%s")
+	syscfg set lastActiontakentimeforAtomHang $storedRebootTime
+
+	TODAYS_ATOM_REBOOT_COUNT=$(($TODAYS_ATOM_REBOOT_COUNT+1))
+	syscfg set todays_atom_reboot_count $TODAYS_ATOM_REBOOT_COUNT
+
+	syscfg commit
 }

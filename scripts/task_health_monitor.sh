@@ -105,6 +105,46 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] [RDKB_SELFHEAL] : Atom only reboot is triggered"
 	fi
 
+###########################################
+	if [ "$BOX_TYPE" = "XB3" ]; then
+		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
+		  wifi_timeout=`echo $wifi_check | grep "CCSP_ERR_TIMEOUT"`
+		  if [ "$wifi_timeout" != "" ]; then
+				  echo "[`getDateTime`] [RDKB_SELFHEAL] : Wifi query timeout"
+		  fi
+
+		  SSH_ATOM_TEST=$(ssh root@$ATOM_IP exit 2>&1)
+		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
+		  if [ "$SSH_ERROR" != "" ]; then
+				  echo "[`getDateTime`] [RDKB_SELFHEAL] : ssh to atom failed"
+		  fi
+
+		  if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
+		  then
+				  atom_hang_count=`sysevent get atom_hang_count`
+				  echo "[`getDateTime`] [RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
+				  if [ $atom_hang_count -ge 2 ]; then
+						  CheckRebootCretiriaForAtomHang
+						  atom_hang_reboot_count=`syscfg get todays_atom_reboot_count`
+						  if [ $atom_hang_reboot_count -eq 0 ]; then
+							  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
+							  reason="ATOM_HANG"
+							  rebootCount=1
+							  setRebootreason $reason $rebootCount
+							  rebootNeeded $reason ""
+						  else
+							  echo "[`getDateTime`] [RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
+						  fi
+				  else
+						  atom_hang_count=$((atom_hang_count + 1))
+						  sysevent set atom_hang_count $atom_hang_count
+				  fi
+		  else
+				  sysevent set atom_hang_count 0
+		  fi
+	fi
+###########################################
+
 	PAM_PID=`pidof CcspPandMSsp`
 	if [ "$PAM_PID" = "" ]; then
 		# Remove the P&M initialized flag
