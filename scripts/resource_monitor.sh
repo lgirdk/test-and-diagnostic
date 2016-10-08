@@ -16,6 +16,8 @@ DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 
+sysevent set atom_hang_count 0
+
 while [ $SELFHEAL_ENABLE = "true" ]
 do
 	RESOURCE_MONITOR_INTERVAL=`syscfg get resource_monitor_interval`
