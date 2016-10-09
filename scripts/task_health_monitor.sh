@@ -11,8 +11,6 @@ fi
 
 ping_failed=0
 ping_success=0
-TMPFS_MAX_USAGE=90
-TMPFS_CUR_USAGE=0
 PING_PATH="/usr/sbin"
 source $UTOPIA_PATH/log_env_var.sh
 
@@ -652,13 +650,3 @@ fi
 			fi
 		fi
 	fi
-
-
-TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
-echo "TMPFS partition usage is = $TMPFS_CUR_USAGE%"
-if [ "$TMPFS_CUR_USAGE" -ge "$TMPFS_MAX_USAGE" ]
-then
-			echo "[`getDateTime`] RDKB_REBOOT : tmpfs maximum size reached, rebooting the device"
-			rebootNeeded RM ""
-fi
-
