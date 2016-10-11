@@ -92,6 +92,9 @@ static ULONG last_tick;
 BOOL CosaIpifGetSetSupported(char * pParamName);
 #endif
 
+//SpeedTest
+static BOOL g_enable_speedtest = FALSE;
+
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
@@ -5266,9 +5269,15 @@ SpeedTest_GetParamBoolValue
     /* check the parameter name and return the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
+	    AnscTraceFlow(("Querying Enable_Speedtest : %d\n",g_enable_speedtest));
+	    *pBool = g_enable_speedtest;
+	    return TRUE;
     } else
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
+	    AnscTraceFlow(("Querying Speedtest Run \n"));
+	    *pBool = FALSE;
+	    return TRUE;
     } else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;
@@ -5316,12 +5325,23 @@ SpeedTest_SetParamBoolValue
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
+	    AnscTraceFlow(("Enable Speedtest : %d \n",bValue));
+	    g_enable_speedtest = bValue;
+	    return TRUE;
     } else 
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
-        memset(cmd, 0, sizeof(cmd));
-        AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
-        system(cmd);
+	    if( g_enable_speedtest )
+	    {
+            memset(cmd, 0, sizeof(cmd));
+            AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+	        printf("Executing speedtest...\n");
+	        AnscTraceFlow(("Executing Speedtest..\n"));
+            system(cmd);
+	    }
+	    else	
+    	    AnscTraceWarning(("Speed Test feature not enabled\n")); 
+	    return TRUE;
     } else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
     return FALSE;
