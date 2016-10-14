@@ -381,6 +381,23 @@ fi
 		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : l2sd0.101 interface is not created" 
 	fi
 
+ 	SYSEVENT_PID=`pidof syseventd`
+	if [ "$SYSEVENT_PID" == "" ]
+	then
+                if [ ! -f "$needSelfhealReboot" ]
+                then
+			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
+			echo "[`getDateTime`] Setting Last reboot reason"
+			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
+			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+			touch $needSelfhealReboot
+			$RDKLOGGER_PATH/backupLogs.sh "true" "syseventd"
+		else
+			rm -rf $needSelfhealReboot
+		fi
+
+	fi
+	
 	rm -rf /etc/cron/cron.everyminute/selfheal_bootup.sh
 else
 	echo "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
