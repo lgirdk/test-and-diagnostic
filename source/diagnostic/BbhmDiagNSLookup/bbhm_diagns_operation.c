@@ -292,6 +292,7 @@ BbhmDiagnsStart
     {
         pProperty->Status = BBHM_NS_LOOKUP_STATUS_ABORT;
         pMyObject->Stop(hThisObject);
+        AnscFreeMemory(query_name); /*RDKB-7453, CID-32901, free unused memory*/
         return  ANSC_STATUS_FAILURE;
     }
     pQuery->QueryId = AnscDnsGetId(pDnsHeader);
@@ -319,6 +320,7 @@ BbhmDiagnsStart
 
     pProperty->PktsSent++;
 
+    AnscFreeMemory(query_name); /*RDKB-7453, CID-32901, free unused memory*/
     return  returnStatus;
 
 }
