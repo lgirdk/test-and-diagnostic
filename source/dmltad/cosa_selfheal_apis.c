@@ -494,24 +494,25 @@ CosaSelfHealRemove
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
 
-    /* Remove necessary resounce */
-    if ( pMyObject->pConnTest->pIPv4Table)
-    {
-        AnscFreeMemory(pMyObject->pConnTest->pIPv4Table );
-    } 
-
-    if ( pMyObject->pConnTest->pIPv6Table)
-    {
-        AnscFreeMemory(pMyObject->pConnTest->pIPv6Table );
-    } 
-
+    /*RDKB-7457, CID-33295, null check before free */
     if ( pMyObject->pConnTest)
     {
+        /* Remove necessary resounce */
+        if ( pMyObject->pConnTest->pIPv4Table)
+        {
+            AnscFreeMemory(pMyObject->pConnTest->pIPv4Table );
+        }
+        if ( pMyObject->pConnTest->pIPv6Table)
+        {
+            AnscFreeMemory(pMyObject->pConnTest->pIPv6Table );
+        }
         AnscFreeMemory(pMyObject->pConnTest);
-    } 
+        pMyObject->pConnTest = NULL;
+    }
     if ( pMyObject->pResMonitor )
     {
         AnscFreeMemory( pMyObject->pResMonitor );
+        pMyObject->pResMonitor = NULL;
     }
 
     /* Remove self */
