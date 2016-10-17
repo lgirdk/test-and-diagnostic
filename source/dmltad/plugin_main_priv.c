@@ -158,6 +158,8 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Validate",  UDPEchoConfig_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Commit",  UDPEchoConfig_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
+	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);

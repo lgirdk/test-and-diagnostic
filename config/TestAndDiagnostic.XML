@@ -583,8 +583,8 @@
 					<name>X_RDKCENTRAL-COM_SpeedTest</name>
 					<objectType>object</objectType>
 					<functions>
-					<func_GetParamBoolValue>X_RDKCENTRAL-COM_SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
-					<func_SetParamBoolValue>X_RDKCENTRAL-COM_SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
+					<func_GetParamBoolValue>SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
+					<func_SetParamBoolValue>SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
 					</functions>
 					<parameters>
 					<parameter>
