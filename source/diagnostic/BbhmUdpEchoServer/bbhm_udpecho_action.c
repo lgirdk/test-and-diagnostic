@@ -144,7 +144,7 @@ bbhmUdpechoStartUdpEchoTask
     USHORT                          usPort              		= 0;
     char                            port[6]             		= {0};
     int                             iReturn             		= 0;
-    char                            address[64]         		= {0};
+    char                            address[NI_MAXHOST]         = {0}; /*RDKB-7455, CID-33431, buffer should be of NI_MAXHOST length*/
 
     if ( !pMyObject->bActive )
     {
