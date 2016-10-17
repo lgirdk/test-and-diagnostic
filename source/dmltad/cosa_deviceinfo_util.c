@@ -207,8 +207,8 @@ CosaDmlDiGetModelName
         ULONG*                      pulSize
     )
 {    
-    UCHAR model[128];
-    char temp[2];
+    UCHAR model[128] = {0};
+    char temp[3] = {0}; /*RDKB-7456, CID-33472, should at least 3 bytes to hold null termination */
 
     memset(model,0,128);
 
@@ -723,7 +723,13 @@ void COSADmlGetProcessInfo(PCOSA_DATAMODEL_PROCSTATUS p_info)
 
         }
     }
-        
+
+    /*RDKB-7456, CID-33177, free unused resources*/
+    if(dir)
+    {
+        closedir(dir);
+    }
+
     if ( i != p_info->ProcessNumberOfEntries )
     {
         p_info->ProcessNumberOfEntries = i;
@@ -737,6 +743,9 @@ void test_get_proc_info()
      PCOSA_DATAMODEL_PROCSTATUS p_info = (PCOSA_DATAMODEL_PROCSTATUS)CosaProcStatusCreate();
 
      if (p_info)  COSADmlGetProcessInfo(p_info);
+
+     /*RDKB-7456, CID-33444, free unused resources before exit */
+     COSADmlRemoveProcessInfo(p_info);
 }
 
 typedef  struct
