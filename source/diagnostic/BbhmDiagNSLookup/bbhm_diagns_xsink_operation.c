@@ -181,6 +181,12 @@ BbhmDiagnsXsinkAccept
     PANSC_XSOCKET_OBJECT            pNewXsocket       = (PANSC_XSOCKET_OBJECT          )hNewXsocket;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pNewXsink         = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )BbhmDiagnsXsinkCreate(pXsink->hOwnerContext);
 
+    /*RDKB-7454, CID-33040, free unused resources*/
+    if(pNewXsink)
+    {
+        BbhmDiagnsXsinkRemove(pNewXsink);
+    }
+
     return  ANSC_STATUS_UNAPPLICABLE;
 }
 
