@@ -121,6 +121,7 @@ static int _GetARPCacheEntries (int *count, arpHost_t **out_hosts)
            hosts = (arpHost_t *) realloc(hosts, sizeof(arpHost_t) * (ct+1));
            if (NULL == hosts) {
                unlink(ARP_CACHE_FILE);
+               fclose(fp); /*RDKB-7460, CID-33311, free unused resources*/
                return ERR_INSUFFICIENT_MEM;
            }
            s_parse_arp_cache(line, &hosts[ct]);
@@ -167,7 +168,7 @@ CosaDmlDiagGetARPTablePriv
         PULONG                      pulCount
     )
 {
-    arpHost_t *host;
+    arpHost_t *host = NULL;
     PCOSA_DML_DIAG_ARP_TABLE pTable = NULL;
     int i = 0, count;
     unsigned int mac[6];
@@ -187,8 +188,14 @@ CosaDmlDiagGetARPTablePriv
                 i++;
             }
             *pulCount = count;
-            free(host);
         }
     }
+
+    /*RDKB-7460,CID-33043, free unused resources*/
+    if(host)
+    {
+        free(host);
+    }
+
     return pTable;
 }
