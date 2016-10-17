@@ -166,6 +166,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             if (ptr == NULL) {
                 if (hops) free(hops);
                 fprintf(stderr, "%s: no memory\n", __FUNCTION__);
+                pclose(fp);/*RDKB-7458, CID-33358, free unused resources before exit */
                 return DIAG_ERR_NOMEM;
             }
             hops = ptr;
