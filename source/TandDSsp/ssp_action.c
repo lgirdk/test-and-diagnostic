@@ -103,6 +103,7 @@ extern  PCCSP_CCD_INTERFACE              pTadCcdIf;
 extern  ANSC_HANDLE                     bus_handle;
 extern  char                            g_Subsystem[32];
 
+static  ANSC_HANDLE                     hDiagPlugin; /*RDKB-7459, CID-33428, global for TandDSsp lib handle*/
 static  COMPONENT_COMMON_DM             CommonDm = {0};
 
 #define  COSA_PLUGIN_XML_FILE           "/usr/ccsp/tad/TestAndDiagnostic.XML"
@@ -226,6 +227,17 @@ ssp_engage_tad
 
     g_DslhDataModelAgent->SetFcContext((ANSC_HANDLE)g_DslhDataModelAgent, (ANSC_HANDLE)pTadFcContext);
 
+    /*RDKB-7459, CID-33428, null check before use */
+    if(!pDslhCpeController)
+    {
+        pDslhCpeController = DslhCreateCpeController(NULL, NULL, NULL);
+        if ( !pDslhCpeController )
+        {
+            CcspTraceWarning(("Null Value, CANNOT Create pDslhCpeController... Exit!\n"));
+            return ANSC_STATUS_RESOURCES;
+        }
+    }
+
     pDslhCpeController->AddInterface((ANSC_HANDLE)pDslhCpeController, (ANSC_HANDLE)MsgHelper_CreateCcdMbiIf((void*)bus_handle, g_Subsystem));
     pDslhCpeController->AddInterface((ANSC_HANDLE)pDslhCpeController, (ANSC_HANDLE)pTadCcdIf);
     pDslhCpeController->SetDbusHandle((ANSC_HANDLE)pDslhCpeController, bus_handle);
@@ -242,9 +254,12 @@ ssp_engage_tad
 
     if ( TRUE )
     {
-        ANSC_HANDLE hDiagPlugin = NULL;
 
-        hDiagPlugin = (ANSC_HANDLE)AnscLoadLibrary(COSA_DIAG_PLUGIN_LIBRARY_NAME);
+        /*RDKB-7459, CID-33428, Load Lib if handle is null */
+        if( hDiagPlugin == NULL)
+        {
+            hDiagPlugin = (ANSC_HANDLE)AnscLoadLibrary(COSA_DIAG_PLUGIN_LIBRARY_NAME);
+        }
 
         if( hDiagPlugin == NULL)
         {
@@ -485,8 +500,19 @@ ssp_cancel_tad
     (
     )
 {
-    pDslhCpeController->Cancel((ANSC_HANDLE)pDslhCpeController);
-    AnscFreeMemory(pDslhCpeController);
+
+    /*RDKB-7459, CID-33428, null check and free */
+    if(pDslhCpeController)
+    {
+        pDslhCpeController->Cancel((ANSC_HANDLE)pDslhCpeController);
+        AnscFreeMemory(pDslhCpeController);
+        pDslhCpeController = (PDSLH_CPE_CONTROLLER_OBJECT )NULL;
+    }
+    if(hDiagPlugin)
+    {
+        AnscFreeLibrary(hDiagPlugin);
+        hDiagPlugin = NULL;
+    }
 
     return ANSC_STATUS_SUCCESS;
 }
