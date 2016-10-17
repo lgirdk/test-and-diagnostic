@@ -181,6 +181,12 @@ BbhmDiagipSinkAccept
     PANSC_XSOCKET_OBJECT            pNewSocket        = (PANSC_XSOCKET_OBJECT          )hNewSocket;
     PBBHM_IP_PING_SINK_OBJECT       pNewSink          = (PBBHM_IP_PING_SINK_OBJECT     )BbhmDiagipSinkCreate(pSink->hOwnerContext);
 
+    /*RDKB-7450, CID-33258; free unused memeory allocated*/
+    if(pNewSink)
+    {
+        BbhmDiagitSinkRemove(pNewSink);
+    }
+ 
     return  ANSC_STATUS_UNAPPLICABLE;
 }
 
