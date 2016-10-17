@@ -11,6 +11,7 @@ fi
 
 ping_failed=0
 ping_success=0
+SyseventdCrashed="/rdklogs/syseventd_crashed"
 PING_PATH="/usr/sbin"
 source $UTOPIA_PATH/log_env_var.sh
 
@@ -120,6 +121,17 @@ rebootDeviceNeeded=0
 	if [ "$LIGHTTPD_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		sh /etc/webgui.sh
+	fi
+# Checking syseventd PID
+ 	SYSEVENT_PID=`pidof syseventd`
+	if [ "$SYSEVENT_PID" == "" ]
+	then
+		if [ ! -f "$SyseventdCrashed"  ]
+		then
+			echo "[`getDateTime`] [RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window." 
+			touch $SyseventdCrashed
+		fi
+		rebootDeviceNeeded=1
 	fi
 	ifconfig | grep brlan1
 	if [ $? == 1 ]; then
