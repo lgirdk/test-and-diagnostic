@@ -189,7 +189,7 @@ do
 			if [ $Curr_CPULoad_Avg -ge $CPU_THRESHOLD ]; then
 				bootup_time_sec=`cat /proc/uptime | cut -d'.' -f1`
 				if [ $bootup_time_sec -ge 2700 ]; then
-					downstream_manager_cpu_usage=`top -bn1 | head -n6 | grep -v top | grep downstream_manager | awk -F' ' '{print $7}' | cut -d'%' -f1`
+					downstream_manager_cpu_usage=`top -bn1 | head -n6 | grep -v top | grep downstream_manager | awk -F' ' '{print $8}' | cut -d'%' -f1`
 					if [ $downstream_manager_cpu_usage -ge 25 ]; then
 						rebootNeeded RM DS_MANAGER_HIGH_CPU
 					fi				
