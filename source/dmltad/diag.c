@@ -211,29 +211,44 @@ static int inet_is_local(const struct in_addr *addr)
 static bool is_ipv6_same(const struct in6_addr *addr1,
         const struct in6_addr *addr2)
 {
-	int c1, c2, c3, c4;
-    c1 = addr1->s6_addr32[0] ^ addr2->s6_addr32[0];
-    c2 = addr1->s6_addr32[1] ^ addr2->s6_addr32[1];
-    c3 = addr1->s6_addr32[2] ^ addr2->s6_addr32[2];
-    c4 = addr1->s6_addr32[3] ^ addr2->s6_addr32[3];
-	return ((c1 | c2 | c3 | c4) == 0);
+	int i;
+	
+	for(i=0;i<4;i++)
+	{	
+		if(!(addr1->s6_addr32[i]==addr2->s6_addr32[i]));
+		{
+			return 0;
+		}
+		
+	}
+	return 1;
 }
 static bool is_prefix_equal(const struct in6_addr *addrs1,
         const struct in6_addr *addrs2,
-        unsigned int prelen)
+        unsigned int prefixlen)
 {
-    const uint32_t *a1 = addrs1->s6_addr32;
-    const uint32_t *a2 = addrs2->s6_addr32;
-    unsigned int pcmu, pinu;
-
+    unsigned int pdw, pbi, pdw2,i;
+	unsigned int mask=0x1f;
+	bool bFlag = true;
+	
     /* check complete u32 in prefix */
-    pcmu = prelen >> 5;
-    if (pcmu && memcmp(a1, a2, pcmu << 2)) 
+    pdw = prefixlen >> 5;
+	pdw2 = pdw<<2;
+	for(i=0;i<pdw2;i++)
+	{
+		if(!(addrs1->s6_addr32[i]==addrs2->s6_addr32[i]))
+		{
+			bFlag = false;
+			break;
+		}
+	}
+    if (pdw && bFlag)
         return false;
 
     /* check incomplete u32 in prefix */
-    pinu = prelen & 0x1f;
-    if (pinu && ((a1[pcmu] ^ a2[pcmu]) & htonl((0xffffffff) << (32 - pinu))))
+    pbi = prefixlen & mask;
+	mask = htonl((0xffffffff) << (32 - pbi));
+    if (pbi && ((addrs1->s6_addr32[pdw] ^ addrs2->s6_addr32[pdw]) & mask))
         return false;
 
     return true;
