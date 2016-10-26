@@ -70,10 +70,17 @@ runPingTest()
 	RESWAITTIME=$(($RESWAITTIME*$PINGCOUNT))
 
 
+        IPv4_Gateway_addr=""
+        IPv4_Gateway_addr=`sysevent get default_router`
+        
+        IPv6_Gateway_addr=""
+        erouterIP6=`sysevent get ipv6_dhcp6_addr | cut -f1 -d:`
 
-
-	IPv4_Gateway_addr=$(ip -4 route list table erouter | grep $WAN_INTERFACE | awk '$1 == "default" {print $3}')
-	IPv6_Gateway_addr=$(ip -6 route list table erouter | grep $WAN_INTERFACE | awk '$1 == "default" {print $3}')
+        if [ $erouterIP6 != "" ]
+        then
+           routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
+           IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d\/`     
+        fi
 
 	if [ "$IPv4_Gateway_addr" != "" ]
 	then
@@ -119,7 +126,12 @@ runPingTest()
 
 	elif [ "$ping4_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                if [ "$IPv4_Gateway_addr" != "" ]
+                then
+                   echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                else
+                   echo "[`getDateTime`] RDKB_SELFHEAL : No IPv4 Gateway Address detected"
+                fi
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
@@ -138,7 +150,13 @@ runPingTest()
 		fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+                if [ "$IPv6_Gateway_addr" != "" ]
+                then
+		            echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+                else
+                    echo "[`getDateTime`] RDKB_SELFHEAL : No IPv6 Gateway Address detected"
+                fi
+
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
