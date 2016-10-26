@@ -114,9 +114,59 @@ checkConditionsbeforeAction()
 
 }
 
+resetRouter()
+{
+	
+	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+	 if [ "$isIPv4" = "" ]
+	 then
+        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+        	 if [ "$isIPv6" != "" ]
+		 then
+			CMRegComplete=1
+		 else
+		   	CMRegComplete=0
+			echo "[`getDateTime`] RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+			return 1			
+		 fi
+	 else
+		CMRegComplete=1
+	 fi
+	
+	if [ "$CMRegComplete" -eq 1 ]
+	then
+
+	echo "RDKB_SELFHEAL : DNS Information :"
+	cat /etc/resolv.conf
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IPtable rules:"
+	iptables -S
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Ipv4 Route Information:"
+	ip route
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IProute Information:"
+	route
+	echo "-------------------------------------------------------"
+
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IP6table rules:"
+	ip6tables -S
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Ipv6 Route Information:"
+	ip -6 route
+	echo "-------------------------------------------------------"
+
+	echo "[`getDateTime`] RDKB_REBOOT : Reset router due to PING connectivity test failure"
+
+	dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Router
+
+	fi
+
+}
+
 rebootNeeded()
 {
-
 
 	# Check for max subsystem reboot
 	# Implement as a indipendent script which can be accessed across both connectivity and resource scripts
@@ -155,31 +205,7 @@ rebootNeeded()
 		then
 			# Storing Information before corrective action
 			storeInformation
-			if [ "$1" == "PING" ]
-			then
-				echo "RDKB_SELFHEAL : DNS Information :"
-				cat /etc/resolv.conf
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IPtable rules:"
-				iptables -S
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv4 Route Information:"
-				ip route
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IProute Information:"
-				route
-				echo "-------------------------------------------------------"
-	
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IP6table rules:"
-				ip6tables -S
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv6 Route Information:"
-				ip -6 route
-				echo "-------------------------------------------------------"
 			
-				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to PING connectivity test failure"
-			fi
 
 			#touch $REBOOTNEEDED
 			TODAYS_REBOOT_COUNT=$(($TODAYS_REBOOT_COUNT+1))
@@ -443,6 +469,9 @@ resetNeeded()
 				cd /usr/ccsp/moca
 				$BINPATH/CcspMoCA -subsys $Subsys
 				cd -
+			elif [ "$ProcessName" == "PING" ]
+			then
+				resetRouter
 
 			elif [ "$3" == "noSubsys" ]
 			then 

@@ -134,7 +134,7 @@ runPingTest()
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-			rebootNeeded PING
+			resetNeeded "" PING
 		fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
@@ -142,14 +142,14 @@ runPingTest()
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-			rebootNeeded PING
+			resetNeeded "" PING
 		fi
 	else
 		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-			rebootNeeded PING
+			resetNeeded "" PING
 		fi
 	fi	
 
@@ -247,7 +247,7 @@ runPingTest()
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-					rebootNeeded PING
+					resetNeeded "" PING
 				fi
 			elif [ "$ping6_success" -ne 1 ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
 			then
@@ -255,7 +255,7 @@ runPingTest()
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-					rebootNeeded PING
+					resetNeeded "" PING
 				fi
 			else
 				echo "[`getDateTime`] RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
@@ -268,7 +268,7 @@ runPingTest()
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-					rebootNeeded PING
+					resetNeeded "" PING
 				fi
 	elif [ "$ping4_success" -ne 1 ]
 	then
@@ -276,7 +276,7 @@ runPingTest()
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-					rebootNeeded PING
+					resetNeeded "" PING
 				fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
@@ -284,7 +284,7 @@ runPingTest()
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-					rebootNeeded PING
+					resetNeeded "" PING
 				fi
 	else
 		echo "[`getDateTime`] RDKB_SELFHEAL : Connectivity Test is Successfull"
