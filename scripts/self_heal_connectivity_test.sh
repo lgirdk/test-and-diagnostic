@@ -119,11 +119,14 @@ runPingTest()
 		fi
 	fi
 
-	if [ "$ping4_success" -eq 1 ] &&  [ "$ping6_success" -eq 1 ]
+	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
-
-		echo "[`getDateTime`] RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
-
+		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
+		if [ `getCorrectiveActionState` = "true" ]
+		then
+			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			resetNeeded "" PING
+		fi
 	elif [ "$ping4_success" -ne 1 ]
 	then
                 if [ "$IPv4_Gateway_addr" != "" ]
@@ -163,12 +166,7 @@ runPingTest()
 			resetNeeded "" PING
 		fi
 	else
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
-		if [ `getCorrectiveActionState` = "true" ]
-		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
-			resetNeeded "" PING
-		fi
+		echo "[`getDateTime`] RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
 	fi	
 
 	ping4_success=0
