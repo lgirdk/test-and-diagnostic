@@ -20,37 +20,7 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 source $TAD_PATH/corrective_action.sh
 
 rebootDeviceNeeded=0
-setRebootreason()
-{
 
-        echo "[`getDateTime`] Setting rebootReason to $1 and rebootCounter to $2"
-        
-        syscfg set X_RDKCENTRAL-COM_LastRebootReason $1
-        result=`echo $?`
-        if [ "$result" != "0" ]
-        then
-            echo "[`getDateTime`] SET for Reboot Reason failed"
-        fi
-        syscfg commit
-        result=`echo $?`
-        if [ "$result" != "0" ]
-        then
-            echo "[`getDateTime`] Commit for Reboot Reason failed"
-        fi
-
-        syscfg set X_RDKCENTRAL-COM_LastRebootCounter $2
-        result=`echo $?`
-        if [ "$result" != "0" ]
-        then
-            echo "[`getDateTime`] SET for Reboot Counter failed"
-        fi
-        syscfg commit
-        result=`echo $?`
-        if [ "$result" != "0" ]
-        then
-            echo "[`getDateTime`] Commit for Reboot Counter failed"
-        fi
-}
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
@@ -327,6 +297,12 @@ rebootDeviceNeeded=0
 	   echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
 	fi
 	
+if [ -f $PING_PATH/arping_peer ]
+then
+    $PING_PATH/arping_peer
+else
+   echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
+fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 		cur_hr=`date +"%H"`
