@@ -119,6 +119,56 @@ checkConditionsbeforeAction()
 
 }
 
+resetRouter()
+{
+	
+	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+	 if [ "$isIPv4" = "" ]
+	 then
+        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+        	 if [ "$isIPv6" != "" ]
+		 then
+			CMRegComplete=1
+		 else
+		   	CMRegComplete=0
+			echo "[`getDateTime`] RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+			return 1			
+		 fi
+	 else
+		CMRegComplete=1
+	 fi
+	
+	if [ "$CMRegComplete" -eq 1 ]
+	then
+
+	echo "RDKB_SELFHEAL : DNS Information :"
+	cat /etc/resolv.conf
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IPtable rules:"
+	iptables -S
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Ipv4 Route Information:"
+	ip route
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IProute Information:"
+	route
+	echo "-------------------------------------------------------"
+
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : IP6table rules:"
+	ip6tables -S
+	echo "-------------------------------------------------------"
+	echo "[`getDateTime`] RDKB_SELFHEAL : Ipv6 Route Information:"
+	ip -6 route
+	echo "-------------------------------------------------------"
+
+	echo "[`getDateTime`] RDKB_REBOOT : Reset router due to PING connectivity test failure"
+
+	dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Router
+
+	fi
+
+}
 rebootNeeded()
 {
 
@@ -160,31 +210,7 @@ rebootNeeded()
 		then
 			# Storing Information before corrective action
 			storeInformation
-			if [ "$1" == "PING" ]
-			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : DNS Information :"
-				cat /etc/resolv.conf
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IPtable rules:"
-				iptables -S
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv4 Route Information:"
-				ip route
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IProute Information:"
-				route
-				echo "-------------------------------------------------------"
-	
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : IP6table rules:"
-				ip6tables -S
-				echo "-------------------------------------------------------"
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ipv6 Route Information:"
-				ip -6 route
-				echo "-------------------------------------------------------"
 			
-				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to PING connectivity test failure"
-			fi
 
 			#touch $REBOOTNEEDED
 			TODAYS_REBOOT_COUNT=$(($TODAYS_REBOOT_COUNT+1))
@@ -207,6 +233,12 @@ rebootNeeded()
 			if [ "$2" == "CPU" ] || [ "$2" == "MEM" ]
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
+			elif [ "$2" == "DS_MANAGER_HIGH_CPU" ]
+			then
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to downstream_manager process having high CPU"					
+				echo "[`getDateTime`] DS_MANAGER_HIGH_CPU : Rebooting due to downstream_manager process having high CPU"		
+			else
+				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2"
 			fi
 			$RDKLOGGER_PATH/backupLogs.sh "true" "$2"
 		fi	
@@ -515,4 +547,35 @@ logNetworkInfo()
 	# for information and not due to a crashed process. This should be refactored
 	/rdklogger/backupLogs.sh "false" "l2sd0"
 
+}
+
+setRebootreason()
+{
+        echo "[`getDateTime`] Setting rebootReason to $1 and rebootCounter to $2"
+        
+        syscfg set X_RDKCENTRAL-COM_LastRebootReason $1
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] SET for Reboot Reason failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] Commit for Reboot Reason failed"
+        fi
+
+        syscfg set X_RDKCENTRAL-COM_LastRebootCounter $2
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] SET for Reboot Counter failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo "[`getDateTime`] Commit for Reboot Counter failed"
+        fi
 }
