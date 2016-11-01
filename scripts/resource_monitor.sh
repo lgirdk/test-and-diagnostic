@@ -56,6 +56,12 @@ do
 		echo "<$level>CABLEMODEM[$vendor]:<99000006><$timestamp><$CMMac><$modelName> RM Memory threshold reached"
 		
 		threshold_reached=1
+
+		echo "[`getDateTime`] Setting Last reboot reason"
+		reason="MEM_THRESHOLD"
+		rebootCount=1
+		setRebootreason $reason $rebootCount
+
 		rebootNeeded RM MEM
 	fi
 	# Avg CPU usage reading from /proc/stat
@@ -182,6 +188,12 @@ do
 #			echo "<$level>CABLEMODEM[$vendor]:<99000005><$timestamp><$CMMac><$modelName> RM CPU threshold reached"
 #		
 #			threshold_reached=1
+#
+#			echo "[`getDateTime`] Setting Last reboot reason"
+#			reason="CPU_THRESHOLD"
+#			rebootCount=1
+#			setRebootreason $reason $rebootCount
+#
 #			rebootNeeded RM CPU
 #		fi
 		if [ "$BOX_TYPE" = "XB3" ]
@@ -191,6 +203,12 @@ do
 				if [ $bootup_time_sec -ge 2700 ]; then
 					downstream_manager_cpu_usage=`top -bn1 | head -n6 | grep -v top | grep downstream_manager | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//'`
 					if [ $downstream_manager_cpu_usage -ge 25 ]; then
+
+						echo "[`getDateTime`] Setting Last reboot reason"
+						reason="DS_MANAGER_HIGH_CPU"
+						rebootCount=1
+						setRebootreason $reason $rebootCount
+
 						rebootNeeded RM DS_MANAGER_HIGH_CPU
 					fi				
 				fi
