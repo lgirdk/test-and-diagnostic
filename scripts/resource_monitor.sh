@@ -196,13 +196,25 @@ do
 #
 #			rebootNeeded RM CPU
 #		fi
+
+####################################################
+# Logic : 	If total CPU is 100% and boot time is more than 45 min,
+#		Take sum of the cpu consumption of top 5 downstream_manager processes.
+#		If total is more than 25%, reboot the box.
+
 		if [ "$BOX_TYPE" = "XB3" ]
                 then
 			if [ $Curr_CPULoad_Avg -ge $CPU_THRESHOLD ]; then
 				bootup_time_sec=`cat /proc/uptime | cut -d'.' -f1`
 				if [ $bootup_time_sec -ge 2700 ]; then
-					downstream_manager_cpu_usage=`top -bn1 | head -n6 | grep -v top | grep downstream_manager | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//'`
-					if [ $downstream_manager_cpu_usage -ge 25 ]; then
+					total_ds_cpu=0
+					ds_cpu_usage=`top -bn1 | grep downstream_manager | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//'`
+					for each_ds_cpu_usage in $ds_cpu_usage
+					do
+						total_ds_cpu=`expr $total_ds_cpu + $each_ds_cpu_usage`
+					done
+
+					if [ $total_ds_cpu -ge 25 ]; then
 
 						echo "[`getDateTime`] Setting Last reboot reason"
 						reason="DS_MANAGER_HIGH_CPU"
@@ -214,6 +226,8 @@ do
 				fi
 			fi
 		fi
+
+####################################################
 	fi
 #	sh $TAD_PATH/task_health_monitor.sh
 	if [ -f  /usr/bin/Selfhealutil ]
