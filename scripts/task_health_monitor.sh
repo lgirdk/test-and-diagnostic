@@ -327,7 +327,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                   dropbear_flagged=0
                   echo "[`getDateTime`] RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                fi
-               dropbear -E -B -p $ARM_INTERFACE_IP:22
+               dropbear -E -B -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
            fi
         fi
 
