@@ -287,6 +287,14 @@ CosaDmlGetSelfHealCfg(
 	pMyObject->MaxResetCnt = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "Selfheal_DiagnosticMode", buf, sizeof(buf));
+	pMyObject->DiagnosticMode = (!strcmp(buf, "true")) ? TRUE : FALSE;
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "diagMode_LogUploadFrequency", buf, sizeof(buf));
+	pMyObject->DiagModeLogUploadFrequency = atoi(buf);
+
+	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "ConnTest_PingInterval", buf, sizeof(buf));
 	pConnTest->PingInterval = atoi(buf);
 	memset(buf,0,sizeof(buf));
@@ -576,4 +584,76 @@ ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum)
 		return returnStatus;
 }
 
+ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject, 
+																    BOOL        bValue )
+{
+	ANSC_STATUS		ReturnStatus    = ANSC_STATUS_SUCCESS;
+	BOOLEAN 		bProcessFurther = TRUE;
 
+	/* Validate received param  */		
+	if( NULL == hThisObject )
+	{
+		bProcessFurther = FALSE;
+		ReturnStatus    = ANSC_STATUS_FAILURE;
+		CcspTraceError(("[%s] hThisObject is NULL\n", __FUNCTION__ ));
+	}
+
+	if( bProcessFurther )
+	{
+		PCOSA_DATAMODEL_SELFHEAL	  pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+		PCOSA_DML_CONNECTIVITY_TEST   pConnTest  = (PCOSA_DML_CONNECTIVITY_TEST)NULL;
+
+		pConnTest = pMyObject->pConnTest;
+
+		if( NULL == pConnTest )
+		{
+			bProcessFurther = FALSE;
+			ReturnStatus	= ANSC_STATUS_FAILURE;
+			CcspTraceError(("[%s] pConnTest is NULL\n", __FUNCTION__ ));
+		}
+
+		if( bProcessFurther )
+		{
+			/* 
+			  * Set connectivity corrective action flag based on DiagnosticMode 
+			  * flag as below,
+			  * 
+			  *  1. If "DiagnosticMode == TRUE" then need to set "ConnTest_CorrectiveAction 
+			  *      as FALSE". To restrict corrective action from connectivity test
+			  *
+			  *  2. If "DiagnosticMode == FALSE" then need to set "ConnTest_CorrectiveAction 
+			  *      as TRUE". To allow corrective action from connectivity test
+			  */
+			if ( 0 == syscfg_set( NULL, 
+								  "ConnTest_CorrectiveAction", 
+								  ( ( bValue == TRUE ) ?  "false" : "true" ) ) ) 
+			{
+				if ( 0 == syscfg_commit( ) ) 
+				{
+					pConnTest->CorrectiveAction = ( ( bValue == TRUE ) ?  FALSE : TRUE );
+				}
+			}
+			
+			/* 
+			  * Set diagnostic mode flag to restrict the corrective action from both resource monitor and self heal 
+			  * connectivity side 
+			  */
+			if ( 0 == syscfg_set( NULL, 
+								   "Selfheal_DiagnosticMode", 
+								   ( ( bValue == TRUE ) ?  "true" : "false" ) ) ) 
+			{
+				if ( 0 == syscfg_commit( ) ) 
+				{
+					pMyObject->DiagnosticMode = ( ( bValue == TRUE ) ?  TRUE : FALSE );
+				}
+			}
+
+			CcspTraceInfo(("[%s] DiagnosticMode:[ %d ] CorrectiveAction:[ %d ]\n",
+													__FUNCTION__,
+													pMyObject->DiagnosticMode,
+													pConnTest->CorrectiveAction ));
+		}
+	}
+
+	return ReturnStatus;
+}

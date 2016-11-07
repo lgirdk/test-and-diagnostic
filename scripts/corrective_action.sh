@@ -167,6 +167,16 @@ resetRouter()
 
 rebootNeeded()
 {
+    # Check and proceed further action based on diagnostic mode
+	# if return value is 1 then box is not in diagnostic mode
+	# if return value is 0 then box is in diagnostic mode
+	CheckAndProceedFurtherBasedonDiagnosticMode
+	return_value=$?
+	
+	if [ "$return_value" -eq 0 ]
+	then
+		return
+	fi
 
 	# Check for max subsystem reboot
 	# Implement as a indipendent script which can be accessed across both connectivity and resource scripts
@@ -303,6 +313,17 @@ fi
 
 resetNeeded()
 {
+	# Check and proceed further action based on diagnostic mode
+	# if return value is 1 then box is not in diagnostic mode
+	# if return value is 0 then box is in diagnostic mode
+	CheckAndProceedFurtherBasedonDiagnosticMode
+	return_value=$?
+	
+	if [ "$return_value" -eq 0 ]
+	then
+		return
+	fi
+
 	folderName=$1
 	ProcessName=$2
 	
@@ -696,4 +717,18 @@ setRebootreason()
         then
             echo "[`getDateTime`] Commit for Reboot Counter failed"
         fi
+}
+
+CheckAndProceedFurtherBasedonDiagnosticMode()
+{
+	# No need todo corrective action during box is in DiagnosticMode state
+	DiagnosticMode=`syscfg get Selfheal_DiagnosticMode`
+	if [ "$DiagnosticMode" == "true" ]
+	then
+		echo "[`getDateTime`] RDKB_SELFHEAL : DiagnosticMode - $DiagnosticMode"
+		echo "[`getDateTime`] RDKB_SELFHEAL : Box is in diagnositic mode so we don't reboot/reset process during this time"		
+		return 0
+	fi
+
+	return 1
 }
