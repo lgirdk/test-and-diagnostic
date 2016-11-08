@@ -358,6 +358,28 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
 		rebootNeededforbrlan1=1
 		rebootDeviceNeeded=1
+	else
+		ifconfig brlan1 | grep "inet addr"
+		if [ $? == 1 ]; then
+			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not having ip, creating it"
+			sysevent set multinet_2-status stopped
+		        $UTOPIA_PATH/service_multinet_exec multinet-start 2
+
+			ifconfig brlan1 | grep "inet addr"
+			if [ $? == 1 ]; then
+				echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created at First Retry, try again after 2 sec"
+				sleep 2
+				sysevent set multinet_2-status stopped
+				$UTOPIA_PATH/service_multinet_exec multinet-start 2
+
+				ifconfig brlan1 | grep "inet addr"
+				if [ $? == 1 ]; then
+					echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created after Second Retry, no more retries !!!"
+				fi
+			else
+				echo "[RDKB_PLATFORM_ERROR] : brlan1 Created at First Retry itself"
+			fi
+		fi
 	fi
 
 	ifconfig | grep brlan0
@@ -368,6 +390,29 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
 		echo "[`getDateTime`] SET succeeded"
 		rebootNeeded RM ""
+	else
+		ifconfig brlan0 | grep "inet addr"
+		if [ $? == 1 ]; then
+			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not having ip, creating it"
+			sysevent set multinet_1-status stopped
+		        $UTOPIA_PATH/service_multinet_exec multinet-start 1
+
+			ifconfig brlan0 | grep "inet addr"
+			if [ $? == 1 ]; then
+				echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created at First Retry, try again after 2 sec"
+				sleep 2
+				sysevent set multinet_1-status stopped
+				$UTOPIA_PATH/service_multinet_exec multinet-start 1
+
+				ifconfig brlan0 | grep "inet addr"
+				if [ $? == 1 ]; then
+					echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created after Second Retry, no more retries !!!"
+				fi
+			else
+				echo "[RDKB_PLATFORM_ERROR] : brlan0 Created at First Retry itself"
+			fi
+		fi
+
 	fi
 
 	ifconfig -a | grep l2sd0.100
