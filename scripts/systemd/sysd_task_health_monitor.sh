@@ -24,8 +24,6 @@ rebootDeviceNeeded=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-rebootDeviceNeeded=0
-
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagnet`
 	if [ "$SNMP_PID" = "" ]; then
@@ -161,6 +159,7 @@ rebootDeviceNeeded=0
 			else
 				echo "[RDKB_PLATFORM_ERROR] : brlan0 Created at First Retry itself"
 			fi
+		fi
 	fi
 
 	SSID_DISABLED=0
@@ -341,12 +340,13 @@ rebootDeviceNeeded=0
 	   echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
 	fi
 	
-if [ -f $PING_PATH/arping_peer ]
-then
-    $PING_PATH/arping_peer
-else
-   echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
-fi
+	if [ -f $PING_PATH/arping_peer ]
+	then
+		$PING_PATH/arping_peer
+	else
+	   echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
+	fi
+	
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 		cur_hr=`LTime H`
