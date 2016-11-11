@@ -94,6 +94,8 @@ COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
     /* duplication of the base object class content */                                      \
     COSA_BASE_CONTENT                                                                       \
     BOOL                       Enable;                                    \
+    BOOL                       DiagnosticMode;                                    \    
+    ULONG                       DiagModeLogUploadFrequency;                                    \    
     ULONG                       MaxRebootCnt;                                    \
     ULONG                       MaxResetCnt;                                    \
     ULONG                       PreviousVisitTime;                                    \
@@ -140,4 +142,5 @@ CosaSelfHealRemove
     );
 void SavePingServerURI(PingServerType type, char *URL, int InstNum);
 ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum);
-
+ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject, 
+												                    BOOL        bValue );

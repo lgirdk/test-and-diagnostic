@@ -87,6 +87,12 @@ BOOL SelfHeal_GetParamBoolValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode", TRUE))
+    {
+        *bValue = pMyObject->DiagnosticMode;
+        return TRUE;
+    }
+
     return FALSE;
 }
 
@@ -218,6 +224,20 @@ BOOL SelfHeal_SetParamBoolValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode", TRUE))
+    {
+        if( pMyObject->DiagnosticMode == bValue )
+        {
+            return TRUE;
+        }
+
+		/* To change the diagnostic mode status */
+		if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDiagnosticModeStatus( pMyObject, bValue ) )
+		{
+			return TRUE;
+		}
+    }
+
     return FALSE;
 }
 
@@ -270,6 +290,12 @@ SelfHeal_GetParamUlongValue
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxResetCount", TRUE))
     {
         *puLong = pMyObject->MaxResetCnt;
+        return TRUE;
+    }
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency", TRUE))
+    {
+        *puLong = pMyObject->DiagModeLogUploadFrequency;
         return TRUE;
     }
 
@@ -363,7 +389,31 @@ SelfHeal_SetParamUlongValue
         return TRUE;
     }
 
-    return FALSE;
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency", TRUE))
+    {
+        if( pMyObject->DiagModeLogUploadFrequency == uValue )
+        {
+            return TRUE;
+        }
+
+        char buf[8];
+        memset(buf, 0, sizeof(buf));
+        snprintf(buf,sizeof(buf),"%d",uValue);
+        if (syscfg_set(NULL, "diagMode_LogUploadFrequency", buf) != 0)
+        {
+            CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        if (syscfg_commit() != 0)
+        {
+            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        pMyObject->DiagModeLogUploadFrequency = uValue;
+        return TRUE;
+    }
+
+	return FALSE;
 }
 
 /**********************************************************************^M
