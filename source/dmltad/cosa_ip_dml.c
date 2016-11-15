@@ -5342,11 +5342,16 @@ SpeedTest_SetParamBoolValue
     {
 	    if( g_enable_speedtest )
 	    {
-            memset(cmd, 0, sizeof(cmd));
-            AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
-	        printf("Executing speedtest...\n");
-	        AnscTraceFlow(("Executing Speedtest..\n"));
-            system(cmd);
+			if( bValue )
+			{
+            	memset(cmd, 0, sizeof(cmd));
+            	AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+	        	printf("Executing speedtest...\n");
+	        	AnscTraceFlow(("Executing Speedtest..\n"));
+            	system(cmd);
+	    	}
+			else	
+    	    	AnscTraceWarning(("Speed Test execution stopped\n")); 
 	    }
 	    else	
     	    AnscTraceWarning(("Speed Test feature not enabled\n")); 
