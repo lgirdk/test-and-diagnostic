@@ -44,7 +44,7 @@ calcRandTimetoStartPing()
 
 runPingTest()
 {
-
+	PING_PACKET_SIZE=`syscfg get selfheal_ping_DataBlockSize`
 	PINGCOUNT=`syscfg get ConnTest_NumPingsPerServer`
 
 	if [ "$PINGCOUNT" = "" ] 
@@ -84,7 +84,8 @@ runPingTest()
 
 	if [ "$IPv4_Gateway_addr" != "" ]
 	then
-		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv4_Gateway_addr`
+		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv4_Gateway_addr`
+		output_ipv4=`echo $?` 
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
 		if [ "$CHECK_PACKET_RECEIVED" != "" ]
@@ -102,8 +103,8 @@ runPingTest()
 
 	if [ "$IPv6_Gateway_addr" != "" ]
 	then
-		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv6_Gateway_addr`
-
+		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv6_Gateway_addr`
+		output_ipv6=`echo $?` 
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
 		if [ "$CHECK_PACKET_RECEIVED" != "" ]
@@ -122,6 +123,8 @@ runPingTest()
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
+		echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
+		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
@@ -135,6 +138,8 @@ runPingTest()
                 else
                    echo "[`getDateTime`] RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
+
+        	echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
@@ -160,6 +165,8 @@ runPingTest()
                     echo "[`getDateTime`] RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
 
+		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"	
+		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
@@ -177,79 +184,66 @@ runPingTest()
 
 	IPV4_SERVER_COUNT=`syscfg get Ipv4PingServer_Count`
 	IPV6_SERVER_COUNT=`syscfg get Ipv6PingServer_Count`
-
-	# Generate random number to find out which server to ping 
-	while [ "$IPV4_SERVER_COUNT" -ne 0 ] || [ "$IPV6_SERVER_COUNT" -ne 0 ]
+	
+	# Ping test for IPv4 Server 
+	while [ "$ping4_server_num" -le "$IPV4_SERVER_COUNT" ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
 	do
 
 		ping4_server_num=$((ping4_server_num+1))
-		if [ "$ping4_success" -ne 1 ] && [ "$ping4_server_num" -le "$IPV4_SERVER_COUNT" ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
+		PING_SERVER_IS=`syscfg get Ipv4_PingServer_$ping4_server_num`
+		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0.0.0.0" ]
 		then
-			PING_SERVER_IS=`syscfg get Ipv4_PingServer_$ping4_server_num`
-			if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0.0.0.0" ]
+			PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
+			output_ping4server=`echo $?` 
+			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
-				PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $PING_SERVER_IS`
-				CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
-				if [ "$CHECK_PACKET_RECEIVED" != "" ]
+				if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
 				then
-					if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
-					then
-						ping4_success=1
-					else
-						ping4_failed=1
-					fi
+					ping4_success=1
 				else
 					ping4_failed=1
 				fi
+			else
+				ping4_failed=1
 			fi
-		  fi
-		
+			
+			if [ "$ping4_failed" -eq 1 ];then
+			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [$output_ping4server]"
+			   ping4_failed=0
+			fi
+		fi
+	done
 
-		  ping6_server_num=$((ping6_server_num+1))
-		  if [ "$ping6_success" -ne 1 ] && [ "$ping6_server_num" -le "$IPV6_SERVER_COUNT" ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
-		  then
-			PING_SERVER_IS=`syscfg get Ipv6_PingServer_$ping6_server_num`
-			if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0000::0000" ]
+	# Ping test for IPv6 Server 
+	while [ "$ping6_server_num" -le "$IPV6_SERVER_COUNT" ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
+	do
+		ping6_server_num=$((ping6_server_num+1))
+		PING_SERVER_IS=`syscfg get Ipv6_PingServer_$ping6_server_num`
+		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0000::0000" ]
+		then
+			PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
+			output_ping6server=`echo $?`
+			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
-				PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $PING_SERVER_IS`
-				CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
-				if [ "$CHECK_PACKET_RECEIVED" != "" ]
+				if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
 				then
-					if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
-					then
-						ping6_success=1
-					else
-						ping6_failed=1
-					fi
+					ping6_success=1
 				else
 					ping6_failed=1
 				fi
+			else
+				ping6_failed=1
 			fi
-		  fi
 
+			if [ "$ping6_failed" -eq 1 ];then
+			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [$output_ping6server]"
+			   ping6_failed=0
+			fi
 
-		  if [ "$ping4_success" -eq 1 ] && [ "$ping6_success" -eq 1 ]
-		  then
-		  	break
-		  fi
-
-		  if [ "$ping4_success" -eq 1 ] || [ "$ping6_success" -eq 1 ]
-		  then
-				if [ "$IPV4_SERVER_COUNT" -eq 0 ] || [ "$IPV6_SERVER_COUNT" -eq 0 ]
-				then
-					break
-				fi
-
-		  fi
-		  
-		  if [ "$ping4_server_num" -ge "$IPV4_SERVER_COUNT" ] && [ "$ping6_server_num" -ge "$IPV6_SERVER_COUNT" ]
-		  then
-		 	break
-		  fi
-		
+		fi
 	done
-
-
 	if [ "$IPV4_SERVER_COUNT" -eq 0 ] ||  [ "$IPV6_SERVER_COUNT" -eq 0 ]
 	then
 

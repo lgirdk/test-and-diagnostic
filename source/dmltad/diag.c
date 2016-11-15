@@ -58,6 +58,8 @@ extern diag_obj_t *diag_tracert_load(void);
 static diag_obj_t *diag_ping;
 static diag_obj_t *diag_tracert;
 
+diag_err_t diag_init_blocksize(void);
+
 static void trim(char *line)
 {
     char *cp;
@@ -451,7 +453,7 @@ diag_err_t diag_init(void)
 
     if ((diag_tracert = diag_tracert_load()) == NULL)
         goto errout;
-
+	diag_init_blocksize();
     return DIAG_ERR_OK;
 
 errout:
@@ -605,4 +607,21 @@ diag_err_t diag_geterr(diag_mode_t mode, diag_err_t *error)
     pthread_mutex_unlock(&diag->mutex);
 
     return DIAG_ERR_OK;
+}
+diag_err_t diag_init_blocksize(void)
+{
+  diag_cfg_t                      cfg;
+	char buf[10];
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return DIAG_ERR_PARAM;
+        
+	syscfg_init();
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
+	cfg.size = atoi(buf);
+
+    if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return DIAG_ERR_PARAM;
+        
+        return DIAG_ERR_OK;
 }

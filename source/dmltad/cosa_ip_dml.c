@@ -1219,9 +1219,18 @@ IPPing_SetParamUlongValue
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
         cfg.timo = uValue / 1000;
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-        cfg.size = uValue;
-    else if( AnscEqualString(ParamName, "DSCP", TRUE))
-        cfg.tos = uValue;
+    	{
+    		char buf[256];
+		memset(buf,0,sizeof(buf));
+		cfg.size = uValue;
+		sprintf(buf, "%d",cfg.size);
+        	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
+		{
+			syscfg_commit();
+		}
+	}
+   else if( AnscEqualString(ParamName, "DSCP", TRUE))
+       cfg.tos = uValue;
     else 
         return FALSE;
 
