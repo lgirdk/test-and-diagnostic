@@ -350,7 +350,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 	
-		if [ "$UTC_TIME_SYNC" == "true" ]
+		if [ "$UTC_ENABLE" == "true" ]
 		then
 			cur_hr=`LTime H`
 			cur_min=`LTime M`
