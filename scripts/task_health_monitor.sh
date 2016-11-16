@@ -649,10 +649,16 @@ else
 fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
-		#cur_hr=`date +"%H"`
-		cur_hr=`LTime H`
-		#cur_min=`date +"%M"`
-		cur_min=`LTime M`
+
+		if [ "$UTC_ENABLE" == "true" ]
+		then
+			cur_hr=`LTime H`
+			cur_min=`LTime M`
+		else
+			cur_hr=`date +"%H"`
+			cur_min=`date +"%M"`
+		fi
+
 		if [ $cur_hr -ge 02 ] && [ $cur_hr -le 03 ]
 		then
 			if [ $cur_hr -eq 03 ] && [ $cur_min -ne 00 ]
