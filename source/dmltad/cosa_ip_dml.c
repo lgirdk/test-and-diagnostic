@@ -5346,7 +5346,6 @@ SpeedTest_SetParamBoolValue
 			{
             	memset(cmd, 0, sizeof(cmd));
             	AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
-	        	printf("Executing speedtest...\n");
 	        	AnscTraceFlow(("Executing Speedtest..\n"));
             	system(cmd);
 	    	}
