@@ -111,14 +111,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		if [ $? == 1 ]; then
 			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not having ip, creating it"
 			sysevent set multinet_2-status stopped
-		        $UTOPIA_PATH/service_multinet_exec multinet-start 2
+		        $UTOPIA_PATH/vlan_util_xb6.sh multinet-up 2
 
 			ifconfig brlan1 | grep "inet addr"
 			if [ $? == 1 ]; then
 				echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created at First Retry, try again after 2 sec"
 				sleep 2
 				sysevent set multinet_2-status stopped
-				$UTOPIA_PATH/service_multinet_exec multinet-start 2
+				$UTOPIA_PATH/vlan_util_xb6.sh multinet-up 2
 
 				ifconfig brlan1 | grep "inet addr"
 				if [ $? == 1 ]; then
@@ -143,14 +143,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		if [ $? == 1 ]; then
 			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not having ip, creating it"
 			sysevent set multinet_1-status stopped
-		        $UTOPIA_PATH/service_multinet_exec multinet-start 1
+		        $UTOPIA_PATH/vlan_util_xb6.sh multinet-up 1
 
 			ifconfig brlan0 | grep "inet addr"
 			if [ $? == 1 ]; then
 				echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created at First Retry, try again after 2 sec"
 				sleep 2
 				sysevent set multinet_1-status stopped
-				$UTOPIA_PATH/service_multinet_exec multinet-start 1
+				$UTOPIA_PATH/vlan_util_xb6.sh multinet-up 1
 
 				ifconfig brlan0 | grep "inet addr"
 				if [ $? == 1 ]; then
