@@ -261,7 +261,7 @@ CosaDmlGetSelfHealCfg(
 	int i=0;
 	int urlIndex;
 	char recName[64];
-	char buf[10];
+	char buf[10], dnsURL[512];
 	ULONG entryCountIPv4 = 0;
 	ULONG entryCountIPv6 = 0;
 
@@ -293,6 +293,21 @@ CosaDmlGetSelfHealCfg(
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "diagMode_LogUploadFrequency", buf, sizeof(buf));
 	pMyObject->DiagModeLogUploadFrequency = atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "selfheal_dns_pingtest_enable", buf, sizeof(buf));
+	pMyObject->DNSPingTest_Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
+
+	memset(dnsURL,0,sizeof(dnsURL));
+	syscfg_get( NULL, "selfheal_dns_pingtest_url", dnsURL, sizeof(dnsURL));
+	if( '\0' != dnsURL[ 0 ] )
+	{
+		AnscCopyString(pMyObject->DNSPingTest_URL, dnsURL);
+	}
+	else
+	{
+		pMyObject->DNSPingTest_URL[ 0 ] = '\0';
+	}
 
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "ConnTest_PingInterval", buf, sizeof(buf));
@@ -653,6 +668,83 @@ ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject,
 													pMyObject->DiagnosticMode,
 													pConnTest->CorrectiveAction ));
 		}
+	}
+
+	return ReturnStatus;
+}
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject, 
+															    BOOL        bValue )
+{
+	ANSC_STATUS		ReturnStatus    = ANSC_STATUS_SUCCESS;
+	BOOLEAN 		bProcessFurther = TRUE;
+
+	/* Validate received param  */		
+	if( NULL == hThisObject )
+	{
+		bProcessFurther = FALSE;
+		ReturnStatus    = ANSC_STATUS_FAILURE;
+		CcspTraceError(("[%s] hThisObject is NULL\n", __FUNCTION__ ));
+	}
+
+	if( bProcessFurther )
+	{
+		PCOSA_DATAMODEL_SELFHEAL	  pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+
+		/* Modify the DNS ping test flag */
+		if ( 0 == syscfg_set( NULL, 
+							  "selfheal_dns_pingtest_enable", 
+							  ( ( bValue == TRUE ) ? "true" : "false" ) ) ) 
+		{
+			if ( 0 == syscfg_commit( ) ) 
+			{
+				pMyObject->DNSPingTest_Enable = bValue;
+			}
+		}
+
+		CcspTraceInfo(("[%s] DNSPingTest_Enable:[ %d ]\n",
+									__FUNCTION__,
+									pMyObject->DNSPingTest_Enable ));
+	}
+
+	return ReturnStatus;
+}
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject, 
+															  PCHAR  	  pString )
+{
+	ANSC_STATUS		ReturnStatus    = ANSC_STATUS_SUCCESS;
+	BOOLEAN 		bProcessFurther = TRUE;
+
+	/* Validate received param  */		
+	if(( NULL == hThisObject ) || \
+	   ( NULL == pString ) 
+	   )  
+	{
+		bProcessFurther = FALSE;
+		ReturnStatus    = ANSC_STATUS_FAILURE;
+		CcspTraceError(("[%s] hThisObject/pString is NULL\n", __FUNCTION__ ));
+	}
+
+	if( bProcessFurther )
+	{
+		PCOSA_DATAMODEL_SELFHEAL	  pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+
+		/* Modify the DNS ping test flag */
+		if ( 0 == syscfg_set( NULL, 
+							  "selfheal_dns_pingtest_url", 
+							  pString ) ) 
+		{
+			if ( 0 == syscfg_commit( ) ) 
+			{
+				memset(pMyObject->DNSPingTest_URL, 0, sizeof( pMyObject->DNSPingTest_URL ));
+				AnscCopyString(pMyObject->DNSPingTest_URL, pString);
+			}
+		}
+
+		CcspTraceInfo(("[%s] DNSPingTest_URL:[ %s ]\n",
+									__FUNCTION__,
+									pMyObject->DNSPingTest_URL ));
 	}
 
 	return ReturnStatus;

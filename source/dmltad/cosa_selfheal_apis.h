@@ -95,6 +95,8 @@ COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
     COSA_BASE_CONTENT                                                                       \
     BOOL                       Enable;                                    \
     BOOL                       DiagnosticMode;                                    \    
+    BOOL                        DNSPingTest_Enable;                                    \    
+    CHAR                        DNSPingTest_URL[ 512 ];                                    \    
     ULONG                       DiagModeLogUploadFrequency;                                    \    
     ULONG                       MaxRebootCnt;                                    \
     ULONG                       MaxResetCnt;                                    \
@@ -144,3 +146,9 @@ void SavePingServerURI(PingServerType type, char *URL, int InstNum);
 ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum);
 ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject, 
 												                    BOOL        bValue );
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject, 
+																BOOL		bValue );
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject, 
+															  PCHAR 	  pString );
