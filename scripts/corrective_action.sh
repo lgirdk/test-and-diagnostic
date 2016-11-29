@@ -496,6 +496,22 @@ resetNeeded()
 				cd /usr/ccsp/wecb
 				$BINPATH/CcspWecbController -subsys $Subsys
 				cd -		
+			elif [ "$ProcessName" == "CcspTandDSsp" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				SelfHealScript_PID=`pidof self_heal_connectivity_test.sh`
+				if [ "$SelfHealScript_PID" != "" ]; then
+					kill -9 $SelfHealScript_PID 
+				fi
+				
+				SelfHealScript_PID=`pidof resource_monitor.sh`
+				if [ "$SelfHealScript_PID" != "" ]; then
+					kill -9 $SelfHealScript_PID 
+				fi
+
+				cd /usr/ccsp/tad
+				$BINPATH/CcspTandDSsp -subsys $Subsys
+				cd -		
 			elif [ "$ProcessName" == "PING" ]
 			then
 				resetRouter
