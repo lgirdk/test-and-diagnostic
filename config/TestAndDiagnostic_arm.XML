@@ -746,7 +746,9 @@
              <func_SetParamBoolValue>SelfHeal_SetParamBoolValue</func_SetParamBoolValue>
              <func_GetParamUlongValue>SelfHeal_GetParamUlongValue</func_GetParamUlongValue>
              <func_SetParamUlongValue>SelfHeal_SetParamUlongValue</func_SetParamUlongValue>
-             <func_Validate>SelfHeal_Validate</func_Validate>
+			 <func_GetParamStringValue>SelfHeal_GetParamStringValue</func_GetParamStringValue>
+			 <func_SetParamStringValue>SelfHeal_SetParamStringValue</func_SetParamStringValue>
+		     <func_Validate>SelfHeal_Validate</func_Validate>
              <func_Commit>SelfHeal_Commit</func_Commit>
              <func_Rollback>SelfHeal_Rollback</func_Rollback>
             </functions>
@@ -781,7 +783,19 @@
                       <syntax>uint32</syntax>
                       <writable>true</writable>
 				</parameter>
-            </parameters>
+				<parameter>
+					  <name>X_RDKCENTRAL-COM_DNS_PINGTEST_Enable</name>
+					  <type>boolean</type>
+					  <syntax>bool</syntax>
+					  <writable>true</writable>
+				</parameter>
+				<parameter>
+					  <name>X_RDKCENTRAL-COM_DNS_URL</name>
+					  <type>string(512)</type>
+					  <syntax>string</syntax>
+					  <writable>true</writable>
+				</parameter>
+	           </parameters>
             <objects>
                 <object>
                     <name>ConnectivityTest</name>

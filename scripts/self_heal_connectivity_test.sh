@@ -42,6 +42,61 @@ calcRandTimetoStartPing()
         
 }
 
+# A generic function which can be used for any URL parsing
+removehttp()
+{
+	urlToCheck=$1
+	haveHttp=`echo $urlToCheck | grep //`
+	if [ "$haveHttp" != "" ]
+	then
+		url=`echo $urlToCheck | cut -f2 -d":" | cut -f3 -d"/"`
+		echo $url
+	else
+		haveSlashAlone=`echo $urlToCheck | grep /`
+		if [ "$haveSlashAlone" != "" ]
+		then
+			url=`echo $urlToCheck | cut -f1 -d"/"`
+			echo $url
+		else	
+			echo $urlToCheck
+		fi
+	fi
+}
+
+runDNSPingTest() 
+{
+	DNS_PING_TEST_STATUS=`syscfg get selfheal_dns_pingtest_enable`
+	
+	if [ "$DNS_PING_TEST_STATUS" = "true" ]
+	then
+		urlToVerify=`syscfg get selfheal_dns_pingtest_url`
+		
+		if [ -z "$urlToVerify" ]
+		then
+			echo "[`getDateTime`] DNS Response: DNS PING Test URL is empty"
+			return
+		fi
+
+		DNS_PING_TEST_URL=`removehttp $urlToVerify`
+
+		if [ "$DNS_PING_TEST_URL" = "" ]
+		then
+			echo "[`getDateTime`] DNS Response: DNS PING Test URL is empty"
+			return
+		fi
+
+		nslookup $DNS_PING_TEST_URL > /dev/null 2>&1
+		RESPONSE=$?
+
+		if [ $RESPONSE -eq 0 ]
+		then
+			echo "[`getDateTime`] DNS Response: Got success response for this URL $DNS_PING_TEST_URL"
+		else
+			echo "[`getDateTime`] DNS Response: fail to resolve this URL $DNS_PING_TEST_URL"
+		fi
+	fi
+}
+
 runPingTest()
 {
 	PING_PACKET_SIZE=`syscfg get selfheal_ping_DataBlockSize`
@@ -119,6 +174,11 @@ runPingTest()
 			ping6_failed=1
 		fi
 	fi
+
+	if [ "$ping4_success" -ne 1 ] ||  [ "$ping6_success" -ne 1 ]
+	then
+		runDNSPingTest
+	fi	
 
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
@@ -244,6 +304,12 @@ runPingTest()
 
 		fi
 	done
+
+	if [ "$ping4_success" -ne 1 ] ||  [ "$ping6_success" -ne 1 ]
+	then
+		runDNSPingTest
+	fi	
+			
 	if [ "$IPV4_SERVER_COUNT" -eq 0 ] ||  [ "$IPV6_SERVER_COUNT" -eq 0 ]
 	then
 

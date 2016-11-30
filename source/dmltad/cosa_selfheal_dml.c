@@ -93,6 +93,12 @@ BOOL SelfHeal_GetParamBoolValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    {
+        *bValue = pMyObject->DNSPingTest_Enable;
+        return TRUE;
+    }
+
     return FALSE;
 }
 
@@ -233,6 +239,20 @@ BOOL SelfHeal_SetParamBoolValue
 
 		/* To change the diagnostic mode status */
 		if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDiagnosticModeStatus( pMyObject, bValue ) )
+		{
+			return TRUE;
+		}
+    }
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    {
+        if( pMyObject->DNSPingTest_Enable == bValue )
+        {
+            return TRUE;
+        }
+
+		/* To change the PING Test Enable status */
+		if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDNSPingTestStatus( pMyObject, bValue ) )
 		{
 			return TRUE;
 		}
@@ -413,6 +433,58 @@ SelfHeal_SetParamUlongValue
         return TRUE;
     }
 
+	return FALSE;
+}
+
+ULONG
+SelfHeal_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+    {
+        /* collect value */
+        if ( AnscSizeOfString(pMyObject->DNSPingTest_URL) < *pUlSize)
+        {
+            AnscCopyString(pValue, pMyObject->DNSPingTest_URL);
+		    return 0;
+        }
+        else
+        {
+            *pUlSize = AnscSizeOfString(pMyObject->DNSPingTest_URL)+1;
+            return 1;
+        }
+    }
+	    return -1;
+}
+
+BOOL
+SelfHeal_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    )
+
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+    {
+		if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDNSPingTestURL( pMyObject, strValue ) )
+		{
+			return TRUE;
+		}
+	}
+	
 	return FALSE;
 }
 
