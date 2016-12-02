@@ -192,6 +192,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
 	fi
 
+	# Checking XdnsSsp PID
+	XDNS_PID=`pidof CcspXdnsSsp`
+	if [ "$XDNS_PID" = "" ]; then
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
+		resetNeeded xdns CcspXdnsSsp
+
+	fi
+
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagnet`
 	if [ "$SNMP_PID" = "" ]; then

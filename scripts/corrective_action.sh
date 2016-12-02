@@ -448,13 +448,21 @@ resetNeeded()
 			elif [ "$ProcessName" == "hotspot_arpd" ]
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
-        			hotspot_arpd -q 0  > /dev/null &
-                        elif [ "$ProcessName" == "CcspLMLite" ]
+				hotspot_arpd -q 0  > /dev/null &
+
+			elif [ "$ProcessName" == "CcspLMLite" ]
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
-        			cd /usr/ccsp/lm
-                                $BINPATH/$ProcessName -subsys $Subsys
-                                cd -
+					cd /usr/ccsp/lm
+					$BINPATH/$ProcessName -subsys $Subsys
+					cd -
+
+			elif [ "$ProcessName" == "CcspXdnsSsp" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/xdns
+				$BINPATH/$ProcessName -subsys $Subsys
+				cd -
 
 			elif [ "$ProcessName" == "PsmSsp" ]
 			then
