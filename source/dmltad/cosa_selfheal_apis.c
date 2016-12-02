@@ -663,6 +663,9 @@ ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject,
 				}
 			}
 
+			/* Modify the cron scheduling based on configured Loguploadfrequency */
+			CosaSelfHealAPIModifyCronSchedule( TRUE );
+
 			CcspTraceInfo(("[%s] DiagnosticMode:[ %d ] CorrectiveAction:[ %d ]\n",
 													__FUNCTION__,
 													pMyObject->DiagnosticMode,
@@ -748,4 +751,24 @@ ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject,
 	}
 
 	return ReturnStatus;
+}
+
+VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun )
+{
+	char buf[10];
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "Selfheal_DiagnosticMode", buf, sizeof(buf));
+
+	if( ( 0 == strcmp(buf, "true") ) || \
+		( TRUE == bForceRun )
+	  )
+	{
+		/* 
+		* We need to modify the cron scheduling based on configured Loguploadfrequency 
+		*/
+		CcspTraceInfo(("%s - Modify DCM cron schedule\n",__FUNCTION__ ));
+		
+		system("sh /lib/rdk/DCMCronreschedule.sh &");
+	}
 }

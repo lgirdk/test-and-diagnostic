@@ -430,6 +430,10 @@ SelfHeal_SetParamUlongValue
             return FALSE;
         }
         pMyObject->DiagModeLogUploadFrequency = uValue;
+
+		/* Modify the cron scheduling based on configured Loguploadfrequency */
+		CosaSelfHealAPIModifyCronSchedule( FALSE );
+		
         return TRUE;
     }
 

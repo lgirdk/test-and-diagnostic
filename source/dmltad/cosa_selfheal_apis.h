@@ -152,3 +152,4 @@ ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject,
 
 ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject, 
 															  PCHAR 	  pString );
+VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun );
