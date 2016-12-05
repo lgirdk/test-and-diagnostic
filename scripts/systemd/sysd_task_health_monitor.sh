@@ -13,6 +13,7 @@ ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
 PING_PATH="/usr/sbin"
+WAN_INTERFACE="erouter0"
 source $UTOPIA_PATH/log_env_var.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
@@ -299,6 +300,26 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$WIFI_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : wifi process is not running, need restart"
 		resetNeeded wifi CcspWifiSsp 
+	fi
+
+	# Checking for WAN_INTERFACE ipv6 address
+	DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
+	WAN_STATUS=`sysevent get wan-status`
+	WAN_IPv4_Addr=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
+	DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+
+	if [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
+	then
+		          isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
+			echo "isIPv6 = $isIPv6"
+	        	 if [ "$isIPv6" == "" ]
+			 then
+				echo "[`getDateTime`] [RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting ti_dhcp6c"
+				rm -rf $DHCPV6_ERROR_FILE
+				sh $DHCPV6_HANDLER disable
+				sleep 2
+				sh $DHCPV6_HANDLER enable
+	           	fi 
 	fi
 	
 	if [ -f $PING_PATH/ping_peer ]
