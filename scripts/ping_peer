@@ -1,0 +1,9 @@
+#!/bin/sh
+
+#ATOM_IP="192.168.101.3"
+#ARM_INT="l2sd0.500"
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
+ping -I $SOURCE_PING_INTF -c 2 -w 2 $PEER_INTERFACE_IP

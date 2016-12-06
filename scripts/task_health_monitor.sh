@@ -630,7 +630,7 @@ then
 			sh $DHCPV6_HANDLER enable
            	fi 
 fi
-
+if [ "$MULTI_CORE" = "yes" ]; then
 if [ -f $PING_PATH/ping_peer ]
 then
 ## Check Peer ip is accessible
@@ -675,6 +675,7 @@ then
     $PING_PATH/arping_peer
 else
    echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
+fi
 fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
