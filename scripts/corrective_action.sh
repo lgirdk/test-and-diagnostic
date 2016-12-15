@@ -680,7 +680,7 @@ logNetworkInfo()
 	ip route list table all_lans
 	echo "-------------------------------------------------------"
 
-	/rdklogger/backupLogs.sh "false" "l2sd0"
+#	/rdklogger/backupLogs.sh "false" "l2sd0"
 
 }
 

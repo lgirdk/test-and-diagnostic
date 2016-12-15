@@ -1,5 +1,6 @@
 #!/bin/sh
 
+
 CM_INTERFACE="wan0"
 WAN_INTERFACE="erouter0"
 Check_CM_Ip=0
@@ -15,6 +16,7 @@ PING_PATH="/usr/sbin"
 ping_failed=0
 ping_success=0
 needSelfhealReboot="/nvram/self_healreboot"
+
 
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
@@ -37,7 +39,6 @@ if [ "$log_nvram2" == "true" ]
 then
 	exec 3>&1 4>&2 >>$SELFHEALFILE_BOOTUP 2>&1
 fi
-
 
 # This function will check if captive portal needs to be enabled or not.
 checkCaptivePortal()
@@ -152,6 +153,7 @@ then
 		fi
 	 fi
 
+
 isIPv4=""
 isIPv6=""
 # Check for WAN IP Address 
@@ -170,7 +172,6 @@ isIPv6=""
 	 else
 		Check_WAN_Ip=1
 	 fi
-
         # Check whether CR process is running
         crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
         isCRAlive=`echo $crTestop | grep "Execution succeed"`
@@ -208,7 +209,6 @@ isIPv6=""
                  fi
         fi
 
-
 # Check whether PSM process is running
 	# Checking PSM's PID
 	PSM_PID=`pidof PsmSsp`
@@ -232,7 +232,6 @@ isIPv6=""
 			fi
 
 	fi
-
 
 # Check whether PAM process is running
 	PAM_PID=`pidof CcspPandMSsp`
@@ -290,95 +289,63 @@ else
    echo "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
 fi
 
-# Check for iptable corruption and brlan0 has ipv4 Address
+# Checking whether brlan0 and l2sd0.100 are created properly
 
-        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-        if [ "$bridgeSucceed" != "" ]
+        check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+
+        check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+
+        if [ "$check_param_get_succeed" != "" ]
         then
-            isBridging=`echo $bridgeMode | grep router`
-            if [ "$isBridging" != "" ]
+            check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+            if [ "$check_device_in_router_mode" != "" ]
             then
-                check_brlan0=`ifconfig -a | grep brlan0`
-			    if [ "$check_brlan0" != "" ]
-			    then
-			        check_brlan0_state=`ifconfig brlan0 | grep UP`
-				    if [ "$check_brlan0_state" == "" ]
-			        then
-            			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not up" 
-					else
-						echo "Device is in router mode check whether brlan0 has IP or not"
-                		ipv4_status=`sysevent get ipv4_4-status` 
-		                ifconfig brlan0 | grep "inet addr"
-		                if [ $? == 1 -a "up" != "$ipv4_status" ]; then
-        		            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP]: brlan0 doesnt have IPV4 Addr try recovering it"
-		                    sysevent set multinet_1-status stopped
-        		            sysevent set multinet_1-status ready 
-		                else
-        		            echo "brlan0 has IPV4 Address in router mode"
-                		    Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
-		                    if [ "$Check_Iptable_Rules" == "" ]; then
-        	    	            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
-            	    	        #sysevent set firewall-restart
-		                    fi
-        		        fi						
-			        fi
-				else
-			     	echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan0 interface is not created" 
-    			fi
+               	    check_if_brlan0_created=`ifconfig | grep brlan0`
+		    check_if_brlan0_up=`ifconfig brlan0 | grep UP`
+	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+		    check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
+		    check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+			  
+		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
+		   then
+			   echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+			   sysevent set multinet-down 1
+			   sleep 5
+			   sysevent set multinet-up 1
+			   sleep 30
+		   fi
+
+
+# Check for iptable corruption 
+		   if [ "$check_if_brlan0_hasip" != "" ]
+		   then
+       		          echo "brlan0 has IPV4 Address in router mode"
+                	  Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
+		          if [ "$Check_Iptable_Rules" == "" ]; then
+        	    	      	 echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
+		          	 #sysevent set firewall-restart
+		          fi	
+		   fi
             fi
         else
             echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
         fi
 
-# Check brlan1.l2sd0.100 and l2sd0.101 interface state
+# Checking whether brlan1 and l2sd0.101 interface are created properly
 
-	check_brlan1=`ifconfig -a | grep brlan1`
-	if [ "$check_brlan1" != "" ]
-	then
-		check_brlan1_state=`ifconfig brlan1 | grep UP`
-		if [ "$check_brlan1_state" == "" ]
-		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan1 interface is not up" 
-        else
-            ipv4_status_brlan1=`sysevent get ipv4_5-status`
-            ifconfig brlan1 | grep "inet addr"
-            if [ $? == 1 -a "up" != "$ipv4_status_brlan1" ]; then
-                echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP]: brlan1 doesnt have IPV4 Addr try recovering it"
-                sysevent set multinet_2-status stopped
-                sysevent set multinet_2-status ready 
-            else
-                echo "brlan1 is UP and has IPV4 Address"
-            fi
-		fi
-	else
-		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : brlan1 interface is not created" 
-	fi
-
-
-	check_l2sd0_100=`ifconfig -a | grep l2sd0.100`
-	if [ "$check_l2sd0_100" != "" ]
-	then
-		check_l2sd0_100_state=`ifconfig l2sd0.100 | grep UP`
-		if [ "$check_l2sd0_100_state" == "" ]
-		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : l2sd0.100 interface is not up" 
-		fi
-	else
-		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : l2sd0.100 interface is not created" 
-	fi
-
-
-	check_l2sd0_101=`ifconfig -a | grep l2sd0.101`
-	if [ "$check_l2sd0_101" != "" ]
-	then
-		check_l2sd0_101_state=`ifconfig l2sd0.101 | grep UP`
-		if [ "$check_l2sd0_101_state" == "" ]
-		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : l2sd0.101 interface is not up" 
-		fi
-	else
-		echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : l2sd0.101 interface is not created" 
+	check_if_brlan1_created=`ifconfig | grep brlan1`
+	check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+	check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+	check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+	
+	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
+        then
+	       echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+		sysevent set multinet-down 2
+		sleep 5
+		sysevent set multinet-up 2
+		sleep 10
 	fi
 
  	SYSEVENT_PID=`pidof syseventd`
