@@ -362,119 +362,57 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	fi
 
-	ifconfig | grep brlan1
-	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
-		rebootNeededforbrlan1=1
-		rebootDeviceNeeded=1
-	else
-		ifconfig brlan1 | grep "inet addr"
-		if [ $? == 1 ]; then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not having ip, creating it"
-			sysevent set multinet_2-status stopped
-		        $UTOPIA_PATH/service_multinet_exec multinet-start 2
 
-			ifconfig brlan1 | grep "inet addr"
-			if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created at First Retry, try again after 2 sec"
-				sleep 2
-				sysevent set multinet_2-status stopped
-				$UTOPIA_PATH/service_multinet_exec multinet-start 2
 
-				ifconfig brlan1 | grep "inet addr"
-				if [ $? == 1 ]; then
-					echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created after Second Retry, no more retries !!!"
-				fi
-			else
-				echo "[RDKB_PLATFORM_ERROR] : brlan1 Created at First Retry itself"
-			fi
-		fi
-	fi
+# Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
-	ifconfig | grep brlan0
-	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not up" 
-		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
-		echo "[`getDateTime`] Setting Last reboot reason"
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
-		echo "[`getDateTime`] SET succeeded"
-		rebootNeeded RM ""
-	else
-		ifconfig brlan0 | grep "inet addr"
-		if [ $? == 1 ]; then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not having ip, creating it"
-			sysevent set multinet_1-status stopped
-		        $UTOPIA_PATH/service_multinet_exec multinet-start 1
-
-			ifconfig brlan0 | grep "inet addr"
-			if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created at First Retry, try again after 2 sec"
-				sleep 2
-				sysevent set multinet_1-status stopped
-				$UTOPIA_PATH/service_multinet_exec multinet-start 1
-
-				ifconfig brlan0 | grep "inet addr"
-				if [ $? == 1 ]; then
-					echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created after Second Retry, no more retries !!!"
-				fi
-			else
-				echo "[RDKB_PLATFORM_ERROR] : brlan0 Created at First Retry itself"
-			fi
-		fi
-
-	fi
-
-	ifconfig -a | grep l2sd0.100
-    if [ $? == 1 ]; then
-        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.100 interface is not created try creating it"
-        sysevent set multinet_1-status stopped
-        $UTOPIA_PATH/service_multinet_exec multinet-start 1
-        ifconfig -a | grep l2sd0.100
-        if [ $? == 1 ]; then
-           echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 is not created at First Retry, try again after 2 sec"
-           sleep 2
-           sysevent set multinet_1-status stopped
-           $UTOPIA_PATH/service_multinet_exec multinet-start 1
-		   ifconfig -a | grep l2sd0.100
-	       if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 is not created after Second Retry, no more retries !!!"
-		   fi 	
-        else
-           echo "[RDKB_PLATFORM_ERROR] : l2sd0.100 Created at First Retry itself"
-        fi
-        logNetworkInfo 
-    else
-        ifconfig l2sd0.100 | grep UP
-        if [ $? == 1 ]; then
-           echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.100 interface is not up"
-           logNetworkInfo
-        fi
-    fi
-
-    ifconfig -a | grep l2sd0.101
-    if [ $? == 1 ]; then
-        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.101 interface is not created try creatig it" 
-        sysevent set multinet_2-status stopped
-        $UTOPIA_PATH/service_multinet_exec multinet-start 2
-        ifconfig -a | grep l2sd0.101
-        if [ $? == 1 ]; then
-           echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 is not created at First Retry, try again after 2 sec"
-           sleep 2
-           sysevent set multinet_2-status stopped
-           $UTOPIA_PATH/service_multinet_exec multinet-start 2
-		   ifconfig -a | grep l2sd0.101
-	       if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 is not created after Second Retry, no more retries !!!"
+        check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+        if [ "$check_param_get_succeed" != "" ]
+        then
+            check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+            if [ "$check_device_in_router_mode" != "" ]
+            then
+         	   check_if_brlan0_created=`ifconfig | grep brlan0`
+		   check_if_brlan0_up=`ifconfig brlan0 | grep UP`
+		   check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+		   check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
+		   check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
+		   then
+			   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+			   logNetworkInfo
+			   sysevent set multinet-down 1
+			   sleep 5
+			   sysevent set multinet-up 1
+			   sleep 30
 		   fi
+
+            fi
         else
-           echo "[RDKB_PLATFORM_ERROR] : l2sd0.101 created at First Retry itself"
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
         fi
-	else
-        ifconfig l2sd0.101 | grep UP
-        if [ $? == 1 ]; then
-           echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : l2sd0.101 interface is not up"
-           fi
-    fi
+
+
+# Checking whether brlan1 and l2sd0.101 interface are created properly
+
+
+	check_if_brlan1_created=`ifconfig | grep brlan1`
+	check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+	check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+	check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP `
+	
+	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
+        then
+	       echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+		sysevent set multinet-down 2
+		sleep 5
+		sysevent set multinet-up 2
+		sleep 10
+	fi
+
+
 
         SSID_DISABLED=0
         BR_MODE=0
