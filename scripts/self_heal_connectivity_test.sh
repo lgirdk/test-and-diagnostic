@@ -93,6 +93,12 @@ runDNSPingTest()
 			echo "[`getDateTime`] DNS Response: Got success response for this URL $DNS_PING_TEST_URL"
 		else
 			echo "[`getDateTime`] DNS Response: fail to resolve this URL $DNS_PING_TEST_URL"
+
+			if [ `getCorrectiveActionState` = "true" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+				resetNeeded "" PING
+			fi
 		fi
 	fi
 }
@@ -174,11 +180,6 @@ runPingTest()
 			ping6_failed=1
 		fi
 	fi
-
-	if [ "$ping4_success" -ne 1 ] ||  [ "$ping6_success" -ne 1 ]
-	then
-		runDNSPingTest
-	fi	
 
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
@@ -305,11 +306,6 @@ runPingTest()
 		fi
 	done
 
-	if [ "$ping4_success" -ne 1 ] ||  [ "$ping6_success" -ne 1 ]
-	then
-		runDNSPingTest
-	fi	
-			
 	if [ "$IPV4_SERVER_COUNT" -eq 0 ] ||  [ "$IPV6_SERVER_COUNT" -eq 0 ]
 	then
 
@@ -398,6 +394,7 @@ do
 
 
 	runPingTest
+	runDNSPingTest
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 	# ping -I $WAN_INTERFACE -c $PINGCOUNT 
