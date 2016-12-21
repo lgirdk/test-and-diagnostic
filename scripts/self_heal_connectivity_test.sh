@@ -135,7 +135,7 @@ runPingTest()
         IPv4_Gateway_addr=`sysevent get default_router`
         
         IPv6_Gateway_addr=""
-        erouterIP6=`sysevent get ipv6_dhcp6_addr | cut -f1 -d:`
+        erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d:`
 
         if [ $erouterIP6 != "" ]
         then
