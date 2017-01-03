@@ -382,6 +382,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		   then
 			   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
 			   logNetworkInfo
+
+			   ipv4_status=`sysevent get ipv4_4-status`
+			   lan_status=`sysevent get lan-status`
+
+			   if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
+			   then
+			   	echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+				sysevent set lan-start
+				sleep 5
+			   fi
+
 			   sysevent set multinet-down 1
 			   sleep 5
 			   sysevent set multinet-up 1
@@ -406,6 +417,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
         then
 	       echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+
+		ipv5_status=`sysevent get ipv4_5-status`
+	        lan_l3net=`sysevent get homesecurity_lan_l3net`
+
+		if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
+		then
+			echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+			sysevent set ipv4-up $lan_l3net
+			sleep 5
+		fi
+
 		sysevent set multinet-down 2
 		sleep 5
 		sysevent set multinet-up 2
