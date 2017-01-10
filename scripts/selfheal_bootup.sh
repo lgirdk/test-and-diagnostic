@@ -176,6 +176,27 @@ isIPv6=""
         crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
         isCRAlive=`echo $crTestop | grep "Execution succeed"`
         if [ "$isCRAlive" == "" ]; then
+				# Test CR Alive or not using rpcclient
+		# This test is done only for XB3 cases 
+		if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ]; then 
+			RPC_RES=`rpcclient $ATOM_ARPING_IP "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
+			isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
+			isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
+			if [ "$isRpcOk" != "" ]; then
+				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is OK"
+			else
+				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is NOK"
+			fi
+
+			if [ "$isCRAlive" != "" ]; then
+				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR process is alive thru RPC"
+			else
+				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
+			fi
+		else
+			echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking CR process using rpcclient"
+		fi
+
                 # Retest by querying some other parameter
                 crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
                 isCRAlive=`echo $crReTestop | grep "Execution succeed"`
@@ -266,7 +287,25 @@ loop=1
 		else
 			ping_failed=1
 		fi
-		
+	
+	    if [ "$ping_failed" -eq 1 ]
+       	then
+			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
+            # This test is done only for XB3 cases 
+            if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
+				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+				if [ "$RPC_OK" != "" ]
+		    	then
+		    		echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
+				else
+				   	echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
+				fi
+			else
+				echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+			fi
+      	fi
+
 		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 		then
 			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
