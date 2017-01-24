@@ -168,20 +168,6 @@ BOOL SelfHeal_SetParamBoolValue
             {
 
                 memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof process_monitor.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop Process Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
-                    system(cmd);
-                }
-    
-                memset(cmd, 0, sizeof(cmd));
                 AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
                 system(cmd); 
 
@@ -218,12 +204,7 @@ BOOL SelfHeal_SetParamBoolValue
                     sprintf(cmd, "kill -9 %s", buf);
                     system(cmd);
                 }   
-
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/etc/process_monitor.sh &");
-	        CcspTraceWarning(("%s: Starting process Monitor script\n", __FUNCTION__));
-                system(cmd);  
+       
 	    }
 	    pMyObject->Enable = bValue;
 	}
