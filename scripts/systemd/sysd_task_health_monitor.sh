@@ -295,6 +295,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	fi
 	
 	#All CCSP Processes Now running on Single Processor. Add those Processes to Test & Diagnostic 
+	# Checking wifi subagent PID
+	WIFI_PID=`pidof CcspWifiSsp`
+	if [ "$WIFI_PID" = "" ]; then
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : wifi process is not running, need restart"
+		resetNeeded wifi CcspWifiSsp 
+	fi
+
 	# Checking for WAN_INTERFACE ipv6 address
 	DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 	WAN_STATUS=`sysevent get wan-status`

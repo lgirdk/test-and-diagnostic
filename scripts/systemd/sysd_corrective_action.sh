@@ -432,6 +432,13 @@ resetNeeded()
 				cd $BINPATH
 				./$ProcessName &
 				cd -
+
+			elif [ "$ProcessName" == "CcspWifiSsp" ]
+			then
+				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd $BINPATH
+				./$ProcessName -subsys $Subsys
+				cd -
 			else
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd $BINPATH
