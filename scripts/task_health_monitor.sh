@@ -479,11 +479,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
             echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
 
 	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
-	    if [ "$pandm_timeout" != "" ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter time out"
+	    pandm_notexist=`echo $bridgeMode | grep "CCSP_ERR_NOT_EXIST"`
+	    if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
+	    then
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
 		cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
 		cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
-		if [ "$cr_timeout" != "" ]; then
+		cr_pam_notexist=`echo $cr_query | grep "CCSP_ERR_NOT_EXIST"`
+		if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
+		then
 			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
 			PANDM_PID=`pidof CcspPandMSsp`
 			if [ "$PANDM_PID" != "" ]; then
