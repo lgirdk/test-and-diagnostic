@@ -658,3 +658,24 @@ CosaDmlDiagGetARPTable
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
 
+ANSC_STATUS
+CosaDmlInputValidation
+    (
+        char                       *host
+    )
+{
+    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+    	
+	// check for possible command injection	
+    if(strstr(host,";"))
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,"&"))
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,"|"))
+        returnStatus = ANSC_STATUS_FAILURE;
+
+	return returnStatus;
+
+}
+
+
