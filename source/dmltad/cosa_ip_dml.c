@@ -1321,7 +1321,14 @@ IPPing_SetParamStringValue
         }
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
+    {
+		ANSC_STATUS             ret;
+        ret=CosaDmlInputValidation(pString);
+		if(ANSC_STATUS_SUCCESS != ret)
+			return FALSE;
+		
         snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    }
     else
         return FALSE;
 
@@ -1978,7 +1985,13 @@ TraceRoute_SetParamStringValue
         }
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
+    {
+		ANSC_STATUS             ret;
+        ret=CosaDmlInputValidation(pString);
+		if(ANSC_STATUS_SUCCESS != ret)
+			return FALSE;
         snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    }
     else
         return FALSE;
 
