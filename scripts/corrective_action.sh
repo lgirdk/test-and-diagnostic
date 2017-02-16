@@ -271,6 +271,8 @@ networkResponse=`cat /var/tmp/networkresponse.txt`
 
 iter=0
 max_iter=2
+PandM_wait_timeout=600
+PandM_wait_count=0
 while [ "$psmNotificationCP" = "" ] && [ "$iter" -le $max_iter ]
 do
 	iter=$((iter+1))
@@ -301,6 +303,12 @@ then
 				fi
 				break
 			fi
+			PandM_wait_count=$(($PandM_wait_count+2))
+			if [ "$PandM_wait_count" -gt "$PandM_wait_timeout" ]	
+			then
+				echo "RDKB_SELFHEAL : PandM_wait_count reached timeout value, exiting from checkCaptivePortal function"
+				break
+			fi				
 			sleep 2
 		done
 	else

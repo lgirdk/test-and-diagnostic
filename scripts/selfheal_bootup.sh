@@ -52,6 +52,8 @@ checkCaptivePortal()
 isWiFiConfigured=`syscfg get redirection_flag`
 psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
 
+PandM_wait_timeout=600
+PandM_wait_count=0
 #Read the http response value
 networkResponse=`cat /var/tmp/networkresponse.txt`
 
@@ -85,6 +87,12 @@ then
 				then
 					echo_t "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
 				fi
+				break
+			fi
+			PandM_wait_count=$(($PandM_wait_count+2))
+			if [ "$PandM_wait_count" -gt "$PandM_wait_timeout" ]	
+			then
+				echo "RDKB_SELFHEAL_BOOTUP : PandM_wait_count reached timeout value, exiting from checkCaptivePortal function"
 				break
 			fi
 			sleep 2
