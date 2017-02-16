@@ -8,6 +8,7 @@ if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
+source /etc/utopia/service.d/log_timestamp.sh
 
 ping_failed=0
 ping_success=0
@@ -41,7 +42,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 #		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
 #		touch $HAVECRASH		
 #		rebootNeeded RM "PSM"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
 		resetNeeded psm PsmSsp
 	fi
 
@@ -55,23 +56,23 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
  			isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
 		  	if [ "$isCRAlive" != "" ]; then
 		#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+				echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
 				vendor=`getVendorName`
 				modelName=`getModelName`
 				CMMac=`getCMMac`
 				timestamp=`getDate`
-				echo "[`getDateTime`] Setting Last reboot reason"
+				echo_t "Setting Last reboot reason"
 				reason="CR_crash"
 				rebootCount=1
 				setRebootreason $reason $rebootCount
-				echo "[`getDateTime`] SET succeeded"
-				echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+				echo_t "SET succeeded"
+				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
 				touch $HAVECRASH
 				rebootNeeded RM "CR"
 		 	fi		
 		fi
 	else
-		echo "[`getDateTime`] [RDKB_SELFHEAL] : Atom only reboot is triggered"
+		echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
 	fi
 
 ###########################################
@@ -79,30 +80,30 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
 		  wifi_timeout=`echo $wifi_check | grep "CCSP_ERR_TIMEOUT"`
 		  if [ "$wifi_timeout" != "" ]; then
-				  echo "[`getDateTime`] [RDKB_SELFHEAL] : Wifi query timeout"
+				  echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
 		  fi
 
 		  SSH_ATOM_TEST=$(ssh root@$ATOM_IP exit 2>&1)
 		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
 		  if [ "$SSH_ERROR" != "" ]; then
-				  echo "[`getDateTime`] [RDKB_SELFHEAL] : ssh to atom failed"
+				  echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
 		  fi
 
 		  if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
 		  then
 				  atom_hang_count=`sysevent get atom_hang_count`
-				  echo "[`getDateTime`] [RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
+				  echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
 				  if [ $atom_hang_count -ge 2 ]; then
 						  CheckRebootCretiriaForAtomHang
 						  atom_hang_reboot_count=`syscfg get todays_atom_reboot_count`
 						  if [ $atom_hang_reboot_count -eq 0 ]; then
-							  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
+							  echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
 							  reason="ATOM_HANG"
 							  rebootCount=1
 							  setRebootreason $reason $rebootCount
 							  rebootNeeded $reason ""
 						  else
-							  echo "[`getDateTime`] [RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
+							  echo_t "[RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
 						  fi
 				  else
 						  atom_hang_count=$((atom_hang_count + 1))
@@ -118,7 +119,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$PAM_PID" = "" ]; then
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
 		resetNeeded pam CcspPandMSsp
 	fi
 	
@@ -126,7 +127,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	MTA_PID=`pidof CcspMtaAgentSsp`
 	if [ "$MTA_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
 		resetNeeded mta CcspMtaAgentSsp
 
 	fi
@@ -135,7 +136,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	CM_PID=`pidof CcspCMAgentSsp`
 	if [ "$CM_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
 		resetNeeded cm CcspCMAgentSsp
 	fi
 
@@ -143,7 +144,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	WEBC_PID=`pidof CcspWecbController`
 	if [ "$WEBC_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
 		resetNeeded wecb CcspWecbController
 	fi
 
@@ -172,7 +173,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 #		touch $HAVECRASH
 #		rebootNeeded RM "TR69"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
 		resetNeeded TR69 CcspTr069PaSsp
 	fi
 
@@ -180,14 +181,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	TandD_PID=`pidof CcspTandDSsp`
 	if [ "$TandD_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TandD_process is not running, restarting it"
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
 		resetNeeded tad CcspTandDSsp
 	fi
 
 	# Checking Lan Manager PID
 	LM_PID=`pidof CcspLMLite`
 	if [ "$LM_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
 		resetNeeded lm CcspLMLite
 	
 	fi
@@ -195,7 +196,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking XdnsSsp PID
 	XDNS_PID=`pidof CcspXdnsSsp`
 	if [ "$XDNS_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
 		resetNeeded xdns CcspXdnsSsp
 
 	fi
@@ -203,20 +204,20 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagent`
 	if [ "$SNMP_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
 		resetNeeded snmp snmp_subagent 
 	fi
 
 	# Checking CcspMoCA PID
 	MOCA_PID=`pidof CcspMoCA`
 	if [ "$MOCA_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
 		resetNeeded moca CcspMoCA 
 	fi
 
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
 		resetNeeded "" CcspHomeSecurity 
 	fi
 
@@ -226,7 +227,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
 		DHCP_ARP_PID=`pidof hotspot_arpd`
 		if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
-		     echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
+		     echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 		     resetNeeded "" hotspot_arpd 
 		fi
 
@@ -235,7 +236,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		#l2sd0.102 case 
 		ifconfig -a | grep l2sd0.102
 		if [ $? == 1 ]; then
-		     echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
+		     echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
 		     sysevent set multinet_3-status stopped
 		     $UTOPIA_PATH/service_multinet_exec multinet-start 3
 		     ifconfig -a | grep l2sd0.102
@@ -258,7 +259,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		#l2sd0.103 case
 		ifconfig -a | grep l2sd0.103
 		if [ $? == 1 ]; then
-		   echo "[`getDateTime`] XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
+		   echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
 		   sysevent set multinet_4-status stopped
 		   $UTOPIA_PATH/service_multinet_exec multinet-start 4
 		   ifconfig -a | grep l2sd0.103
@@ -283,12 +284,12 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$WEBPA_PID" = "" ]; then
 		ENABLEWEBPA=`cat /nvram/webpa_cfg.json | grep -r EnablePa | awk '{print $2}' | sed 's|[\"\",]||g'`
 		if [ "$ENABLEWEBPA" = "true" ];then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
 			#We'll set the reason only if webpa reconnect is not due to DNS resolve
 			syscfg get X_RDKCENTRAL-COM_LastReconnectReason | grep "Dns_Res_webpa_reconnect"
 			if [ $? != 0 ]; then
 				echo "setting reconnect reason from task_health_monitor.sh"
-			echo "[`getDateTime`] Setting Last reconnect reason"
+			echo_t "Setting Last reconnect reason"
 			syscfg set X_RDKCENTRAL-COM_LastReconnectReason WebPa_crash
 			result=`echo $?`
 			if [ "$result" != "0" ]
@@ -301,7 +302,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			then
 			    echo "Commit for Reconnect Reason failed"
 			fi
-			echo "[`getDateTime`] SET succeeded"
+			echo_t "SET succeeded"
 		fi
 			resetNeeded webpa webpa
 		fi
@@ -318,7 +319,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	dropbear_flagged=0
 	if [ "$DROPBEAR_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
+		echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
 		dropbear_flagged=1
 		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
 		sleep 3
@@ -334,7 +335,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                if [ $dropbear_flagged -eq 0 ]
                then
                   dropbear_flagged=0
-                  echo "[`getDateTime`] RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
+                  echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                fi
                dropbear -E -B -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
            fi
@@ -346,10 +347,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		isPortKilled=`netstat -anp | grep 51515`
 		if [ "$isPortKilled" != "" ]
 		then
-		    echo "[`getDateTime`] Port 51515 is still alive. Killing processes associated to 51515"
+		    echo_t "Port 51515 is still alive. Killing processes associated to 51515"
 		    fuser -k 51515/tcp
 		fi
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+		echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		#lighttpd -f $LIGHTTPD_CONF
 		sh /etc/webgui.sh
 	fi
@@ -360,7 +361,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	then
 		if [ ! -f "$SyseventdCrashed"  ]
 		then
-			echo "[`getDateTime`] [RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window." 
+			echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window." 
 			touch $SyseventdCrashed
 		fi
 		rebootDeviceNeeded=1
@@ -386,7 +387,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		   check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
 		   then
-			   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+			   echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
 			   logNetworkInfo
 
 			   ipv4_status=`sysevent get ipv4_4-status`
@@ -394,7 +395,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 			   if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
 			   then
-			   	echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+			   	echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
 				sysevent set lan-start
 				sleep 5
 			   fi
@@ -407,7 +408,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
             fi
         else
-            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
         fi
 
 
@@ -422,14 +423,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
 	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
         then
-	       echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+	       echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
 
 		ipv5_status=`sysevent get ipv4_5-status`
 	        lan_l3net=`sysevent get homesecurity_lan_l3net`
 
 		if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
 		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+			echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
 			sysevent set ipv4-up $lan_l3net
 			sleep 5
 		fi
@@ -452,15 +453,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
            if [ "$isEnabled" != "" ]
            then
              SSID_DISABLED=1
-             echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+             echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
            fi
         else
            destinationError=`echo $ssidEnable | grep "Can't find destination component"`
            if [ "$destinationError" != "" ]
            then
-                echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
            else
-                echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+                echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
            fi
         fi
 
@@ -473,22 +474,22 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
            if [ "$isBridging" = "" ]
            then
                BR_MODE=1
-               echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
+               echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
            fi
         else
-            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
 
 	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
 	    pandm_notexist=`echo $bridgeMode | grep "CCSP_ERR_NOT_EXIST"`
 	    if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
 	    then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
+		echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
 		cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
 		cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
 		cr_pam_notexist=`echo $cr_query | grep "CCSP_ERR_NOT_EXIST"`
 		if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
 		then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+			echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
 			PANDM_PID=`pidof CcspPandMSsp`
 			if [ "$PANDM_PID" != "" ]; then
 				kill -9 $PANDM_PID
@@ -515,13 +516,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                    # We need to verify if it was a dmcli crash or is WiFi really down
 		           isDown=`echo $ssidStatus_5 | grep "Down"`
 		           if [ "$isDown" != "" ]; then
-                      echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+                      echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
                    else
-                      echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
+                      echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
                    fi
                 fi
             else
-               echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+               echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
             fi
         fi
 
@@ -536,10 +537,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
             if [ "$isEnabled_2" != "" ]
             then
                SSID_DISABLED_2G=1
-               echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
+               echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             fi
         else
-            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
+            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
         fi
 
         # If bridge mode is not set and WiFI is not disabled by user,
@@ -557,26 +558,26 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                     # We need to verify if it was a dmcli crash or is WiFi really down
 		            isDown=`echo $ssidStatus_2 | grep "Down"`
 		            if [ "$isDown" != "" ]; then
-                        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
+                        echo_t "[RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
                     else
-                        echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
+                        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
                     fi
                 fi
             else
-               echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+               echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
             fi
         fi
         
 	FIREWALL_ENABLED=`syscfg get firewall_enabled`
 
-	echo "[`getDateTime`] [RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
-    echo "[`getDateTime`] [RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
+	echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
+    echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 
 	if [ $BR_MODE -eq 0 ] 
 	then
 		iptables-save -t nat | grep "A PREROUTING -i"
 		if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted."
+		echo_t "[RDKB_PLATFORM_ERROR] : iptable corrupted."
 		#sysevent set firewall-restart
 		fi
      fi
@@ -593,7 +594,7 @@ then
 		echo "isIPv6 = $isIPv6"
         	 if [ "$isIPv6" == "" ]
 		 then
-			echo "[`getDateTime`] [RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting ti_dhcp6c"
+			echo_t "[RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting ti_dhcp6c"
 			rm -rf $DHCPV6_ERROR_FILE
 			sh $DHCPV6_HANDLER disable
 			sleep 2
@@ -615,7 +616,7 @@ loop=1
 			if [ "$CHECK_PING_RES" -ne 100 ] 
 			then
 				ping_success=1
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP is success"
+				echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
 				break
 			else
 				ping_failed=1
@@ -626,10 +627,10 @@ loop=1
 		
 		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
 		else
-			echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-			echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
+			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 			rebootNeeded RM ""
 
 		fi
@@ -637,14 +638,14 @@ loop=1
 		sleep 5
 	done
 else
-   echo "[`getDateTime`] RDKB_SELFHEAL : ping_peer command not found"
+   echo_t "RDKB_SELFHEAL : ping_peer command not found"
 fi
 
 if [ -f $PING_PATH/arping_peer ]
 then
     $PING_PATH/arping_peer
 else
-   echo "[`getDateTime`] RDKB_SELFHEAL : arping_peer command not found"
+   echo_t "RDKB_SELFHEAL : arping_peer command not found"
 fi
 fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
@@ -671,10 +672,10 @@ fi
 					if [ "$rebootNeededforbrlan1" -eq 1 ]
 					then
 						echo "rebootNeededforbrlan1"
-						echo "[`getDateTime`] RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
-						echo "[`getDateTime`] Setting Last reboot reason"
+						echo_t "RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
+						echo_t "Setting Last reboot reason"
 						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
-						echo "[`getDateTime`] SET succeeded"
+						echo_t "SET succeeded"
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
 						echo "rebootDeviceNeeded"

@@ -9,6 +9,8 @@ then
 fi
 
 source $TAD_PATH/corrective_action.sh
+source /etc/utopia/service.d/log_timestamp.sh
+
 source $UTOPIA_PATH/log_env_var.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -23,15 +25,15 @@ then
     then
         if [ $isSuccess -gt 0 ]
         then
-            echo "[`getDateTime`] ARPING_FROM_SOURCE:Success"
+            echo_t "ARPING_FROM_SOURCE:Success"
         else
-            echo "[`getDateTime`] ARPING_FROM_SOURCE:Failed 0 Reply"
+            echo_t "ARPING_FROM_SOURCE:Failed 0 Reply"
         fi
     else
-        echo "[`getDateTime`] ARPING_FROM_SOURCE:Failed no count"
+        echo_t "ARPING_FROM_SOURCE:Failed no count"
     fi
 else
-   echo "[`getDateTime`] ARPING_FROM_SOURCE:Failed no Reply"
+   echo_t "ARPING_FROM_SOURCE:Failed no Reply"
 fi
 
 rm -rf /tmp/.arpingresult

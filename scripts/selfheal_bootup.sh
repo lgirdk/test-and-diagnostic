@@ -21,6 +21,7 @@ needSelfhealReboot="/nvram/self_healreboot"
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
 source $UTOPIA_PATH/log_env_var.sh
+source /etc/utopia/service.d/log_timestamp.sh
 
 if [ "$UPTIME" -lt 600 ]
 then
@@ -60,8 +61,8 @@ do
 	psmNotificationCP=`psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges`
 done
 
-echo "[`getDateTime`] RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
-echo "[`getDateTime`] RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
+echo_t "RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
+echo_t "RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
 
 if [ "$isWiFiConfigured" = "true" ]
 then
@@ -69,27 +70,27 @@ then
 	then
 		# Check if P&M is up and able to find the captive portal parameter
 		while : ; do
-			echo "[`getDateTime`] RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
+			echo_t "RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
 			CHECK_PAM_INITIALIZED=`find /tmp/ -name "pam_initialized"`
-			echo "[`getDateTime`] RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
+			echo_t "RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
 			if [ "$CHECK_PAM_INITIALIZED" != "" ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
+				echo_t "RDKB_SELFHEAL : WiFi is not configured, setting ConfigureWiFi to true"
 				output=`dmcli eRT setvalues Device.DeviceInfo.X_RDKCENTRAL-COM_ConfigureWiFi bool TRUE`
 				check_success=`echo $output | grep  "Execution succeed."`
 				if [ "$check_success" != "" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+					echo_t "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
 				fi
 				break
 			fi
 			sleep 2
 		done
 	else
-		echo "[`getDateTime`] RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
+		echo_t "RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
 	fi
 else
-	echo "[`getDateTime`] RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
+	echo_t "RDKB_SELFHEAL : Syscfg DB value is : $isWiFiConfigured"
 fi	
 
 }
@@ -115,7 +116,7 @@ resetNeeded()
         	Subsys=""
 	fi
 
-	echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Resetting process $ProcessName"
+	echo_t "RDKB_SELFHEAL_BOOTUP : Resetting process $ProcessName"
 	cd /usr/ccsp/pam/
 	$BINPATH/CcspPandMSsp -subsys $Subsys
 	cd -
@@ -136,7 +137,7 @@ then
 			Check_CM_Ip=1
 		 else
 		   	Check_CM_Ip=0
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
+			echo_t "RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
 		 fi
 	 else
 		Check_CM_Ip=1
@@ -149,7 +150,7 @@ then
 		year_is=`date +"%Y"`
 		if [ "$year_is" == "1970" ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : System time is in 1970's"
+			echo_t "RDKB_SELFHEAL_BOOTUP : System time is in 1970's"
 		fi
 	 fi
 
@@ -167,7 +168,7 @@ isIPv6=""
 			Check_WAN_Ip=1
 		 else
 		   	Check_WAN_Ip=0
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
+			echo_t "RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
 		 fi
 	 else
 		Check_WAN_Ip=1
@@ -183,15 +184,15 @@ isIPv6=""
 			isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
 			isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
 			if [ "$isRpcOk" != "" ]; then
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is OK"
+				echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is OK"
 			else
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is NOK"
+				echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is NOK"
 			fi
 
 			if [ "$isCRAlive" != "" ]; then
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR process is alive thru RPC"
+				echo_t "RDKB_SELFHEAL_BOOTUP : CR process is alive thru RPC"
 			else
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
+				echo_t "RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
 			fi
 		else
 			echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking CR process using rpcclient"
@@ -201,8 +202,8 @@ isIPv6=""
                 crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
                 isCRAlive=`echo $crReTestop | grep "Execution succeed"`
                   if [ "$isCRAlive" == "" ]; then
-                        echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-                        echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : CR_process is not running, need reboot"
+                        echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+                        echo_t "RDKB_SELFHEAL_BOOTUP : CR_process is not running, need reboot"
                         touch $HAVECRASH
 						
                         if [ ! -f "$needSelfhealReboot" ]
@@ -213,13 +214,13 @@ isIPv6=""
 				result=`echo $?`
 				if [ "$result" != "0" ]
 				then
-					echo "[`getDateTime`] SET for Reboot Reason failed"
+					echo_t "SET for Reboot Reason failed"
 				fi
 				syscfg commit
 				result=`echo $?`
 				if [ "$result" != "0" ]
 				then
-					echo "[`getDateTime`] Commit for Reboot Reason failed"
+					echo_t "Commit for Reboot Reason failed"
 				fi
 
                                 $RDKLOGGER_PATH/backupLogs.sh "true" "CR"
@@ -235,14 +236,14 @@ isIPv6=""
 	PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" == "" ]; then
 
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-		echo "[`getDateTime`] Setting Last reboot reason"
+		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+		echo_t "Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
-		echo "[`getDateTime`] SET succeeded"
+		echo_t "SET succeeded"
 		touch $HAVECRASH		
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
-		echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : PSM_process is not running, need reboot"
+		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
+		echo_t "RDKB_SELFHEAL_BOOTUP : PSM_process is not running, need reboot"
 
 			if [ ! -f "$needSelfhealReboot" ]
 			then
@@ -259,8 +260,8 @@ isIPv6=""
 	if [ "$PAM_PID" == "" ]; then
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
-		echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : PAM_process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+		echo_t "RDKB_SELFHEAL_BOOTUP : PAM_process is not running, need restart"
 		resetNeeded CcspPandMSsp
 	fi
 
@@ -279,7 +280,7 @@ loop=1
 			if [ "$CHECK_PING_RES" -ne 100 ] 
 			then
 				ping_success=1
-				echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
+				echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
 				break
 			else
 				ping_failed=1
@@ -290,16 +291,16 @@ loop=1
 	
 	    if [ "$ping_failed" -eq 1 ]
        	then
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
             # This test is done only for XB3 cases 
             if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
 				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
 				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
 				if [ "$RPC_OK" != "" ]
 		    	then
-		    		echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
+		    		echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
 				else
-				   	echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
+				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
 				fi
 			else
 				echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
@@ -308,13 +309,13 @@ loop=1
 
 		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
 		else
-			echo "[`getDateTime`] RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 			if [ ! -f "/nvram/self_healreboot" ]
 			then
 				touch /nvram/self_healreboot
-				echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
+				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 				$RDKLOGGER_PATH/backupLogs.sh "true" ""
 			else
 				rm -rf /nvram/self_healreboot
@@ -347,13 +348,13 @@ fi
 			  
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
 		   then
-			   echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+			   echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
 			   ipv4_status=`sysevent get ipv4_4-status`
 			   lan_status=`sysevent get lan-status`
 
 			   if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
 			   then
-			   	echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+			   	echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv4_4-status is not set or lan is not started, setting lan-start event"
 				sysevent set lan-start
 				sleep 5
 			   fi
@@ -370,13 +371,13 @@ fi
        		          echo "brlan0 has IPV4 Address in router mode"
                 	  Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
 		          if [ "$Check_Iptable_Rules" == "" ]; then
-        	    	      	 echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
+        	    	      	 echo_t "[RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
 		          	 #sysevent set firewall-restart
 		          fi	
 		   fi
             fi
         else
-            echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
+            echo_t "[RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
         fi
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
@@ -389,14 +390,14 @@ fi
 	
 	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
         then
-	       echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+	       echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
 
 		ipv5_status=`sysevent get ipv4_5-status`
 	        lan_l3net=`sysevent get homesecurity_lan_l3net`
 
 		if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
 		then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
+			echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
 			sysevent set ipv4-up $lan_l3net
 			sleep 5
 		fi
@@ -411,8 +412,8 @@ fi
 	then
                 if [ ! -f "$needSelfhealReboot" ]
                 then
-			echo "[`getDateTime`] [RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
-			echo "[`getDateTime`] Setting Last reboot reason"
+			echo_t "[RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
+			echo_t "Setting Last reboot reason"
 			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
 			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 			touch $needSelfhealReboot

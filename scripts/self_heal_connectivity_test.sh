@@ -7,6 +7,7 @@ source $UTOPIA_PATH/log_env_var.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 rand_num_old=""
 source $TAD_PATH/corrective_action.sh
+source /etc/utopia/service.d/log_timestamp.sh
 source /etc/device.properties
 
 # Generate random time to start 
@@ -73,7 +74,7 @@ runDNSPingTest()
 		
 		if [ -z "$urlToVerify" ]
 		then
-			echo "[`getDateTime`] DNS Response: DNS PING Test URL is empty"
+			echo_t "DNS Response: DNS PING Test URL is empty"
 			return
 		fi
 
@@ -81,7 +82,7 @@ runDNSPingTest()
 
 		if [ "$DNS_PING_TEST_URL" = "" ]
 		then
-			echo "[`getDateTime`] DNS Response: DNS PING Test URL is empty"
+			echo_t "DNS Response: DNS PING Test URL is empty"
 			return
 		fi
 
@@ -90,13 +91,13 @@ runDNSPingTest()
 
 		if [ $RESPONSE -eq 0 ]
 		then
-			echo "[`getDateTime`] DNS Response: Got success response for this URL $DNS_PING_TEST_URL"
+			echo_t "DNS Response: Got success response for this URL $DNS_PING_TEST_URL"
 		else
-			echo "[`getDateTime`] DNS Response: fail to resolve this URL $DNS_PING_TEST_URL"
+			echo_t "DNS Response: fail to resolve this URL $DNS_PING_TEST_URL"
 
 			if [ `getCorrectiveActionState` = "true" ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+				echo_t "RDKB_SELFHEAL : Taking corrective action"
 				resetNeeded "" PING
 			fi
 		fi
@@ -183,21 +184,21 @@ runPingTest()
 
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
+		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
 		echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
 		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			echo_t "RDKB_SELFHEAL : Taking corrective action"
 			resetNeeded "" PING
 		fi
 	elif [ "$ping4_success" -ne 1 ]
 	then
                 if [ "$IPv4_Gateway_addr" != "" ]
                 then
-                   echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                   echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
                 else
-                   echo "[`getDateTime`] RDKB_SELFHEAL : No IPv4 Gateway Address detected"
+                   echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
 
         	echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
@@ -208,33 +209,33 @@ runPingTest()
                       wanIP=`ifconfig erouter0 | grep "inet addr" | cut -f2 -d: | cut -f1 -d" "`
                       if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
                       then
-                          echo "[`getDateTime`] EROUTER_DHCP_STATUS:Rebinding"
+                          echo_t "EROUTER_DHCP_STATUS:Rebinding"
                       fi
                 fi
 
 		if [ `getCorrectiveActionState` = "true" ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			echo_t "RDKB_SELFHEAL : Taking corrective action"
 			resetNeeded "" PING
 		fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
                 if [ "$IPv6_Gateway_addr" != "" ]
                 then
-		            echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
                 else
-                    echo "[`getDateTime`] RDKB_SELFHEAL : No IPv6 Gateway Address detected"
+                    echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
 
 		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"	
 		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
-			echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+			echo_t "RDKB_SELFHEAL : Taking corrective action"
 			resetNeeded "" PING
 		fi
 	else
-		echo "[`getDateTime`] RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
+		echo_t "RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
 	fi	
 
 	ping4_success=0
@@ -311,55 +312,55 @@ runPingTest()
 
 			if [ "$IPV4_SERVER_COUNT" -eq 0 ] && [ "$IPV6_SERVER_COUNT" -eq 0 ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping server lists are empty , not taking any corrective actions"				
+				echo_t "RDKB_SELFHEAL : Ping server lists are empty , not taking any corrective actions"				
 
 			elif [ "$ping4_success" -ne 1 ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed."
+				echo_t "RDKB_SELFHEAL : Ping to IPv4 servers are failed."
 				if [ `getCorrectiveActionState` = "true" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					echo_t "RDKB_SELFHEAL : Taking corrective action"
 					resetNeeded "" PING
 				fi
 			elif [ "$ping6_success" -ne 1 ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
 			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed."
+				echo_t "RDKB_SELFHEAL : Ping to IPv6 servers are failed."
 				if [ `getCorrectiveActionState` = "true" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					echo_t "RDKB_SELFHEAL : Taking corrective action"
 					resetNeeded "" PING
 				fi
 			else
-				echo "[`getDateTime`] RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
-				echo "[`getDateTime`] RDKB_SELFHEAL : Connectivity Test is Successfull"
+				echo_t "RDKB_SELFHEAL : One of the ping server list is empty, ping to the other list is successfull"
+				echo_t "RDKB_SELFHEAL : Connectivity Test is Successfull"
 			fi	
 
 	elif [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed."
+		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed."
 				if [ `getCorrectiveActionState` = "true" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					echo_t "RDKB_SELFHEAL : Taking corrective action"
 					resetNeeded "" PING
 				fi
 	elif [ "$ping4_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv4 servers are failed."
+		echo_t "RDKB_SELFHEAL : Ping to IPv4 servers are failed."
 				if [ `getCorrectiveActionState` = "true" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					echo_t "RDKB_SELFHEAL : Taking corrective action"
 					resetNeeded "" PING
 				fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Ping to IPv6 servers are failed."
+		echo_t "RDKB_SELFHEAL : Ping to IPv6 servers are failed."
 				if [ `getCorrectiveActionState` = "true" ]
 				then
-					echo "[`getDateTime`] RDKB_SELFHEAL : Taking corrective action"
+					echo_t "RDKB_SELFHEAL : Taking corrective action"
 					resetNeeded "" PING
 				fi
 	else
-		echo "[`getDateTime`] RDKB_SELFHEAL : Connectivity Test is Successfull"
+		echo_t "RDKB_SELFHEAL : Connectivity Test is Successfull"
 	fi	
 
 	ping4_success=0
