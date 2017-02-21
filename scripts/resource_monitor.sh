@@ -172,6 +172,16 @@ do
 
 		echo "[`getDateTime`] RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
 
+		if [ ! -f /tmp/CPUUsageReachedMAXThreshold ]
+		then
+			if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
+				echo "[`getDateTime`] RDKB_SELFHEAL : CPU load is $Curr_CPULoad_Avg"
+				echo "[`getDateTime`] RDKB_SELFHEAL : Top 5 tasks running on device"				
+				top -bn1 | head -n10 | tail -6
+				touch /tmp/CPUUsageReachedMAXThreshold
+			fi
+		fi
+
 		LOAD_AVG=`cat /proc/loadavg`
 		echo "[`getDateTime`] RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
 
