@@ -23,11 +23,7 @@
 void SyncAndUploadLogs()
 {
 		char  str[100] = {0};
-	sprintf(str,"/rdklogger/backupLogs.sh false \"\" Atom_Max_Log_Size_Reached");
+	sprintf(str,"/rdklogger/backupLogs.sh false \"\" Atom_Max_Log_Size_Reached upload &");
         system(str);
 
-	memset(str,sizeof(str),0);
-
-	sprintf(str,"/rdklogger/uploadRDKBLogs.sh \"\" HTTP \"\" false  &");
-	system(str);
 }
