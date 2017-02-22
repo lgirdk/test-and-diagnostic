@@ -9,6 +9,7 @@ batteryMode=0
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
 source /etc/device.properties
+source /etc/utopia/service.d/log_timestamp.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -44,10 +45,10 @@ do
 	if [ "$AvgMemUsed" -ge "$MEM_THRESHOLD" ]
 	then
 
-		echo "[`getDateTime`] RDKB_SELFHEAL : Total memory in system is $totalMemSys at timestamp $timestamp"
-		echo "[`getDateTime`] RDKB_SELFHEAL : Used memory in system is $usedMemSys at timestamp $timestamp"
-		echo "[`getDateTime`] RDKB_SELFHEAL : Free memory in system is $freeMemSys at timestamp $timestamp"
-		echo "[`getDateTime`] RDKB_SELFHEAL : AvgMemUsed in % is  $AvgMemUsed"
+		echo_t "RDKB_SELFHEAL : Total memory in system is $totalMemSys at timestamp $timestamp"
+		echo_t "RDKB_SELFHEAL : Used memory in system is $usedMemSys at timestamp $timestamp"
+		echo_t "RDKB_SELFHEAL : Free memory in system is $freeMemSys at timestamp $timestamp"
+		echo_t "RDKB_SELFHEAL : AvgMemUsed in % is  $AvgMemUsed"
 		vendor=`getVendorName`
 		modelName=`getModelName`
 		CMMac=`getCMMac`
@@ -57,7 +58,7 @@ do
 		
 		threshold_reached=1
 
-		echo "[`getDateTime`] Setting Last reboot reason"
+		echo_t "Setting Last reboot reason"
 		reason="MEM_THRESHOLD"
 		rebootCount=1
 		setRebootreason $reason $rebootCount
@@ -111,16 +112,16 @@ do
 	total=$(($active + $idle_diff))
 	Curr_CPULoad=$(( $active * 100 / $total ))
 
-	echo "[`getDateTime`] RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+	echo_t "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
 	CPU_THRESHOLD=`syscfg get avg_cpu_threshold`
 
 	count_val=0
 	if [ "$Curr_CPULoad" -ge "$CPU_THRESHOLD" ]
 	then
-		echo "[`getDateTime`] RDKB_SELFHEAL : Interrupts"
+		echo_t "RDKB_SELFHEAL : Interrupts"
 		echo "`cat /proc/interrupts`"
 
-		echo "[`getDateTime`] RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
+		echo_t "RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
 	        Curr_CPULoad=0
 		# Calculating CPU avg in 5 mins window		
 		while [ "$count_val" -lt 10 ]
@@ -136,7 +137,7 @@ do
 			idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
 			iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
 
-			echo "[`getDateTime`] RDKB_SELFHEAL : Initial CPU stats are"
+			echo_t "RDKB_SELFHEAL : Initial CPU stats are"
 			echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
 
 			sleep $DELAY
@@ -149,7 +150,7 @@ do
 			idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
 			iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
 
-			echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats after $DELAY sec are"
+			echo_t "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
 			echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
 	
 			user_diff=$(change 1)
@@ -157,20 +158,20 @@ do
 			idle_diff=$(change 4)
 			iowait_diff=$(change 5)
 
-			echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
+			echo_t "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
 			echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
 
 			active=$(( $user_diff + $system_diff + $iowait_diff))
 			total=$(($active + $idle_diff))
 			Curr_CPULoad_calc=$(( $active * 100 / $total ))
-			echo "[`getDateTime`] RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
+			echo_t "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
 			Curr_CPULoad=$(($Curr_CPULoad + $Curr_CPULoad_calc))
 			
 		done
 
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
 
-		echo "[`getDateTime`] RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
+		echo_t "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
 
 		if [ ! -f /tmp/CPUUsageReachedMAXThreshold ]
 		then
@@ -183,9 +184,9 @@ do
 		fi
 
 		LOAD_AVG=`cat /proc/loadavg`
-		echo "[`getDateTime`] RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
+		echo_t "RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
 
-		echo "[`getDateTime`] RDKB_SELFHEAL : Interrupts after calculating Avg CPU usage (after 5 minutes)"
+		echo_t "RDKB_SELFHEAL : Interrupts after calculating Avg CPU usage (after 5 minutes)"
 		echo "`cat /proc/interrupts`"
 
 #		if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ]
@@ -226,7 +227,7 @@ do
 
 					if [ $total_ds_cpu -ge 25 ]; then
 
-						echo "[`getDateTime`] Setting Last reboot reason"
+						echo_t "Setting Last reboot reason"
 						reason="DS_MANAGER_HIGH_CPU"
 						rebootCount=1
 						setRebootreason $reason $rebootCount
@@ -244,7 +245,7 @@ do
   	then
   		Selfhealutil power_mode
   		batteryMode=$?
-  	        echo "[`getDateTime`] RDKB_SELFHEAL : batteryMode is  $batteryMode"
+  	        echo_t "RDKB_SELFHEAL : batteryMode is  $batteryMode"
     	fi	
      	   
   	if [ $batteryMode = 0 ]
