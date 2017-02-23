@@ -125,6 +125,40 @@ resetNeeded()
 
 }
 
+
+setRebootreason()
+{
+        echo_t " Setting rebootReason to $1 and rebootCounter to $2"
+        
+        syscfg set X_RDKCENTRAL-COM_LastRebootReason $1
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo_t " SET for Reboot Reason failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo_t " Commit for Reboot Reason failed"
+        fi
+
+        syscfg set X_RDKCENTRAL-COM_LastRebootCounter $2
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo_t " SET for Reboot Counter failed"
+        fi
+        syscfg commit
+        result=`echo $?`
+        if [ "$result" != "0" ]
+        then
+            echo_t " Commit for Reboot Counter failed"
+        fi
+}
+
+
+
 if [ "$log_nvram2" == "true" ]
 then    
 # Check for CM IP Address 
@@ -209,19 +243,9 @@ isIPv6=""
                         if [ ! -f "$needSelfhealReboot" ]
                         then
                                 touch $needSelfhealReboot
-				syscfg set X_RDKCENTRAL-COM_LastRebootReason CR_crash
-				syscfg set X_RDKCENTRAL-COM_LastRebootCounter 1
-				result=`echo $?`
-				if [ "$result" != "0" ]
-				then
-					echo_t "SET for Reboot Reason failed"
-				fi
-				syscfg commit
-				result=`echo $?`
-				if [ "$result" != "0" ]
-				then
-					echo_t "Commit for Reboot Reason failed"
-				fi
+                                reason="CR_crash"
+                                rebootCount=1
+                                setRebootreason $reason $rebootCount
 
                                 $RDKLOGGER_PATH/backupLogs.sh "true" "CR"
                         else
@@ -239,7 +263,6 @@ isIPv6=""
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
 		echo_t "Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 		echo_t "SET succeeded"
 		touch $HAVECRASH		
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
@@ -316,6 +339,10 @@ loop=1
 			then
 				touch /nvram/self_healreboot
 				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
+		        reason="Peer_down"
+                rebootCount=1
+                setRebootreason $reason $rebootCount
 				$RDKLOGGER_PATH/backupLogs.sh "true" ""
 			else
 				rm -rf /nvram/self_healreboot
@@ -415,7 +442,6 @@ fi
 			echo_t "[RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
 			echo_t "Setting Last reboot reason"
 			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
-			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 			touch $needSelfhealReboot
 			$RDKLOGGER_PATH/backupLogs.sh "true" "syseventd"
 		else

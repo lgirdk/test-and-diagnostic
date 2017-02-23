@@ -344,7 +344,11 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			else
 				echo "[`getDateTime`] RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 				echo "[`getDateTime`] RDKB_REBOOT : Peer is not up ,Rebooting device "
-				rebootNeeded RM ""
+				echo "[`getDateTime`] Setting Last reboot reason Peer_down"
+                reason="Peer_down"
+                rebootCount=1
+                setRebootreason $reason $rebootCount
+                rebootNeeded RM ""
 
 			fi
 			loop=$((loop+1))

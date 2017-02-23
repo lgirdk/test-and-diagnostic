@@ -631,6 +631,10 @@ loop=1
 		else
 			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+            echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+            reason="Peer_down"
+            rebootCount=1
+            setRebootreason $reason $rebootCount
 			rebootNeeded RM ""
 
 		fi
