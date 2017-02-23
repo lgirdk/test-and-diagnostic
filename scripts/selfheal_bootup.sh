@@ -41,6 +41,9 @@ then
 	exec 3>&1 4>&2 >>$SELFHEALFILE_BOOTUP 2>&1
 fi
 
+#Remove script from cron execution
+rm -rf /etc/cron/cron.everyminute/selfheal_bootup.sh
+
 # This function will check if captive portal needs to be enabled or not.
 checkCaptivePortal()
 {
@@ -207,6 +210,74 @@ isIPv6=""
 	 else
 		Check_WAN_Ip=1
 	 fi
+## Check Peer ip is accessible
+if [ -f $PING_PATH/ping_peer ]
+then
+loop=1
+	while [ "$loop" -le 3 ]
+	do
+	
+        PING_RES=`ping_peer`
+	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+
+		if [ "$CHECK_PING_RES" != "" ]
+		then
+			if [ "$CHECK_PING_RES" -ne 100 ] 
+			then
+				ping_success=1
+				echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
+				break
+			else
+				ping_failed=1
+			fi
+		else
+			ping_failed=1
+		fi
+	
+	    if [ "$ping_failed" -eq 1 ]
+       	then
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
+            # This test is done only for XB3 cases 
+            if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
+				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+				if [ "$RPC_OK" != "" ]
+		    	then
+		    		echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
+				else
+				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
+				fi
+			else
+				echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+			fi
+      	fi
+
+		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+		then
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+		else
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			if [ ! -f "/nvram/self_healreboot" ]
+			then
+				touch /nvram/self_healreboot
+				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
+		        reason="Peer_down"
+                rebootCount=1
+                setRebootreason $reason $rebootCount
+				$RDKLOGGER_PATH/backupLogs.sh "true" ""
+			else
+				rm -rf /nvram/self_healreboot
+			fi
+
+		fi
+		loop=$((loop+1))
+		sleep 5
+	done
+else
+   echo "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
+fi
+##################
         # Check whether CR process is running
         crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
         isCRAlive=`echo $crTestop | grep "Execution succeed"`
@@ -287,74 +358,6 @@ isIPv6=""
 		echo_t "RDKB_SELFHEAL_BOOTUP : PAM_process is not running, need restart"
 		resetNeeded CcspPandMSsp
 	fi
-
-## Check Peer ip is accessible
-if [ -f $PING_PATH/ping_peer ]
-then
-loop=1
-	while [ "$loop" -le 3 ]
-	do
-	
-        PING_RES=`ping_peer`
-	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
-
-		if [ "$CHECK_PING_RES" != "" ]
-		then
-			if [ "$CHECK_PING_RES" -ne 100 ] 
-			then
-				ping_success=1
-				echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
-				break
-			else
-				ping_failed=1
-			fi
-		else
-			ping_failed=1
-		fi
-	
-	    if [ "$ping_failed" -eq 1 ]
-       	then
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
-            # This test is done only for XB3 cases 
-            if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
-				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
-				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
-				if [ "$RPC_OK" != "" ]
-		    	then
-		    		echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
-				else
-				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
-				fi
-			else
-				echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
-			fi
-      	fi
-
-		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
-		then
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
-		else
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-			if [ ! -f "/nvram/self_healreboot" ]
-			then
-				touch /nvram/self_healreboot
-				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
-		        reason="Peer_down"
-                rebootCount=1
-                setRebootreason $reason $rebootCount
-				$RDKLOGGER_PATH/backupLogs.sh "true" ""
-			else
-				rm -rf /nvram/self_healreboot
-			fi
-
-		fi
-		loop=$((loop+1))
-		sleep 5
-	done
-else
-   echo "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
-fi
 
 # Checking whether brlan0 and l2sd0.100 are created properly
 
@@ -449,10 +452,8 @@ fi
 		fi
 
 	fi
-	
-	rm -rf /etc/cron/cron.everyminute/selfheal_bootup.sh
+
 else
 	echo "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
-	rm -rf /etc/cron/cron.everyminute/selfheal_bootup.sh
 fi
 

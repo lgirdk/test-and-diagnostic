@@ -45,37 +45,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
 		resetNeeded psm PsmSsp
 	fi
-
-	atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
-	if [ x$atomOnlyReboot = x ];then
-		crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
- 		isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
-		if [ "$isCRAlive" != "" ]; then
-			# Retest by querying some other parameter
-			crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
- 			isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
-		  	if [ "$isCRAlive" != "" ]; then
-		#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-				echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-				vendor=`getVendorName`
-				modelName=`getModelName`
-				CMMac=`getCMMac`
-				timestamp=`getDate`
-				echo_t "Setting Last reboot reason"
-				reason="CR_crash"
-				rebootCount=1
-				setRebootreason $reason $rebootCount
-				echo_t "SET succeeded"
-				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
-				touch $HAVECRASH
-				rebootNeeded RM "CR"
-		 	fi		
-		fi
-	else
-		echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
-	fi
-
-###########################################
+##################################
 	if [ "$BOX_TYPE" = "XB3" ]; then
 		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
 		  wifi_timeout=`echo $wifi_check | grep "CCSP_ERR_TIMEOUT"`
@@ -114,6 +84,91 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		  fi
 	fi
 ###########################################
+
+if [ "$MULTI_CORE" = "yes" ]; then
+if [ -f $PING_PATH/ping_peer ]
+then
+## Check Peer ip is accessible
+loop=1
+	while [ "$loop" -le 3 ]
+	do
+        PING_RES=`ping_peer`
+	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+
+		if [ "$CHECK_PING_RES" != "" ]
+		then
+			if [ "$CHECK_PING_RES" -ne 100 ] 
+			then
+				ping_success=1
+				echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+				break
+			else
+				ping_failed=1
+			fi
+		else
+			ping_failed=1
+		fi
+		
+		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+		then
+			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+		else
+			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+            echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+            reason="Peer_down"
+            rebootCount=1
+            setRebootreason $reason $rebootCount
+			rebootNeeded RM ""
+
+		fi
+		loop=$((loop+1))
+		sleep 5
+	done
+else
+   echo_t "RDKB_SELFHEAL : ping_peer command not found"
+fi
+
+if [ -f $PING_PATH/arping_peer ]
+then
+    $PING_PATH/arping_peer
+else
+   echo_t "RDKB_SELFHEAL : arping_peer command not found"
+fi
+fi
+########################################
+
+	atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
+	if [ x$atomOnlyReboot = x ];then
+		crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
+ 		isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
+		if [ "$isCRAlive" != "" ]; then
+			# Retest by querying some other parameter
+			crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+ 			isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
+		  	if [ "$isCRAlive" != "" ]; then
+		#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+				echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+				vendor=`getVendorName`
+				modelName=`getModelName`
+				CMMac=`getCMMac`
+				timestamp=`getDate`
+				echo_t "Setting Last reboot reason"
+				reason="CR_crash"
+				rebootCount=1
+				setRebootreason $reason $rebootCount
+				echo_t "SET succeeded"
+				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+				touch $HAVECRASH
+				rebootNeeded RM "CR"
+		 	fi		
+		fi
+	else
+		echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
+	fi
+
+###########################################
+
 
 	PAM_PID=`pidof CcspPandMSsp`
 	if [ "$PAM_PID" = "" ]; then
@@ -601,57 +656,7 @@ then
 			sh $DHCPV6_HANDLER enable
            	fi 
 fi
-if [ "$MULTI_CORE" = "yes" ]; then
-if [ -f $PING_PATH/ping_peer ]
-then
-## Check Peer ip is accessible
-loop=1
-	while [ "$loop" -le 3 ]
-	do
-        PING_RES=`ping_peer`
-	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
-		if [ "$CHECK_PING_RES" != "" ]
-		then
-			if [ "$CHECK_PING_RES" -ne 100 ] 
-			then
-				ping_success=1
-				echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-				break
-			else
-				ping_failed=1
-			fi
-		else
-			ping_failed=1
-		fi
-		
-		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
-		then
-			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-		else
-			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-            echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-            reason="Peer_down"
-            rebootCount=1
-            setRebootreason $reason $rebootCount
-			rebootNeeded RM ""
-
-		fi
-		loop=$((loop+1))
-		sleep 5
-	done
-else
-   echo_t "RDKB_SELFHEAL : ping_peer command not found"
-fi
-
-if [ -f $PING_PATH/arping_peer ]
-then
-    $PING_PATH/arping_peer
-else
-   echo_t "RDKB_SELFHEAL : arping_peer command not found"
-fi
-fi
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
 
