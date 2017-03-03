@@ -228,57 +228,59 @@ loop=1
         PING_RES=`ping_peer`
 	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
-		if [ "$CHECK_PING_RES" != "" ]
+	if [ "$CHECK_PING_RES" != "" ]
+	then
+		if [ "$CHECK_PING_RES" -ne 100 ] 
 		then
-			if [ "$CHECK_PING_RES" -ne 100 ] 
-			then
-				ping_success=1
-				echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
-				break
-			else
-				ping_failed=1
-			fi
+			ping_success=1
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
+			break
 		else
 			ping_failed=1
 		fi
+	else
+			ping_failed=1
+	fi
 	
-	    if [ "$ping_failed" -eq 1 ]
-       	then
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
-            # This test is done only for XB3 cases 
-            if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
-				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
-				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
-				if [ "$RPC_OK" != "" ]
-		    	then
-		    		echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
-				else
-				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
-				fi
+	if [ "$ping_failed" -eq 1 ]
+        then
+	     echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
+             # This test is done only for XB3 cases 
+       	     if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
+			RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+			RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+			if [ "$RPC_OK" != "" ]
+	         	then
+	    			echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
 			else
-				echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+			   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
 			fi
-      	fi
+	     else
+			echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+	     fi
+      	 fi
 
-		if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+	 if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+	 then
+		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+		echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
+	 else
+		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+		echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
+		if [ ! -f "/nvram/self_healreboot" ]
 		then
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+			touch /nvram/self_healreboot
+			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+			echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
+	       	        reason="Peer_down"
+        	        rebootCount=1
+      		        setRebootreason $reason $rebootCount
+			$RDKLOGGER_PATH/backupLogs.sh "true" ""
 		else
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-			if [ ! -f "/nvram/self_healreboot" ]
-			then
-				touch /nvram/self_healreboot
-				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
-		        reason="Peer_down"
-                rebootCount=1
-                setRebootreason $reason $rebootCount
-				$RDKLOGGER_PATH/backupLogs.sh "true" ""
-			else
-				rm -rf /nvram/self_healreboot
-			fi
-
+			rm -rf /nvram/self_healreboot
 		fi
+
+	 fi
 		loop=$((loop+1))
 		sleep 5
 	done
