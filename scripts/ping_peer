@@ -6,4 +6,4 @@ if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
-ping -I $SOURCE_PING_INTF -c 2 -w 2 $PEER_INTERFACE_IP
+ping -I $SOURCE_PING_INTF -c 2 -w 10 $PEER_INTERFACE_IP
