@@ -336,6 +336,24 @@ fi
 		   echo "Xfinitywifi is enabled and l2sd0.103 is present"
 		fi
 	fi
+if [ -f "/etc/PARODUS_ENABLE" ]; then
+	# Checking parodus PID
+        PARODUS_PID=`pidof parodus`
+        if [ "$PARODUS_PID" = "" ]; then
+            processCount=`ps -elf |grep parodus_start.sh|wc -l`
+	    echo "processCount for parodus script is $processCount"
+	    if [ "$processCount" -gt "1" ]; then
+	        echo "parodus_start script is already running, parodus is yet to start"
+            else 	
+                echo_t "RDKB_PROCESS_CRASHED : parodus process is not running, need restart"
+                echo_t "Starting parodus in background "
+                cd /usr/ccsp/parodus
+                sh  ./parodus_start.sh &
+                echo_t "Started parodus_start script"
+                cd -
+            fi
+        fi
+else
 	# Checking webpa PID
 	WEBPA_PID=`pidof webpa`
 	if [ "$WEBPA_PID" = "" ]; then
@@ -365,7 +383,7 @@ fi
 		fi
 	
 	fi
-
+fi
 	#Check if we support rsync dropbear 
 	if [ "$ARM_INTERFACE_IP" == "" ]
 	then
