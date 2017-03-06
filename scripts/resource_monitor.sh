@@ -9,7 +9,7 @@ batteryMode=0
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
 source /etc/device.properties
-source /etc/utopia/service.d/log_timestamp.sh
+source /etc/log_timestamp.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 

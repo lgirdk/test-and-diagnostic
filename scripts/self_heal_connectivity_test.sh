@@ -7,7 +7,7 @@ source $UTOPIA_PATH/log_env_var.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 rand_num_old=""
 source $TAD_PATH/corrective_action.sh
-source /etc/utopia/service.d/log_timestamp.sh
+source /etc/log_timestamp.sh
 source /etc/device.properties
 
 # Generate random time to start 

@@ -21,7 +21,7 @@ needSelfhealReboot="/nvram/self_healreboot"
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
 source $UTOPIA_PATH/log_env_var.sh
-source /etc/utopia/service.d/log_timestamp.sh
+source /etc/log_timestamp.sh
 
 if [ "$UPTIME" -lt 600 ]
 then
