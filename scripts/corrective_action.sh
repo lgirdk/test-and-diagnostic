@@ -5,7 +5,7 @@ UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
 
 source $UTOPIA_PATH/log_env_var.sh
-source /etc/utopia/service.d/log_timestamp.sh
+source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
