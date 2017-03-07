@@ -77,6 +77,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 
+extern BOOL g_enable_speedtest;
 /**********************************************************************
 
     caller:     owner of the object
@@ -281,6 +282,18 @@ CosaDiagInitialize
     pMyObject->ArpEntryCount      = 0;
     pMyObject->PreviousVisitTime  = 0;
 
+    /* Initialize speedtest enable */
+    syscfg_init();
+    char buf[8]={0};
+    if(syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0)
+    {
+        g_enable_speedtest =  (strcmp(buf,"true") ? FALSE : TRUE);
+    }
+    else
+    {
+	AnscTraceWarning(("%s syscfg_get failed  for Enable_Speedtest\n",__FUNCTION__));
+	g_enable_speedtest = FALSE ;
+    }
 
     /* Initiation all functions */
 
