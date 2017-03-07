@@ -463,6 +463,60 @@ fi
 
 	fi
 
+    #Check whether dnsmasq is running or not
+    DNS_PID=`pidof dnsmasq`
+    if [ "$DNS_PID" == "" ]
+    then
+          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is is not running."
+    else
+	  brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
+          brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+          infup=`cat /var/dnsmasq.conf | grep l2sd0.106`
+
+	  IsAnyOneInfFailtoUp=0	
+	  BR_MODE=0
+	  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+          bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+          if [ "$bridgeSucceed" != "" ]
+          then
+               isBridging=`echo $bridgeMode | grep router`
+               if [ "$isBridging" = "" ]
+               then
+                   BR_MODE=1
+               fi
+          fi
+
+	  if [ $BR_MODE -eq 0 ]
+	  then
+			if [ "$brlan0up" == "" ]
+			then
+			    echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 info is not availble in dnsmasq.conf"
+			    IsAnyOneInfFailtoUp=1
+			fi
+	  fi
+
+	  if [ "$brlan1up" == "" ]
+	  then
+	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
+			 IsAnyOneInfFailtoUp=1
+	  fi
+
+          if [ "$infup" == "" ]
+          then
+                 echo_t "[RDKB_SELFHEAL_BOOTUP] : l2sd0.106 info is not availble in dnsmasq.conf"
+			 IsAnyOneInfFailtoUp=1
+          fi
+	  if [ $IsAnyOneInfFailtoUp -eq 1 ]
+	  then
+		 echo_t "[RDKB_SELFHEAL_BOOTUP] : dnsmasq.conf is."   
+	 	 echo "`cat /var/dnsmasq.conf`"
+
+		 echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
+	         sysevent set dhcp_server-stop
+	         sysevent set dhcp_server-start
+        fi
+    fi
+    
 else
 	echo "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
 fi
