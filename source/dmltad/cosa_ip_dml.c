@@ -93,7 +93,7 @@ BOOL CosaIpifGetSetSupported(char * pParamName);
 #endif
 
 //SpeedTest
-static BOOL g_enable_speedtest = FALSE;
+BOOL g_enable_speedtest = FALSE;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -5348,12 +5348,31 @@ SpeedTest_SetParamBoolValue
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
 	    AnscTraceFlow(("Enable Speedtest : %d \n",bValue));
+
+	    if( g_enable_speedtest == bValue )
+	    {
+		return TRUE;
+	    }
+
+	    char buf[8]={0};
+	    snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
+	    if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+	    {
+		AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
+		return FALSE;
+	    }
+	    if (syscfg_commit() != 0)
+	    {
+		AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
+		return FALSE;
+	    }
+
 	    g_enable_speedtest = bValue;
 	    return TRUE;
     } else 
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
-	    if( g_enable_speedtest )
+	    if ( g_enable_speedtest )
 	    {
 			if( bValue )
 			{
