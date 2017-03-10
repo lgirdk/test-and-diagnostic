@@ -3,7 +3,7 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 	
 source $UTOPIA_PATH/log_env_var.sh
-source $UTOPIA_PATH/log_timestamp.sh
+source /etc/log_timestamp.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
