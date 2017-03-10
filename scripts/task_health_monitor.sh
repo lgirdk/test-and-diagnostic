@@ -657,6 +657,55 @@ fi
 		fi
      fi
 
+#Checking whether dnsmasq is running or not
+   DNS_PID=`pidof dnsmasq`
+   if [ "$DNS_PID" == "" ]
+   then
+		 echo_t "[RDKB_SELFHEAL] : dnsmasq is is not running"   
+   else
+	     brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
+	     brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+             infup=`cat /var/dnsmasq.conf | grep l2sd0.106`
+
+	     IsAnyOneInfFailtoUp=0	
+
+	     if [ $BR_MODE -eq 0 ]
+	     then
+			if [ "$brlan0up" == "" ]
+			then
+			    echo_t "[RDKB_SELFHEAL] : brlan0 info is not availble in dnsmasq.conf"
+			    IsAnyOneInfFailtoUp=1
+			fi
+	     fi
+
+	     if [ "$brlan1up" == "" ]
+	     then
+	         echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
+			 IsAnyOneInfFailtoUp=1
+	     fi
+
+             if [ "$infup" == "" ]
+             then
+                 echo_t "[RDKB_SELFHEAL] : l2sd0.106 info is not availble in dnsmasq.conf"
+			 IsAnyOneInfFailtoUp=1
+             fi
+
+	     if [ ! -f /tmp/dnsmasq_restarted_via_selfheal ] 
+	     then
+		     if [ $IsAnyOneInfFailtoUp -eq 1 ]
+		     then
+				 touch /tmp/dnsmasq_restarted_via_selfheal
+
+		         echo_t "[RDKB_SELFHEAL] : dnsmasq.conf is."   
+			 	 echo "`cat /var/dnsmasq.conf`"
+
+				 echo_t "[RDKB_SELFHEAL] : Setting an event to restart dnsmasq"
+		         sysevent set dhcp_server-stop
+		         sysevent set dhcp_server-start
+		     fi
+	     fi
+   fi
+
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=`sysevent get wan-status`
