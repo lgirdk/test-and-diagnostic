@@ -447,73 +447,90 @@ fi
 
 
 # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
+	lanSelfheal=`sysevent get lan_selfheal`
+	echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
+	if [ "$lanSelfheal" != "done" ]
+	then
 
-        check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
-        if [ "$check_param_get_succeed" != "" ]
-        then
-            check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
-            if [ "$check_device_in_router_mode" != "" ]
-            then
-         	   check_if_brlan0_created=`ifconfig | grep brlan0`
-		   check_if_brlan0_up=`ifconfig brlan0 | grep UP`
-		   check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
-		   check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
-		   check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
-		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
-		   then
-			   echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
-			   logNetworkInfo
+        	check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        	check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+        	if [ "$check_param_get_succeed" != "" ]
+        	then
+			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+			if [ "$check_device_in_router_mode" != "" ]
+			then
+				check_if_brlan0_created=`ifconfig | grep brlan0`
+				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
+				check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+				check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
+				check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+				if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
+				then
+					echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+					logNetworkInfo
 
-			   ipv4_status=`sysevent get ipv4_4-status`
-			   lan_status=`sysevent get lan-status`
+					ipv4_status=`sysevent get ipv4_4-status`
+					lan_status=`sysevent get lan-status`
 
-			   if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
-			   then
-			   	echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-				sysevent set lan-start
-				sleep 5
-			   fi
+					if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
+					then
+						echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+						sysevent set lan-start
+						sleep 5
+					fi
 
-			   sysevent set multinet-down 1
-			   sleep 5
-			   sysevent set multinet-up 1
-			   sleep 30
-		   fi
+					sysevent set multinet-down 1
+					sleep 5
+					sysevent set multinet-up 1
+					sleep 30
+					sysevent set lan_selfheal done
+				fi
 
-            fi
-        else
-            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
-        fi
+            		fi
+        	else
+            		echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+        	fi
+	else
+		echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+	fi
 
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
 
+	l3netRestart=`sysevent get l3net_selfheal`
+	echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
 
-	check_if_brlan1_created=`ifconfig | grep brlan1`
-	check_if_brlan1_up=`ifconfig brlan1 | grep UP`
-        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
-	check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
-	check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP `
+	if [ "$l3netRestart" != "done" ]
+	then
+
+		check_if_brlan1_created=`ifconfig | grep brlan1`
+		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+        	check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+		check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+		check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP `
 	
-	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
-        then
-	       echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
+        	then
+	       		echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
 
-		ipv5_status=`sysevent get ipv4_5-status`
-	        lan_l3net=`sysevent get homesecurity_lan_l3net`
+			ipv5_status=`sysevent get ipv4_5-status`
+	        	lan_l3net=`sysevent get homesecurity_lan_l3net`
 
-		if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
-		then
-			echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
-			sysevent set ipv4-up $lan_l3net
+			if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
+			then
+				echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+				sysevent set ipv4-up $lan_l3net
+				sleep 5
+			fi
+
+			sysevent set multinet-down 2
 			sleep 5
+			sysevent set multinet-up 2
+			sleep 10
+			sysevent set l3net_selfheal done
 		fi
-
-		sysevent set multinet-down 2
-		sleep 5
-		sysevent set multinet-up 2
-		sleep 10
+	else
+		echo_t "[RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
 	fi
 
 
