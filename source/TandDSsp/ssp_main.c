@@ -40,6 +40,9 @@
 #endif
 
 #include "ssp_global.h"
+#ifdef INCLUDE_BREAKPAD
+#include "breakpad_wrapper.h"
+#endif
 #include "stdlib.h"
 
 PDSLH_CPE_CONTROLLER_OBJECT     pDslhCpeController      = NULL;
@@ -336,7 +339,9 @@ int main(int argc, char* argv[])
 #elif defined(_ANSC_LINUX)
     if ( bRunAsDaemon )
         daemonize();
-
+#ifdef INCLUDE_BREAKPAD
+    breakpad_ExceptionHandler();
+#else
     signal(SIGTERM, sig_handler);
     signal(SIGINT, sig_handler);
     /*signal(SIGCHLD, sig_handler);*/
@@ -351,6 +356,7 @@ int main(int argc, char* argv[])
     signal(SIGQUIT, sig_handler);
     signal(SIGHUP, sig_handler);
     signal(SIGPIPE, SIG_IGN);
+#endif
 
 //    if (write_pid_file("/var/tmp/CcspTandDSsp.pid") != 0)
 //        fprintf(stderr, "%s: fail to write PID file\n", argv[0]);
