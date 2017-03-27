@@ -23,8 +23,57 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 source $TAD_PATH/corrective_action.sh
 
 rebootDeviceNeeded=0
+reb_window=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
+
+# Check if it is still in maintenance window
+checkMaintenanceWindow()
+{
+    start_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
+    end_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
+
+    if [ "$start_time" -eq "$end_time" ]
+    then
+        echo_t "[RDKB_SELFHEAL] : Start time can not be equal to end time"
+        echo_t "[RDKB_SELFHEAL] : Resetting values to default"
+        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime string "0"
+        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime string "10800"
+        start_time=0
+        end_time=10800
+    fi
+
+    echo_t "[RDKB_SELFHEAL] : Firmware upgrade start time : $start_time"
+    echo_t "[RDKB_SELFHEAL] : Firmware upgrade end time : $end_time"
+
+    if [ "$UTC_ENABLE" == "true" ]
+    then
+        reb_hr="10#"`LTime H`
+        reb_min="10#"`LTime M`
+        reb_sec="10#"`date +"%S"`
+    else
+        reb_hr="10#"`date +"%H"`
+        reb_min="10#"`date +"%M"`
+        reb_sec="10#"`date +"%S"`
+    fi
+
+    reb_window=0
+    reb_hr_in_sec=$((reb_hr*60*60))
+    reb_min_in_sec=$((reb_min*60))
+    reb_time_in_sec=$((reb_hr_in_sec+reb_min_in_sec+reb_sec))
+    echo_t "XCONF SCRIPT : Current time in seconds : $reb_time_in_sec"
+    echo_t "XCONF SCRIPT : Current time in seconds : $reb_time_in_sec" >> $XCONF_LOG_FILE
+
+    if [ $start_time -lt $end_time ] && [ $reb_time_in_sec -ge $start_time ] && [ $reb_time_in_sec -lt $end_time ]
+    then
+        reb_window=1
+    elif [[ ($start_time -gt $end_time) && ( $reb_time_in_sec -lt $end_time || $reb_time_in_sec -ge $start_time ) ]];then
+        reb_window=1
+    else
+        reb_window=0
+    fi
+}
+
 
 	# Checking PSM's PID
 	PSM_PID=`pidof PsmSsp`
@@ -214,7 +263,6 @@ fi
 
 #	fi
 
-
 	# Checking Test adn Daignostic's PID
 	TandD_PID=`pidof CcspTandDSsp`
 	if [ "$TandD_PID" = "" ]; then
@@ -246,7 +294,6 @@ fi
 		resetNeeded snmp snmp_subagent 
 	fi
 
-
 	HOTSPOT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep value | cut -f3 -d : | cut -f2 -d" "`
 	if [ "$HOTSPOT_ENABLE" = "true" ]
 	then
@@ -255,54 +302,6 @@ fi
 		if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
 		     echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
 		     resetNeeded "" hotspot_arpd 
-		fi
-
-		#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
-		#If they are not present below code shall re-create them
-		#l2sd0.102 case 
-		ifconfig -a | grep wl0.2
-		if [ $? == 1 ]; then
-		     echo_t "XfinityWifi is enabled, but wl0.2 interface is not created try creating it" 
-		     sysevent set multinet_3-status stopped
-		     $UTOPIA_PATH/vlan_util_tchcbr.sh multinet-start 3
-		     ifconfig -a | grep wl0.2
-		     if [ $? == 1 ]; then
-		       echo "wl0.2 is not created at First Retry, try again after 2 sec"
-		       sleep 2
-		       sysevent set multinet_3-status stopped
-		       $UTOPIA_PATH/vlan_util_tchcbr.sh multinet-start 3
-		       ifconfig -a | grep wl0.2
-		       if [ $? == 1 ]; then
-		          echo "[RDKB_PLATFORM_ERROR] : wl0.2 is not created after Second Retry, no more retries !!!"
-		       fi
-		     else
-		       echo "[RDKB_PLATFORM_ERROR] : wl0.2 created at First Retry itself"
-		     fi
-		else
-		   echo "XfinityWifi is enabled and wl0.2 is present"  
-		fi
-
-		#wl1.2 case
-		ifconfig -a | grep wl1.2
-		if [ $? == 1 ]; then
-		   echo_t "XfinityWifi is enabled, but wl1.2 interface is not created try creatig it" 
-		   sysevent set multinet_4-status stopped
-		   $UTOPIA_PATH/vlan_util_tchcbr.sh multinet-start 4
-		   ifconfig -a | grep wl1.2
-		   if [ $? == 1 ]; then
-		      echo "wl1.2 is not created at First Retry, try again after 2 sec"
-		      sleep 2
-		      sysevent set multinet_4-status stopped
-		      $UTOPIA_PATH/vlan_util_tchcbr.sh multinet-start 4
-		      ifconfig -a | grep wl1.2
-		      if [ $? == 1 ]; then
-		         echo "[RDKB_PLATFORM_ERROR] : wl1.2 is not created after Second Retry, no more retries !!!"
-		      fi
-		   else
-		        echo "[RDKB_PLATFORM_ERROR] : wl1.2 created at First Retry itself"
-		   fi
-		else
-		   echo "Xfinitywifi is enabled and wl1.2 is present"
 		fi
 	fi
 if [ -f "/etc/PARODUS_ENABLE" ]; then
@@ -415,52 +414,51 @@ fi
 
 
 
-# Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
-	lanSelfheal=`sysevent get lan_selfheal`
-	echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
-	if [ "$lanSelfheal" != "done" ]
-	then
+# Checking whether brlan0 created properly , if not recreate it
+lanSelfheal=`sysevent get lan_selfheal`
+echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
+if [ "$lanSelfheal" != "done" ]
+then
+        check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+        if [ "$check_param_get_succeed" != "" ]
+        then
+            check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+            if [ "$check_device_in_router_mode" != "" ]
+            then
+         	   check_if_brlan0_created=`ifconfig | grep brlan0`
+		   check_if_brlan0_up=`ifconfig brlan0 | grep UP`
+		   check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
+		   then
+			echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 is not completely up, setting event to recreate brlan0 interface"
+			logNetworkInfo
 
-        	check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        	check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
-        	if [ "$check_param_get_succeed" != "" ]
-        	then
-			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
-			if [ "$check_device_in_router_mode" != "" ]
+			ipv4_status=`sysevent get ipv4_4-status`
+			lan_status=`sysevent get lan-status`
+
+			if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
 			then
-				check_if_brlan0_created=`ifconfig | grep brlan0`
-				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
-				check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+				echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+				sysevent set lan-start
+				sleep 5
+			fi
 
-				if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] 
-				then
-					echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
-					logNetworkInfo
+			sysevent set multinet-down 1
+			sleep 5
+			sysevent set multinet-up 1
+			sleep 30
+			sysevent set lan_selfheal done
+		   fi
 
-					ipv4_status=`sysevent get ipv4_4-status`
-					lan_status=`sysevent get lan-status`
+            fi
+        else
+            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+        fi
+else
+	echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+fi
 
-					if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
-					then
-						echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-						sysevent set lan-start
-						sleep 5
-					fi
-
-					sysevent set multinet-down 1
-					sleep 5
-					sysevent set multinet-up 1
-					sleep 30
-					sysevent set lan_selfheal done
-				fi
-
-            		fi
-        	else
-            		echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
-        	fi
-	else
-		echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
-	fi
 
 
         SSID_DISABLED=0
@@ -530,13 +528,13 @@ fi
             if [ "$isExecutionSucceed" != "" ]
             then       
         
-	            isUp=`echo $ssidStatus_5 | grep "Up"`
+	        isUp=`echo $ssidStatus_5 | grep "Up"`
                 if [ "$isUp" = "" ]
                 then
                    # We need to verify if it was a dmcli crash or is WiFi really down
-		           isDown=`echo $ssidStatus_5 | grep "Down"`
-		           if [ "$isDown" != "" ]; then
-                      echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+	           isDown=`echo $ssidStatus_5 | grep "Down"`
+	           if [ "$isDown" != "" ]; then
+                      echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID is off."
                    else
                       echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
                    fi
@@ -572,12 +570,12 @@ fi
             if [ "$isExecutionSucceed_2" != "" ]
             then       
         
-	            isUp=`echo $ssidStatus_2 | grep "Up"`
+                isUp=`echo $ssidStatus_2 | grep "Up"`
                 if [ "$isUp" = "" ]
                 then
                     # We need to verify if it was a dmcli crash or is WiFi really down
-		            isDown=`echo $ssidStatus_2 | grep "Down"`
-		            if [ "$isDown" != "" ]; then
+	            isDown=`echo $ssidStatus_2 | grep "Down"`
+	            if [ "$isDown" != "" ]; then
                         echo_t "[RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
                     else
                         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
@@ -591,7 +589,7 @@ fi
 	FIREWALL_ENABLED=`syscfg get firewall_enabled`
 
 	echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
-    echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
+	echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 
 	if [ $BR_MODE -eq 0 ] 
 	then
@@ -621,7 +619,7 @@ fi
 			fi
 	     fi
 
-	     
+
 	     if [ ! -f /tmp/dnsmasq_restarted_via_selfheal ] 
 	     then
 		     if [ $IsAnyOneInfFailtoUp -eq 1 ]
@@ -658,33 +656,22 @@ then
            	fi 
 fi
 
-	if [ "$rebootDeviceNeeded" -eq 1 ]
+if [ "$rebootDeviceNeeded" -eq 1 ]
+then
+
+	checkMaintenanceWindow
+	if [ $reb_window -eq 0 ]
 	then
-
-		if [ "$UTC_ENABLE" == "true" ]
+		echo "Maintanance window for the current day is over , unit will be rebooted in next Maintanance window "
+	else
+		#Check if we have already flagged reboot is needed
+		if [ ! -e $FLAG_REBOOT ]
 		then
-			cur_hr=`LTime H`
-			cur_min=`LTime M`
+			echo "rebootDeviceNeeded"
+			sh /etc/calc_random_time_to_reboot_dev.sh "" &
+			touch $FLAG_REBOOT
 		else
-			cur_hr=`date +"%H"`
-			cur_min=`date +"%M"`
-		fi
-
-		if [ $cur_hr -ge 02 ] && [ $cur_hr -le 03 ]
-		then
-			if [ $cur_hr -eq 03 ] && [ $cur_min -ne 00 ]
-			then
-				echo "Maintanance window for the current day is over , unit will be rebooted in next Maintanance window "
-			else
-			#Check if we have already flagged reboot is needed
-				if [ ! -e $FLAG_REBOOT ]
-				then
-					echo "rebootDeviceNeeded"
-					sh /etc/calc_random_time_to_reboot_dev.sh "" &
-					touch $FLAG_REBOOT
-				else
-					echo "Already waiting for reboot"
-				fi					
-			fi
-		fi
+			echo "Already waiting for reboot"
+		fi					
 	fi
+fi

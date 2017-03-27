@@ -1,6 +1,5 @@
 #!/bin/sh
 
-
 CM_INTERFACE="wan0"
 WAN_INTERFACE="erouter0"
 Check_CM_Ip=0
@@ -369,7 +368,7 @@ fi
 		resetNeeded CcspPandMSsp
 	fi
 
-# Checking whether brlan0 and l2sd0.100 are created properly
+# Checking whether brlan0 created properly
 
         check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
 
@@ -384,9 +383,9 @@ fi
 		    check_if_brlan0_up=`ifconfig brlan0 | grep UP`
 	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 			  
-		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] 
+		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
 		   then
-			   echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+			   echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
 			   ipv4_status=`sysevent get ipv4_4-status`
 			   lan_status=`sysevent get lan-status`
 
