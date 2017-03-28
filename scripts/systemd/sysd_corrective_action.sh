@@ -400,14 +400,7 @@ resetNeeded()
 				syscfg commit
 			fi
 
-			if [ "$ProcessName" == "snmp_subagent" ]
-			then
-				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
-				cd $folderName
-				sh run_subagent.sh $CCSP_SNMP_AGENT_COM &
-				cd -	
-			
-			elif [ "$ProcessName" == "CcspHomeSecurity" ]
+			if [ "$ProcessName" == "CcspHomeSecurity" ]
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
 				CcspHomeSecurity 8081&
