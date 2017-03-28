@@ -431,7 +431,7 @@ then
 		   check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
 		   then
-			echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 is not completely up, setting event to recreate brlan0 interface"
+			echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate brlan0 interface"
 			logNetworkInfo
 
 			ipv4_status=`sysevent get ipv4_4-status`
