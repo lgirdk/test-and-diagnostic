@@ -723,6 +723,35 @@ fi
 	     fi
    fi
 
+#Checking dibbler server is running or not RDKB_10683
+	DIBBLER_PID=`pidof dibbler-server`
+	if [ "$DIBBLER_PID" = "" ]; then
+
+		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
+		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
+
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+			if [ -f "/etc/dibbler/server.conf" ]
+			then
+				dibbler-server stop
+				sleep 2
+				dibbler-server start
+			else
+				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+			fi
+		fi
+	fi
+
+#Checking the zebra is running or not
+	ZEBRA_PID=`pidof zebra`
+	if [ "$ZEBRA_PID" = "" ]; then
+		if [ "$BR_MODE" == "0" ]; then
+
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
+			sysevent set zebra-restart
+		fi
+	fi
+
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=`sysevent get wan-status`
