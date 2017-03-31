@@ -201,7 +201,14 @@ rebootNeeded()
 		fi
 		
 	fi
-
+	
+	HIGHLOADAVG_REBOOT_COUNT=`syscfg get highloadavg_reboot_count`
+	if [ "$HIGHLOADAVG_REBOOT_COUNT" -ge 1 ] && [ "$2" == "ATOM_HIGH_LOADAVG" ]
+		then
+			echo_t "RDKB_SELFHEAL : Today's max reboot count already reached for High load average on Atom"
+		return
+	fi
+	
 	MAX_REBOOT_COUNT=`syscfg get max_reboot_count`
 	TODAYS_REBOOT_COUNT=`syscfg get todays_reboot_count`
 
@@ -246,6 +253,11 @@ rebootNeeded()
 			then
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting due to downstream_manager process having high CPU"					
 				echo "[`getDateTime`] DS_MANAGER_HIGH_CPU : Rebooting due to downstream_manager process having high CPU"		
+			elif [ "$2" == "ATOM_HIGH_LOADAVG" ]
+			then
+				echo_t "RDKB_REBOOT : Rebooting due to $2 threshold reached"
+				syscfg set highloadavg_reboot_count 1
+				syscfg commit
 			else
 				echo "[`getDateTime`] RDKB_REBOOT : Rebooting device due to $2"
 			fi

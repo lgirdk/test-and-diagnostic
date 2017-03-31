@@ -237,9 +237,24 @@ do
 				fi
 			fi
 		fi
+fi
+####################################################
+#Logic:We will read ATOM load average on ARM side using rpcclient, 
+#	based on the load average threshold value,reboot the box.
+Curr_AtomLoad_Avg=`rpcclient $ATOM_ARPING_IP "cat /proc/loadavg" | sed '4q;d'`
+Load_Avg1=`echo $Curr_AtomLoad_Avg | awk  '{print $1}'`
+Load_Avg10=`echo $Curr_AtomLoad_Avg | awk  '{print $2}'`
+Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
+        if [ ${Load_Avg1%%.*} -ge 5 ] && [ ${Load_Avg10%%.*} -ge 5 ] && [ ${Load_Avg15%%.*} -ge 5 ]; then
+		echo_t "Setting Last reboot reason as ATOM_HIGH_LOADAVG"
+		reason="ATOM_HIGH_LOADAVG"
+		rebootCount=1
+		setRebootreason $reason $rebootCount
+		rebootNeeded RM ATOM_HIGH_LOADAVG
+	fi
 
 ####################################################
-	fi
+	
 #	sh $TAD_PATH/task_health_monitor.sh
 	if [ -f  /usr/bin/Selfhealutil ]
   	then
