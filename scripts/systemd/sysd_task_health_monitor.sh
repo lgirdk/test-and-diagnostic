@@ -25,13 +25,6 @@ rebootDeviceNeeded=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-	# Checking snmp subagent PID
-	SNMP_PID=`pidof snmp_subagent`
-	if [ "$SNMP_PID" = "" ]; then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-		resetNeeded snmp snmp_subagent 
-	fi
-
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
