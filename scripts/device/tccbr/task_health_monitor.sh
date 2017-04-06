@@ -238,6 +238,16 @@ fi
 
 	fi
 
+        # Checking Wifi's PID
+        WIFI_PID=`pidof CcspWifiSsp`
+        if [ "$WIFI_PID" = "" ]; then
+#               echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WIFI_process is not running, restarting it"
+                # Remove the wifi initialized flag
+                rm -rf /tmp/wifi_initialized
+                echo_t "RDKB_PROCESS_CRASHED : WIFI_process is not running, need restart"
+                resetNeeded wifi CcspWifiSsp
+        fi
+
 	# Checking CM's PID
 	CM_PID=`pidof CcspCMAgentSsp`
 	if [ "$CM_PID" = "" ]; then

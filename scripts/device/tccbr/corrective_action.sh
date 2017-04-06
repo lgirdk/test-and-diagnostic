@@ -441,6 +441,13 @@ resetNeeded()
 				# We need to check whether to enable captive portal flag
 				checkCaptivePortal
 
+                        elif [ "$ProcessName" == "CcspWifiSsp" ]
+                        then
+                                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                                cd /usr/ccsp/wifi/
+                                $BINPATH/CcspWifiSsp -subsys $Subsys
+                                cd -
+
 			elif [ "$ProcessName" == "hotspotfd" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
