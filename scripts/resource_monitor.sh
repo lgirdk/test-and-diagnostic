@@ -58,12 +58,12 @@ do
 		
 		threshold_reached=1
 
-		echo_t "Setting Last reboot reason"
+		#echo_t "Setting Last reboot reason"
 		reason="MEM_THRESHOLD"
 		rebootCount=1
-		setRebootreason $reason $rebootCount
+		#setRebootreason $reason $rebootCount
 
-		rebootNeeded RM MEM
+		rebootNeeded RM MEM $reason $rebootCount
 	fi
 	# Avg CPU usage reading from /proc/stat
 #	AvgCpuUsed=`grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage }'`
@@ -227,12 +227,12 @@ do
 
 					if [ $total_ds_cpu -ge 25 ]; then
 
-						echo_t "Setting Last reboot reason"
+						#echo_t "Setting Last reboot reason"
 						reason="DS_MANAGER_HIGH_CPU"
 						rebootCount=1
-						setRebootreason $reason $rebootCount
+						#setRebootreason $reason $rebootCount
 
-						rebootNeeded RM DS_MANAGER_HIGH_CPU
+						rebootNeeded RM DS_MANAGER_HIGH_CPU $reason $rebootCount
 					fi				
 				fi
 			fi
@@ -246,11 +246,11 @@ Load_Avg1=`echo $Curr_AtomLoad_Avg | awk  '{print $1}'`
 Load_Avg10=`echo $Curr_AtomLoad_Avg | awk  '{print $2}'`
 Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
         if [ ${Load_Avg1%%.*} -ge 5 ] && [ ${Load_Avg10%%.*} -ge 5 ] && [ ${Load_Avg15%%.*} -ge 5 ]; then
-		echo_t "Setting Last reboot reason as ATOM_HIGH_LOADAVG"
+		#echo_t "Setting Last reboot reason as ATOM_HIGH_LOADAVG"
 		reason="ATOM_HIGH_LOADAVG"
 		rebootCount=1
-		setRebootreason $reason $rebootCount
-		rebootNeeded RM ATOM_HIGH_LOADAVG
+		#setRebootreason $reason $rebootCount
+		rebootNeeded RM ATOM_HIGH_LOADAVG $reason $rebootCount
 	fi
 
 ####################################################

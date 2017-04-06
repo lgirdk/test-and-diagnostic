@@ -70,8 +70,8 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 							  echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
 							  reason="ATOM_HANG"
 							  rebootCount=1
-							  setRebootreason $reason $rebootCount
-							  rebootNeeded $reason ""
+							  #setRebootreason $reason $rebootCount
+							  rebootNeeded $reason "" $reason $rebootCount
 						  else
 							  echo_t "[RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
 						  fi
@@ -117,11 +117,11 @@ loop=1
 			echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 			echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
 			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-            		echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+            		#echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
             		reason="Peer_down"
           		rebootCount=1
-         	    	setRebootreason $reason $rebootCount
-			rebootNeeded RM ""
+         	    	#setRebootreason $reason $rebootCount
+			rebootNeeded RM "" $reason $rebootCount
 
 		fi
 		loop=$((loop+1))
@@ -155,14 +155,14 @@ fi
 				modelName=`getModelName`
 				CMMac=`getCMMac`
 				timestamp=`getDate`
-				echo_t "Setting Last reboot reason"
+				#echo_t "Setting Last reboot reason"
 				reason="CR_crash"
 				rebootCount=1
-				setRebootreason $reason $rebootCount
+				#setRebootreason $reason $rebootCount
 				echo_t "SET succeeded"
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
 				touch $HAVECRASH
-				rebootNeeded RM "CR"
+				rebootNeeded RM "CR" $reason $rebootCount
 		 	fi		
 		fi
 	else

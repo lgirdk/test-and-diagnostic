@@ -248,6 +248,9 @@ rebootNeeded()
 				SetRebootConfigForAtomHang
 			fi
 			
+			echo_t "Setting Last reboot reason as $3"
+			setRebootreason $3 $4
+			
 			if [ "$2" == "CPU" ] || [ "$2" == "MEM" ]
 			then
 				echo_t "RDKB_REBOOT : Rebooting device due to $2 threshold reached"	
