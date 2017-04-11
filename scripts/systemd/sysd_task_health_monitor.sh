@@ -130,8 +130,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
 		reason="brlan0_down"
 		rebootCount=1
-		setRebootreason $reason $rebootCount
-		rebootNeeded RM ""
+		rebootNeeded RM "" $reason $rebootCount
 	else
 		ifconfig brlan0 | grep "inet addr"
 		if [ $? == 1 ]; then
@@ -415,8 +414,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 				echo "[`getDateTime`] Setting Last reboot reason Peer_down"
                 reason="Peer_down"
                 rebootCount=1
-                setRebootreason $reason $rebootCount
-                rebootNeeded RM ""
+                rebootNeeded RM "" $reason $rebootCount
 
 			fi
 			loop=$((loop+1))
