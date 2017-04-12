@@ -160,6 +160,10 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         tracert_hop_t *hops = NULL;
         void *ptr;
         int idx;
+        char msg[300], dest_ip[65];
+
+        /* traceroute to xxx.cisco.com (10.112.0.118), 30 hops max, 60 byte packets */
+        sscanf(line,"%[^(] (%[^)])",msg,dest_ip);
 
         while (fgets(line, sizeof(line), fp) != NULL) {
             ptr = realloc(hops, (nhop + 1) * sizeof(tracert_hop_t));
@@ -184,7 +188,14 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         stat->u.tracert.nhop = nhop;
         stat->u.tracert.hops = hops;
 
-        err = DIAG_ERR_OK;
+        if((nhop > 0) && (nhop >= cfg->maxhop) && (strncmp(dest_ip,hops[nhop-1].addr,65)!=0))
+        {
+	    err = DIAG_ERR_MAXHOPS;
+        }
+        else
+        {
+	    err = DIAG_ERR_OK;
+        }
     }
 
     fprintf(stderr, "> done: %d\n", err);
