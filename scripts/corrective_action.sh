@@ -548,6 +548,13 @@ resetNeeded()
 			then
 				resetRouter
 
+                        elif [ "$ProcessName" == "Arm_Mdc" ]
+			then
+                                echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+                                cd /usr/ccsp/CcspArmMdc/
+                                $BINPATH/$ProcessName -subsys $Subsys
+				cd -
+
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
