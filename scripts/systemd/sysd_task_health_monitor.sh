@@ -128,9 +128,9 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ $? == 1 ]; then
 		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not up" 
 		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
-		echo "[`getDateTime`] Setting Last reboot reason"
-		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan0_down
-		echo "[`getDateTime`] SET succeeded"
+		reason="brlan0_down"
+		rebootCount=1
+		setRebootreason $reason $rebootCount
 		rebootNeeded RM ""
 	else
 		ifconfig brlan0 | grep "inet addr"
@@ -285,7 +285,82 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : iptable corrupted."
 		#sysevent set firewall-restart
 		fi
+     fi
+
+#Checking whether dnsmasq is running or not
+   DNS_PID=`pidof dnsmasq`
+   if [ "$DNS_PID" == "" ]
+   then
+		 echo_t "[RDKB_SELFHEAL] : dnsmasq is is not running"   
+   else
+	     brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
+	     brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+
+
+	     IsAnyOneInfFailtoUp=0	
+
+	     if [ $BR_MODE -eq 0 ]
+	     then
+			if [ "$brlan0up" == "" ]
+			then
+			    echo_t "[RDKB_SELFHEAL] : brlan0 info is not availble in dnsmasq.conf"
+			    IsAnyOneInfFailtoUp=1
+			fi
+	     fi
+
+	     if [ "$brlan1up" == "" ]
+	     then
+	         echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
+			 IsAnyOneInfFailtoUp=1
+	     fi
+
+
+
+	     if [ ! -f /tmp/dnsmasq_restarted_via_selfheal ] 
+	     then
+		     if [ $IsAnyOneInfFailtoUp -eq 1 ]
+		     then
+				 touch /tmp/dnsmasq_restarted_via_selfheal
+
+		         echo_t "[RDKB_SELFHEAL] : dnsmasq.conf is."   
+			 	 echo "`cat /var/dnsmasq.conf`"
+
+				 echo_t "[RDKB_SELFHEAL] : Setting an event to restart dnsmasq"
+		         sysevent set dhcp_server-stop
+		         sysevent set dhcp_server-start
+		     fi
+	     fi
+   fi
+
+#Checking dibbler server is running or not RDKB_10683
+	DIBBLER_PID=`pidof dibbler-server`
+	if [ "$DIBBLER_PID" = "" ]; then
+
+		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
+		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
+
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+			if [ -f "/etc/dibbler/server.conf" ]
+			then
+				dibbler-server stop
+				sleep 2
+				dibbler-server start
+			else
+				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+			fi
+		fi
 	fi
+
+#Checking the zebra is running or not
+	ZEBRA_PID=`pidof zebra`
+	if [ "$ZEBRA_PID" = "" ]; then
+		if [ "$BR_MODE" == "0" ]; then
+
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
+			sysevent set zebra-restart
+		fi
+	fi
+
 	
 	#All CCSP Processes Now running on Single Processor. Add those Processes to Test & Diagnostic 
 	# Checking for WAN_INTERFACE ipv6 address
