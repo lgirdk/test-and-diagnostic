@@ -141,7 +141,14 @@ runPingTest()
         if [ $erouterIP6 != "" ]
         then
            routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
-           IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d\/`     
+           IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/`
+
+ 	   # If we don't get the Network prefix we need this additional check to 
+           # retrieve the IPv6 GW Addr 
+           if [ "$routeEntry" = "$IPv6_Gateway_addr" ]
+           then
+                IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d ' '`
+           fi     
         fi
 
 	if [ "$IPv4_Gateway_addr" != "" ]
