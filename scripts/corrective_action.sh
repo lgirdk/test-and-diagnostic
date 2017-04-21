@@ -416,7 +416,7 @@ resetNeeded()
 				# Storing Information before corrective action
 		 		storeInformation
 				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
-				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
+				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_ | cut -f2 -d:`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			else
 				# Storing Information before corrective action
@@ -426,7 +426,7 @@ resetNeeded()
 					storeInformation
 				fi
 				vendor=`getVendorName`
-				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
+				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_ | cut -f2 -d:`
 				CMMac=`getCMMac`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			fi			
