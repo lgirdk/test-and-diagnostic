@@ -17,7 +17,7 @@ CMRegComplete=0
 level=128
 
 DELAY=1
-VERSION_FILE="/fss/gw/version.txt"
+VERSION_FILE="/version.txt"
 
 getstat() {
     grep 'cpu ' /proc/stat | sed -e 's/  */x/g' -e 's/^cpux//'
@@ -229,7 +229,7 @@ rebootNeeded()
 			syscfg set todays_reboot_count $TODAYS_REBOOT_COUNT
 			syscfg commit
 			vendor=`getVendorName`
-			modelName=`getModelName`
+			modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
 			CMMac=`getCMMac`
 			timestamp=`getDate`
 
@@ -426,7 +426,7 @@ resetNeeded()
 					storeInformation
 				fi
 				vendor=`getVendorName`
-				modelName=`getModelName`
+				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
 				CMMac=`getCMMac`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			fi			
