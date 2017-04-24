@@ -9,6 +9,11 @@ then
     source /etc/device.properties
 fi
 
+if [ -f /usr/ccsp/tad/tadUtilsDevice.sh ]
+then
+    source /usr/ccsp/tad/tadUtilsDevice.sh
+fi
+
 ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
@@ -105,14 +110,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		if [ $? == 1 ]; then
 			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not having ip, creating it"
 			sysevent set multinet_2-status stopped
-		        $UTOPIA_PATH/vlan_util_xb6.sh multinet-up 2
+		    deviceBrlan1Up
 
 			ifconfig brlan1 | grep "inet addr"
 			if [ $? == 1 ]; then
 				echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created at First Retry, try again after 2 sec"
 				sleep 2
 				sysevent set multinet_2-status stopped
-				$UTOPIA_PATH/vlan_util_xb6.sh multinet-up 2
+				deviceBrlan1Up
 
 				ifconfig brlan1 | grep "inet addr"
 				if [ $? == 1 ]; then
@@ -136,14 +141,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		if [ $? == 1 ]; then
 			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not having ip, creating it"
 			sysevent set multinet_1-status stopped
-		        $UTOPIA_PATH/vlan_util_xb6.sh multinet-up 1
+		    deviceBrlan0Up
 
 			ifconfig brlan0 | grep "inet addr"
 			if [ $? == 1 ]; then
 				echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created at First Retry, try again after 2 sec"
 				sleep 2
 				sysevent set multinet_1-status stopped
-				$UTOPIA_PATH/vlan_util_xb6.sh multinet-up 1
+				deviceBrlan0Up
 
 				ifconfig brlan0 | grep "inet addr"
 				if [ $? == 1 ]; then
