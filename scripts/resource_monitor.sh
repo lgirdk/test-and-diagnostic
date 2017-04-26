@@ -238,6 +238,8 @@ do
 			fi
 		fi
 fi
+
+if [ "$BOX_TYPE" = "XB3" ] ; then
 ####################################################
 #Logic:We will read ATOM load average on ARM side using rpcclient, 
 #	based on the load average threshold value,reboot the box.
@@ -251,7 +253,8 @@ Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
 		rebootCount=1
 		#setRebootreason $reason $rebootCount
 		rebootNeeded RM ATOM_HIGH_LOADAVG $reason $rebootCount
-	fi
+	    fi
+fi
 
 ####################################################
 	
