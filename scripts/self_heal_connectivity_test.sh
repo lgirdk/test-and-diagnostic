@@ -154,7 +154,6 @@ runPingTest()
 	if [ "$IPv4_Gateway_addr" != "" ]
 	then
 		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv4_Gateway_addr`
-		output_ipv4=`echo $?` 
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
 		if [ "$CHECK_PACKET_RECEIVED" != "" ]
@@ -173,7 +172,6 @@ runPingTest()
 	if [ "$IPv6_Gateway_addr" != "" ]
 	then
 		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv6_Gateway_addr`
-		output_ipv6=`echo $?` 
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
 		if [ "$CHECK_PACKET_RECEIVED" != "" ]
@@ -192,8 +190,8 @@ runPingTest()
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
-		echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
-		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"		
+		echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [ping failed]"
+		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [ping failed]"		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
@@ -208,7 +206,7 @@ runPingTest()
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
 
-        	echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
+        	echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [ping failed]"
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
@@ -234,7 +232,7 @@ runPingTest()
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
 
-		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"	
+		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [ping failed]"	
 		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
@@ -263,7 +261,6 @@ runPingTest()
 		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0.0.0.0" ]
 		then
 			PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
-			output_ping4server=`echo $?` 
 			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
@@ -278,7 +275,7 @@ runPingTest()
 			fi
 			
 			if [ "$ping4_failed" -eq 1 ];then
-			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [$output_ping4server]"
+			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [ping failed]"
 			   ping4_failed=0
 			fi
 		fi
@@ -292,7 +289,6 @@ runPingTest()
 		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0000::0000" ]
 		then
 			PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
-			output_ping6server=`echo $?`
 			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
@@ -307,7 +303,7 @@ runPingTest()
 			fi
 
 			if [ "$ping6_failed" -eq 1 ];then
-			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [$output_ping6server]"
+			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [ping failed]"
 			   ping6_failed=0
 			fi
 
