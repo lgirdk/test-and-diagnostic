@@ -10,7 +10,7 @@ then
 fi
 
 source $UTOPIA_PATH/log_env_var.sh
-CM_INTERFACE=wan0
+WAN_INTERFACE=wan0
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -71,10 +71,10 @@ getCMMac()
 checkConditionsbeforeAction()
 {
 
-	 isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+	 isIPv4=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
 	 if [ "$isIPv4" = "" ]
 	 then
-        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+        	 isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
         	 if [ "$isIPv6" != "" ]
 		 then
 			CMRegComplete=1
@@ -122,10 +122,10 @@ checkConditionsbeforeAction()
 resetRouter()
 {
 	
-	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+	isIPv4=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
 	 if [ "$isIPv4" = "" ]
 	 then
-        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+        	 isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
         	 if [ "$isIPv6" != "" ]
 		 then
 			CMRegComplete=1
