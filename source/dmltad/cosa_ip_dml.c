@@ -94,6 +94,8 @@ BOOL CosaIpifGetSetSupported(char * pParamName);
 
 //SpeedTest
 BOOL g_enable_speedtest = FALSE;
+BOOL g_run_speedtest = FALSE;
+
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -5291,14 +5293,14 @@ SpeedTest_GetParamBoolValue
     /* check the parameter name and return the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
-	    AnscTraceFlow(("Querying Enable_Speedtest : %d\n",g_enable_speedtest));
+	    AnscTraceFlow(("%s Enable_Speedtest : %d\n",  __FUNCTION__, g_enable_speedtest));
 	    *pBool = g_enable_speedtest;
 	    return TRUE;
     } else
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
-	    AnscTraceFlow(("Querying Speedtest Run \n"));
-	    *pBool = FALSE;
+	    AnscTraceFlow(("%s Speedtest Run : %d \n", __FUNCTION__, g_run_speedtest));
+	    *pBool = g_run_speedtest;
 	    return TRUE;
     } else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
@@ -5343,55 +5345,180 @@ SpeedTest_SetParamBoolValue
         BOOL                        bValue
     )
 {
-    char cmd[128];
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
-	    AnscTraceFlow(("Enable Speedtest : %d \n",bValue));
-
-	    if( g_enable_speedtest == bValue )
-	    {
-		return TRUE;
-	    }
-
-	    char buf[8]={0};
-	    snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-	    if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
-	    {
-		AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
-		return FALSE;
-	    }
-	    if (syscfg_commit() != 0)
-	    {
-		AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
-		return FALSE;
-	    }
-
-	    g_enable_speedtest = bValue;
-	    return TRUE;
-    } else 
-    if ( AnscEqualString(ParamName, "Run", TRUE))
+        AnscTraceFlow(("%s Enable Speedtest : %d \n", __FUNCTION__, bValue));
+        g_enable_speedtest = bValue;
+        return TRUE;
+    }
+    else if ( AnscEqualString(ParamName, "Run", TRUE))
     {
-	    if ( g_enable_speedtest )
-	    {
-			if( bValue )
-			{
-            	memset(cmd, 0, sizeof(cmd));
-            	AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
-	        	AnscTraceFlow(("Executing Speedtest..\n"));
-            	system(cmd);
-	    	}
-			else	
-    	    	AnscTraceWarning(("Speed Test execution stopped\n")); 
-	    }
-	    else	
-    	    AnscTraceWarning(("Speed Test feature not enabled\n")); 
-	    return TRUE;
-    } else
-    	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
+        AnscTraceFlow(("%s Run Speedtest : %d \n",__FUNCTION__, bValue));
+        g_run_speedtest = bValue;
+        return TRUE;
+    }
+
+    AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
     return FALSE;
 }
 
+/**********************************************************************
 
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_Validate
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       pReturnParamName,
+                ULONG*                      puLength
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       pReturnParamName,
+                The buffer (128 bytes) of parameter name if there's a validation.
+
+                ULONG*                      puLength
+                The output length of the param name.
+
+    return:     TRUE if there's no validation.
+
+**********************************************************************/
+BOOL
+SpeedTest_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    )
+{
+    if ( g_enable_speedtest == FALSE && g_run_speedtest == TRUE )
+    {
+        AnscCopyString(pReturnParamName, "Run");
+        g_run_speedtest = FALSE;
+        return FALSE; 
+    }
+
+    return TRUE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_Commit
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+SpeedTest_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    ANSC_STATUS     returnStatus  = ANSC_STATUS_FAILURE;
+    BOOL            speedtest_setting = FALSE;
+
+    char buf[128] = {0};
+    char cmd[128] = {0};
+
+    memset(buf,0,sizeof(buf));
+    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    {
+            speedtest_setting = (!strcmp(buf, "true")) ? TRUE : FALSE;
+    }
+
+    if( g_enable_speedtest != speedtest_setting )
+    {
+        char buf[8]={0};
+        snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
+        if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+        {
+            AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
+            return 1;
+        }
+        if (syscfg_commit() != 0)
+        {
+            AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
+            return 1;
+        }
+    }
+
+    if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
+    {
+        memset(cmd, 0, sizeof(cmd));
+        AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+        AnscTraceFlow(("Executing Speedtest..\n"));
+        system(cmd);
+        g_run_speedtest = FALSE;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_Rollback
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to roll back the update whenever there's a
+        validation found.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+SpeedTest_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    char buf[128];
+
+    memset(buf,0,sizeof(buf));
+    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    {
+            g_enable_speedtest = (!strcmp(buf, "true")) ? TRUE : FALSE;
+    }
+
+    g_run_speedtest = FALSE;
+
+    return 0;
+}
 
 

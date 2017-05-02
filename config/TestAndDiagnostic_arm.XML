@@ -579,28 +579,31 @@
                         </parameter>
                     </parameters>
                 </object>
-				<object>
-					<name>X_RDKCENTRAL-COM_SpeedTest</name>
-					<objectType>object</objectType>
-					<functions>
-					<func_GetParamBoolValue>SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
-					<func_SetParamBoolValue>SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
-					</functions>
-					<parameters>
-					<parameter>
-						<name>Enable_Speedtest</name>
-						<type>boolean</type>
-						<syntax>bool</syntax>
-                        <writable>true</writable>
-					</parameter>
-					 <parameter>
-						<name>Run</name>
-						<type>boolean</type>
-						<syntax>bool</syntax>
-                        <writable>true</writable>
-					</parameter>
-					</parameters>
-				</object>
+                <object>
+                    <name>X_RDKCENTRAL-COM_SpeedTest</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamBoolValue>SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
+                        <func_SetParamBoolValue>SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>SpeedTest_Validate</func_Validate>
+                        <func_Commit>SpeedTest_Commit</func_Commit>
+                        <func_Rollback>SpeedTest_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>Enable_Speedtest</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>Run</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                    </parameters>
+                </object>
             </objects>
         </object>
         <object>
