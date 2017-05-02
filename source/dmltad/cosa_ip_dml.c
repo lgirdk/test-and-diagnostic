@@ -5106,7 +5106,23 @@ UDPEchoConfig_Validate
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
+    char*                           pAddrName     = NULL;
 
+    if (AnscSizeOfString(pUdpEchoInfo->Interface))    
+    {
+        pAddrName = CosaGetInterfaceAddrByName(pUdpEchoInfo->Interface);
+        if (_ansc_strcmp(pAddrName, "::"))
+        {
+            AnscCopyString(pUdpEchoInfo->IfAddrName, pAddrName);
+            AnscFreeMemory(pAddrName);
+        }
+        else
+        {
+            AnscCopyString(pReturnParamName, "Interface");
+            AnscFreeMemory(pAddrName);
+            return FALSE;  
+        }
+    }
 
     if ( pUdpEchoInfo->EchoPlusEnabled && !pUdpEchoInfo->EchoPlusSupported )
     {
@@ -5161,11 +5177,6 @@ UDPEchoConfig_Commit
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
     PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
-    char*                           pAddrName     = NULL;
-
-    pAddrName = CosaGetInterfaceAddrByName(pUdpEchoInfo->Interface);
-    AnscCopyString(pUdpEchoInfo->IfAddrName, pAddrName);
-    AnscFreeMemory(pAddrName);
 
     returnStatus = CosaDmlDiagScheduleDiagnostic
                 (
