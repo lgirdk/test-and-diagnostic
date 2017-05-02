@@ -72,7 +72,7 @@
         01/14/2011    initial revision.
 
 **************************************************************************/
-
+#include <arpa/inet.h>
 #include "ansc_platform.h"
 #include "cosa_diagnostic_apis.h"
 #include "cosa_dns_dml.h"
@@ -113,6 +113,20 @@
  }
 
 ***********************************************************************/
+
+int isValidIPv4Address(char *ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+    return result;
+}
+
+int isValidIPv6Address(char *ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET6, ipAddress, &(sa.sin_addr));
+    return result;
+}
 
 
 /***********************************************************************
@@ -782,6 +796,7 @@ NSLookupDiagnostics_Validate
     ULONG                           i                  = 0;
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo  = pMyObject->hDiagNSLookInfo;
+    char*                           pAddrName          = NULL;
 
     if ( !pNSLookupDiagInfo )
     {
@@ -789,11 +804,23 @@ NSLookupDiagnostics_Validate
     }
 
     //COSAValidateHierarchyInterface doesn't work now due to incomplete lan device management
-    if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )//&&
-         //COSAValidateHierarchyInterface && AnscSizeOfString(pNSLookupDiagInfo->Interface) > 0 )
+    if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested || 
+         /*COSAValidateHierarchyInterface && */ AnscSizeOfString(pNSLookupDiagInfo->Interface) > 0 )
     {
         // COSAValidateHierarchyInterface depends on the specific target
-        return TRUE;
+        pAddrName = CosaGetInterfaceAddrByName(pNSLookupDiagInfo->Interface);
+        if(strcmp(pAddrName,"::") && (isValidIPv4Address(pAddrName) || isValidIPv6Address(pAddrName)))
+        {
+        	AnscCopyString(pNSLookupDiagInfo->IfAddr, pAddrName);
+			AnscFreeMemory(pAddrName);
+        }
+        else
+        {
+            AnscFreeMemory(pAddrName);
+            AnscCopyString(pReturnParamName, "Interface");
+            pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
+            return FALSE;
+        }
         /*
         if ( !COSAValidateHierarchyInterface
                 (
@@ -914,7 +941,13 @@ NSLookupDiagnostics_Validate
     if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested || AnscSizeOfString(pNSLookupDiagInfo->DNSServer) > 0  )
     {
         //still not clear how to validate dns server
-        return TRUE;
+        // we are only validating if the server ip is v4/v6
+        if(!isValidIPv4Address(pNSLookupDiagInfo->DNSServer) && !isValidIPv6Address(pNSLookupDiagInfo->DNSServer))
+            {
+                AnscCopyString(pReturnParamName, "DNSServer");
+                pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
+                return FALSE;
+            }
     }
 
     if ( TRUE )
@@ -971,7 +1004,6 @@ NSLookupDiagnostics_Commit
     ANSC_STATUS                     returnStatus       = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo  = pMyObject->hDiagNSLookInfo;
-    char*                           pAddrName          = NULL;
 
     if ( !pNSLookupDiagInfo )
     {
@@ -980,13 +1012,7 @@ NSLookupDiagnostics_Commit
 
     if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested )
     {
-        pAddrName = CosaGetInterfaceAddrByName(pNSLookupDiagInfo->Interface);
-        AnscCopyString(pNSLookupDiagInfo->IfAddr, pAddrName);
-        AnscFreeMemory(pAddrName);
-
         returnStatus = CosaDmlDiagScheduleDiagnostic(DSLH_DIAGNOSTIC_TYPE_NSLookup, (ANSC_HANDLE)pNSLookupDiagInfo);
-        pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-        pNSLookupDiagInfo->bForced = FALSE;
     }
     else
     {
