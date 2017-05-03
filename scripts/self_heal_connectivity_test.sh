@@ -190,8 +190,8 @@ runPingTest()
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
-		echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [ping failed]"
-		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [ping failed]"		
+		echo "PING_FAILED:$IPv4_Gateway_addr"
+		echo "PING_FAILED:$IPv6_Gateway_addr"		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
@@ -206,7 +206,7 @@ runPingTest()
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
 
-        	echo "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [ping failed]"
+        	echo "PING_FAILED:$IPv4_Gateway_addr"
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
@@ -232,7 +232,7 @@ runPingTest()
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
 
-		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [ping failed]"	
+		echo "PING_FAILED:$IPv6_Gateway_addr"	
 		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
@@ -275,7 +275,7 @@ runPingTest()
 			fi
 			
 			if [ "$ping4_failed" -eq 1 ];then
-			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [ping failed]"
+			   echo "PING_FAILED:$PING_SERVER_IS"
 			   ping4_failed=0
 			fi
 		fi
@@ -303,7 +303,7 @@ runPingTest()
 			fi
 
 			if [ "$ping6_failed" -eq 1 ];then
-			   echo "IPERROR_Ping: IP_Host=[$PING_SERVER_IS], Ping_Error = [ping failed]"
+			   echo "PING_FAILED:$PING_SERVER_IS"
 			   ping6_failed=0
 			fi
 
