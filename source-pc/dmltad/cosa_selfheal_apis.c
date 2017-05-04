@@ -274,8 +274,8 @@ CosaDmlGetSelfHealCfg(
 	pMyObject->Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
         if ( pMyObject->Enable == TRUE )
         {
-            /*system("/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-            system("/fss/gw/usr/ccsp/tad/resource_monitor.sh &");*/ //LNT_EMU
+            system("/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+            system("/fss/gw/usr/ccsp/tad/resource_monitor.sh &");
 	}  
 
 	memset(buf,0,sizeof(buf));
