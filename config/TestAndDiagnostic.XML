@@ -585,6 +585,8 @@
 					<functions>
 					<func_GetParamBoolValue>SpeedTest_GetParamBoolValue</func_GetParamBoolValue>
 					<func_SetParamBoolValue>SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
+					<func_GetParamStringValue>SpeedTest_GetParamStringValue</func_GetParamStringValue>
+					<func_SetParamStringValue>SpeedTest_SetParamStringValue</func_SetParamStringValue>
 					</functions>
 					<parameters>
 					<parameter>
@@ -598,6 +600,12 @@
 						<type>boolean</type>
 						<syntax>bool</syntax>
                         <writable>true</writable>
+					</parameter>
+					 <parameter>
+						<name>Argument</name>
+						<type>string(64)</type>
+						<syntax>string</syntax>
+			                        <writable>true</writable>
 					</parameter>
 					</parameters>
 				</object>

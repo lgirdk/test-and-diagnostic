@@ -81,6 +81,7 @@
 
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
+#define SPEEDTEST_ARG_SIZE 64
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
 
 #ifndef ROUTEHOPS_HOST_STRING
@@ -95,7 +96,7 @@ BOOL CosaIpifGetSetSupported(char * pParamName);
 //SpeedTest
 BOOL g_enable_speedtest = FALSE;
 BOOL g_run_speedtest = FALSE;
-
+char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -5261,6 +5262,8 @@ UDPEchoConfig_Rollback
 
     *  SpeedTest_GetParamBoolValue
     *  SpeedTest_GetParamBoolValue
+    *  SpeedTest_GetParamStringValue
+    *  SpeedTest_SetParamStringValue
   
 ***********************************************************************/
 /**********************************************************************
@@ -5532,4 +5535,135 @@ SpeedTest_Rollback
     return 0;
 }
 
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue,
+                The string value buffer;
+
+                ULONG*                      pUlSize
+                The buffer of length of string value;
+                Usually size of 256 will be used.
+                If it's not big enough, put required size here and return 1;
+
+    return:     0 if succeeded;
+                1 if short of buffer size; (*pUlSize = required size)
+                -1 if not supported.
+
+**********************************************************************/
+ULONG
+SpeedTest_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    int len = strlen(g_argument_speedtest);
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    {
+        if (  *pUlSize > SPEEDTEST_ARG_SIZE )
+        {
+		AnscTraceFlow(("SpeedTest Argument get : %s : len :%d: *pUlSize:%d: \n",g_argument_speedtest,len,*pUlSize));
+		AnscCopyString(pValue, g_argument_speedtest);
+		return 0;
+        } else
+	{
+		AnscTraceWarning(("SpeedTest Argument get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_argument_speedtest,len, *pUlSize));
+		return 1;
+
+	}
+    }
+    else
+    {
+
+		AnscTraceWarning(("SpeedTest Argument get :Unsupported parameter '%s'\n", ParamName));
+		return -1;
+    } 
+}
+
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_SetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pString
+            );
+
+    description:
+
+        This function is called to set string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pString
+                The updated string value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+SpeedTest_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+
+    int len = strlen(pString);
+    /* check the parameter name and set the corresponding value */
+    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    {
+	if ( len <= (SPEEDTEST_ARG_SIZE ) ){
+		AnscTraceFlow(("SpeedTest Argument set : %s : string len : %d: \n",pString,len));
+		AnscCopyString(g_argument_speedtest, pString);
+		return TRUE;
+	} else
+	{
+		AnscTraceWarning(("SpeedTest Argument set : string too long:  %s : string len : %d: \n",pString,len));
+		return FALSE;
+	}
+    } else
+    {
+     AnscTraceWarning(("SpeedTest Argument set : Unsupported parameter '%s'\n", ParamName));
+    }
+    return FALSE;
+}
 
