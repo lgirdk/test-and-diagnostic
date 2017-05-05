@@ -444,6 +444,13 @@ fi
 
 	fi
 
+        # Verify MDC is enabled in the build by
+        # checking if /usr/bin/Arm_Mdc exists
+        ArmMdc_PID=`pidof Arm_Mdc`
+	if [ -e /usr/bin/Arm_Mdc ] && [ "$ArmMdc_PID" = "" ]; then
+		echo "RDKB_PROCESS_CRASHED : Arm_Mdc is not running, restarting it"
+		resetNeeded CcspArmMdc Arm_Mdc
+	fi
 
 
 # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
