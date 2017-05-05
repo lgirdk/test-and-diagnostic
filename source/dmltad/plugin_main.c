@@ -216,6 +216,9 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_Validate",  SpeedTest_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_Commit",  SpeedTest_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_Rollback",  SpeedTest_Rollback);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
