@@ -190,10 +190,30 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
         if((nhop > 0) && (nhop >= cfg->maxhop) && (strncmp(dest_ip,hops[nhop-1].addr,65)!=0))
         {
+	    stat->u.tracert.resptime = 0;
 	    err = DIAG_ERR_MAXHOPS;
         }
         else
         {
+	    int rtt_sum = 0, rtt_count = 0, resp =0;
+	    char rtts[256];
+	    char *rtt, *sp;
+	    if(nhop > 0 && (strncmp(dest_ip,hops[nhop-1].addr,65)==0))
+	    {
+	        strncpy(rtts,hops[nhop-1].rtts,256);
+		sp = rtts;
+		while(rtt = strtok_r(sp,",",&sp))
+		{
+		   rtt_sum += atoi(rtt);
+		   rtt_count++;
+		}
+		if(rtt_count > 0)
+		{
+		    resp = rtt_sum/rtt_count;
+		}
+
+	    }
+	    stat->u.tracert.resptime = resp;
 	    err = DIAG_ERR_OK;
         }
     }
