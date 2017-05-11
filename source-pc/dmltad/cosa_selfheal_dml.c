@@ -172,9 +172,9 @@ BOOL SelfHeal_SetParamBoolValue
                 AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
                 system(cmd); 
 
-                memset(cmd, 0, sizeof(cmd));
+                /*memset(cmd, 0, sizeof(cmd));
                 AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/resource_monitor.sh &");
-                system(cmd); 
+                system(cmd); */ //RDKB-EMU
 	    }
             else
 	    {
@@ -192,7 +192,7 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }
     
-                memset(cmd, 0, sizeof(cmd));
+               /* memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
                 sprintf(cmd, "pidof resource_monitor.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
@@ -204,7 +204,7 @@ BOOL SelfHeal_SetParamBoolValue
 	            CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
                     sprintf(cmd, "kill -9 %s", buf);
                     system(cmd);
-                }   
+                }*/ //RDKB-EMU   
 
 
                 memset(cmd, 0, sizeof(cmd));

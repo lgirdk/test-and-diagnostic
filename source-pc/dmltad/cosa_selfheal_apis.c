@@ -275,7 +275,7 @@ CosaDmlGetSelfHealCfg(
         if ( pMyObject->Enable == TRUE )
         {
             system("/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-            system("/fss/gw/usr/ccsp/tad/resource_monitor.sh &");
+            //system("/fss/gw/usr/ccsp/tad/resource_monitor.sh &"); //RDKB-EMU
 	}  
 
 	memset(buf,0,sizeof(buf));
