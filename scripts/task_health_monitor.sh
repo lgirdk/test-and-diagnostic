@@ -771,6 +771,13 @@ fi
 		fi
 	fi
 
+#Checking the ntpd is running or not
+	NTPD_PID=`pidof ntpd`
+	if [ "$NTPD_PID" = "" ]; then
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
+			sysevent set ntpd-restart
+	fi
+
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=`sysevent get wan-status`
