@@ -23,6 +23,11 @@ UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
+if [ -f /etc/device.properties ]
+then
+	source /etc/device.properties
+fi
+
 if [ "$UPTIME" -lt 600 ]
 then
     exit 0
