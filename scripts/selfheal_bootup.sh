@@ -23,6 +23,11 @@ UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
+if [ -f /etc/device.properties ]
+then
+	source /etc/device.properties
+fi
+
 if [ "$UPTIME" -lt 600 ]
 then
     exit 0
@@ -219,6 +224,7 @@ isIPv6=""
 		Check_WAN_Ip=1
 	 fi
 ## Check Peer ip is accessible
+
 if [ -f $PING_PATH/ping_peer ]
 then
 loop=1
@@ -253,7 +259,7 @@ loop=1
 	         	then
 	    			echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
 			else
-			   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
+				echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"
 			fi
 	     else
 			echo "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
@@ -324,11 +330,19 @@ fi
                         if [ ! -f "$needSelfhealReboot" ]
                         then
                                 touch $needSelfhealReboot
-                                reason="CR_crash"
+				if [ "$ping_failed" == "1" ]
+				then
+					echo_t "RDKB_PROCESS_CRASHED : Ping peer failed and CR_process not running"
+                                	reason="Peer_down"
+					backupreason=""
+				else
+					reason="CR_crash"
+					backupreason="CR"
+				fi
                                 rebootCount=1
                                 setRebootreason $reason $rebootCount
 
-                                $RDKLOGGER_PATH/backupLogs.sh "true" "CR"
+                                $RDKLOGGER_PATH/backupLogs.sh "true" $backupreason
                         else
                                 rm -rf $needSelfhealReboot
                         fi
