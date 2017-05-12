@@ -134,8 +134,7 @@ BOOL SelfHeal_SetParamBoolValue
         {
             return TRUE;
 	}
-//LNT_EMU
-       /* char buf[128];
+        char buf[128];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
         if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
@@ -214,7 +213,7 @@ BOOL SelfHeal_SetParamBoolValue
                 system(cmd);  
 	    }
 	    pMyObject->Enable = bValue;
-	}*/
+	}
         return TRUE;
     }
 
