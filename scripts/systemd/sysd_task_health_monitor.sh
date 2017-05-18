@@ -405,6 +405,56 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	           	fi 
 	fi
 	
+	if [ "$WAN_STATUS" = "started" ];then
+		wan_dhcp_client_v4=1
+		wan_dhcp_client_v6=1
+		dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
+
+		check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
+		check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+
+		if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+			wan_dhcp_client_v4=0
+		fi
+
+		if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+			wan_dhcp_client_v6=0
+		fi
+
+		DHCP_STATUS=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | cut -f3 -d : | cut -f2 -d" "`
+
+		if [ "$DHCP_STATUS" = "Rebinding" ] ; then
+			if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
+				echo "[`getDateTime`] DHCP_CLIENT : DHCPStatus is rebinding, restarting WAN"
+				sh /etc/utopia/service.d/service_wan.sh wan-stop
+				sh /etc/utopia/service.d/service_wan.sh wan-start
+				wan_dhcp_client_v4=1
+				wan_dhcp_client_v6=1
+			fi
+		fi
+
+		if [ $wan_dhcp_client_v4 -eq 0 ];
+		then
+			DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+			echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v4"
+			ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1
+			sleep 5
+			wan_dhcp_client_v4=1
+		fi
+
+		if [ $wan_dhcp_client_v6 -eq 0 ];
+		then
+			echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v6"
+			sh $DHCPV6_HANDLER disable
+			sleep 2
+			sh $DHCPV6_HANDLER enable
+			wan_dhcp_client_v6=1
+		fi
+
+	fi
+	
 	if [ -f $PING_PATH/ping_peer ]
 	then
 	## Check Peer ip is accessible
