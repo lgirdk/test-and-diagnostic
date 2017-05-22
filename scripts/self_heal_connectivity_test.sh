@@ -187,11 +187,23 @@ runPingTest()
 		fi
 	fi
 
-	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
-	then
-		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
-		echo "PING_FAILED:$IPv4_Gateway_addr"
-		echo "PING_FAILED:$IPv6_Gateway_addr"		
+		if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
+		then
+			if [ "$IPv4_Gateway_addr" == "" ]
+             	 then
+                 	  echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
+               	else
+                  	 echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                   	echo "PING_FAILED:$IPv4_Gateway_addr"
+            fi
+            if [ "$IPv6_Gateway_addr" == "" ]
+              	then
+                  	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
+               	else
+                      echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address failed."
+                      echo "PING_FAILED:$IPv6_Gateway_addr"
+            fi
+ 
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
@@ -202,11 +214,10 @@ runPingTest()
                 if [ "$IPv4_Gateway_addr" != "" ]
                 then
                    echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+        	   echo "PING_FAILED:$IPv4_Gateway_addr"	
                 else
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
-
-        	echo "PING_FAILED:$IPv4_Gateway_addr"
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
@@ -228,11 +239,10 @@ runPingTest()
                 if [ "$IPv6_Gateway_addr" != "" ]
                 then
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+		            echo "PING_FAILED:$IPv6_Gateway_addr"
                 else
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
-
-		echo "PING_FAILED:$IPv6_Gateway_addr"	
 		
 		if [ `getCorrectiveActionState` = "true" ]
 		then
