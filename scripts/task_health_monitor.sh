@@ -412,7 +412,7 @@ fi
                   dropbear_flagged=0
                   echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                fi
-               dropbear -E -B -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
+               dropbear -E -B -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
            fi
         fi
 
