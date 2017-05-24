@@ -580,7 +580,7 @@ fi
     DNS_PID=`pidof dnsmasq`
     if [ "$DNS_PID" == "" ]
     then
-          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is is not running."
+          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
 
 		  BR_MODE=0
 		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
