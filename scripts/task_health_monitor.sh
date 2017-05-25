@@ -340,18 +340,17 @@ if [ -f "/etc/PARODUS_ENABLE" ]; then
 	# Checking parodus PID
         PARODUS_PID=`pidof parodus`
         if [ "$PARODUS_PID" = "" ]; then
-            processCount=`ps -elf |grep parodus_start.sh|wc -l`
-	    echo "processCount for parodus script is $processCount"
-	    if [ "$processCount" -gt "1" ]; then
-	        echo "parodus_start script is already running, parodus is yet to start"
-            else 	
                 echo_t "RDKB_PROCESS_CRASHED : parodus process is not running, need restart"
-                echo_t "Starting parodus in background "
-                cd /usr/ccsp/parodus
-                sh  ./parodus_start.sh &
-                echo_t "Started parodus_start script"
-                cd -
-            fi
+                echo_t "Check parodusCmd.cmd in /tmp"
+		if [ -e /tmp/parodusCmd.cmd ]; then
+			 echo_t "parodusCmd.cmd exists in tmp"
+			 parodusCmd=`cat /tmp/parodusCmd.cmd`
+			 #start parodus
+			 $parodusCmd &
+			 echo_t "Started parodusCmd in background"
+		else
+		 	 echo_t "parodusCmd.cmd does not exist in tmp, unable to start parodus"
+            	fi
         fi
 else
 	# Checking webpa PID
