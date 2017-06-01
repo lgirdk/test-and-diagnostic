@@ -685,7 +685,7 @@ fi
    DNS_PID=`pidof dnsmasq`
    if [ "$DNS_PID" == "" ]
    then
-		 echo_t "[RDKB_SELFHEAL] : dnsmasq is is not running"   
+		 echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"   
    else
 	     brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
 	     brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
