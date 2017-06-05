@@ -37,12 +37,20 @@ change() {
 getVendorName()
 {
 	vendorName=`dmcli eRT getv Device.DeviceInfo.Manufacturer | grep value | awk '{print $5}'`
+	if [ "$vendorName" = "" ]
+	then
+		vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
+	fi
 	echo "$vendorName"
 }
 
 getModelName()
 {
 	modelName=`dmcli eRT getv Device.DeviceInfo.ModelName | grep value | awk '{print $5}'`
+	if [ "$modelName" = "" ]
+	then
+		modelName=`cat /etc/device.properties | grep MODEL_NUM | cut -f2 -d=`
+	fi
 	echo "$modelName"
 }
 
@@ -61,6 +69,10 @@ getDateTime()
 getCMMac()
 {
 	CMMac=`dmcli eRT getv Device.X_CISCO_COM_CableModem.MACAddress | grep value | awk '{print $5}'`
+	if [ "$CMMac" = "" ]
+	then
+		CMMac=`ifconfig wan0 | grep HWaddr | cut -d" " -f11`
+	fi
 	echo "$CMMac"
 }
 
