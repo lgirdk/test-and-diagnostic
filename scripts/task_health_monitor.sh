@@ -710,13 +710,17 @@ fi
 	
 	checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
 	if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
-		confirmZombie=`grep "State:" /proc/$checkIfDnsmasqIsZombie/status | grep -i "zombie"`
-		if [ "$confirmZombie" != "" ] ; then
-			echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
-			kill -9 `pidof dnsmasq`
-			sysevent set dhcp_server-stop
-			sysevent set dhcp_server-start
-		fi
+		for zombiepid in $checkIfDnsmasqIsZombie
+		do
+			confirmZombie=`grep "State:" /proc/$zombiepid/status | grep -i "zombie"`
+			if [ "$confirmZombie" != "" ] ; then
+				echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+				kill -9 `pidof dnsmasq`
+				sysevent set dhcp_server-stop
+				sysevent set dhcp_server-start
+				break
+			fi
+		done
 	fi
 
    fi
