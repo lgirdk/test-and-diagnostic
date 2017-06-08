@@ -383,21 +383,6 @@ else
 	
 	fi
 fi
-	#Check if we support rsync dropbear 
-	if [ "$ARM_INTERFACE_IP" == "" ]
-	then
-	    DROPBEAR_PID=`pidof dropbear`
-	else
-	    DROPBEAR_PID=`ps | grep dropbear | grep -v "$ARM_INTERFACE_IP" | grep -v grep`
-	fi
-
-	dropbear_flagged=0
-	if [ "$DROPBEAR_PID" = "" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-		dropbear_flagged=1
-		sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-		sleep 3
-	fi
 
 	#Check dropbear is alive to do rsync/scp to/fro ATOM
 	if [ "$ARM_INTERFACE_IP" != "" ]
@@ -405,13 +390,8 @@ fi
            DROPBEAR_ENABLE=`ps | grep dropbear | grep $ARM_INTERFACE_IP`
            if [ "$DROPBEAR_ENABLE" == "" ]
            then
-               # No need to print this message as we have already printed the log message
-               if [ $dropbear_flagged -eq 0 ]
-               then
-                  dropbear_flagged=0
                   echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-               fi
-               dropbear -E -B -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
+            	    dropbear -E -B -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
            fi
         fi
 
