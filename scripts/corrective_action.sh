@@ -522,12 +522,6 @@ resetNeeded()
 				cd /usr/ccsp/moca
 				$BINPATH/CcspMoCA -subsys $Subsys
 				cd -
-			elif [ "$ProcessName" == "CcspWecbController" ]
-			then
-				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-				cd /usr/ccsp/wecb
-				$BINPATH/CcspWecbController -subsys $Subsys
-				cd -		
 			elif [ "$ProcessName" == "CcspTandDSsp" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
