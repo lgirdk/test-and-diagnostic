@@ -75,9 +75,11 @@ DELAY=30
 	SYS=$(change 3)
 	IDLE=$(change 4)
 	IOW=$(change 5)
+	IRQ=$(change 6)
+	SIRQ=$(change 7)
+	STEAL=$(change 8)
 
-
-	ACTIVE=$(( $USR + $SYS + $IOW ))
+	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
 
 	TOTAL=$(($ACTIVE + $IDLE))
 
@@ -88,7 +90,7 @@ DELAY=30
     echo_t "USED_CPU:$Curr_CPULoad"
 
     # RDKB-7412
-   	CPU_INFO=`mpstat | tail -1 | tr -s ' ' ':' | cut -d':' -f5-`
+   	CPU_INFO=`mpstat 1 1 | tail -1 | tr -s ' ' ':' | cut -d':' -f3-`
 	MPSTAT_USR=`echo $CPU_INFO | cut -d':' -f1`
 	MPSTAT_SYS=`echo $CPU_INFO | cut -d':' -f3`
 	MPSTAT_NICE=`echo $CPU_INFO | cut -d':' -f2`

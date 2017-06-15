@@ -611,9 +611,11 @@ fi
 	SYS=$(change 3)
 	IDLE=$(change 4)
 	IOW=$(change 5)
+	IRQ=$(change 6)
+	SIRQ=$(change 7)
+	STEAL=$(change 8)
 
-
-	ACTIVE=$(( $USR + $SYS + $IOW ))
+	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
 
 	TOTAL=$(($ACTIVE + $IDLE))
 

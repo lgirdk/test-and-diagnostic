@@ -84,9 +84,12 @@ do
 	system_ini=`echo $STARTSTAT | cut -d 'x' -f 3`
 	idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
 	iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
+	irq_ini=`echo $STARTSTAT | cut -d 'x' -f 6`
+	softirq_ini=`echo $STARTSTAT | cut -d 'x' -f 7`
+	steal_ini=`echo $STARTSTAT | cut -d 'x' -f 8`
 
 #echo "[`getDateTime`] RDKB_SELFHEAL : Initial CPU stats are"
-#echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
+#echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini irq_ini=$irq_ini softirq_ini=$softirq_ini steal_ini=$steal_ini"
 	sleep $DELAY
 
 #Record the end statistics
@@ -96,19 +99,25 @@ do
 	system_end=`echo $ENDSTAT | cut -d 'x' -f 3`
 	idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
 	iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
+	irq_end=`echo $ENDSTAT | cut -d 'x' -f 6`
+	softirq_end=`echo $ENDSTAT | cut -d 'x' -f 7`
+	steal_end=`echo $ENDSTAT | cut -d 'x' -f 8`
 
 #echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats after $DELAY sec are"
-#echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
+#echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end irq_end=$irq_end softirq_end=$softirq_end steal_end=$steal_end"
 	
 	user_diff=$(change 1)
 	system_diff=$(change 3)
 	idle_diff=$(change 4)
 	iowait_diff=$(change 5)
+	irq_diff=$(change 6)
+	softirq_diff=$(change 7)
+	steal_diff=$(change 8)
 
 #echo "[`getDateTime`] RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
-#echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
+#echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff irq_diff=$irq_diff softirq_diff=$softirq_diff steal_diff=$steal_diff"
 
-	active=$(( $user_diff + $system_diff + $iowait_diff))
+	active=$(( $user_diff + $system_diff + $iowait_diff + $irq_diff + $softirq_diff + $steal_diff))
 	total=$(($active + $idle_diff))
 	Curr_CPULoad=$(( $active * 100 / $total ))
 
@@ -136,9 +145,12 @@ do
 			system_ini=`echo $STARTSTAT | cut -d 'x' -f 3`
 			idle_ini=`echo $STARTSTAT | cut -d 'x' -f 4`
 			iowait_ini=`echo $STARTSTAT | cut -d 'x' -f 5`
+			irq_ini=`echo $STARTSTAT | cut -d 'x' -f 6`
+			softirq_ini=`echo $STARTSTAT | cut -d 'x' -f 7`
+			steal_ini=`echo $STARTSTAT | cut -d 'x' -f 8`
 
 			echo_t "RDKB_SELFHEAL : Initial CPU stats are"
-			echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini"
+			echo "user_ini: $user_ini system_ini: $system_ini idle_ini=$idle_ini iowait_ini=$iowait_ini irq_ini=$irq_ini softirq_ini=$softirq_ini steal_ini=$steal_ini"
 
 			sleep $DELAY
 
@@ -149,19 +161,25 @@ do
 			system_end=`echo $ENDSTAT | cut -d 'x' -f 3`
 			idle_end=`echo $ENDSTAT | cut -d 'x' -f 4`
 			iowait_end=`echo $ENDSTAT | cut -d 'x' -f 5`
+			irq_end=`echo $ENDSTAT | cut -d 'x' -f 6`
+			softirq_end=`echo $ENDSTAT | cut -d 'x' -f 7`
+			steal_end=`echo $ENDSTAT | cut -d 'x' -f 8`
 
 			echo_t "RDKB_SELFHEAL : CPU stats after $DELAY sec are"
-			echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end"
+			echo "user_end: $user_end system_end: $system_end idle_end=$idle_end iowait_end=$iowait_end irq_end=$irq_end softirq_end=$softirq_end steal_end=$steal_end"
 	
 			user_diff=$(change 1)
 			system_diff=$(change 3)
 			idle_diff=$(change 4)
 			iowait_diff=$(change 5)
+			irq_diff=$(change 6)
+			softirq_diff=$(change 7)
+			steal_diff=$(change 8)
 
 			echo_t "RDKB_SELFHEAL : CPU stats diff btw 2 intervals is"
-			echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff"
+			echo "user_diff= $user_diff system_diff=$system_diff and idle_diff=$idle_diff iowait_diff=$iowait_diff irq_diff=$irq_diff softirq_diff=$softirq_diff steal_diff=$steal_diff"
 
-			active=$(( $user_diff + $system_diff + $iowait_diff))
+			active=$(( $user_diff + $system_diff + $iowait_diff + $irq_diff + $softirq_diff + $steal_diff))
 			total=$(($active + $idle_diff))
 			Curr_CPULoad_calc=$(( $active * 100 / $total ))
 			echo_t "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_calc in iteration $count_val"
