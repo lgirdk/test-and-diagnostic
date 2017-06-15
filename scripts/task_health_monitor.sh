@@ -198,12 +198,12 @@ fi
 	fi
 
 	# Checking WEBController's PID
-	WEBC_PID=`pidof CcspWecbController`
-	if [ "$WEBC_PID" = "" ]; then
+#	WEBC_PID=`pidof CcspWecbController`
+#	if [ "$WEBC_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
-		echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
-		resetNeeded wecb CcspWecbController
-	fi
+#		echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
+#		resetNeeded wecb CcspWecbController
+#	fi
 
 	# Checking RebootManager's PID
 #	Rm_PID=`pidof CcspRmSsp`
