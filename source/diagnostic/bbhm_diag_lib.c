@@ -788,6 +788,7 @@ COSA_Diag_SetDiagState
     
                 break;
         }
+    return returnStatus;
 }
 
 ANSC_STATUS ANSC_EXPORT_API

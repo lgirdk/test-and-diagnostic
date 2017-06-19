@@ -387,7 +387,7 @@ LogBackup_Rollback
 
 
 //*****************************************
-get_logbackupcfg()
+void get_logbackupcfg()
 {
 
 	char buf[128];
@@ -438,6 +438,5 @@ get_logbackupcfg()
 	        }
 	
 	}
-
 }
 

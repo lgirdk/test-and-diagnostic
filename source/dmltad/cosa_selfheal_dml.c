@@ -940,6 +940,7 @@ IPv4PingServerTable_Synchronize
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
     ULONG                                 entryCount        = 0;
+    return returnStatus;
 }
 
 ANSC_HANDLE
@@ -1100,7 +1101,7 @@ IPv4PingServerTable_Validate
     )
 
 {
-
+    return TRUE;
 }
 
 ULONG
@@ -1110,7 +1111,7 @@ IPv4PingServerTable_Commit
     )
 
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 ULONG
@@ -1120,7 +1121,7 @@ IPv4PingServerTable_Rollback
     )
 
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 
@@ -1206,7 +1207,7 @@ IPv6PingServerTable_Synchronize
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
     ULONG                                 entryCount        = 0;
-	
+    return returnStatus;
 }
 
 ANSC_HANDLE
@@ -1361,7 +1362,7 @@ IPv6PingServerTable_Validate
         ULONG*                      puLength
     )
 {
-
+    return TRUE;
 }
 
 ULONG
@@ -1370,7 +1371,7 @@ IPv6PingServerTable_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 ULONG
@@ -1379,7 +1380,7 @@ IPv6PingServerTable_Rollback
         ANSC_HANDLE                 hInsContext
     )
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 /***********************************************************************

@@ -656,5 +656,6 @@ CosaDmlDiagGetARPTable
     )
 {
 	//return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //LNT_EMU
+    return NULL;
 }
 
