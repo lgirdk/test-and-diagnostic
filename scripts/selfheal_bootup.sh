@@ -370,7 +370,20 @@ fi
 			else
 				rm -rf $needSelfhealReboot
 			fi
-
+	else
+		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
+		psm_name_timeout=`echo $psm_name | grep "CCSP_ERR_TIMEOUT"`
+		psm_name_notexist=`echo $psm_name | grep "CCSP_ERR_NOT_EXIST"`
+		if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
+			psm_health=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health`
+			psm_health_timeout=`echo $psm_health | grep "CCSP_ERR_TIMEOUT"`
+			psm_health_notexist=`echo $psm_health | grep "CCSP_ERR_NOT_EXIST"`
+			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
+				echo_t "RDKB_SELFHEAL_BOOTUP : PSM_process is not responding, need reboot"
+				dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_hang
+				$RDKLOGGER_PATH/backupLogs.sh "true" "PSM"
+			fi
+		fi
 	fi
 
 # Check whether PAM process is running
