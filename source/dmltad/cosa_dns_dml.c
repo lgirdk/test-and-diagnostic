@@ -940,6 +940,30 @@ NSLookupDiagnostics_Validate
 
     if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested || AnscSizeOfString(pNSLookupDiagInfo->DNSServer) > 0  )
     {
+		/*
+		  * if DNSServer is empty then we have to take default DNS Server value Device.DNS.Client.Server.1.DNSServer 
+		  */
+		if ( 0 == AnscSizeOfString(pNSLookupDiagInfo->DNSServer) )
+		{
+			parameterValStruct_t varStruct 		= { 0 };
+			UCHAR	   ucEntryNameValue[128]	= { 0 };
+			UCHAR	   ucEntryParamName[128]	= { 0 };
+			int 	   			 ulEntryNameLen = 0;
+
+			AnscCopyString( ucEntryParamName, "Device.DNS.Client.Server.1.DNSServer");
+
+			varStruct.parameterName  = ucEntryParamName;
+			varStruct.parameterValue = ucEntryNameValue;
+
+			if ( ANSC_STATUS_SUCCESS == COSAGetParamValueByPathName(  g_MessageBusHandle, 
+																	   &varStruct,
+																	   &ulEntryNameLen ) 
+				)
+			{
+				AnscCopyString( pNSLookupDiagInfo->DNSServer, varStruct.parameterValue );
+			}
+		}
+
         //still not clear how to validate dns server
         // we are only validating if the server ip is v4/v6
         if(!isValidIPv4Address(pNSLookupDiagInfo->DNSServer) && !isValidIPv6Address(pNSLookupDiagInfo->DNSServer))
