@@ -6,6 +6,6 @@ fi
 /usr/ccsp/tad/rxtx_cur.sh
 sleep 19
 /usr/ccsp/tad/rxtx_cur.sh
-seep 19
+sleep 19
 /usr/ccsp/tad/rxtx_cur.sh
 
