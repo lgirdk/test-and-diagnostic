@@ -44,8 +44,8 @@
 #include <assert.h>
 #include "diag_inter.h"
 
-#define TRACERT_DEF_CNT     3
-#define TRACERT_DEF_TIMO    5
+#define TRACERT_DEF_CNT     1
+#define TRACERT_DEF_TIMO    3
 #define TRACERT_DEF_SIZE    38
 #define TRACERT_DEF_MAXHOP  30
 
