@@ -274,7 +274,7 @@ fi
 
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
+		echo_t "RDKB_PROCESS_CRASHED : HomeSecurity_process is not running, need restart"
 		resetNeeded "" CcspHomeSecurity 
 	fi
 
