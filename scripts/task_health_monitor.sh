@@ -750,6 +750,7 @@ fi
 		if [ "$BR_MODE" == "0" ]; then
 
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
+			/etc/utopia/registration.d/20_routing restart
 			sysevent set zebra-restart
 		fi
 	fi
