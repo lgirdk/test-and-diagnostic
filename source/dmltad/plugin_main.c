@@ -99,7 +99,7 @@
 /*
 #include "cosa_moca_internal.h"
 */
-#include "cosa_apis_deviceinfo.h"
+//#include "cosa_apis_deviceinfo.h"
 #include "cosa_apis_vendorlogfile.h"
 
 PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
