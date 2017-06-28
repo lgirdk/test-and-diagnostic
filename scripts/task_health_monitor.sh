@@ -767,6 +767,11 @@ WAN_STATUS=`sysevent get wan-status`
 WAN_IPv4_Addr=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 
+if [ "$WAN_STATUS" != "started" ]
+then
+	echo_t "WAN_STATUS : wan-status is $WAN_STATUS"
+fi
+
 if [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
 then
 	          isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
