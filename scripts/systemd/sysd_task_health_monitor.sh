@@ -408,10 +408,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$WAN_STATUS" = "started" ];then
 		wan_dhcp_client_v4=1
 		wan_dhcp_client_v6=1
-		dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
 
-		check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
-		check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+		if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+			check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
+			check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
+		else
+			dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
+			check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
+			check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+		fi
 
 		if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
 			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
@@ -437,9 +442,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 		if [ $wan_dhcp_client_v4 -eq 0 ];
 		then
-			DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+			if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+				V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+			else
+				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+			fi
+
 			echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v4"
-			ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1
+			eval "$V4_EXEC_CMD"
 			sleep 5
 			wan_dhcp_client_v4=1
 		fi
@@ -447,9 +458,15 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		if [ $wan_dhcp_client_v6 -eq 0 ];
 		then
 			echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v6"
-			sh $DHCPV6_HANDLER disable
-			sleep 2
-			sh $DHCPV6_HANDLER enable
+			if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+				/etc/dibbler/dibbler-init.sh
+				sleep 2
+				/usr/sbin/dibbler-client start
+			else
+				sh $DHCPV6_HANDLER disable
+				sleep 2
+				sh $DHCPV6_HANDLER enable
+			fi
 			wan_dhcp_client_v6=1
 		fi
 
