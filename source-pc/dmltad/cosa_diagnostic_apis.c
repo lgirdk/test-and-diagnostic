@@ -658,3 +658,32 @@ CosaDmlDiagGetARPTable
 	//return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //LNT_EMU
 }
 
+ANSC_STATUS
+CosaDmlInputValidation
+    (
+        char                       *host
+    )
+{
+    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+    char wrapstring[256]={0};
+
+        // check for possible command injection 
+    if(strstr(host,";"))
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,"&"))
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,"|"))
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,"'"))
+        returnStatus = ANSC_STATUS_FAILURE;
+
+    if(ANSC_STATUS_SUCCESS == returnStatus)
+    {
+        sprintf(wrapstring,"'%s'",host);
+        strcpy(host,wrapstring);
+    }
+
+        return returnStatus;
+
+}
+

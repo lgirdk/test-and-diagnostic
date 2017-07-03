@@ -184,6 +184,11 @@ CosaDmlDiagGetARPTable
         PULONG                      pulCount
     );
 
+ANSC_STATUS
+CosaDmlInputValidation
+    (
+        char                       *host
+    );
 
 #endif
 

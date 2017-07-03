@@ -81,6 +81,7 @@
 
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
+#define SPEEDTEST_ARG_SIZE 64
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
 
 #ifndef ROUTEHOPS_HOST_STRING
@@ -91,6 +92,11 @@ static ULONG last_tick;
 #ifndef _COSA_SIM_
 BOOL CosaIpifGetSetSupported(char * pParamName);
 #endif
+
+//SpeedTest
+BOOL g_enable_speedtest = FALSE;
+BOOL g_run_speedtest = FALSE;
+char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -523,10 +529,10 @@ ARPTable_Synchronize
         return ANSC_STATUS_FAILURE;
     }
 
-   /* if ( pArpTable )
+/*    if ( pArpTable )
     {
         AnscFreeMemory(pArpTable);
-    }*/ //LNT_EMU
+    } */ //RDKB_EMU
 
     pMyObject->pArpTable     = pArpTable2;
     pMyObject->ArpEntryCount = entryCount;
@@ -1216,9 +1222,18 @@ IPPing_SetParamUlongValue
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
         cfg.timo = uValue / 1000;
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
-        cfg.size = uValue;
-    else if( AnscEqualString(ParamName, "DSCP", TRUE))
-        cfg.tos = uValue;
+    	{
+    		char buf[256];
+		memset(buf,0,sizeof(buf));
+		cfg.size = uValue;
+		sprintf(buf, "%d",cfg.size);
+        	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
+		{
+			syscfg_commit();
+		}
+	}
+   else if( AnscEqualString(ParamName, "DSCP", TRUE))
+       cfg.tos = uValue;
     else 
         return FALSE;
 
@@ -1309,7 +1324,14 @@ IPPing_SetParamStringValue
         }
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
+    {
+		ANSC_STATUS             ret;
+        ret=CosaDmlInputValidation(pString);
+		if(ANSC_STATUS_SUCCESS != ret)
+			return FALSE;
+		
         snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    }
     else
         return FALSE;
 
@@ -1966,7 +1988,13 @@ TraceRoute_SetParamStringValue
         }
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
+    {
+		ANSC_STATUS             ret;
+        ret=CosaDmlInputValidation(pString);
+		if(ANSC_STATUS_SUCCESS != ret)
+			return FALSE;
         snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+    }
     else
         return FALSE;
 
@@ -5081,7 +5109,23 @@ UDPEchoConfig_Validate
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
+    char*                           pAddrName     = NULL;
 
+    if (AnscSizeOfString(pUdpEchoInfo->Interface))    
+    {
+        pAddrName = CosaGetInterfaceAddrByName(pUdpEchoInfo->Interface);
+        if (_ansc_strcmp(pAddrName, "::"))
+        {
+            AnscCopyString(pUdpEchoInfo->IfAddrName, pAddrName);
+            AnscFreeMemory(pAddrName);
+        }
+        else
+        {
+            AnscCopyString(pReturnParamName, "Interface");
+            AnscFreeMemory(pAddrName);
+            return FALSE;  
+        }
+    }
 
     if ( pUdpEchoInfo->EchoPlusEnabled && !pUdpEchoInfo->EchoPlusSupported )
     {
@@ -5136,11 +5180,6 @@ UDPEchoConfig_Commit
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
     PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
-    char*                           pAddrName     = NULL;
-
-    pAddrName = CosaGetInterfaceAddrByName(pUdpEchoInfo->Interface);
-    AnscCopyString(pUdpEchoInfo->IfAddrName, pAddrName);
-    AnscFreeMemory(pAddrName);
 
     returnStatus = CosaDmlDiagScheduleDiagnostic
                 (
@@ -5223,6 +5262,8 @@ UDPEchoConfig_Rollback
 
     *  SpeedTest_GetParamBoolValue
     *  SpeedTest_GetParamBoolValue
+    *  SpeedTest_GetParamStringValue
+    *  SpeedTest_SetParamStringValue
   
 ***********************************************************************/
 /**********************************************************************
@@ -5266,9 +5307,15 @@ SpeedTest_GetParamBoolValue
     /* check the parameter name and return the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
+	    AnscTraceFlow(("%s Enable_Speedtest : %d\n",  __FUNCTION__, g_enable_speedtest));
+	    *pBool = g_enable_speedtest;
+	    return TRUE;
     } else
     if ( AnscEqualString(ParamName, "Run", TRUE))
     {
+	    AnscTraceFlow(("%s Speedtest Run : %d \n", __FUNCTION__, g_run_speedtest));
+	    *pBool = g_run_speedtest;
+	    return TRUE;
     } else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;
@@ -5315,14 +5362,308 @@ SpeedTest_SetParamBoolValue
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
     {
-    } else 
-    if ( AnscEqualString(ParamName, "Run", TRUE))
+        AnscTraceFlow(("%s Enable Speedtest : %d \n", __FUNCTION__, bValue));
+        g_enable_speedtest = bValue;
+        return TRUE;
+    }
+    else if ( AnscEqualString(ParamName, "Run", TRUE))
     {
-    } else
-    	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
+        AnscTraceFlow(("%s Run Speedtest : %d \n",__FUNCTION__, bValue));
+        g_run_speedtest = bValue;
+        return TRUE;
+    }
+
+    AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); 
     return FALSE;
 }
 
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_Validate
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       pReturnParamName,
+                ULONG*                      puLength
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       pReturnParamName,
+                The buffer (128 bytes) of parameter name if there's a validation.
+
+                ULONG*                      puLength
+                The output length of the param name.
+
+    return:     TRUE if there's no validation.
+
+**********************************************************************/
+BOOL
+SpeedTest_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    )
+{
+    if ( g_enable_speedtest == FALSE && g_run_speedtest == TRUE )
+    {
+        AnscCopyString(pReturnParamName, "Run");
+        g_run_speedtest = FALSE;
+        return FALSE; 
+    }
+
+    return TRUE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_Commit
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+SpeedTest_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    ANSC_STATUS     returnStatus  = ANSC_STATUS_FAILURE;
+    BOOL            speedtest_setting = FALSE;
+
+    char buf[128] = {0};
+    char cmd[128] = {0};
+
+    memset(buf,0,sizeof(buf));
+    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    {
+            speedtest_setting = (!strcmp(buf, "true")) ? TRUE : FALSE;
+    }
+
+    if( g_enable_speedtest != speedtest_setting )
+    {
+        char buf[8]={0};
+        snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
+        if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+        {
+            AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
+            return 1;
+        }
+        if (syscfg_commit() != 0)
+        {
+            AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
+            return 1;
+        }
+    }
+
+    if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
+    {
+        memset(cmd, 0, sizeof(cmd));
+        AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+        AnscTraceFlow(("Executing Speedtest..\n"));
+        system(cmd);
+        g_run_speedtest = FALSE;
+    }
+
+    return 0;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_Rollback
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to roll back the update whenever there's a
+        validation found.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+SpeedTest_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    char buf[128];
+
+    memset(buf,0,sizeof(buf));
+    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    {
+            g_enable_speedtest = (!strcmp(buf, "true")) ? TRUE : FALSE;
+    }
+
+    g_run_speedtest = FALSE;
+
+    return 0;
+}
 
 
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue,
+                The string value buffer;
+
+                ULONG*                      pUlSize
+                The buffer of length of string value;
+                Usually size of 256 will be used.
+                If it's not big enough, put required size here and return 1;
+
+    return:     0 if succeeded;
+                1 if short of buffer size; (*pUlSize = required size)
+                -1 if not supported.
+
+**********************************************************************/
+ULONG
+SpeedTest_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    int len = strlen(g_argument_speedtest);
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    {
+        if (  *pUlSize > SPEEDTEST_ARG_SIZE )
+        {
+		AnscTraceFlow(("SpeedTest Argument get : %s : len :%d: *pUlSize:%d: \n",g_argument_speedtest,len,*pUlSize));
+		AnscCopyString(pValue, g_argument_speedtest);
+		return 0;
+        } else
+	{
+		AnscTraceWarning(("SpeedTest Argument get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_argument_speedtest,len, *pUlSize));
+		return 1;
+
+	}
+    }
+    else
+    {
+
+		AnscTraceWarning(("SpeedTest Argument get :Unsupported parameter '%s'\n", ParamName));
+		return -1;
+    } 
+}
+
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        SpeedTest_SetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pString
+            );
+
+    description:
+
+        This function is called to set string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pString
+                The updated string value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+SpeedTest_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+
+    int len = strlen(pString);
+    /* check the parameter name and set the corresponding value */
+    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    {
+	if ( len <= (SPEEDTEST_ARG_SIZE ) ){
+		AnscTraceFlow(("SpeedTest Argument set : %s : string len : %d: \n",pString,len));
+		AnscCopyString(g_argument_speedtest, pString);
+		return TRUE;
+	} else
+	{
+		AnscTraceWarning(("SpeedTest Argument set : string too long:  %s : string len : %d: \n",pString,len));
+		return FALSE;
+	}
+    } else
+    {
+     AnscTraceWarning(("SpeedTest Argument set : Unsupported parameter '%s'\n", ParamName));
+    }
+    return FALSE;
+}
 

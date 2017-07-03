@@ -804,7 +804,12 @@ UDPEchoConfig_Rollback
     IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.
 
     *  SpeedTest_GetParamBoolValue
-    *  SpeedTest_GetParamBoolValue
+    *  SpeedTest_SetParamBoolValue
+    *  SpeedTest_Commit
+    *  SpeedTest_Validate
+    *  SpeedTest_Rollback
+    *  SpeedTest_GetParamStringValue
+    *  SpeedTest_SetParamStringValue
   
 ***********************************************************************/
 BOOL
@@ -823,6 +828,41 @@ SpeedTest_SetParamBoolValue
         BOOL                        bValue
     );
 
+ULONG
+SpeedTest_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+BOOL
+SpeedTest_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    );
+
+ULONG
+SpeedTest_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    );  
   
+ULONG
+SpeedTest_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+BOOL
+SpeedTest_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    );
 
 #endif
