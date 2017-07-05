@@ -5129,6 +5129,11 @@ UDPEchoConfig_Validate
             return FALSE;  
         }
     }
+    else
+    {
+        AnscCopyString(pUdpEchoInfo->IfAddrName, "::");
+    }
+
 
     if ( pUdpEchoInfo->EchoPlusEnabled && !pUdpEchoInfo->EchoPlusSupported )
     {
