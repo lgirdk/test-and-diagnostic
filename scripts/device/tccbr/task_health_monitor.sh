@@ -433,11 +433,14 @@ then
 			ipv4_status=`sysevent get ipv4_4-status`
 			lan_status=`sysevent get lan-status`
 
-			if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
+			if [ "$lan_status" != "started" ]
 			then
-				echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-				sysevent set lan-start
-				sleep 5
+				if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]
+				then
+					echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+					sysevent set lan-start
+					sleep 5
+				fi
 			fi
 
 			sysevent set multinet-down 1
