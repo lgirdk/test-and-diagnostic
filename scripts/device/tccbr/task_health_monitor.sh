@@ -15,6 +15,9 @@ ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
 PING_PATH="/usr/sbin"
 WAN_INTERFACE="erouter0"
+PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
+PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
+CONFIGPARAMGEN="/usr/bin/configparamgen"
 source $UTOPIA_PATH/log_env_var.sh
 
 
@@ -102,8 +105,11 @@ checkMaintenanceWindow()
 				  echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
 		  fi
 
-		  SSH_ATOM_TEST=$(ssh root@$ATOM_IP exit 2>&1)
+                  
+                  $CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
+		  SSH_ATOM_TEST=$(ssh -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
 		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
+                  rm -f $PEER_COMM_ID
 		  if [ "$SSH_ERROR" != "" ]; then
 				  echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
 		  fi
@@ -370,7 +376,7 @@ fi
            if [ "$DROPBEAR_ENABLE" == "" ]
            then
                   echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-         	     dropbear -E -B -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
+         	     dropbear -E -s -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
            fi
         fi
 
