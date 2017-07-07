@@ -138,7 +138,7 @@ runPingTest()
         IPv6_Gateway_addr=""
         erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d:`
 
-        if [ $erouterIP6 != "" ]
+        if [ "$erouterIP6" != "" ]
         then
            routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
            IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/`
