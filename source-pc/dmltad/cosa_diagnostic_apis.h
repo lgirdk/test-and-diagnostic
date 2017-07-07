@@ -187,7 +187,10 @@ CosaDmlDiagGetARPTable
 ANSC_STATUS
 CosaDmlInputValidation
     (
-        char                       *host
+        char                       *host,
+	char                       *wrapped_host,
+	int                        lengthof_host,
+	int                        sizeof_wrapped_host  
     );
 
 #endif

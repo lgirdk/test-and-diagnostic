@@ -674,14 +674,23 @@ CosaDmlDiagGetARPTable
 ANSC_STATUS
 CosaDmlInputValidation
     (
-        char                       *host
+        char                       *host,
+	char                       *wrapped_host,
+	int                        lengthof_host,
+	int                        sizeof_wrapped_host
     )
 {
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
-    char wrapstring[256]={0};
     	
-	// check for possible command injection	
-    if(strstr(host,";"))
+	/*
+	  * Validate input/params 
+	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
+	  * we are adding 2 extra charecters here. so we need to have extra bytes 
+	  * in copied(wrapped_inputparam) string
+	  */ 
+    if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
+        returnStatus = ANSC_STATUS_FAILURE;
+    else if(strstr(host,";"))// check for possible command injection 
         returnStatus = ANSC_STATUS_FAILURE;
     else if(strstr(host,"&"))
         returnStatus = ANSC_STATUS_FAILURE;
@@ -691,10 +700,7 @@ CosaDmlInputValidation
         returnStatus = ANSC_STATUS_FAILURE;
 
     if(ANSC_STATUS_SUCCESS == returnStatus)
-    {
-	sprintf(wrapstring,"'%s'",host);
-	strcpy(host,wrapstring);
-    }
+	sprintf(wrapped_host,"'%s'",host);
 
 	return returnStatus;
 

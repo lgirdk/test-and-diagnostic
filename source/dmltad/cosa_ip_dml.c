@@ -1326,11 +1326,12 @@ IPPing_SetParamStringValue
     else if( AnscEqualString(ParamName, "Host", TRUE))
     {
 		ANSC_STATUS             ret;
-        ret=CosaDmlInputValidation(pString);
+		char wrapped_host[64]={0};
+        ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
 		
-        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
     }
     else
         return FALSE;
@@ -1990,10 +1991,12 @@ TraceRoute_SetParamStringValue
     else if( AnscEqualString(ParamName, "Host", TRUE))
     {
 		ANSC_STATUS             ret;
-        ret=CosaDmlInputValidation(pString);
+		char wrapped_host[64]={0};
+		ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
-        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
+
+        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
     }
     else
         return FALSE;
