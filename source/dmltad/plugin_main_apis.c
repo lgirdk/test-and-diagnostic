@@ -216,8 +216,8 @@ CosaBackEndManagerInitialize
     /*pMyObject->hNat           = (ANSC_HANDLE)CosaNatCreate();*/
     pMyObject->hDiag          = (ANSC_HANDLE)CosaDiagCreate();
     pMyObject->hSelfHeal          = (ANSC_HANDLE)CosaSelfHealCreate();
+/*
     pMyObject->hProcStatus    = (ANSC_HANDLE)CosaProcStatusCreate();
-     /*
    pMyObject->hDeviceInfo    = (ANSC_HANDLE)CosaDeviceInfoCreate();
     pMyObject->hTime          = (ANSC_HANDLE)CosaTimeCreate();
     pMyObject->hUserinterface = (ANSC_HANDLE)CosaUserinterfaceCreate();
@@ -327,12 +327,11 @@ CosaBackEndManagerRemove
     {
         CosaUsersRemove((ANSC_HANDLE)pMyObject->hUsers);
     }
-*/
     if ( pMyObject->hProcStatus )
     {
         COSADmlRemoveProcessInfo((ANSC_HANDLE)pMyObject->hProcStatus);
     }
-/*
+
     if ( pMyObject->hDdns )
     {
         CosaDdnsRemove((ANSC_HANDLE)pMyObject->hDdns);
