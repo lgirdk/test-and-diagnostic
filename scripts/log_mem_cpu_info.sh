@@ -145,3 +145,13 @@ DELAY=30
 	then
 		echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
 	fi
+
+	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
+	if [ "$nvram_ro_fs" != "" ]; then
+		echo_t "[RDKB_SELFHEAL] : NVRAM IS READ-ONLY"
+	fi
+
+	nvram2_ro_fs=`mount | grep "nvram2 " | grep dev | grep "[ (]ro[ ,]"`
+	if [ "$nvram2_ro_fs" != "" ]; then
+		echo_t "[RDKB_SELFHEAL] : NVRAM2 IS READ-ONLY"
+	fi
