@@ -76,7 +76,14 @@
 
 **************************************************************************/
 
-#include "cosa_deviceinfo_util.h"
+#include "cosa_apis.h"
+#include "plugin_main_apis.h"
+
+#if defined(_ANSC_LINUX)
+#include <sys/sysinfo.h>
+#endif
+
+//#include "cosa_deviceinfo_util.h"
 
 #include "ansc_string_util.h"
 
