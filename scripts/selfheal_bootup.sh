@@ -419,11 +419,14 @@ fi
 			   ipv4_status=`sysevent get ipv4_4-status`
 			   lan_status=`sysevent get lan-status`
 
-			   if [ "$ipv4_status" = "" ] && [ "$lan_status" != "started" ]
+			   if [ "$lan_status" != "started" ]
 			   then
-			   	echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-				sysevent set lan-start
-				sleep 5
+					if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]
+					then
+						echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+						sysevent set lan-start
+						sleep 5
+					fi
 			   fi
 			   sysevent set multinet-down 1
 			   sleep 5
@@ -462,11 +465,14 @@ fi
 		ipv5_status=`sysevent get ipv4_5-status`
 	        lan_l3net=`sysevent get homesecurity_lan_l3net`
 
-		if [ "$ipv5_status" = "" ] && [ "$lan_l3net" != "" ]
+		if [ "$lan_l3net" != "" ]
 		then
-			echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
-			sysevent set ipv4-up $lan_l3net
-			sleep 5
+			if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+			then
+				echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
+				sysevent set ipv4-up $lan_l3net
+				sleep 5
+			fi
 		fi
 		sysevent set multinet-down 2
 		sleep 5
