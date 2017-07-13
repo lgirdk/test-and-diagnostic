@@ -442,7 +442,7 @@ fi
 		wan_dhcp_client_v4=1
 		wan_dhcp_client_v6=1
 
-		if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
 			check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
 			check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
 		else
@@ -475,7 +475,7 @@ fi
 
 		if [ $wan_dhcp_client_v4 -eq 0 ];
 		then
-			if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+			if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
 				V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
 			else
 				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
@@ -491,7 +491,7 @@ fi
 		if [ $wan_dhcp_client_v6 -eq 0 ];
 		then
 			echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v6"
-			if [[ ( "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ) || ( "$BOX_TYPE" = "TCCBR" ) ]]; then
+			if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
 				/etc/dibbler/dibbler-init.sh
 				sleep 2
 				/usr/sbin/dibbler-client start
