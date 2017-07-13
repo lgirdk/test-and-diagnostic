@@ -9,11 +9,6 @@ then
     source /etc/device.properties
 fi
 
-if [ -f /usr/ccsp/tad/tadUtilsDevice.sh ]
-then
-    source /usr/ccsp/tad/tadUtilsDevice.sh
-fi
-
 ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
@@ -89,7 +84,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		isPortKilled=`netstat -anp | grep 51515`
 		if [ "$isPortKilled" != "" ]
 		then
-		    echo_t "Port 51515 is still alive. Killing processes associated to 51515"
+		    echo "[`getDateTime`] Port 51515 is still alive. Killing processes associated to 51515"
 		    fuser -k 51515/tcp
 		fi
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
@@ -106,64 +101,93 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		fi
 		rebootDeviceNeeded=1
 	fi
-	ifconfig | grep brlan1
-	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not up, need to reboot the unit" 
-		rebootNeededforbrlan1=1
-		rebootDeviceNeeded=1
-	else
-		ifconfig brlan1 | grep "inet addr"
-		if [ $? == 1 ]; then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 interface is not having ip, creating it"
-			sysevent set multinet_2-status stopped
-		    deviceBrlan1Up
+	
+	# Checking whether brlan0 is created properly , if not recreate it
+	lanSelfheal=`sysevent get lan_selfheal`
+	echo "[`getDateTime`] [RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
+	if [ "$lanSelfheal" != "done" ]
+	then
 
-			ifconfig brlan1 | grep "inet addr"
-			if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created at First Retry, try again after 2 sec"
-				sleep 2
-				sysevent set multinet_2-status stopped
-				deviceBrlan1Up
+		check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+		check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+		if [ "$check_param_get_succeed" != "" ]
+		then
+			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+			if [ "$check_device_in_router_mode" != "" ]
+			then
+				check_if_brlan0_created=`ifconfig | grep brlan0`
+				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
+				check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+				if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
+				then
+					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
+					logNetworkInfo
 
-				ifconfig brlan1 | grep "inet addr"
-				if [ $? == 1 ]; then
-					echo "[RDKB_PLATFORM_ERROR] : brlan1 is not created after Second Retry, no more retries !!!"
+					ipv4_status=`sysevent get ipv4_4-status`
+					lan_status=`sysevent get lan-status`
+
+					if [ "$lan_status" != "started" ]
+					then
+						if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]
+						then
+							echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+							sysevent set lan-start
+							sleep 5
+						fi
+					fi
+
+					sysevent set multinet-down 1
+					sleep 5
+					sysevent set multinet-up 1
+					sleep 30
+					sysevent set lan_selfheal done
 				fi
-			else
-				echo "[RDKB_PLATFORM_ERROR] : brlan1 Created at First Retry itself"
+
 			fi
+		else
+				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
 		fi
+	else
+		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
 	fi
+			
+	# Checking whether brlan1 interface is created properly
 
-	ifconfig | grep brlan0
-	if [ $? == 1 ]; then
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not up" 
-		echo "[`getDateTime`] RDKB_REBOOT : brlan0 interface is not up, rebooting the device"
-		reason="brlan0_down"
-		rebootCount=1
-		rebootNeeded RM "" $reason $rebootCount
-	else
-		ifconfig brlan0 | grep "inet addr"
-		if [ $? == 1 ]; then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan0 interface is not having ip, creating it"
-			sysevent set multinet_1-status stopped
-		    deviceBrlan0Up
+	l3netRestart=`sysevent get l3net_selfheal`
+	echo "[`getDateTime`] [RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
 
-			ifconfig brlan0 | grep "inet addr"
-			if [ $? == 1 ]; then
-				echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created at First Retry, try again after 2 sec"
-				sleep 2
-				sysevent set multinet_1-status stopped
-				deviceBrlan0Up
+	if [ "$l3netRestart" != "done" ]
+	then
 
-				ifconfig brlan0 | grep "inet addr"
-				if [ $? == 1 ]; then
-					echo "[RDKB_PLATFORM_ERROR] : brlan0 is not created after Second Retry, no more retries !!!"
+		check_if_brlan1_created=`ifconfig | grep brlan1`
+		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+		check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+	
+		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ]
+        	then
+	       		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : brlan1 is not completely up, setting event to recreate vlan and brlan1 interface"
+
+			ipv5_status=`sysevent get ipv4_5-status`
+			lan_l3net=`sysevent get homesecurity_lan_l3net`
+
+			if [ "$lan_l3net" != "" ]
+			then
+				if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+				then
+					echo "[`getDateTime`] [RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+					sysevent set ipv4-up $lan_l3net
+					sleep 5
 				fi
-			else
-				echo "[RDKB_PLATFORM_ERROR] : brlan0 Created at First Retry itself"
 			fi
+
+			sysevent set multinet-down 2
+			sleep 5
+			sysevent set multinet-up 2
+			sleep 10
+			sysevent set l3net_selfheal done
 		fi
+	else
+		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
 	fi
 
 	SSID_DISABLED=0
@@ -301,7 +325,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
    DNS_PID=`pidof dnsmasq`
    if [ "$DNS_PID" == "" ]
    then
-		 echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"   
+		 echo "[`getDateTime`] [RDKB_SELFHEAL] : dnsmasq is not running"   
    else
 	     brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
 	     brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
@@ -313,14 +337,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	     then
 			if [ "$brlan0up" == "" ]
 			then
-			    echo_t "[RDKB_SELFHEAL] : brlan0 info is not availble in dnsmasq.conf"
+			    echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan0 info is not availble in dnsmasq.conf"
 			    IsAnyOneInfFailtoUp=1
 			fi
 	     fi
 
 	     if [ "$brlan1up" == "" ]
 	     then
-	         echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
+	         echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
 	     fi
 
@@ -332,10 +356,10 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		     then
 				 touch /tmp/dnsmasq_restarted_via_selfheal
 
-		         echo_t "[RDKB_SELFHEAL] : dnsmasq.conf is."   
+		         echo "[`getDateTime`] [RDKB_SELFHEAL] : dnsmasq.conf is."   
 			 	 echo "`cat /var/dnsmasq.conf`"
 
-				 echo_t "[RDKB_SELFHEAL] : Setting an event to restart dnsmasq"
+				 echo "[`getDateTime`] [RDKB_SELFHEAL] : Setting an event to restart dnsmasq"
 		         sysevent set dhcp_server-stop
 		         sysevent set dhcp_server-start
 		     fi
@@ -343,13 +367,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	
 	checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
 	if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
-		confirmZombie=`grep "State:" /proc/$checkIfDnsmasqIsZombie/status | grep -i "zombie"`
-		if [ "$confirmZombie" != "" ] ; then
-			echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
-			kill -9 `pidof dnsmasq`
-			sysevent set dhcp_server-stop
-			sysevent set dhcp_server-start
-		fi
+		for zombiepid in $checkIfDnsmasqIsZombie
+		do
+			confirmZombie=`grep "State:" /proc/$zombiepid/status | grep -i "zombie"`
+			if [ "$confirmZombie" != "" ] ; then
+				echo "[`getDateTime`] [RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+				kill -9 `pidof dnsmasq`
+				sysevent set dhcp_server-stop
+				sysevent set dhcp_server-start
+				break
+			fi
+		done
 	fi
 
    fi
@@ -390,6 +418,11 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	WAN_STATUS=`sysevent get wan-status`
 	WAN_IPv4_Addr=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
 	DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+
+if [ "$WAN_STATUS" != "started" ]
+then
+	echo "[`getDateTime`] WAN_STATUS : wan-status is $WAN_STATUS"
+fi
 
 	if [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
 	then

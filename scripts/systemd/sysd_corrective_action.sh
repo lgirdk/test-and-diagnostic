@@ -41,12 +41,20 @@ change() {
 getVendorName()
 {
 	vendorName=`dmcli eRT getv Device.DeviceInfo.Manufacturer | grep value | awk '{print $5}'`
+	if [ "$vendorName" = "" ]
+	then
+		vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
+	fi
 	echo "$vendorName"
 }
 
 getModelName()
 {
 	modelName=`dmcli eRT getv Device.DeviceInfo.ModelName | grep value | awk '{print $5}'`
+	if [ "$modelName" = "" ]
+	then
+		modelName=`cat /etc/device.properties | grep MODEL_NUM | cut -f2 -d=`
+	fi
 	echo "$modelName"
 }
 
@@ -484,9 +492,11 @@ storeInformation()
 	SYS=$(change 3)
 	IDLE=$(change 4)
 	IOW=$(change 5)
+	IRQ=$(change 6)
+	SIRQ=$(change 7)
+	STEAL=$(change 8)
 
-
-	ACTIVE=$(( $USR + $SYS + $IOW ))
+	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
 
 	TOTAL=$(($ACTIVE + $IDLE))
 
