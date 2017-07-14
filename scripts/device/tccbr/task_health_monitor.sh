@@ -687,6 +687,57 @@ then
            	fi 
 fi
 
+
+if [ "$WAN_STATUS" = "started" ];then
+
+	wan_dhcp_client_v4=1
+	wan_dhcp_client_v6=1
+
+	check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
+	check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
+
+	if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+		wan_dhcp_client_v4=0
+	fi
+
+	if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+		wan_dhcp_client_v6=0
+	fi
+
+	DHCP_STATUS=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | cut -f3 -d : | cut -f2 -d" "`
+
+	if [ "$DHCP_STATUS" = "Rebinding" ] ; then
+		if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
+			echo "[`getDateTime`] DHCP_CLIENT : DHCPStatus is rebinding, restarting WAN"
+			sh /etc/utopia/service.d/service_wan.sh wan-stop
+			sh /etc/utopia/service.d/service_wan.sh wan-start
+			wan_dhcp_client_v4=1
+			wan_dhcp_client_v6=1
+		fi
+	fi
+
+	if [ $wan_dhcp_client_v4 -eq 0 ];
+	then
+		V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+		echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v4"
+		eval "$V4_EXEC_CMD"
+		sleep 5
+		wan_dhcp_client_v4=1
+	fi
+
+	if [ $wan_dhcp_client_v6 -eq 0 ];
+	then
+		echo "[`getDateTime`] DHCP_CLIENT : Restarting DHCP Client for v6"
+		/etc/dibbler/dibbler-init.sh
+		sleep 2
+		/usr/sbin/dibbler-client start
+		wan_dhcp_client_v6=1
+	fi
+
+fi
+
 if [ "$rebootDeviceNeeded" -eq 1 ]
 then
 
