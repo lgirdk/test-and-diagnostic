@@ -410,8 +410,16 @@ fi
                	    check_if_brlan0_created=`ifconfig | grep brlan0`
 		    check_if_brlan0_up=`ifconfig brlan0 | grep UP`
 	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
-		    check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
-		    check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+
+                    # l2sd0.100 is an interface specific to intel platform. Not applicable for other soc vendors.
+                    if [ "$BOX_TYPE" = "XB6" ]
+                    then
+                        check_if_l2sd0_100_created="NotApplicable"
+                        check_if_l2sd0_100_up="NotApplicable"
+                    else
+		        check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
+		        check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+                    fi
 			  
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
 		   then
@@ -455,8 +463,16 @@ fi
 	check_if_brlan1_created=`ifconfig | grep brlan1`
 	check_if_brlan1_up=`ifconfig brlan1 | grep UP`
         check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
-	check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
-	check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+
+        # l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
+        if [ "$BOX_TYPE" = "XB6" ]
+        then
+	    check_if_l2sd0_101_created="NotApplicable"
+	    check_if_l2sd0_101_up="NotApplicable"
+        else
+	    check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+	    check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+        fi
 	
 	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
         then
