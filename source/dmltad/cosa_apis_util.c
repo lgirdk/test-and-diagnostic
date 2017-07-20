@@ -97,7 +97,7 @@ CosaUtilStringToHex
         unsigned char *hex_str
     )
 {
-    INT   i, index, val = 0;
+    INT   i = 0, index = 0, val = 0;
     CHAR  byte[3]       = {'\0'};
 
     while(str[i] != '\0')
