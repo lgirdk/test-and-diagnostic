@@ -808,11 +808,15 @@ NSLookupDiagnostics_Validate
          /*COSAValidateHierarchyInterface && */ AnscSizeOfString(pNSLookupDiagInfo->Interface) > 0 )
     {
         // COSAValidateHierarchyInterface depends on the specific target
-        pAddrName = CosaGetInterfaceAddrByName(pNSLookupDiagInfo->Interface);
+       if(AnscSizeOfString(pNSLookupDiagInfo->Interface) > 0)
+            pAddrName = CosaGetInterfaceAddrByName(pNSLookupDiagInfo->Interface);
+       else
+           pAddrName = CosaGetInterfaceAddrByName("Device.DeviceInfo.X_COMCAST-COM_WAN_IP");
+
         if(strcmp(pAddrName,"::") && (isValidIPv4Address(pAddrName) || isValidIPv6Address(pAddrName)))
         {
-        	AnscCopyString(pNSLookupDiagInfo->IfAddr, pAddrName);
-			AnscFreeMemory(pAddrName);
+            AnscCopyString(pNSLookupDiagInfo->IfAddr, pAddrName);
+            AnscFreeMemory(pAddrName);
         }
         else
         {
