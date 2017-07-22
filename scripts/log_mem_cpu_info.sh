@@ -94,6 +94,7 @@ DELAY=30
 	MPSTAT_USR=`echo $CPU_INFO | cut -d':' -f1`
 	MPSTAT_SYS=`echo $CPU_INFO | cut -d':' -f3`
 	MPSTAT_NICE=`echo $CPU_INFO | cut -d':' -f2`
+
 	MPSTAT_IRQ=`echo $CPU_INFO | cut -d':' -f5`
 	MPSTAT_SOFT=`echo $CPU_INFO | cut -d':' -f6`
 	MPSTAT_IDLE=`echo $CPU_INFO | cut -d':' -f9`
@@ -154,4 +155,29 @@ DELAY=30
 	nvram2_ro_fs=`mount | grep "nvram2 " | grep dev | grep "[ (]ro[ ,]"`
 	if [ "$nvram2_ro_fs" != "" ]; then
 		echo_t "[RDKB_SELFHEAL] : NVRAM2 IS READ-ONLY"
+	fi
+
+	if [ "$BOX_TYPE" = "XB3" ]; then
+		if [ "$UTC_ENABLE" == "true" ]
+		then
+			cur_hr=`LTime H`
+			cur_min=`LTime M`
+		else
+			cur_hr=`date +"%H"`
+			cur_min=`date +"%M"`
+		fi
+
+		if [ "$cur_hr" -ge 02 ] && [ "$cur_hr" -le 05 ] 
+		then
+				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
+					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window"
+					kill -9 `pidof snmp_subagent`
+					resetNeeded snmp snmp_subagent 
+					touch /tmp/snmp_agent_restarted
+				fi
+		else 
+			if [ -f "/tmp/snmp_agent_restarted" ]; then
+				rm "/tmp/snmp_agent_restarted"
+			fi
+		fi
 	fi
