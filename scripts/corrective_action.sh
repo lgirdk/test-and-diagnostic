@@ -8,6 +8,12 @@ source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
 
+
+if [ -f /etc/device.properties ]
+then
+    source /etc/device.properties
+fi
+
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 voiceCallCompleted=0
@@ -457,7 +463,11 @@ resetNeeded()
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd /fss/gw/usr/ccsp/snmp/
-				sh run_subagent.sh /var/tmp/cm_snmp_ma &
+				if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+					sh run_subagent.sh tcp:127.0.0.1:705 &
+				else
+					sh run_subagent.sh /var/tmp/cm_snmp_ma &
+				fi
 				cd -	
 			elif [ "$ProcessName" == "CcspPandMSsp" ]
 			then
