@@ -27,6 +27,7 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 source $TAD_PATH/corrective_action.sh
 
 rebootDeviceNeeded=0
+reboot_needed_atom_ro=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
@@ -430,6 +431,11 @@ fi
 		rebootDeviceNeeded=1
 
 
+	fi
+
+	if [ -e /tmp/atom_ro ]; then
+		reboot_needed_atom_ro=1
+		rebootDeviceNeeded=1
 	fi
 
         # Verify MDC is enabled in the build by
@@ -890,7 +896,11 @@ fi
 			#Check if we have already flagged reboot is needed
 				if [ ! -e $FLAG_REBOOT ]
 				then
-					if [ "$rebootNeededforbrlan1" -eq 1 ]
+					if [ "$reboot_needed_atom_ro" -eq 1 ]; then
+						echo_t "RDKB_REBOOT : atom is read only, rebooting the device."
+						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string atom_read_only
+						sh /etc/calc_random_time_to_reboot_dev.sh "ATOM_RO" &
+					elif [ "$rebootNeededforbrlan1" -eq 1 ]
 					then
 						echo "rebootNeededforbrlan1"
 						echo_t "RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
