@@ -517,6 +517,31 @@ fi
     if [ "$DNS_PID" == "" ]
     then
           echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
+
+		  BR_MODE=0
+		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+			  bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+			  if [ "$bridgeSucceed" != "" ]
+			  then
+				   isBridging=`echo $bridgeMode | grep router`
+				   if [ "$isBridging" = "" ]
+				   then
+					   BR_MODE=1
+				   fi
+			  fi
+
+			  if [ $BR_MODE -eq 1 ]
+			  then
+				  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Device is in bridge mode"
+
+				  if [ "" == "`sysevent get lan_status-dhcp`" ] ; then
+					  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting lan_status-dhcp event to started"
+					  sysevent set lan_status-dhcp started
+                                          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
+					  sysevent set dhcp_server-stop
+					  sysevent set dhcp_server-start
+				  fi
+			  fi
     else
 	  brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
           brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
