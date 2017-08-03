@@ -77,6 +77,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 
+extern BOOL g_enable_speedtest;
 /**********************************************************************
 
     caller:     owner of the object
@@ -281,6 +282,18 @@ CosaDiagInitialize
     pMyObject->ArpEntryCount      = 0;
     pMyObject->PreviousVisitTime  = 0;
 
+    /* Initialize speedtest enable */
+    syscfg_init();
+    char buf[8]={0};
+    if(syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0)
+    {
+        g_enable_speedtest =  (strcmp(buf,"true") ? FALSE : TRUE);
+    }
+    else
+    {
+	AnscTraceWarning(("%s syscfg_get failed  for Enable_Speedtest\n",__FUNCTION__));
+	g_enable_speedtest = FALSE ;
+    }
 
     /* Initiation all functions */
 
@@ -655,7 +668,7 @@ CosaDmlDiagGetARPTable
         PULONG                      pulCount
     )
 {
-	//return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //LNT_EMU
+//	return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //RDKB-EMU
     return NULL;
 }
 
@@ -663,13 +676,13 @@ ANSC_STATUS
 CosaDmlInputValidation
     (
         char                       *host,
-  	char                       *wrapped_host,
-  	int                        lengthof_host,
-  	int                        sizeof_wrapped_host
+	char                       *wrapped_host,
+	int                        lengthof_host,
+	int                        sizeof_wrapped_host
     )
 {
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
-
+    	
 	/*
 	  * Validate input/params 
 	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
@@ -690,7 +703,8 @@ CosaDmlInputValidation
     if(ANSC_STATUS_SUCCESS == returnStatus)
 	sprintf(wrapped_host,"'%s'",host);
 
-        return returnStatus;
+	return returnStatus;
 
 }
+
 
