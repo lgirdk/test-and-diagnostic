@@ -834,9 +834,9 @@ if [ "$WAN_STATUS" = "started" ];then
 
 	DHCP_STATUS=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | cut -f3 -d : | cut -f2 -d" "`
 
-	if [ "$DHCP_STATUS" = "Rebinding" ] ; then
+	if [ "$DHCP_STATUS" != "Bound" ] ; then
 		if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
-			echo "DHCP_CLIENT : DHCPStatus is rebinding, restarting WAN"
+			echo "DHCP_CLIENT : DHCPStatus is $DHCP_STATUS, restarting WAN"
 			sh /etc/utopia/service.d/service_wan.sh wan-stop
 			sh /etc/utopia/service.d/service_wan.sh wan-start
 			wan_dhcp_client_v4=1
