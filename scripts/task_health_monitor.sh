@@ -783,6 +783,13 @@ fi
 			sysevent set ntpd-restart
 	fi
 
+#Checking if rpcserver is running
+	RPCSERVER_PID=`pidof rpcserver`
+	if [ "$RPCSERVER_PID" = "" ] && [ -f /usr/bin/rpcserver ]; then
+			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : RPCSERVER is not running on ARM side, restarting "
+			/usr/bin/rpcserver &
+	fi
+
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=`sysevent get wan-status`
