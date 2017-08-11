@@ -88,7 +88,7 @@ LogBackup_Rollback
         ANSC_HANDLE                 hInsContext
     );
 
-get_logbackupcfg();
+void get_logbackupcfg();
 
 
 
