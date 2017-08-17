@@ -160,12 +160,17 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         tracert_hop_t *hops = NULL;
         void *ptr;
         int idx;
+        char msg[300], dest_ip[65];
+
+        /* traceroute to xxx.cisco.com (10.112.0.118), 30 hops max, 60 byte packets */
+        sscanf(line,"%[^(] (%[^)])",msg,dest_ip);
 
         while (fgets(line, sizeof(line), fp) != NULL) {
             ptr = realloc(hops, (nhop + 1) * sizeof(tracert_hop_t));
             if (ptr == NULL) {
                 if (hops) free(hops);
                 fprintf(stderr, "%s: no memory\n", __FUNCTION__);
+                pclose(fp);/*RDKB-7458, CID-33358, free unused resources before exit */
                 return DIAG_ERR_NOMEM;
             }
             hops = ptr;
@@ -183,7 +188,34 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         stat->u.tracert.nhop = nhop;
         stat->u.tracert.hops = hops;
 
-        err = DIAG_ERR_OK;
+        if((nhop > 0) && (nhop >= cfg->maxhop) && (strncmp(dest_ip,hops[nhop-1].addr,65)!=0))
+        {
+	    stat->u.tracert.resptime = 0;
+	    err = DIAG_ERR_MAXHOPS;
+        }
+        else
+        {
+	    int rtt_sum = 0, rtt_count = 0, resp =0;
+	    char rtts[256];
+	    char *rtt, *sp;
+	    if(nhop > 0 && (strncmp(dest_ip,hops[nhop-1].addr,65)==0))
+	    {
+	        strncpy(rtts,hops[nhop-1].rtts,256);
+		sp = rtts;
+		while(rtt = strtok_r(sp,",",&sp))
+		{
+		   rtt_sum += atoi(rtt);
+		   rtt_count++;
+		}
+		if(rtt_count > 0)
+		{
+		    resp = rtt_sum/rtt_count;
+		}
+
+	    }
+	    stat->u.tracert.resptime = resp;
+	    err = DIAG_ERR_OK;
+        }
     }
 
     fprintf(stderr, "> done: %d\n", err);
