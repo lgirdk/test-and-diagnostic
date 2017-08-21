@@ -109,6 +109,17 @@ typedef struct diag_stat_s {
     } u;
 } diag_stat_t;
 
+typedef struct diag_pingtest_device_details_s {
+    char        PartnerID[64]; 		 /* Partner ID */
+    char        ecmMAC[32];   		 /* The MAC address for the eCM interface */
+    char        DeviceID[256];    	 /* Serialnumber */
+    char        DeviceModel[256];    /* Device Model */
+} diag_pingtest_device_details_t;
+
+typedef struct diag_pingtest_stat_s {
+	diag_pingtest_device_details_t device_details;
+} diag_pingtest_stat_t;
+
 diag_err_t diag_init(void);
 diag_err_t diag_term(void);
 
@@ -121,5 +132,7 @@ diag_err_t diag_getcfg(diag_mode_t mode, diag_cfg_t *cfg);
 diag_err_t diag_getstatis(diag_mode_t mode, diag_stat_t *stat);
 diag_err_t diag_getstate(diag_mode_t mode, diag_state_t *state);
 diag_err_t diag_geterr(diag_mode_t mode, diag_err_t *state);
-
+diag_err_t diag_pingtest_init(void);
+diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void);
+diag_err_t diag_getPartnerID( char *partnerID );
 #endif /* __DIAG_COMM_H__ */

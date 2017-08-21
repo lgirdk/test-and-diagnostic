@@ -57,6 +57,7 @@ extern diag_obj_t *diag_tracert_load(void);
 
 static diag_obj_t *diag_ping;
 static diag_obj_t *diag_tracert;
+diag_pingtest_stat_t diag_pingtest_stat;
 
 diag_err_t diag_init_blocksize(void);
 
@@ -466,7 +467,10 @@ static void *diag_task(void *arg)
 
 diag_err_t diag_init(void)
 {
-    if ((diag_ping = diag_ping_load()) == NULL)
+	//diagnositic PING test initialization
+	diag_pingtest_init( );
+
+	if ((diag_ping = diag_ping_load()) == NULL)
         goto errout;
 
     if ((diag_tracert = diag_tracert_load()) == NULL)
@@ -649,4 +653,76 @@ diag_err_t diag_init_blocksize(void)
         return DIAG_ERR_PARAM;
         
         return DIAG_ERR_OK;
+}
+
+diag_err_t diag_pingtest_init( void )
+{
+	diag_pingtest_device_details_t *pingtest_devdet = diag_pingtest_getdevicedetails( );
+
+	/* validation */
+	if( NULL == pingtest_devdet )
+	{
+		return DIAG_ERR_PARAM;
+	}
+
+	//PartnerID
+	diag_getPartnerID( pingtest_devdet->PartnerID );
+	
+	//ecmMAC
+	pingtest_devdet->ecmMAC[ 0 ] = '\0';
+
+	//Device ID
+	pingtest_devdet->DeviceID[ 0 ] = '\0';
+	
+	//Device Model
+	pingtest_devdet->DeviceModel[ 0 ] = '\0';
+
+	return DIAG_ERR_OK;
+}
+
+diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void)
+{
+    return ( &diag_pingtest_stat.device_details);
+}
+
+#define DEVICE_PROPERTIES    "/etc/device.properties"
+diag_err_t diag_getPartnerID( char *partnerID )
+{
+	if( NULL == partnerID )
+	{
+		return DIAG_ERR_OTHER;
+	}
+	else
+	{
+		FILE	*deviceFilePtr;
+		char	*pBldTypeStr		= NULL;
+		char	 fileContent[ 255 ] = { '\0' };
+		int 	 offsetValue		= 0;
+		deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
+		
+		// Copy default string as "comcast"
+		sprintf( partnerID, "%s", "comcast" );
+
+		if ( deviceFilePtr ) 
+		{
+			while ( fscanf( deviceFilePtr , "%s", fileContent ) != EOF ) 
+			{
+				if ( ( pBldTypeStr = strstr( fileContent, "PARTNER_ID" ) ) != NULL ) 
+				{
+					offsetValue = strlen( "PARTNER_ID=" );
+					pBldTypeStr = pBldTypeStr + offsetValue ;
+					break;
+				}
+			}
+			
+			fclose( deviceFilePtr );
+		
+			if( pBldTypeStr )
+			{
+				sprintf( partnerID, "%s", pBldTypeStr );
+			}
+		}
+	}
+	
+	return DIAG_ERR_OK;
 }
