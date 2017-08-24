@@ -205,6 +205,75 @@ ARPTable_GetParamStringValue
 
  APIs for Object:
 
+    IP.Diagnostics.X_RDKCENTRAL-COM_PingTest.
+
+    *  X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
+    *  X_RDKCENTRAL_COM_PingTest_GetParamStringValue
+    *  X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
+    *  X_RDKCENTRAL_COM_PingTest_Validate
+    *  X_RDKCENTRAL_COM_PingTest_Commit
+    *  X_RDKCENTRAL_COM_PingTest_Rollback
+
+***********************************************************************/
+void COSAIP_pingtest_ProcessThread_Start( void );
+
+int COSAIP_pingtest_ProcessThread( void *arg );
+
+int COSA_IP_diag_Startpingtest( void );
+
+void COSA_IP_diag_getGetParamValue( char *ParamName, char *ParamValue, int size );
+
+void COSA_IP_diag_FillDeviceDetails( void );
+
+BOOL
+X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
+	(
+		ANSC_HANDLE 				hInsContext,
+		char*						ParamName,
+		BOOL*						pBool
+	);
+
+BOOL
+X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    );
+
+ULONG
+X_RDKCENTRAL_COM_PingTest_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+BOOL
+X_RDKCENTRAL_COM_PingTest_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    );
+
+ULONG
+X_RDKCENTRAL_COM_PingTest_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+ULONG
+X_RDKCENTRAL_COM_PingTest_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+
+/***********************************************************************
+
+ APIs for Object:
+
     IP.Diagnostics.IPPing.
 
     *  IPPing_GetParamBoolValue

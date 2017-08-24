@@ -81,6 +81,46 @@
                     </objects>
                 </object>
                 <object>
+                    <name>X_RDKCENTRAL-COM_PingTest</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamBoolValue>X_RDKCENTRAL_COM_PingTest_GetParamBoolValue</func_GetParamBoolValue>
+                        <func_GetParamStringValue>X_RDKCENTRAL_COM_PingTest_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamBoolValue>X_RDKCENTRAL_COM_PingTest_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>X_RDKCENTRAL_COM_PingTest_Validate</func_Validate>
+                        <func_Commit>X_RDKCENTRAL_COM_PingTest_Commit</func_Commit>
+                        <func_Rollback>X_RDKCENTRAL_COM_PingTest_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+						<parameter>
+							<name>Run</name>
+							<type>boolean</type>
+							<syntax>bool</syntax>
+							<writable>true</writable>
+						</parameter>
+                        <parameter>
+                            <name>PartnerID</name>
+                            <type>string(64)</type>
+                            <syntax>string</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>ecmMAC</name>
+                            <type>string(32)</type>
+                            <syntax>string</syntax>
+                        </parameter>
+						<parameter>
+							<name>DeviceID</name>
+							<type>string</type>
+							<syntax>string</syntax>
+						</parameter>
+						<parameter>
+							<name>DeviceModel</name>
+							<type>string</type>
+							<syntax>string</syntax>
+						</parameter>
+                    </parameters>
+                </object>
+                <object>
                     <name>IPPing</name>
                     <objectType>object</objectType>
                     <functions>

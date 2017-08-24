@@ -96,6 +96,8 @@ BOOL CosaIpifGetSetSupported(char * pParamName);
 //SpeedTest
 BOOL g_enable_speedtest = FALSE;
 BOOL g_run_speedtest = FALSE;
+BOOL g_is_pingtest_running = FALSE;
+
 char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
@@ -770,6 +772,580 @@ ARPTable_GetParamStringValue
 
     /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return -1;
+}
+
+/***********************************************************************
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDKCENTRAL-COM_PingTest.
+
+    *  X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
+    *  X_RDKCENTRAL_COM_PingTest_GetParamStringValue
+    *  X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
+    *  X_RDKCENTRAL_COM_PingTest_Validate
+    *  X_RDKCENTRAL_COM_PingTest_Commit
+    *  X_RDKCENTRAL_COM_PingTest_Rollback
+
+***********************************************************************/
+void COSAIP_pingtest_ProcessThread_Start( void )
+{
+	pthread_t pingtestthread;
+	pthread_create( &pingtestthread, NULL, &COSAIP_pingtest_ProcessThread, NULL );
+}
+
+int COSAIP_pingtest_ProcessThread( void *arg )
+{
+	diag_pingtest_device_details_t *pingtest_devdet = diag_pingtest_getdevicedetails( );
+	diag_state_t	state;
+	diag_err_t		err, err_return;
+	diag_cfg_t		cfg;
+	diag_stat_t 	statis;
+	char 			pingtestresult[ 64 ] = { 0 },
+					tmp_hostname[ 257 ]  = { 0 },
+					*ptmp_hostname = NULL;
+
+	//Detach the thread from loop
+    pthread_detach( pthread_self( ) );
+
+	if ( CCSP_SUCCESS != COSA_IP_diag_Startpingtest( ) )
+	{
+		AnscTraceFlow(( "<%s> Failed to execute PING Test\n", __FUNCTION__ ));
+		g_is_pingtest_running = FALSE;
+		return DIAG_ERR_OTHER;
+	}
+
+	//ping test process thread
+	while( 1 ) 
+	{
+		//Get the current state of ping test
+		err_return = diag_getstate( DIAG_MD_PING, &state );
+		if ( err_return != DIAG_ERR_OK )
+		break;
+
+		/* wait till ping test complete or error state */
+		if( DIAG_ST_COMPLETE == state || DIAG_ST_ERROR == state )
+		{
+			break;
+		}
+
+		// wait for 1 sec of previous query
+		sleep( 1 );
+	}
+
+	if( err_return != DIAG_ERR_OK )
+	{
+		AnscTraceFlow(( "<%s> Failed to execute PING Test\n", __FUNCTION__ ));
+		g_is_pingtest_running = 0;
+		return DIAG_ERR_OTHER;
+	}
+
+//For future requirement if need
+#if 0
+	/* Get the ping test status */
+	switch( state )
+	{
+		case DIAG_ST_NONE:
+		{
+			sprintf( pingtestresult, "%s", "None" );
+		}
+		break; /* DIAG_ST_NONE	*/
+
+		case DIAG_ST_COMPLETE:
+		{
+			sprintf( pingtestresult, "%s", "Complete" );			
+		}
+		break; /* DIAG_ST_COMPLETE  */
+		
+		case DIAG_ST_ERROR:
+		{
+			diag_geterr(DIAG_MD_PING, &err);
+			
+			switch ( err ) 
+			{
+				case DIAG_ERR_RESOLVE:
+					sprintf( pingtestresult, "%s", "Error_CannotResolveHostName" );			
+					break; /* DIAG_ERR_RESOLVE */
+				case DIAG_ERR_INTERNAL:
+					sprintf( pingtestresult, "%s", "Error_Internal" );			
+					break; /* DIAG_ERR_INTERNAL */
+				case DIAG_ERR_OTHER:
+				default:
+					sprintf( pingtestresult, "%s", "Error_Other" );			
+					break; /* DIAG_ERR_OTHER | default */
+			}
+		}
+		break; /* DIAG_ST_ERROR */
+		default:
+			break;
+	}
+#endif /* 0 */
+
+	/* Get the ping test configuration */
+	diag_getcfg(DIAG_MD_PING, &cfg);
+
+	/* Get the ping test results */
+	diag_getstatis(DIAG_MD_PING, &statis);
+
+	//Fill Device Details it's already not filled case
+	COSA_IP_diag_FillDeviceDetails( );
+
+	/*
+	  * Remove first and last charecter from host name
+	  * if host name is 'www.google.com' then we have to display like 
+	  * www.google.com
+	  */
+	sprintf( tmp_hostname, "%s", "NULL" );
+
+	if( cfg.host[ 0 ] != '\0' )
+	{
+		sprintf( tmp_hostname, "%s", cfg.host );
+
+		ptmp_hostname = tmp_hostname;
+
+		//Remove first special charecter
+		if( tmp_hostname[ 0 ] == '\'' )
+		ptmp_hostname++;
+		
+		//Remove last special charecter
+		if ( tmp_hostname[ strlen( tmp_hostname ) - 1 ] == '\'' )
+		ptmp_hostname[ strlen( ptmp_hostname ) - 1 ] = '\0';
+
+		sprintf( tmp_hostname, "%s", ptmp_hostname );
+	}
+
+	AnscTraceFlow(( "DeviceId:%s;CmMac:%s;PartnerId:%s;DeviceModel:%s;Endpoint:%s;Attempts:%d;SuccessCount:%d;AvgRtt:%.2f\n",
+					( pingtest_devdet->DeviceID[ 0 ] != '\0' ) ? pingtest_devdet->DeviceID : "NULL",
+					( pingtest_devdet->ecmMAC[ 0 ] != '\0' ) ? pingtest_devdet->ecmMAC : "NULL",										
+					( pingtest_devdet->PartnerID[ 0 ] != '\0' ) ? pingtest_devdet->PartnerID : "NULL",										
+					( pingtest_devdet->DeviceModel[ 0 ] != '\0' ) ? pingtest_devdet->DeviceModel : "NULL", 				
+					tmp_hostname,
+					cfg.cnt,
+					statis.u.ping.success,
+					statis.u.ping.rtt_avg ));
+
+	g_is_pingtest_running = 0;
+	
+	return DIAG_ERR_OK;
+}
+
+void COSA_IP_diag_FillDeviceDetails( void )
+{
+	diag_pingtest_device_details_t *pingtest_devdet = diag_pingtest_getdevicedetails( );
+
+	/* Get CM MAC if already having NULL */
+	if( '\0' == pingtest_devdet->ecmMAC[ 0 ] )
+	{
+		memset( pingtest_devdet->ecmMAC, 0, sizeof( pingtest_devdet->ecmMAC ));
+
+		COSA_IP_diag_getGetParamValue( "Device.X_CISCO_COM_CableModem.MACAddress", 
+									  pingtest_devdet->ecmMAC,
+									  sizeof( pingtest_devdet->ecmMAC ));
+	}
+
+	/* Get Serial number if already having NULL */
+	if( '\0' == pingtest_devdet->DeviceID[ 0 ] )
+	{
+		memset( pingtest_devdet->DeviceID, 0, sizeof( pingtest_devdet->DeviceID ));
+
+		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.SerialNumber", 
+									  pingtest_devdet->DeviceID,
+									  sizeof( pingtest_devdet->DeviceID ));
+	}
+
+	/* Get ModelName if already having NULL */
+	if( '\0' == pingtest_devdet->DeviceModel[ 0 ] )
+	{
+		memset( pingtest_devdet->DeviceModel, 0, sizeof( pingtest_devdet->DeviceModel ));
+
+		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.ModelName", 
+									  pingtest_devdet->DeviceModel,
+									  sizeof( pingtest_devdet->DeviceModel ));
+	}
+}
+
+int	COSA_IP_diag_Startpingtest( void )
+{
+	CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
+	parameterValStruct_t   param_val[ 1 ]    = { "Device.IP.Diagnostics.IPPing.DiagnosticsState", "Requested", ccsp_string };
+	char				   component[ 256 ]  = "eRT.com.cisco.spvtg.ccsp.tdm";
+	char				   bus[256]		     = "/com/cisco/spvtg/ccsp/tdm";
+	char*				   faultParam 	     = NULL;
+	int 				   ret			     = 0;	
+
+	ret = CcspBaseIf_setParameterValues(  bus_handle,
+										  component,
+										  bus,
+										  0,
+										  0,
+										  &param_val,
+										  1,
+										  TRUE,
+										  &faultParam
+										  );
+			
+	if( ( ret != CCSP_SUCCESS ) && \
+		( faultParam )
+	  )
+	{
+	    AnscTraceWarning(("%s -- failed to set parameter %s\n", __FUNCTION__, param_val[ 0 ].parameterName));
+		bus_info->freefunc( faultParam );
+	}
+
+	return ret;
+}
+
+void COSA_IP_diag_getGetParamValue( char *ParamName, char *ParamValue, int size )
+{
+    ANSC_STATUS   retval  = ANSC_STATUS_FAILURE;
+
+	if( ( NULL != ParamName ) && \
+		( NULL != ParamValue ) && \
+		( size > 0 ) 
+	)
+	{
+		parameterValStruct_t	ParamStruct = { 0 };
+		
+		ParamStruct.parameterName	= ParamName;
+		ParamStruct.parameterValue  = ParamValue;
+		
+		AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, ParamName));
+		
+		retval = g_GetParamValueByPathNameProc( bus_handle, &ParamStruct, &size);
+		
+		if ( retval != ANSC_STATUS_SUCCESS )
+		{
+			AnscTraceWarning(("%s -- failed to retrieve parameter %s\n", __FUNCTION__, ParamName));
+		}
+	}
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL*                       pBool
+            );
+
+    description:
+
+        This function is called to retrieve Boolean parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL*                       pBool
+                The buffer of returned boolean value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
+	(
+	    ANSC_HANDLE                 hInsContext,
+	    char*                       ParamName,
+	    BOOL*                       pBool
+	)
+{
+    /* check the parameter name and return the corresponding value */
+	if ( AnscEqualString(ParamName, "Run", TRUE))
+    {
+	    *pBool = g_is_pingtest_running;
+	    return TRUE;
+    } 
+
+    /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL                        bValue
+            );
+
+    description:
+
+        This function is called to set BOOL parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                BOOL                        bValue
+                The updated BOOL value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    /* check the parameter name and set the corresponding value */
+	if ( AnscEqualString(ParamName, "Run", TRUE))
+    {
+		if( bValue )
+		{
+			if( FALSE == g_is_pingtest_running )
+			{
+				AnscTraceFlow(("%s Run Pingtest : %d \n",__FUNCTION__, bValue));
+				g_is_pingtest_running = bValue;
+
+				/* Start the PING test as a thread */
+				COSAIP_pingtest_ProcessThread_Start( );
+			}
+			else
+			{
+				AnscTraceFlow(("%s Pingtest is already running : %d\n",__FUNCTION__, g_is_pingtest_running));
+			}
+		}
+		
+		return TRUE;
+	 }
+
+    /*AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        X_RDKCENTRAL_COM_PingTest_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue,
+                The string value buffer;
+
+                ULONG*                      pUlSize
+                The buffer of length of string value;
+                Usually size of 1023 will be used.
+                If it's not big enough, put required size here and return 1;
+
+    return:     0 if succeeded;
+                1 if short of buffer size; (*pUlSize = required size)
+                -1 if not supported.
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_PingTest_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    diag_pingtest_device_details_t	*devdetails = diag_pingtest_getdevicedetails( );
+
+	//Fill Device Details it's already not filled case
+	COSA_IP_diag_FillDeviceDetails( );
+
+    if( AnscEqualString(ParamName, "PartnerID", TRUE))
+    {
+		if ( *pUlSize < AnscSizeOfString( devdetails->PartnerID ) )
+		{
+			*pUlSize = AnscSizeOfString( devdetails->PartnerID ) + 1;
+			return 1;
+		}
+
+		AnscCopyString( pValue, devdetails->PartnerID );
+		*pUlSize = AnscSizeOfString( devdetails->PartnerID );
+		
+		return 0;
+    }
+
+    if( AnscEqualString(ParamName, "ecmMAC", TRUE))
+    {
+		if ( *pUlSize < AnscSizeOfString( devdetails->ecmMAC ) )
+		{
+			*pUlSize = AnscSizeOfString( devdetails->ecmMAC ) + 1;
+			return 1;
+		}
+
+		AnscCopyString( pValue, devdetails->ecmMAC );
+		*pUlSize = AnscSizeOfString( devdetails->ecmMAC );
+		
+		return 0;
+    }
+
+    if( AnscEqualString(ParamName, "DeviceID", TRUE))
+    {
+		if ( *pUlSize < AnscSizeOfString( devdetails->DeviceID ) )
+		{
+			*pUlSize = AnscSizeOfString( devdetails->DeviceID ) + 1;
+			return 1;
+		}
+
+		AnscCopyString( pValue, devdetails->DeviceID );
+		*pUlSize = AnscSizeOfString( devdetails->DeviceID );
+		
+		return 0;
+    }
+
+    if( AnscEqualString(ParamName, "DeviceModel", TRUE))
+    {
+		if ( *pUlSize < AnscSizeOfString( devdetails->DeviceModel ) )
+		{
+			*pUlSize = AnscSizeOfString( devdetails->DeviceModel ) + 1;
+			return 1;
+		}
+
+		AnscCopyString( pValue, devdetails->DeviceModel );
+		*pUlSize = AnscSizeOfString( devdetails->DeviceModel );
+		
+		return 0;
+    }
+
+    return -1;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        X_RDKCENTRAL_COM_PingTest_Validate
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       pReturnParamName,
+                ULONG*                      puLength
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       pReturnParamName,
+                The buffer (128 bytes) of parameter name if there's a validation.
+
+                ULONG*                      puLength
+                The output length of the param name.
+
+    return:     TRUE if there's no validation.
+
+**********************************************************************/
+BOOL
+X_RDKCENTRAL_COM_PingTest_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    )
+{
+    return TRUE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        X_RDKCENTRAL_COM_PingTest_Commit
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_PingTest_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return 0;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        X_RDKCENTRAL_COM_PingTest_Rollback
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to roll back the update whenever there's a
+        validation found.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_PingTest_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return 0;
 }
 
 /***********************************************************************
