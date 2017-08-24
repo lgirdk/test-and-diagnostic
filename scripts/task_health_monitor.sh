@@ -832,6 +832,13 @@ if [ "$WAN_STATUS" = "started" ];then
 		check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
 	fi
 
+	if [ "x$check_wan_dhcp_client_v4" != "x" ] && [ "x$check_wan_dhcp_client_v6" != "x" ];then
+		if [ `cat /proc/net/dbrctl/mode`  = "standbay" ]
+		then
+			echo "RDKB_SELFHEAL : dbrctl mode is standbay, changing mode to registered"
+			echo "registered" > /proc/net/dbrctl/mode
+		fi
+	fi
 
 	if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
 		echo "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
