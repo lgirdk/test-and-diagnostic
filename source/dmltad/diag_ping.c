@@ -44,8 +44,8 @@
 #include <assert.h>
 #include "diag_inter.h"
 
-#define PING_DEF_CNT        3
-#define PING_DEF_TIMO       1
+#define PING_DEF_CNT        1
+#define PING_DEF_TIMO       10
 #define PING_DEF_SIZE       56
 
 static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *st);
