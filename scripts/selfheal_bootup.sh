@@ -550,7 +550,16 @@ fi
     else
 	  brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
           brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
-          infup=`cat /var/dnsmasq.conf | grep l2sd0.106`
+          lnf_ifname=`syscfg get iot_ifname`
+          if [ "$lnf_ifname" != "" ]
+          then
+             echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface is: $lnf_ifname"
+             infup=`cat /var/dnsmasq.conf | grep $lnf_ifname`
+          else
+             echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface not available in DB"
+             #Set some value so that dnsmasq won't restart
+             infup="NA"
+          fi
 
 	  IsAnyOneInfFailtoUp=0	
 	  BR_MODE=0
@@ -582,7 +591,7 @@ fi
 
           if [ "$infup" == "" ]
           then
-                 echo_t "[RDKB_SELFHEAL_BOOTUP] : l2sd0.106 info is not availble in dnsmasq.conf"
+                 echo_t "[RDKB_SELFHEAL_BOOTUP] : $lnf_ifname info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
           fi
 	  if [ $IsAnyOneInfFailtoUp -eq 1 ]
