@@ -443,6 +443,10 @@ then
 				fi
 			fi
 
+			if [ "$check_if_brlan0_created" = "" ]; then
+				/etc/utopia/registration.d/02_multinet restart
+			fi
+
 			sysevent set multinet-down 1
 			sleep 5
 			sysevent set multinet-up 1
