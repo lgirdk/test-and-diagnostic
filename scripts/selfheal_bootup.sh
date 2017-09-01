@@ -604,7 +604,26 @@ fi
 	         sysevent set dhcp_server-start
         fi
     fi
-    
+
+#Display count of ATOM and ARM Process
+	    HOST_PROCESS_MAX_THRESHOLD=400
+            PEER_PROCESS_MAX_THRESHOLD=200	
+
+            HOST_PROCESS_COUNT=`ps | wc -l`
+            echo_t "TOTAL_HOST_Processes:$HOST_PROCESS_COUNT" >> /rdklogs/logs/SelfHeal.txt.0
+
+            if [ $HOST_PROCESS_COUNT -gt $HOST_PROCESS_MAX_THRESHOLD ]; then
+                    echo_t "HOST process count above threshold" >> /rdklogs/logs/SelfHeal.txt.0
+            fi
+
+            if [ "$BOX_TYPE" = "XB3" ]; then
+                    PEER_PROCESS_COUNT=`rpcclient $ATOM_ARPING_IP "ps | wc -l" | sed '4q;d'`
+                    echo_t "TOTAL_PEER_Processes:$PEER_PROCESS_COUNT" >> /rdklogs/logs/SelfHeal.txt.0
+
+                    if [ $PEER_PROCESS_COUNT -gt $PEER_PROCESS_MAX_THRESHOLD ]; then
+                            echo_t "PEER process count above threshold" >> /rdklogs/logs/SelfHeal.txt.0
+                    fi
+            fi
 else
 	echo "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
 fi
