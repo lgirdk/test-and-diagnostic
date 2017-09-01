@@ -763,6 +763,10 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 					fi
 				fi
 
+				if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then	
+					/etc/utopia/registration.d/02_multinet restart
+				fi
+
 			   sysevent set multinet-down 1
 			   sleep 5
 			   sysevent set multinet-up 1
@@ -800,6 +804,10 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 					sleep 5
 				fi
 			fi 
+
+			if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
+				/etc/utopia/registration.d/02_multinet restart
+			fi
 
 		sysevent set multinet-down 2
 		sleep 5
