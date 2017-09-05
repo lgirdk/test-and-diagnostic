@@ -573,10 +573,7 @@ Mamidi:If we stop the diag test here that is causing the actual test to stop  an
     if (diag->op_clearstatis)
         diag->op_clearstatis(diag);
     memset(&diag->stat, 0, sizeof(diag->stat));
-/*RDKB-12522*/
-#if 0 
     diag->state = DIAG_ST_NONE;
-#endif
     pthread_mutex_unlock(&diag->mutex);
 
     return DIAG_ERR_OK;
