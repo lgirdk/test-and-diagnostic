@@ -476,6 +476,13 @@ resetNeeded()
 				$BINPATH/$ProcessName -subsys $Subsys
 				cd -
 
+			elif [ "$ProcessName" == "CcspEthAgent" ]
+			then
+				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/ethagent
+				$BINPATH/$ProcessName -subsys $Subsys
+				cd -
+
 			elif [ "$ProcessName" == "PsmSsp" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"

@@ -268,6 +268,14 @@ fi
 
 	fi
 
+	# Checking CcspEthAgent PID
+	ETHAGENT_PID=`pidof CcspEthAgent`
+	if [ "$ETHAGENT_PID" = "" ]; then
+		echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
+		resetNeeded ethagent CcspEthAgent
+
+	fi
+
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagent`
 	if [ "$SNMP_PID" = "" ]; then
