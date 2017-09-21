@@ -567,6 +567,35 @@ resetNeeded()
 				cd /usr/ccsp/tad
 				$BINPATH/CcspTandDSsp -subsys $Subsys
 				cd -		
+			elif [ "$ProcessName" == "CcspAdvSecuritySsp" ]
+			then
+				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/advsec
+				advsec_disable
+				$BINPATH/CcspAdvSecuritySsp -subsys $Subsys
+				cd -
+			elif [ "$folderName" == "advsec_bin" ]
+			then
+				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				if [ "$ProcessName" == "AdvSecurityAgent" ]
+				then
+					advsec_restart_agent
+				elif [ "$ProcessName" == "AdvSecurityDns" ]
+				then
+					advsec_start_process dnscap
+				elif [ "$ProcessName" == "AdvSecurityDhcp" ]
+				then
+					advsec_start_process dhcpcap
+				elif [ "$ProcessName" == "AdvSecurityMdns" ]
+				then
+					advsec_start_process mdnscap
+				elif [ "$ProcessName" == "AdvSecurityPof" ]
+				then
+					advsec_start_process p0f
+				elif [ "$ProcessName" == "AdvSecurityScanner" ]
+				then
+					advsec_start_process scannerd
+				fi
 			elif [ "$ProcessName" == "PING" ]
 			then
 				resetRouter
