@@ -90,6 +90,23 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		  else
 				  sysevent set atom_hang_count 0
 		  fi
+
+		### SNMPv3 agent self-heal ####
+                  SNMPv3_PID=`pidof snmpd`
+                  if [ "$SNMPv3_PID" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
+                      # Restart disconnected master and agent
+                      v3AgentPid=`ps -ww | grep cm_snmp_ma_2 | grep -v grep | tr -s ' ' | cut -d ' ' -f2`
+                      if [ ! -z "$v3AgentPid" ]; then
+                          kill -9 $v3AgentPid
+                      fi
+                      if [ -f /tmp/snmpd.conf ]; then
+                          rm -f /tmp/snmpd.conf
+                      fi
+                      if [ -f /lib/rdk/run_snmpv3_master.sh ]; then
+                          sh /lib/rdk/run_snmpv3_master.sh &
+                      fi
+                  fi
+
 	fi
 ###########################################
 
