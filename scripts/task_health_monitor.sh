@@ -3,6 +3,7 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
+ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 
 if [ -f /etc/device.properties ]
 then
@@ -25,7 +26,7 @@ source $UTOPIA_PATH/log_env_var.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 source $TAD_PATH/corrective_action.sh
-
+source $ADVSEC_PATH
 rebootDeviceNeeded=0
 reboot_needed_atom_ro=0
 

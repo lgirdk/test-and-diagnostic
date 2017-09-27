@@ -3,10 +3,12 @@
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
+ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
+source $ADVSEC_PATH
 
 
 if [ -f /etc/device.properties ]
