@@ -8,7 +8,10 @@ ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
-source $ADVSEC_PATH
+if [ -f $ADVSEC_PATH ]
+then
+    source $ADVSEC_PATH
+fi
 
 
 if [ -f /etc/device.properties ]
