@@ -244,16 +244,24 @@ fi
 
 	fi
 
-        # Checking Wifi's PID
-        WIFI_PID=`pidof CcspWifiSsp`
-        if [ "$WIFI_PID" = "" ]; then
+	# Checking Wifi's PID
+	WIFI_PID=`pidof CcspWifiSsp`
+	if [ "$WIFI_PID" = "" ]; then
 #               echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WIFI_process is not running, restarting it"
-                # Remove the wifi initialized flag
-                rm -rf /tmp/wifi_initialized
-                echo_t "RDKB_PROCESS_CRASHED : WIFI_process is not running, need restart"
-                resetNeeded wifi CcspWifiSsp
-        fi
-
+			# Remove the wifi initialized flag
+			rm -rf /tmp/wifi_initialized
+			echo_t "RDKB_PROCESS_CRASHED : WIFI_process is not running, need restart"
+			resetNeeded wifi CcspWifiSsp
+	fi
+	
+	if [ -f /tmp/wifi_eapd_restart_required ] ; then
+		echo_t "RDKB_PROCESS_CRASHED : eapd wifi process needs restart"
+		killall eapd
+		#starting the eapd process 
+		eapd
+		rm -rf /tmp/wifi_eapd_restart_required 
+	fi
+	
 	# Checking CM's PID
 	CM_PID=`pidof CcspCMAgentSsp`
 	if [ "$CM_PID" = "" ]; then
