@@ -541,11 +541,12 @@ fi
 	if [ "$lanSelfheal" != "done" ]
 	then
 
-        	check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        	check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+		#avoid using dmcli hence using syscfgdb used common across all hardware
+		check_device_mode=`cat /nvram/syscfg.db | grep "last_erouter_mode=" | cut -d"=" -f2`
+		check_param_get_succeed=`echo $check_device_mode | grep [0-9]`
         	if [ "$check_param_get_succeed" != "" ]
         	then
-			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+			check_device_in_router_mode=`echo $check_param_get_succeed | grep [1-4]`
 			if [ "$check_device_in_router_mode" != "" ]
 			then
 				check_if_brlan0_created=`ifconfig | grep brlan0`
