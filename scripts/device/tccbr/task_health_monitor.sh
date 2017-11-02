@@ -97,47 +97,7 @@ checkMaintenanceWindow()
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
 		resetNeeded psm PsmSsp
 	fi
-##################################
-	if [ "$BOX_TYPE" = "XB3" ]; then
-		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
-		  wifi_timeout=`echo $wifi_check | grep "CCSP_ERR_TIMEOUT"`
-		  if [ "$wifi_timeout" != "" ]; then
-				  echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
-		  fi
-
-                  
-                  $CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
-		  SSH_ATOM_TEST=$(ssh -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
-		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
-                  rm -f $PEER_COMM_ID
-		  if [ "$SSH_ERROR" != "" ]; then
-				  echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
-		  fi
-
-		  if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
-		  then
-				  atom_hang_count=`sysevent get atom_hang_count`
-				  echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
-				  if [ $atom_hang_count -ge 2 ]; then
-						  CheckRebootCretiriaForAtomHang
-						  atom_hang_reboot_count=`syscfg get todays_atom_reboot_count`
-						  if [ $atom_hang_reboot_count -eq 0 ]; then
-							  echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
-							  reason="ATOM_HANG"
-							  rebootCount=1
-							  setRebootreason $reason $rebootCount
-							  rebootNeeded $reason ""
-						  else
-							  echo_t "[RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
-						  fi
-				  else
-						  atom_hang_count=$((atom_hang_count + 1))
-						  sysevent set atom_hang_count $atom_hang_count
-				  fi
-		  else
-				  sysevent set atom_hang_count 0
-		  fi
-	fi
+	
 ###########################################
 
 if [ "$MULTI_CORE" = "yes" ]; then
@@ -193,7 +153,49 @@ else
    echo_t "RDKB_SELFHEAL : arping_peer command not found"
 fi
 fi
-########################################
+	
+##################################
+	if [ "$BOX_TYPE" = "XB3" ]; then
+		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
+		  wifi_timeout=`echo $wifi_check | grep "CCSP_ERR_TIMEOUT"`
+		  if [ "$wifi_timeout" != "" ]; then
+				  echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
+		  fi
+
+                  
+                  $CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
+		  SSH_ATOM_TEST=$(ssh -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
+		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
+                  rm -f $PEER_COMM_ID
+		  if [ "$SSH_ERROR" != "" ]; then
+				  echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
+		  fi
+
+		  if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
+		  then
+				  atom_hang_count=`sysevent get atom_hang_count`
+				  echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
+				  if [ $atom_hang_count -ge 2 ]; then
+						  CheckRebootCretiriaForAtomHang
+						  atom_hang_reboot_count=`syscfg get todays_atom_reboot_count`
+						  if [ $atom_hang_reboot_count -eq 0 ]; then
+							  echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
+							  reason="ATOM_HANG"
+							  rebootCount=1
+							  setRebootreason $reason $rebootCount
+							  rebootNeeded $reason ""
+						  else
+							  echo_t "[RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
+						  fi
+				  else
+						  atom_hang_count=$((atom_hang_count + 1))
+						  sysevent set atom_hang_count $atom_hang_count
+				  fi
+		  else
+				  sysevent set atom_hang_count 0
+		  fi
+	fi
+###########################################
 
 	atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
 	if [ x$atomOnlyReboot = x ];then

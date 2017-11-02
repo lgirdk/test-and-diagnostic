@@ -55,6 +55,64 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
 		resetNeeded psm PsmSsp
 	fi
+
+###########################################
+
+if [ "$MULTI_CORE" = "yes" ]; then
+	if [ -f $PING_PATH/ping_peer ]
+	then
+	## Check Peer ip is accessible
+	loop=1
+		while [ "$loop" -le 3 ]
+		do
+		PING_RES=`ping_peer`
+		CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+
+			if [ "$CHECK_PING_RES" != "" ]
+			then
+				if [ "$CHECK_PING_RES" -ne 100 ] 
+				then
+					ping_success=1
+					echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+					break
+				else
+					ping_failed=1
+				fi
+			else
+				ping_failed=1
+			fi
+			
+			if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+			then
+				echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+				echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
+			else
+				echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+				echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
+				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+				#echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+				reason="Peer_down"
+				rebootCount=1
+				#setRebootreason $reason $rebootCount
+				rebootNeeded RM "" $reason $rebootCount
+
+			fi
+			loop=$((loop+1))
+			sleep 5
+		done
+	else
+	   echo_t "RDKB_SELFHEAL : ping_peer command not found"
+	fi
+
+	if [ -f $PING_PATH/arping_peer ]
+	then
+	    $PING_PATH/arping_peer
+	else
+	   echo_t "RDKB_SELFHEAL : arping_peer command not found"
+	fi
+else
+        echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
+fi	
 ##################################
 	if [ "$BOX_TYPE" = "XB3" ]; then
 		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
@@ -114,64 +172,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 	fi
 ###########################################
-
-if [ "$MULTI_CORE" = "yes" ]; then
-	if [ -f $PING_PATH/ping_peer ]
-	then
-	## Check Peer ip is accessible
-	loop=1
-		while [ "$loop" -le 3 ]
-		do
-		PING_RES=`ping_peer`
-		CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
-
-			if [ "$CHECK_PING_RES" != "" ]
-			then
-				if [ "$CHECK_PING_RES" -ne 100 ] 
-				then
-					ping_success=1
-					echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-					break
-				else
-					ping_failed=1
-				fi
-			else
-				ping_failed=1
-			fi
-			
-			if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
-			then
-				echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-				echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
-			else
-				echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-				echo "RDKB_SELFHEAL : Ping command output is $PING_RES"
-				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-				#echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-				reason="Peer_down"
-				rebootCount=1
-				#setRebootreason $reason $rebootCount
-				rebootNeeded RM "" $reason $rebootCount
-
-			fi
-			loop=$((loop+1))
-			sleep 5
-		done
-	else
-	   echo_t "RDKB_SELFHEAL : ping_peer command not found"
-	fi
-
-	if [ -f $PING_PATH/arping_peer ]
-	then
-	    $PING_PATH/arping_peer
-	else
-	   echo_t "RDKB_SELFHEAL : arping_peer command not found"
-	fi
-else
-        echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
-fi
-########################################
-
 	atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
 	if [ x$atomOnlyReboot = x ];then
 		crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
