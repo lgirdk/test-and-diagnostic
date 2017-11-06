@@ -888,6 +888,38 @@ fi
 
         fi
 
+        #check for PandM response
+        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+        if [ "$bridgeSucceed" == "" ]
+        then
+            echo_t "[RDKB_SELFHEAL_DEBUG] : bridge mode = $bridgeMode"
+            serialNumber=`dmcli eRT getv Device.DeviceInfo.SerialNumber`
+            echo_t "[RDKB_SELFHEAL_DEBUG] : SerialNumber = $serialNumber"
+            modelName=`dmcli eRT getv Device.DeviceInfo.ModelName`
+            echo_t "[RDKB_SELFHEAL_DEBUG] : modelName = $modelName"
+
+            pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
+            pandm_notexist=`echo $bridgeMode | grep "CCSP_ERR_NOT_EXIST"`
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
+            then
+                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
+                cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
+                cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
+                cr_pam_notexist=`echo $cr_query | grep "CCSP_ERR_NOT_EXIST"`
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
+                then
+                        echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+                        PANDM_PID=`pidof CcspPandMSsp`
+                        if [ "$PANDM_PID" != "" ]; then
+                                kill -9 $PANDM_PID
+                        fi
+                        rm -rf /tmp/pam_initialized
+                        resetNeeded pam CcspPandMSsp
+                fi
+            fi
+        fi
+
         # If bridge mode is not set and WiFI is not disabled by user,
         # check the status of SSID
         if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]
