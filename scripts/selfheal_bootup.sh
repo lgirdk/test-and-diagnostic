@@ -17,7 +17,9 @@ ping_failed=0
 ping_success=0
 needSelfhealReboot="/nvram/self_healreboot"
 
-
+MF_WiFi_Index="5 6 9 10"
+PSM_CONFIG="/nvram/bbhm_cur_cfg.xml"
+WiFi_INIT_FILE="/tmp/wifi_initialized"
 UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
 
 source $UTOPIA_PATH/log_env_var.sh
@@ -171,6 +173,43 @@ setRebootreason()
         then
             echo_t " Commit for Reboot Counter failed"
         fi
+}
+
+
+db_clean_up_required()
+{
+
+	if [ "$BOX_TYPE" = "XB3" ]
+	then
+		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "pidof CcspWifiSsp"`	
+		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
+		if [ ! -z "$WiFi_PID" ]; then
+			echo "RDKB_SELFHEAL_BOOTUP : Stopping CcspWifiSsp before cleaning the database"
+			rpcclient $ATOM_ARPING_IP "kill -9 $WiFi_PID"
+		fi
+	else
+		if [ ! -z `pidof CcspWifiSsp` ]; then
+			echo "RDKB_SELFHEAL_BOOTUP : Stopping CcspWifiSsp before cleaning the database"
+			kill -9 `pidof CcspWifiSsp`
+		fi
+	fi
+
+	entries_needs_to_delete=""
+	for index in $MF_WiFi_Index
+	do
+		MF_Table=`cat "$PSM_CONFIG"  | grep "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.$index.MacFilter." | grep -v MacFilterMode | grep -v MacFilterList | awk -F '"' '{print $2}'`
+		for entry in $MF_Table
+		do
+			entries_needs_to_delete="$entries_needs_to_delete $entry"
+		done
+
+		if [ ! -z "$entries_needs_to_delete" ]; then
+			echo "Deleting psm entries from macfilter table"
+			psmcli del $entries_needs_to_delete
+		fi
+		psmcli set eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.$index.MacFilterList "0:"
+		sleep 2
+	done
 }
 
 
@@ -624,6 +663,60 @@ fi
                             echo_t "PEER process count above threshold" >> /rdklogs/logs/SelfHeal.txt.0
                     fi
             fi
+
+	if [ "$BOX_TYPE" = "XB3" ]
+	then
+		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "pidof CcspWifiSsp"`	
+		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
+		RPC_WiF_FILE_EXISTS=`rpcclient $ATOM_ARPING_IP "ls $WiFi_INIT_FILE"`
+		WIFI_INIT_FILE_EXISTS=`echo "$RPC_WiF_FILE_EXISTS" | awk 'END{print}' | grep -v "RPC CONNECTED"`
+	else
+		WiFi_PID=`pidof CcspWifiSsp`
+		WIFI_INIT_FILE_EXISTS=`ls /tmp/wifi_initialized`
+	fi
+
+	if [ -z "$WiFi_PID" ] || [ "$WIFI_INIT_FILE_EXISTS" != "$WiFi_INIT_FILE" ]; then
+		echo "RDKB_SELFHEAL : WiFi Agent is not running or not initialized completely, checking if MacFilter entries are corrupted"
+		for index in $MF_WiFi_Index
+		do
+			#MF_List_5="41:,56,67,68,69,70,71,72"
+			#db_clean_up_required="no"
+			MF_List=`psmcli get eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.$index.MacFilterList`
+			echo "MF_List = $MF_List for index $index"
+			#MF_List_$index=`psmcli get eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.5.MacFilterList`
+			#echo "MF_List_$index = $MF_List_$index"
+
+			if [ ! -z "$MF_List"  ] &&  [ "$MF_List" != "0:" ] ;then
+				MF_No_Of_Entries=`echo $MF_List | cut -d":" -f1`
+				echo "MF_No_Of_Entries = $MF_No_Of_Entries"
+
+				MF_Entries=`echo $MF_List | cut -d":" -f2`
+				echo "MF_Entries = $MF_Total_Entries"
+
+
+				#check if the first field is empty
+				check_if_first_field_empty=`echo "$MF_Entries" | awk -F "," '{print $1}'`
+
+				#Get the total entries based of "," delimiter
+				MF_Total_Count_Delim=`echo "$MF_Entries" | awk -F "," "{ print NF }"`
+
+				if [ "$check_if_first_field_empty" = "" ] || [ "$MF_No_Of_Entries" != "$MF_Total_Count_Delim" ] 
+				then
+					#db_clean_up_required="yes"
+					echo_t "RDKB_SELFHEAL : PSM database is corrupted for MacFilter entries, cleaning up MacFilter entries from database"
+					db_clean_up_required
+					break;
+				fi
+
+			fi
+			MF_List=""
+			MF_No_Of_Entries=""
+			MF_Entries=""
+			check_if_first_field_empty=""
+			MF_Total_Count_Delim=""
+		done
+
+	fi
 else
 	echo "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
 fi
