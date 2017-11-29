@@ -3,6 +3,13 @@
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
+ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+
+if [ -f $ADVSEC_PATH ]
+then
+    source $ADVSEC_PATH
+fi
+
 
 if [ -f /etc/device.properties ]
 then
@@ -431,6 +438,28 @@ resetNeeded()
 			then
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
         			hotspot_arpd -q 0  > /dev/null &
+			elif [ "$folderName" == "advsec_bin" ]
+			then
+				echo "RDKB_SELFHEAL : Resetting process $ProcessName"
+				if [ "$ProcessName" == "AdvSecurityAgent" ]
+				then
+					advsec_restart_agent
+				elif [ "$ProcessName" == "AdvSecurityDns" ]
+				then
+					advsec_start_process dnscap
+				elif [ "$ProcessName" == "AdvSecurityDhcp" ]
+				then
+					advsec_start_process dhcpcap
+				elif [ "$ProcessName" == "AdvSecurityMdns" ]
+				then
+					advsec_start_process mdnscap
+				elif [ "$ProcessName" == "AdvSecurityPof" ]
+				then
+					advsec_start_process p0f
+				elif [ "$ProcessName" == "AdvSecurityScanner" ]
+				then
+					advsec_start_process scannerd
+				fi
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
