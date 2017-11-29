@@ -252,7 +252,7 @@ rebootNeeded()
 			syscfg set todays_reboot_count $TODAYS_REBOOT_COUNT
 			syscfg commit
 			vendor=`getVendorName`
-			modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
+			modelName=`getModelName`
 			CMMac=`getCMMac`
 			timestamp=`getDate`
 
@@ -439,7 +439,7 @@ resetNeeded()
 				# Storing Information before corrective action
 		 		storeInformation
 				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
-				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_ | cut -f2 -d:`
+			  modelName=`getModelName`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			else
 				# Storing Information before corrective action
@@ -449,7 +449,7 @@ resetNeeded()
 					storeInformation
 				fi
 				vendor=`getVendorName`
-				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_ | cut -f2 -d:`
+			  modelName=`getModelName`
 				CMMac=`getCMMac`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			fi			
