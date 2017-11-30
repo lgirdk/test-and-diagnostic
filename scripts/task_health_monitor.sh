@@ -3,13 +3,18 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
-ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
 source /etc/log_timestamp.sh
+
+if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+	ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
+else
+	ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+fi
 
 ping_failed=0
 ping_success=0
@@ -360,6 +365,10 @@ fi
 				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Scanner process is not running, need restart"
 				resetNeeded advsec_bin AdvSecurityScanner
 			fi
+		fi
+	else
+		if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+			/usr/sbin/cujo_download.sh &
 		fi
 	fi
 				

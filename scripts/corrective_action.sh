@@ -3,20 +3,25 @@
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
-ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
-if [ -f $ADVSEC_PATH ]
-then
-    source $ADVSEC_PATH
-fi
-
 
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
+fi
+
+if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+        ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
+else
+        ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+fi
+
+if [ -f $ADVSEC_PATH ]
+then
+    source $ADVSEC_PATH
 fi
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
@@ -575,9 +580,15 @@ resetNeeded()
 			elif [ "$ProcessName" == "CcspAdvSecuritySsp" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-				cd /usr/ccsp/advsec
-				advsec_disable
-				$BINPATH/CcspAdvSecuritySsp -subsys $Subsys
+				if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+					cd /tmp/cujo_dnld/usr/ccsp/advsec
+					advsec_disable
+					./CcspAdvSecuritySsp -subsys $Subsys
+				else
+					cd /usr/ccsp/advsec
+					advsec_disable
+					$BINPATH/CcspAdvSecuritySsp -subsys $Subsys
+				fi
 				cd -
 			elif [ "$folderName" == "advsec_bin" ]
 			then
