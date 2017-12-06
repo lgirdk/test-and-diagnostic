@@ -84,35 +84,6 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			resetNeeded "" hotspot_arpd 
    	fi
 	fi
-	# Checking webpa PID
-	WEBPA_PID=`pidof webpa`
-	if [ "$WEBPA_PID" = "" ]; then
-		ENABLEWEBPA=`cat /nvram/webpa_cfg.json | grep -r EnablePa | awk '{print $2}' | sed 's|[\"\",]||g'`
-		if [ "$ENABLEWEBPA" = "true" ];then
-		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
-			#We'll set the reason only if webpa reconnect is not due to DNS resolve
-			syscfg get X_RDKCENTRAL-COM_LastReconnectReason | grep "Dns_Res_webpa_reconnect"
-			if [ $? != 0 ]; then
-				echo "setting reconnect reason from sysd_task_health_monitor.sh"
-				echo "[`getDateTime`] Setting Last reconnect reason"
-				syscfg set X_RDKCENTRAL-COM_LastReconnectReason WebPa_crash
-				result=`echo $?`
-				if [ "$result" != "0" ]
-				then
-					echo "SET for Reconnect Reason failed"
-				fi
-				syscfg commit
-				result=`echo $?`
-				if [ "$result" != "0" ]
-				then
-					echo "Commit for Reconnect Reason failed"
-				fi
-				echo "[`getDateTime`] SET succeeded"
-			fi
-			resetNeeded webpa webpa
-		fi
-	
-	fi
 
 	#Checking dropbear PID 
 	DROPBEAR_PID=`pidof dropbear`
