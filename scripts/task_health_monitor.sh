@@ -306,8 +306,12 @@ fi
 	# Checking snmp subagent PID
 	SNMP_PID=`pidof snmp_subagent`
 	if [ "$SNMP_PID" = "" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-		resetNeeded snmp snmp_subagent 
+		if [ -f /tmp/.snmp_agent_restarting ]; then
+			echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
+		else
+			echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
+			resetNeeded snmp snmp_subagent 
+		fi
 	fi
 
 	# Checking CcspMoCA PID

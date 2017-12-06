@@ -171,8 +171,10 @@ DELAY=30
 		then
 				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
 					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window"
+					touch /tmp/.snmp_agent_restarting
 					kill -9 `pidof snmp_subagent`
-					resetNeeded snmp snmp_subagent 
+					resetNeeded snmp snmp_subagent
+					rm -rf /tmp/.snmp_agent_restarting
 					touch /tmp/snmp_agent_restarted
 				fi
 		else 
