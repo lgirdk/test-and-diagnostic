@@ -6,7 +6,8 @@
 traffic_count -L | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 
 cat /tmp/rxtx_cur.txt | cut -d'|' -f1 | sort -u > /tmp/eblist
-cat /nvram/dnsmasq.leases | grep -v "\* \*" | grep -v "172.16.12." | cut -d' ' -f2 > /tmp/cli4
+# Dump leases table - strip out mesh pods
+cat /nvram/dnsmasq.leases | grep -v "\* \*" | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8:ee:0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
 ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
 cat /tmp/cli4 /tmp/cli46 | sort -u | tr '[a-z]' '[A-Z]'  > /tmp/clilist
 diff /tmp/eblist /tmp/clilist | grep "^+" | grep -v "+++" | cut -d'+' -f2 > /tmp/nclilist
