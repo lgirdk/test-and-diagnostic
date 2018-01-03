@@ -230,7 +230,8 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
        then
             echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
        else
-            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"            
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
+            echo "$ssidEnable"
        fi            
 	fi
 
@@ -259,6 +260,8 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 				rm -rf /tmp/pam_initialized
 				systemctl restart CcspPandMSsp.service
 			fi
+	    else
+			echo "$bridgeMode"
 	    fi
         fi
 
@@ -279,11 +282,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 			   if [ "$isDown" != "" ]; then
 				  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
 			   else
-				  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."                      
+				  echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."
+                  echo "$ssidStatus_5"
 			   fi
 			fi
 		else
 		   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+           echo "$ssidStatus_5"
 		fi
 	fi
 
@@ -301,7 +306,8 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 		   echo "[`getDateTime`] [RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
 		fi
 	else
-		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"            
+		echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
+		echo "$ssidEnable_2"
 	fi
 
 	# If bridge mode is not set and WiFI is not disabled by user,
@@ -321,11 +327,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 				if [ "$isDown" != "" ]; then
 					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
 				else
-					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."                      
+					echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."
+					echo "$ssidStatus_2"
 				fi
 			fi
 		else
 		   echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+		   echo "$ssidStatus_2"
 		fi
 	fi
         

@@ -300,6 +300,8 @@ then
 				if [ "$check_success" != "" ]
 				then
 					echo_t "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+				else
+					echo "$output"
 				fi
 				break
 			fi

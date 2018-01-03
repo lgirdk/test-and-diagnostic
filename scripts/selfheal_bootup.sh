@@ -93,6 +93,8 @@ then
 				if [ "$check_success" != "" ]
 				then
 					echo_t "RDKB_SELFHEAL : Setting ConfigureWiFi to true is success"
+				else
+					echo "$output"
 				fi
 				break
 			fi
@@ -498,6 +500,7 @@ fi
             fi
         else
             echo_t "[RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
+            echo "$check_device_mode"
         fi
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
