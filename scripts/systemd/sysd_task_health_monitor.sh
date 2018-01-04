@@ -201,11 +201,11 @@ PSM_PID=`pidof PsmSsp`
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
 	if [ "$LIGHTTPD_PID" = "" ]; then
-		isPortKilled=`netstat -an | grep 51515`
+		isPortKilled=`netstat -an | grep 21515`
 		if [ "$isPortKilled" != "" ]
 		then
-		    echo_t "Port 51515 is still alive. Killing processes associated to 51515"
-		    fuser -k 51515/tcp
+		    echo_t "Port 21515 is still alive. Killing processes associated to 21515"
+		    fuser -k 21515/tcp
 		fi
 		echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		sh /etc/webgui.sh
