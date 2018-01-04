@@ -95,11 +95,11 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
 	if [ "$LIGHTTPD_PID" = "" ]; then
-		isPortKilled=`netstat -anp | grep 51515`
+		isPortKilled=`netstat -anp | grep 21515`
 		if [ "$isPortKilled" != "" ]
 		then
-		    echo "[`getDateTime`] Port 51515 is still alive. Killing processes associated to 51515"
-		    fuser -k 51515/tcp
+		    echo "[`getDateTime`] Port 21515 is still alive. Killing processes associated to 21515"
+		    fuser -k 21515/tcp
 		fi
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		sh /etc/webgui.sh
