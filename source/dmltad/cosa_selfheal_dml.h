@@ -37,6 +37,8 @@
 
     *  ConnectivityTest_GetParamUlongValue
     *  ConnectivityTest_SetParamUlongValue
+    *  ConnectivityTest_GetParamIntValue
+    *  ConnectivityTest_SetParamIntValue
     *  ConnectivityTest_Validate
     *  ConnectivityTest_Commit
     *  ConnectivityTest_Rollback
@@ -57,6 +59,22 @@ ConnectivityTest_SetParamUlongValue
         ANSC_HANDLE                 hInsContext,
         char*                       ParamName,
         ULONG                       uValuepUlong
+    );
+
+BOOL
+ConnectivityTest_GetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int*                        pInt
+    );
+
+BOOL
+ConnectivityTest_SetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int                         pInt
     );
 
 BOOL

@@ -479,6 +479,8 @@ SelfHeal_Rollback
     *  ConnectivityTest_SetParamBoolValue
     *  ConnectivityTest_GetParamUlongValue
     *  ConnectivityTest_SetParamUlongValue
+    *  ConnectivityTest_GetParamIntValue
+    *  ConnectivityTest_SetParamIntValue
     *  ConnectivityTest_Validate
     *  ConnectivityTest_Commit
     *  ConnectivityTest_Rollback
@@ -608,6 +610,50 @@ ConnectivityTest_GetParamUlongValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_LastReboot", TRUE))
+    {
+        /* collect value */
+	char buf[64]={0};
+	syscfg_get( NULL, "last_router_reboot_time", buf, sizeof(buf));
+	if( buf[0] != '\0' )
+	{
+		*pUlong = atoi(buf);
+		return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+BOOL
+ConnectivityTest_GetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int*                        pInt
+    )
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_RebootInterval", TRUE))
+    {
+        /* collect value */
+	   *pInt = pMyObject->pConnTest->RouterRebootInterval ;
+	   return TRUE;
+    }
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CurrentCount", TRUE))
+    {
+        /* collect value */
+        char buf[16]={0};
+        syscfg_get( NULL, "todays_reset_count", buf, sizeof(buf));
+        if( buf[0] != '\0' )
+        {
+                    *pInt = atoi(buf);
+                     return TRUE;
+        }
+    }
+    
     return FALSE;
 }
 
@@ -719,6 +765,43 @@ ConnectivityTest_SetParamUlongValue
         }     
         /* save update to backup */
 		pMyObject->pConnTest->WaitTime = uValue;
+        return TRUE;
+    }
+    
+    return FALSE;
+}
+
+BOOL
+ConnectivityTest_SetParamIntValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        int                         pInt
+    )
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_RebootInterval", TRUE))
+    {
+        if ( pMyObject->pConnTest->RouterRebootInterval == pInt )
+        {
+            return  TRUE;
+        }
+	char cValue[10];
+	memset(cValue, 0, sizeof(cValue));
+        snprintf(cValue, sizeof(cValue), "%d", pInt);
+	if (syscfg_set(NULL, "router_reboot_Interval", cValue) != 0)
+	{
+		CcspTraceWarning(("%s syscfg set failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
+		return FALSE;
+	}
+        if (syscfg_commit() != 0)
+	{
+		CcspTraceWarning(("%s syscfg commit failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
+		return FALSE;
+	}     
+        /* save update to backup */
+	pMyObject->pConnTest->RouterRebootInterval = pInt;
         return TRUE;
     }
     

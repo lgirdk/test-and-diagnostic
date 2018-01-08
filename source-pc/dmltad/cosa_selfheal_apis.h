@@ -77,7 +77,8 @@ _PCOSA_DML_CONNECTIVITY_TEST
     ULONG                      	    IPv4EntryCount;                                    
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE    pIPv4Table;    
     ULONG                      	    IPv6EntryCount;                                    
-    PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE    pIPv6Table;  
+    PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE    pIPv6Table;
+    int                             RouterRebootInterval; 
 }
 COSA_DML_CONNECTIVITY_TEST,  *PCOSA_DML_CONNECTIVITY_TEST;
 

@@ -401,9 +401,12 @@ resetNeeded()
 	TODAYS_RESET_COUNT=`syscfg get todays_reset_count`
 
         # RDKB-6012: No need to validate today's reset count
-        TODAYS_RESET_COUNT=0
+	if [ "$ProcessName" != "PING" ]
+	then
+		TODAYS_RESET_COUNT=0
+	fi
 
-	if [ "$TODAYS_RESET_COUNT" -gt "$MAX_RESET_COUNT" ]
+	if [ "$TODAYS_RESET_COUNT" -ge "$MAX_RESET_COUNT" ] && [ "$ProcessName" == "PING" ]
 	then
 		echo "[`getDateTime`] RDKB_SELFHEAL : Today's max reset count already reached, please wait for reset till next 24 hour window"
 	else
@@ -488,7 +491,19 @@ resetNeeded()
 				fi
 			elif [ "$ProcessName" == "PING" ]
 			then
-				resetRouter
+				REBOOTINTERVAL=`syscfg get router_reboot_Interval`
+				LAST_REBOOT=`syscfg get last_router_reboot_time`
+				currTime=$(date -u +"%s")
+				diff=$(($currTime-$LAST_REBOOT))
+				if [ $diff -ge $REBOOTINTERVAL ]
+				then
+					TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
+					syscfg set todays_reset_count $TODAYS_RESET_COUNT
+					syscfg commit
+					syscfg set last_router_reboot_time $currTime
+					syscfg commit
+					resetRouter
+				fi
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"

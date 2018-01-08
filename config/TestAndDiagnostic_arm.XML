@@ -874,6 +874,8 @@
 	                <func_SetParamBoolValue>ConnectivityTest_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamUlongValue>ConnectivityTest_GetParamUlongValue</func_GetParamUlongValue>
                         <func_SetParamUlongValue>ConnectivityTest_SetParamUlongValue</func_SetParamUlongValue>
+			<func_GetParamIntValue>ConnectivityTest_GetParamIntValue</func_GetParamIntValue>
+                        <func_SetParamIntValue>ConnectivityTest_SetParamIntValue</func_SetParamIntValue>
                         <!--func_Validate>ConnectivityTest_Validate</func_Validate>
                         <func_Commit>ConnectivityTest_Commit</func_Commit>
                         <func_Rollback>ConnectivityTest_Rollback</func_Rollback-->
@@ -907,6 +909,24 @@
                             <name>X_RDKCENTRAL-COM_CorrectiveAction</name>
                             <type>boolean</type>
                             <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>X_RDKCENTRAL-COM_LastReboot</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>X_RDKCENTRAL-COM_RebootInterval</name>
+                            <type>int</type>
+                            <syntax>int</syntax>
+                            <writable>true</writable>
+                         </parameter>
+			<parameter>
+                            <name>X_RDKCENTRAL-COM_CurrentCount</name>
+                            <type>int</type>
+                            <syntax>int</syntax>
                             <writable>true</writable>
                         </parameter>
                     </parameters>

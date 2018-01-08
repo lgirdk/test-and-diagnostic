@@ -23,5 +23,6 @@ syscfg set todays_reset_count 0
 
 syscfg set lastActiontakentime 0 
 syscfg set highloadavg_reboot_count 0
+syscfg set last_router_reboot_time 0
 syscfg commit 
 
