@@ -182,4 +182,20 @@ DELAY=30
 				rm "/tmp/snmp_agent_restarted"
 			fi
 		fi
-	fi
+	fi	
+	
+	# swap usage information
+        # vmInfoHeader: swpd,free,buff,cache,si,so
+        # vmInfoValues: <int>,<int>,<int>,<int>,<int>,<int>
+        echo "VM STATS SINCE BOOT ARM"
+        swaped=`free | awk 'FNR == 4 {print $3}'`
+        cache=`cat /proc/meminfo | awk 'FNR == 4 {print $2}'`
+        buff=`cat /proc/meminfo | awk 'FNR == 3 {print $2}'`
+        swaped_in=`cat /proc/vmstat | grep pswpin | cut -d ' ' -f2`
+        swaped_out=`cat /proc/vmstat | grep pswpout | cut -d ' ' -f2`
+        # conversion to kb assumes 4kb page, which is quite standard
+        swaped_in_kb=$(($swaped_in * 4))
+        swaped_out_kb=$(($swaped_out * 4))
+        echo vmInfoHeader: swpd,free,buff,cache,si,so
+        echo vmInfoValues: $swaped,$freeMemSys,$buff,$cache,$swaped_in,$swaped_out
+        # end of swap usage information block
