@@ -462,6 +462,9 @@ resetNeeded()
 				then
 					advsec_start_process scannerd
 				fi
+			elif [ "$ProcessName" == "PING" ]
+			then
+				resetRouter
 			elif [ "$3" == "noSubsys" ]
 			then 
 				echo "[`getDateTime`] RDKB_SELFHEAL : Resetting process $ProcessName"
