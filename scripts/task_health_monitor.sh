@@ -24,7 +24,7 @@ WAN_INTERFACE="erouter0"
 PEER_COMM_DAT="/etc/dropbear/elxrretyt.swr"
 PEER_COMM_ID="/tmp/elxrretyt-$$.swr"
 CONFIGPARAMGEN="/usr/bin/configparamgen"
-
+IDLE_TIMEOUT=30
 source $UTOPIA_PATH/log_env_var.sh
 
 
@@ -128,7 +128,7 @@ fi
 
                   
                   $CONFIGPARAMGEN jx $PEER_COMM_DAT $PEER_COMM_ID
-		  SSH_ATOM_TEST=$(ssh -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
+		  SSH_ATOM_TEST=$(ssh -I $IDLE_TIMEOUT -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
 		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
                   rm -f $PEER_COMM_ID
 		  if [ "$SSH_ERROR" != "" ]; then
