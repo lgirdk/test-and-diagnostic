@@ -643,7 +643,7 @@
 					</parameter>
 					 <parameter>
 						<name>Argument</name>
-						<type>string(64)</type>
+						<type>string(4096)</type>
 						<syntax>string</syntax>
 			                        <writable>true</writable>
 					</parameter>

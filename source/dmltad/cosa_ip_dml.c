@@ -81,7 +81,7 @@
 
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
-#define SPEEDTEST_ARG_SIZE 64
+#define SPEEDTEST_ARG_SIZE 4096
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
 
 #ifndef ROUTEHOPS_HOST_STRING
@@ -6179,6 +6179,8 @@ SpeedTest_GetParamStringValue
         } else
 	{
 		AnscTraceWarning(("SpeedTest Argument get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_argument_speedtest,len, *pUlSize));
+
+                *pUlSize = SPEEDTEST_ARG_SIZE+1;
 		return 1;
 
 	}
