@@ -594,7 +594,7 @@ resetNeeded()
 				cd -
 			elif [ "$folderName" == "advsec_bin" ]
 			then
-				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
 				if [ "$ProcessName" == "AdvSecurityAgent" ]
 				then
 					advsec_restart_agent
