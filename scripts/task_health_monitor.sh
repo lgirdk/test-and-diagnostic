@@ -383,6 +383,20 @@ fi
 				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Scanner process is not running, need restart"
 				resetNeeded advsec_bin AdvSecurityScanner
 			fi
+			if [ -e ${SAFEBRO_ENABLE} ] ; then
+				ADV_SB_PID=`advsec_is_alive threatd`
+				if [ "$ADV_SB_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityThreat
+				fi
+			fi
+                        if [ -e ${SOFTFLOWD_ENABLE} ] ; then
+                                ADV_SF_PID=`advsec_is_alive softflowd`
+                                if [ "$ADV_SF_PID" = "" ] ; then
+                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
+                                        resetNeeded advsec_bin AdvSecuritySoftflowd
+                                fi
+                        fi
 		fi
 	else
 		if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then

@@ -458,6 +458,12 @@ resetNeeded()
 				elif [ "$ProcessName" == "AdvSecurityPof" ]
 				then
 					advsec_start_process p0f
+				elif [ "$ProcessName" == "AdvSecuritySoftflowd" ]
+				then
+					advsec_start_process softflowd
+                                elif [ "$ProcessName" == "AdvSecurityThreat" ]
+                                then
+                                        advsec_start_process threatd
 				elif [ "$ProcessName" == "AdvSecurityScanner" ]
 				then
 					advsec_start_process scannerd
