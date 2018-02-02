@@ -173,10 +173,17 @@ static int inet_is_local(const struct in_addr *addr)
      * 2. unicast to address of local device, 'local xxx.xxx.xxx.xxx'
      * 3. unicast to address in same network e.g,. "xxx.xxx.xxx.xxx/xx" 
      */
-    snprintf(cmd, sizeof(cmd), "ip route show table local");
+     snprintf(cmd, sizeof(cmd), "ip route show table local");
+#ifdef _PLATFORM_RASPBERRYPI_
+/*
+rb mode is not supported to create pipe
+*/
+    if ((fp = popen(cmd, "r")) == NULL)
+        return 0;
+#else
     if ((fp = popen(cmd, "rb")) == NULL)
         return 0;
-
+#endif
     while (fgets(entry, sizeof(entry), fp) != NULL) {
         trim(entry);
 
@@ -407,7 +414,17 @@ static void *diag_task(void *arg)
     pthread_mutex_lock(&diag->mutex);
     cfg = diag->cfg;
     pthread_mutex_unlock(&diag->mutex);
-    
+#ifdef _PLATFORM_RASPBERRYPI_
+/**
+ inet_pton is failing because of extra quotes in ip address (cfg.host)
+**/
+    int len = strlen(cfg.host);
+    if( (cfg.host[0] == '\'') && (cfg.host[len-1] == '\'') )
+    {
+        memmove(cfg.host,&cfg.host[1],len-2);
+        cfg.host[len-2]='\0';
+    }
+#endif
     /**
      * XXX: work around for dual WAN issue.
      * We have two WAN default route, one for wan0 another for erouter0.
