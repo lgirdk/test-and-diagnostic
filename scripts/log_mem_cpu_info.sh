@@ -137,6 +137,34 @@ DELAY=30
 	echo_t ""
 	disk_usage="df"
 	eval $disk_usage
+        # RDKB-15785
+        ####################################
+     mount | grep  -w "nvram" > /dev/null
+     if [ $? -eq 0 ]; then
+     memory_usage=`df -h /nvram | grep -i nvram | awk '{print $5}'| tr -d '%'`
+     nvram_usage=$memory_usage
+     fi
+     mount | grep  -w "nvram2" > /dev/null
+     if [ $? -eq 0 ]; then
+        memory_usage=`df -h /nvram2 | grep -i nvram2 | awk '{print $5}'| tr -d '%'`
+        nvram2_usage=$memory_usage
+        if [ "$BOX_TYPE" = "XB3" ] ;   then
+            rpcclient $ATOM_ARPING_IP "mount | grep  -w "nvram"" > /dev/null
+            if [ $? -eq 0 ]; then
+            memory_usage=`rpcclient $ATOM_ARPING_IP "df -h /nvram" | grep -i nvram | awk '{print $5}'| tr -d '%'`
+            atom_nvram_usage=$memory_usage
+            echo_t "RDKB_NVRAM_USAGE: NVRAM_USE_PERCENTAGE:$nvram_usage"
+            echo_t "RDKB_NVRAM_USAGE: NVRAM2_USE_PERCENTAGE:$nvram2_usage"
+            echo_t "RDKB_NVRAM_USAGE: NVRAM_ATOM_USE_PERCENTAGE:$atom_nvram_usage"
+            fi
+        else
+             echo_t "RDKB_NVRAM_USAGE: NVRAM_USE_PERCENTAGE:$nvram_usage"
+             echo_t "RDKB_NVRAM_USAGE: NVRAM2_USE_PERCENTAGE:$nvram2_usage"
+        fi
+     else 
+         echo_t "RDKB_NVRAM_USAGE: NVRAM_USE_PERCENTAGE:$nvram_usage"
+     fi
+        ###################################  
 	count=$((count + 1))
 
 	########### df related ########
