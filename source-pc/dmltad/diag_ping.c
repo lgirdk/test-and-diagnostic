@@ -94,7 +94,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     const char      *awkcmd = 
         " | awk -F'[ /]+' '/transmitted/ {SEND=$1; RECV=$4; }; "
         " /^ping:/ { print; exit } " /* capture ping error message */
-        " /^round-trip/ {MAX=$6; AVG=$7; MIN=$8 } "
+        " /^round-trip/ {MAX=$7; AVG=$8; MIN=$9 } "/*updating the value from 6 to 7,since the addition of mtdev attribute in result*/
         " /^rtt/ {MIN=$7; AVG=$8; MAX=$9 } "
         " END {print SEND, RECV, MIN, AVG, MAX}' 2>&1";
 
