@@ -10,6 +10,11 @@ then
 fi
 source /etc/log_timestamp.sh
 
+if [ -f /etc/mount-utils/getConfigFile.sh ];then
+      mkdir -p /tmp/.dropbear
+     . /etc/mount-utils/getConfigFile.sh
+fi
+
 if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
 	ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
 else
@@ -538,8 +543,13 @@ fi
            if [ "$DROPBEAR_ENABLE" == "" ]
            then
                   echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-            	    dropbear -E -s -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
+                  DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1.xyz"
+                  DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2.xyz"
+                  getConfigFile $DROPBEAR_PARAMS_1
+                  getConfigFile $DROPBEAR_PARAMS_2               
+                  dropbear -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -E -s -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
            fi
+           rm -rf /tmp/.dropbear
         fi
 
 	# Checking lighttpd PID
