@@ -30,6 +30,21 @@ rebootDeviceNeeded=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
+PSM_PID=`pidof PsmSsp`
+	if [ "$PSM_PID" != "" ]; then
+		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
+		psm_name_timeout=`echo $psm_name | grep "CCSP_ERR_TIMEOUT"`
+		psm_name_notexist=`echo $psm_name | grep "CCSP_ERR_NOT_EXIST"`
+		if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
+			psm_health=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health`
+			psm_health_timeout=`echo $psm_health | grep "CCSP_ERR_TIMEOUT"`
+			psm_health_notexist=`echo $psm_health | grep "CCSP_ERR_NOT_EXIST"`
+			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
+				echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
+				systemctl restart PsmSsp.service
+			fi
+		fi
+	fi
 	HOMESEC_PID=`pidof CcspHomeSecurity`
 	if [ "$HOMESEC_PID" = "" ]; then
 		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"

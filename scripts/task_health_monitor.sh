@@ -59,6 +59,20 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 #		rebootNeeded RM "PSM"
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
 		resetNeeded psm PsmSsp
+	else
+		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
+		psm_name_timeout=`echo $psm_name | grep "CCSP_ERR_TIMEOUT"`
+		psm_name_notexist=`echo $psm_name | grep "CCSP_ERR_NOT_EXIST"`
+		if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
+			psm_health=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health`
+			psm_health_timeout=`echo $psm_health | grep "CCSP_ERR_TIMEOUT"`
+			psm_health_notexist=`echo $psm_health | grep "CCSP_ERR_NOT_EXIST"`
+			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
+				echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
+				kill -9 `pidof PsmSsp`
+				resetNeeded psm PsmSsp
+			fi
+		fi
 	fi
 
 ###########################################
