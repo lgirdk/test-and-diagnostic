@@ -711,10 +711,14 @@ fi
 	ZEBRA_PID=`pidof zebra`
 	if [ "$ZEBRA_PID" = "" ]; then
 		if [ "$BR_MODE" == "0" ]; then
-
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
-			/etc/utopia/registration.d/20_routing restart
-			sysevent set zebra-restart
+	                DHCPv6EnableStatus=`syscfg get dhcpv6s00::serverenable`
+        	        if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
+                	   echo "DHCPv6 Disabled. Restart of zebra process not Required"
+			else
+			   echo "[`getDateTime`] RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
+			   /etc/utopia/registration.d/20_routing restart
+			   sysevent set zebra-restart
+                        fi
 		fi
 	fi
 
