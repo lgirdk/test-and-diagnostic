@@ -897,15 +897,20 @@ fi
 		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
 		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
 
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-			if [ -f "/etc/dibbler/server.conf" ]
-			then
+                        DHCPv6EnableStatus=`syscfg get dhcpv6s00::serverenable`
+                        if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
+                           echo "DHCPv6 Disabled. Restart of Dibbler process not Required"
+                        else
+			   echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+			   if [ -f "/etc/dibbler/server.conf" ]
+			   then
 				dibbler-server stop
 				sleep 2
 				dibbler-server start
-			else
+			   else
 				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
-			fi
+			   fi
+		     	fi
 		fi
 	fi
 
