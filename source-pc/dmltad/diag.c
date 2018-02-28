@@ -172,7 +172,7 @@ static int inet_is_local(const struct in_addr *addr)
      * 3. unicast to address in same network e.g,. "xxx.xxx.xxx.xxx/xx" 
      */
     snprintf(cmd, sizeof(cmd), "ip route show table local");
-    if ((fp = popen(cmd, "rb")) == NULL)
+    if ((fp = popen(cmd, "r")) == NULL)
         return 0;
 
     while (fgets(entry, sizeof(entry), fp) != NULL) {
@@ -389,7 +389,12 @@ static void *diag_task(void *arg)
     pthread_mutex_lock(&diag->mutex);
     cfg = diag->cfg;
     pthread_mutex_unlock(&diag->mutex);
-    
+    int len = strlen(cfg.host);
+    if( (cfg.host[0] == '\'') && (cfg.host[len-1] == '\'') )
+    {
+        memmove(cfg.host,&cfg.host[1],len-2);
+        cfg.host[len-2]='\0';
+    }    
     /**
      * XXX: work around for dual WAN issue.
      * We have two WAN default route, one for wan0 another for erouter0.
