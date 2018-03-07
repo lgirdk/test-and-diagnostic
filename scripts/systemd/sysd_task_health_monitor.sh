@@ -9,6 +9,7 @@ if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
 fi
+source /etc/log_timestamp.sh
 
 ping_failed=0
 ping_success=0
