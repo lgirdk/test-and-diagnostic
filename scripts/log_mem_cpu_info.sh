@@ -246,8 +246,8 @@ DELAY=30
         swaped_in=`cat /proc/vmstat | grep pswpin | cut -d ' ' -f2`
         swaped_out=`cat /proc/vmstat | grep pswpout | cut -d ' ' -f2`
         # conversion to kb assumes 4kb page, which is quite standard
-        swaped_in_kb=$(($swaped_in * 4))
-        swaped_out_kb=$(($swaped_out * 4))
+        swaped_in_kb=$((swaped_in * 4))
+        swaped_out_kb=$((swaped_out * 4))
         echo vmInfoHeader: swpd,free,buff,cache,si,so
         echo vmInfoValues: $swaped,$freeMemSys,$buff,$cache,$swaped_in,$swaped_out
         # end of swap usage information block
