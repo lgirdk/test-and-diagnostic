@@ -55,7 +55,7 @@ PSM_PID=`pidof PsmSsp`
 	if [ -f $ADVSEC_PATH ]
 	then
 		DEVICE_FINGERPRINT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
-		if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ]
+		if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ] && [ ! -f $ADVSEC_INITIALIZING ]
 		then   
 			ADV_AG_PID=`advsec_is_alive agent`
 			if [ "$ADV_AG_PID" = "" ] ; then
