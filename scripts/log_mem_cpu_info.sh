@@ -200,13 +200,19 @@ DELAY=30
 				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
 					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window"
 					touch /tmp/.snmp_agent_restarting
-					kill -9 `pidof snmp_subagent`
+					# restarting only zsnmpv2
+					snmp_subagent_pid=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+					if [ "$snmp_subagent_pid" != "" ];then 
+						kill -9 $snmp_subagent_pid
+					fi
 					resetNeeded snmp snmp_subagent
 					rm -rf /tmp/.snmp_agent_restarting
+					echo_t "subagent is restarted in maintanance window, creating snmp_agent_restarted tmp file"
 					touch /tmp/snmp_agent_restarted
 				fi
 		else 
 			if [ -f "/tmp/snmp_agent_restarted" ]; then
+				echo_t "current hr is :$cur_hr Maintanance window is complete, removing snmp_agent_restarted"
 				rm "/tmp/snmp_agent_restarted"
 			fi
 		fi

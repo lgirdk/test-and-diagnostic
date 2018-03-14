@@ -476,9 +476,9 @@ resetNeeded()
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
 				cd /fss/gw/usr/ccsp/snmp/
 				if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
-					sh run_subagent.sh tcp:127.0.0.1:705 &
+					sh run_subagent.sh tcp:127.0.0.1:705 selfheal_snmpv2 &
 				else
-					sh run_subagent.sh /var/tmp/cm_snmp_ma &
+					sh run_subagent.sh /var/tmp/cm_snmp_ma selfheal_snmpv2 &
 				fi
 				cd -	
 			elif [ "$ProcessName" == "CcspPandMSsp" ]

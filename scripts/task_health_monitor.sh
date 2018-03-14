@@ -339,7 +339,7 @@ fi
 	fi
 
 	# Checking snmp subagent PID
-	SNMP_PID=`pidof snmp_subagent`
+	SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
 	if [ "$SNMP_PID" = "" ]; then
 		if [ -f /tmp/.snmp_agent_restarting ]; then
 			echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
