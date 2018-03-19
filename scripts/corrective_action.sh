@@ -131,6 +131,7 @@ checkConditionsbeforeAction()
 			
 
 	printOnce=1
+	loop=1
 	while : ; do
 
 		#xhs traffic implementation pending 
@@ -156,7 +157,13 @@ checkConditionsbeforeAction()
 			return 0
 		fi
 
-		sleep 2
+		if [ "$loop" -ge 60 ]; then
+			echo_t "RDKB_SELFHEAL : Counter reached max, Not taking corrective action"
+			return 1
+		fi
+
+		loop=$((loop+1))
+		sleep 10
 	done
 
 }
@@ -445,11 +452,11 @@ resetNeeded()
 	else
 		#touch $RESETNEEDED
 
-		checkConditionsbeforeAction
-		return_value=$?
+		#checkConditionsbeforeAction
+		#return_value=$?
 
-		if [ "$return_value" -eq 0 ]
-		then
+		#if [ "$return_value" -eq 0 ]
+		#then
                         # RDKB-6012: No need to validate today's reset count
 			#TODAYS_RESET_COUNT=$(($TODAYS_RESET_COUNT+1))
 
@@ -662,7 +669,7 @@ resetNeeded()
 				./$ProcessName -subsys $Subsys
 				cd -
 			fi
-		fi
+		#fi
 			
 	fi
 
