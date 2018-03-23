@@ -429,7 +429,7 @@ fi
 	#Check dropbear is alive to do rsync/scp to/fro ATOM
 	if [ "$ARM_INTERFACE_IP" != "" ]
 	then
-           DROPBEAR_ENABLE=`ps | grep dropbear | grep $ARM_INTERFACE_IP`
+           DROPBEAR_ENABLE=`ps -w | grep dropbear | grep $ARM_INTERFACE_IP`
            if [ "$DROPBEAR_ENABLE" == "" ]
            then
                   echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
