@@ -79,7 +79,11 @@ getDateTime()
 getCMMac()
 {
 	CMMac=`dmcli eRT getv Device.X_CISCO_COM_CableModem.MACAddress | grep value | awk '{print $5}'`
-	echo "$CMMac"
+        if [ "$CMMac" = "" ]
+        then
+                CMMac=`snmpget -v2c -c public 172.31.255.45 1.3.6.1.2.1.2.2.1.6.2 | grep -o '[^ ]*$'`
+        fi
+        echo "$CMMac"
 }
 
 checkConditionsbeforeAction()
