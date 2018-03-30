@@ -168,12 +168,19 @@ BOOL SelfHeal_SetParamBoolValue
             {
 
                 memset(cmd, 0, sizeof(cmd));
+#if defined (_COSA_BCM_MIPS_)
+		AnscCopyString(cmd, "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+                system(cmd);
+                memset(cmd, 0, sizeof(cmd));
+                AnscCopyString(cmd, "/usr/ccsp/tad/resource_monitor.sh &");
+                system(cmd); 
+#else 
                 AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
                 system(cmd); 
-
                 memset(cmd, 0, sizeof(cmd));
                 AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/resource_monitor.sh &");
                 system(cmd); 
+#endif
 	    }
             else
 	    {
