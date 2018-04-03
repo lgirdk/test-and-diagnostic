@@ -385,69 +385,78 @@ fi
 		resetNeeded "" CcspHomeSecurity 
 	fi
 
-	if [ -f $ADVSEC_PATH ]
-	then
-		# CcspAdvSecurity
-		ADV_PID=`pidof CcspAdvSecuritySsp`
-		if [ "$ADV_PID" = "" ] ; then
-			echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
-			resetNeeded advsec CcspAdvSecuritySsp
-		fi
-								 
-		DEVICE_FINGERPRINT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
-		if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ] && [ ! -f $ADVSEC_INITIALIZING ]
-		then   
-			ADV_AG_PID=`advsec_is_alive agent`
-			if [ "$ADV_AG_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Agent process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityAgent
+	DEVICE_FINGERPRINT_VALUE=`psmcli get eRT.com.cisco.spvtg.ccsp.advsecurity.Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable`
+	if [ "$DEVICE_FINGERPRINT_VALUE" = "1" ] ; then
+	        DEVICE_FINGERPRINT_ENABLE=true
+	else
+	        DEVICE_FINGERPRINT_ENABLE=false
+	fi
+
+	if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ] ; then
+
+		if [ -f $ADVSEC_PATH ]
+		then
+			# CcspAdvSecurity
+			ADV_PID=`pidof CcspAdvSecuritySsp`
+			if [ "$ADV_PID" = "" ] ; then
+				echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
+				resetNeeded advsec CcspAdvSecuritySsp
 			fi
-			ADV_DNS_PID=`advsec_is_alive dnscap`
-			if [ "$ADV_DNS_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dnscap process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityDns
-			fi
-			ADV_DHCP_PID=`advsec_is_alive dhcpcap`
-			if [ "$ADV_DHCP_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dhcpcap process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityDhcp
-			fi
-			ADV_MDNS_PID=`advsec_is_alive mdnscap`
-			if [ "$ADV_MDNS_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityMdns
-			fi
-			ADV_P0F_PID=`advsec_is_alive p0f`
-			if [ "$ADV_P0F_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity PoF process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityPof
-			fi
-			ADV_SCAN_PID=`advsec_is_alive scannerd`
-			if [ "$ADV_SCAN_PID" = "" ] ; then
-				echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Scanner process is not running, need restart"
-				resetNeeded advsec_bin AdvSecurityScanner
-			fi
-			if [ -e ${SAFEBRO_ENABLE} ] ; then
-				ADV_SB_PID=`advsec_is_alive threatd`
-				if [ "$ADV_SB_PID" = "" ] ; then
-					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
-					resetNeeded advsec_bin AdvSecurityThreat
+									 
+			if [ ! -f $ADVSEC_INITIALIZING ]
+			then   
+				ADV_AG_PID=`advsec_is_alive agent`
+				if [ "$ADV_AG_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Agent process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityAgent
+				fi
+				ADV_DNS_PID=`advsec_is_alive dnscap`
+				if [ "$ADV_DNS_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dnscap process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityDns
+				fi
+				ADV_DHCP_PID=`advsec_is_alive dhcpcap`
+				if [ "$ADV_DHCP_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dhcpcap process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityDhcp
+				fi
+				ADV_MDNS_PID=`advsec_is_alive mdnscap`
+				if [ "$ADV_MDNS_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityMdns
+				fi
+				ADV_P0F_PID=`advsec_is_alive p0f`
+				if [ "$ADV_P0F_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity PoF process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityPof
+				fi
+				ADV_SCAN_PID=`advsec_is_alive scannerd`
+				if [ "$ADV_SCAN_PID" = "" ] ; then
+					echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Scanner process is not running, need restart"
+					resetNeeded advsec_bin AdvSecurityScanner
+				fi
+				if [ -e ${SAFEBRO_ENABLE} ] ; then
+					ADV_SB_PID=`advsec_is_alive threatd`
+					if [ "$ADV_SB_PID" = "" ] ; then
+						echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
+						resetNeeded advsec_bin AdvSecurityThreat
+					fi
+				fi
+				if [ -e ${SOFTFLOWD_ENABLE} ] ; then
+					ADV_SF_PID=`advsec_is_alive softflowd`
+					if [ "$ADV_SF_PID" = "" ] ; then
+						echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
+						resetNeeded advsec_bin AdvSecuritySoftflowd
+					fi
 				fi
 			fi
-                        if [ -e ${SOFTFLOWD_ENABLE} ] ; then
-                                ADV_SF_PID=`advsec_is_alive softflowd`
-                                if [ "$ADV_SF_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecuritySoftflowd
-                                fi
-                        fi
-		fi
-	else
-		if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
-			/usr/sbin/cujo_download.sh &
+		else
+			if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+				/usr/sbin/cujo_download.sh &
+			fi
 		fi
 	fi
-				
+	
 	HOTSPOT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep value | cut -f3 -d : | cut -f2 -d" "`
 	if [ "$HOTSPOT_ENABLE" = "true" ]
 	then
