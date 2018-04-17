@@ -49,54 +49,6 @@ reb_window=0
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-# Check if it is still in maintenance window
-checkMaintenanceWindow()
-{
-    start_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
-    end_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
-
-    if [ "$start_time" -eq "$end_time" ]
-    then
-        echo_t "[RDKB_SELFHEAL] : Start time can not be equal to end time"
-        echo_t "[RDKB_SELFHEAL] : Resetting values to default"
-        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime string "0"
-        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime string "10800"
-        start_time=0
-        end_time=10800
-    fi
-
-    echo_t "[RDKB_SELFHEAL] : Firmware upgrade start time : $start_time"
-    echo_t "[RDKB_SELFHEAL] : Firmware upgrade end time : $end_time"
-
-    if [ "$UTC_ENABLE" == "true" ]
-    then
-        reb_hr="10#"`LTime H`
-        reb_min="10#"`LTime M`
-        reb_sec="10#"`date +"%S"`
-    else
-        reb_hr="10#"`date +"%H"`
-        reb_min="10#"`date +"%M"`
-        reb_sec="10#"`date +"%S"`
-    fi
-
-    reb_window=0
-    reb_hr_in_sec=$((reb_hr*60*60))
-    reb_min_in_sec=$((reb_min*60))
-    reb_time_in_sec=$((reb_hr_in_sec+reb_min_in_sec+reb_sec))
-    echo_t "XCONF SCRIPT : Current time in seconds : $reb_time_in_sec"
-    echo_t "XCONF SCRIPT : Current time in seconds : $reb_time_in_sec" >> $XCONF_LOG_FILE
-
-    if [ $start_time -lt $end_time ] && [ $reb_time_in_sec -ge $start_time ] && [ $reb_time_in_sec -lt $end_time ]
-    then
-        reb_window=1
-    elif [[ ($start_time -gt $end_time) && ( $reb_time_in_sec -lt $end_time || $reb_time_in_sec -ge $start_time ) ]];then
-        reb_window=1
-    else
-        reb_window=0
-    fi
-}
-
-
 	# Checking PSM's PID
 	PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" = "" ]; then

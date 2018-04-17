@@ -23,6 +23,7 @@ UTOPIA_PATH="/etc/utopia/service.d"
 rebootDeviceNeeded=0
 rebootNeededforbrlan1=0
 batteryMode=0
+IsAlreadyCountReseted=0
 
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
@@ -304,7 +305,19 @@ fi
      	   
   	if [ $batteryMode = 0 ]
   	then
-	     sh $TAD_PATH/task_health_monitor.sh
+	    checkMaintenanceWindow
+	    if [ $reb_window -eq 1 ]
+	    then
+	        if [ $IsAlreadyCountReseted -eq 0 ]
+		then
+		    syscfg set todays_reset_count 0
+		    syscfg commit
+		    IsAlreadyCountReseted=1
+		    fi
+	    else
+		    IsAlreadyCountReseted=0
+	    fi
+	    sh $TAD_PATH/task_health_monitor.sh
 	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
