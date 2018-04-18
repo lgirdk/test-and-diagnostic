@@ -21,6 +21,9 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
+grePrefix="gretap0"
+brlanPrefix="brlan"
+l2sd0Prefix="l2sd0"
 
 if [ -f /etc/device.properties ]
 then
@@ -517,6 +520,77 @@ fi
 		else
 		   echo "Xfinitywifi is enabled and l2sd0.103 is present"
 		fi
+                
+                #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
+ 		#if found not attached , then add the device to bridges
+                for index in 2 3 4 5
+	        do
+                    grePresent=`ifconfig -a | grep $grePrefix.10$index`
+                    if [ -n "$grePresent" ]; then
+                      vlanAdded=`brctl show $brlanPrefix$index | grep $l2sd0Prefix.10$index`
+                      if [ -z "$vlanAdded" ]; then
+                        echo "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
+                        brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
+                      fi 
+                    fi
+                done
+                
+                #Check for Secured Xfinity hotspot briges and associate them properly if 
+		#not proper
+                #l2sd0.103 case
+                
+		#Secured Xfinity 2.4
+                grePresent=`ifconfig -a | grep $grePrefix.104`
+                if [ -n "$grePresent" ]; then
+                 ifconfig -a | grep l2sd0.104
+                 if [ $? == 1 ]; then
+                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.104 interface is not created try creatig it"
+                    sysevent set multinet_7-status stopped
+                    $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                    ifconfig -a | grep l2sd0.104
+                    if [ $? == 1 ]; then
+                       echo "l2sd0.104 is not created at First Retry, try again after 2 sec"
+                       sleep 2
+                       sysevent set multinet_7-status stopped
+                       $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                       ifconfig -a | grep l2sd0.104
+                       if [ $? == 1 ]; then
+                          echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 is not created after Second Retry, no more retries !!!"
+                       fi
+                    else
+                         echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 created at First Retry itself"
+                    fi
+                 else
+                    echo "Xfinitywifi is enabled and l2sd0.104 is present"
+                 fi
+                fi
+                
+                #Secured Xfinity 2.4
+                grePresent=`ifconfig -a | grep $grePrefix.105`
+                if [ -n "$grePresent" ]; then
+                 ifconfig -a | grep l2sd0.105
+                 if [ $? == 1 ]; then
+                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.105 interface is not created try creatig it"
+                    sysevent set multinet_8-status stopped
+                    $UTOPIA_PATH/service_multinet_exec multinet-start 8
+                    ifconfig -a | grep l2sd0.105
+                    if [ $? == 1 ]; then
+                       echo "l2sd0.105 is not created at First Retry, try again after 2 sec"
+                       sleep 2
+                       sysevent set multinet_8-status stopped
+                       $UTOPIA_PATH/service_multinet_exec multinet-start 8
+                       ifconfig -a | grep l2sd0.105
+                       if [ $? == 1 ]; then
+                          echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 is not created after Second Retry, no more retries !!!"
+                       fi
+                    else
+                         echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 created at First Retry itself"
+                    fi
+                 else
+                    echo "Xfinitywifi is enabled and l2sd0.105 is present"
+                 fi
+                fi
+                 
 	fi
 if [ -f "/etc/PARODUS_ENABLE" ]; then
 	# Checking parodus PID
