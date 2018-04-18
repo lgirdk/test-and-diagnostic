@@ -123,7 +123,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
     cmd[0] = '\0', left = sizeof(cmd);
     
-    left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+    left -= snprintf(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
     if (strlen(cfg->ifname))
         left -= snprintf(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
     if (cfg->cnt)
