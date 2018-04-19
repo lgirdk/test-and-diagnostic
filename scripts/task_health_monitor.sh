@@ -107,6 +107,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 ###########################################
 
 if [ "$MULTI_CORE" = "yes" ]; then
+	if [ "$CORE_TYPE" = "arm" ]; then
+		# Checking logbackup PID
+		LOGBACKUP_PID=`pidof logbackup`
+		if [ "$LOGBACKUP_PID" == "" ]; then
+			echo_t "RDKB_PROCESS_CRASHED : logbackup process is not running, need restart"
+			/usr/bin/logbackup &
+		fi
+        fi
 	if [ -f $PING_PATH/ping_peer ]
 	then
 	## Check Peer ip is accessible
