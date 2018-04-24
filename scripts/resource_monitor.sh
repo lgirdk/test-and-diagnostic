@@ -309,10 +309,13 @@ fi
 	    if [ $reb_window -eq 1 ]
 	    then
 	        if [ $IsAlreadyCountReseted -eq 0 ]
-		then
-		    syscfg set todays_reset_count 0
-		    syscfg commit
-		    IsAlreadyCountReseted=1
+			then
+			    syscfg set todays_reset_count 0
+			    syscfg commit
+			    IsAlreadyCountReseted=1
+			    RES_COUNT=`syscfg get todays_reset_count`
+	  	        echo_t "RDKB_SELFHEAL : Resetted todays_reset_count during maintenance Window"
+	  	        echo_t "RDKB_SELFHEAL : Current Reset Count is $RES_COUNT"	  	        
 		    fi
 	    else
 		    IsAlreadyCountReseted=0
