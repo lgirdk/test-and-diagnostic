@@ -145,6 +145,7 @@ bbhmUdpechoStartUdpEchoTask
     char                            port[6]             		= {0};
     int                             iReturn             		= 0;
     char                            address[NI_MAXHOST]         = {0}; /*RDKB-7455, CID-33431, buffer should be of NI_MAXHOST length*/
+    char                            srcIP[NI_MAXHOST]  = {0};
 
     if ( !pMyObject->bActive )
     {
@@ -256,6 +257,20 @@ bbhmUdpechoStartUdpEchoTask
         }
 
         AnscTrace("!!! after getaddrinfo !!!\n");
+
+        iReturn = _xskt_getnameinfo
+                    (
+                        pxskt_src_addrinfo->ai_addr,
+                        pxskt_src_addrinfo->ai_addrlen,
+                        srcIP,
+                        NI_MAXHOST,
+                        NULL,
+                        NI_MAXSERV,
+                        NI_NUMERICHOST
+                    );
+
+        CcspTraceInfo(("Normalized source ip = %s iReturn = %d \n", srcIP, iReturn));
+
     }
 
     if ( pMyObject->bStopServer )
@@ -340,7 +355,7 @@ bbhmUdpechoStartUdpEchoTask
 
 
                 /* check the client ip address */
-                if ( AnscEqualString(address, pUdpEchoInfo->SourceIPName, TRUE) )
+                if ( AnscEqualString(address, srcIP, TRUE) )
                 {
                     if ( bFirst )
                     {
