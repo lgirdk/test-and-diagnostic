@@ -70,7 +70,7 @@ PSM_PID=`pidof PsmSsp`
 		resetNeeded "" CcspHomeSecurity 
 	fi
 
-	DEVICE_FINGERPRINT_VALUE=`psmcli get eRT.com.cisco.spvtg.ccsp.advsecurity.Device.DeviceInfo.X_RDKCENTRAL-COM_DeviceFingerPrint.Enable`
+	DEVICE_FINGERPRINT_VALUE=`syscfg get Advsecurity_DeviceFingerPrint`
 	if [ "$DEVICE_FINGERPRINT_VALUE" = "1" ] ; then
 	        DEVICE_FINGERPRINT_ENABLE=true
 	else

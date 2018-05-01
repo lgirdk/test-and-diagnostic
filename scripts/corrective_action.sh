@@ -21,6 +21,7 @@
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
+ADVSEC_LAUNCH_SCRIPT=/usr/ccsp/pam/launch_adv_security.sh
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
@@ -612,16 +613,9 @@ resetNeeded()
 			elif [ "$ProcessName" == "CcspAdvSecuritySsp" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-				if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
-					cd /tmp/cujo_dnld/usr/ccsp/advsec
-					advsec_disable
-					./CcspAdvSecuritySsp -subsys $Subsys
-				else
-					cd /usr/ccsp/advsec
-					advsec_disable
-					$BINPATH/CcspAdvSecuritySsp -subsys $Subsys
+				if [ -f $ADVSEC_LAUNCH_SCRIPT ]; then
+					$ADVSEC_LAUNCH_SCRIPT -enable &
 				fi
-				cd -
 			elif [ "$folderName" == "advsec_bin" ]
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
