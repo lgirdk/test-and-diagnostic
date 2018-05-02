@@ -113,22 +113,24 @@ getCMMac()
 checkConditionsbeforeAction()
 {
 
-	 isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
-	 if [ "$isIPv4" = "" ]
-	 then
-        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
-        	 if [ "$isIPv6" != "" ]
+	if [ "$1" != "RM" ];then
+
+		 isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+		 if [ "$isIPv4" = "" ]
 		 then
-			CMRegComplete=1
+			 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+			 if [ "$isIPv6" != "" ]
+			 then
+				CMRegComplete=1
+			 else
+			   	CMRegComplete=0
+				echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+				return 1			
+			 fi
 		 else
-		   	CMRegComplete=0
-			echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
-			return 1			
+			CMRegComplete=1
 		 fi
-	 else
-		CMRegComplete=1
-	 fi
-			
+	fi		
 
 	printOnce=1
 	loop=1
@@ -267,7 +269,7 @@ rebootNeeded()
 	else
 
 		# Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
-		checkConditionsbeforeAction
+		checkConditionsbeforeAction $1
 
 		return_value=$?
 

@@ -88,7 +88,7 @@ getCMMac()
 
 checkConditionsbeforeAction()
 {
-
+	if [ "$1" != "RM" ];then
 	 isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
 	 if [ "$isIPv4" = "" ]
 	 then
@@ -104,7 +104,7 @@ checkConditionsbeforeAction()
 	 else
 		CMRegComplete=1
 	 fi
-			
+	fi			
 
 	printOnce=1
 	loop=1
@@ -237,7 +237,7 @@ rebootNeeded()
 	else
 
 		# Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
-		checkConditionsbeforeAction
+		checkConditionsbeforeAction $1
 
 		return_value=$?
 
