@@ -482,19 +482,22 @@ fi
 
 		#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
 		#If they are not present below code shall re-create them
-		#l2sd0.102 case 
-		ifconfig -a | grep l2sd0.102
+		#l2sd0.102 case , also adding a strict rule that they are up, since some
+                #devices we observed l2sd0 not up
+		ifconfig | grep l2sd0.102
 		if [ $? == 1 ]; then
 		     echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
 		     sysevent set multinet_3-status stopped
 		     $UTOPIA_PATH/service_multinet_exec multinet-start 3
-		     ifconfig -a | grep l2sd0.102
+                     ifconfig l2sd0.102 up
+		     ifconfig | grep l2sd0.102
 		     if [ $? == 1 ]; then
 		       echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
 		       sleep 2
 		       sysevent set multinet_3-status stopped
 		       $UTOPIA_PATH/service_multinet_exec multinet-start 3
-		       ifconfig -a | grep l2sd0.102
+                       ifconfig l2sd0.102 up
+		       ifconfig | grep l2sd0.102
 		       if [ $? == 1 ]; then
 		          echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
 		       fi
@@ -506,18 +509,20 @@ fi
 		fi
 
 		#l2sd0.103 case
-		ifconfig -a | grep l2sd0.103
+		ifconfig | grep l2sd0.103
 		if [ $? == 1 ]; then
 		   echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
 		   sysevent set multinet_4-status stopped
 		   $UTOPIA_PATH/service_multinet_exec multinet-start 4
-		   ifconfig -a | grep l2sd0.103
+                   ifconfig l2sd0.103 up
+		   ifconfig | grep l2sd0.103
 		   if [ $? == 1 ]; then
 		      echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
 		      sleep 2
 		      sysevent set multinet_4-status stopped
 		      $UTOPIA_PATH/service_multinet_exec multinet-start 4
-		      ifconfig -a | grep l2sd0.103
+                      ifconfig l2sd0.103 up
+		      ifconfig | grep l2sd0.103
 		      if [ $? == 1 ]; then
 		         echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
 		      fi
@@ -549,18 +554,20 @@ fi
 		#Secured Xfinity 2.4
                 grePresent=`ifconfig -a | grep $grePrefix.104`
                 if [ -n "$grePresent" ]; then
-                 ifconfig -a | grep l2sd0.104
+                 ifconfig | grep l2sd0.104
                  if [ $? == 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.104 interface is not created try creatig it"
                     sysevent set multinet_7-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                    ifconfig -a | grep l2sd0.104
+                    ifconfig l2sd0.104 up
+                    ifconfig | grep l2sd0.104
                     if [ $? == 1 ]; then
                        echo "l2sd0.104 is not created at First Retry, try again after 2 sec"
                        sleep 2
                        sysevent set multinet_7-status stopped
                        $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                       ifconfig -a | grep l2sd0.104
+                       ifconfig l2sd0.104 up
+                       ifconfig | grep l2sd0.104
                        if [ $? == 1 ]; then
                           echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 is not created after Second Retry, no more retries !!!"
                        fi
@@ -572,21 +579,23 @@ fi
                  fi
                 fi
                 
-                #Secured Xfinity 2.4
+                #Secured Xfinity 5
                 grePresent=`ifconfig -a | grep $grePrefix.105`
                 if [ -n "$grePresent" ]; then
-                 ifconfig -a | grep l2sd0.105
+                 ifconfig | grep l2sd0.105
                  if [ $? == 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.105 interface is not created try creatig it"
                     sysevent set multinet_8-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                    ifconfig -a | grep l2sd0.105
+                    ifconfig l2sd0.105 up
+                    ifconfig | grep l2sd0.105
                     if [ $? == 1 ]; then
                        echo "l2sd0.105 is not created at First Retry, try again after 2 sec"
                        sleep 2
                        sysevent set multinet_8-status stopped
                        $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                       ifconfig -a | grep l2sd0.105
+                       ifconfig l2sd0.105 up
+                       ifconfig | grep l2sd0.105
                        if [ $? == 1 ]; then
                           echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 is not created after Second Retry, no more retries !!!"
                        fi
