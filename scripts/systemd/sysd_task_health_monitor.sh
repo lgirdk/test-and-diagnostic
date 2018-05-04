@@ -384,18 +384,18 @@ PSM_PID=`pidof PsmSsp`
 #Logging to check the DHCP range corruption
     lan_ipaddr=`syscfg get lan_ipaddr`
     lan_netmask=`syscfg get lan_netmask`
-    echo "[`getDateTime`] [RDKB_SELFHEAL] : lan_ipaddr = $lan_ipaddr lan_netmask = $lan_netmask"
+    echo "[`getDateTime`]DHCPCORRUPT_TRACE:lan_ipaddr=$lan_ipaddr,lan_netmask=$lan_netmask"
 
     lost_and_found_enable=`syscfg get lost_and_found_enable`
-    echo "[`getDateTime`] [RDKB_SELFHEAL] :  lost_and_found_enable = $lost_and_found_enable"
+    echo "[`getDateTime`]DHCPCORRUPT_TRACE:lost_and_found_enable=$lost_and_found_enable"
     if [ "$lost_and_found_enable" == "true" ]
     then
         iot_ifname=`syscfg get iot_ifname`
         iot_dhcp_start=`syscfg get iot_dhcp_start`
         iot_dhcp_end=`syscfg get iot_dhcp_end`
         iot_netmask=`syscfg get iot_netmask`
-        echo "[`getDateTime`] [RDKB_SELFHEAL] : DHCP server configuring for IOT iot_ifname = $iot_ifname "
-        echo "[`getDateTime`] [RDKB_SELFHEAL] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
+        echo "[`getDateTime`]DHCPCORRUPT_TRACE:iot_ifname=$iot_ifname "
+        echo "[`getDateTime`]DHCPCORRUPT_TRACE:iot_dhcp_start=$iot_dhcp_start,iot_dhcp_end=$iot_dhcp_end,iot_netmask=$iot_netmask"
     fi
 
 #Checking whether dnsmasq is running or not
