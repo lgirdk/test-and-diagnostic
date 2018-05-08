@@ -463,9 +463,13 @@ resetNeeded()
         			hotspot_arpd -q 0  > /dev/null &
 			elif [ "$folderName" == "advsec_bin" ]
 			then
-				echo "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
 				if [ "$ProcessName" == "AdvSecurityAgent" ]
 				then
+					if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
+						rm $ADVSEC_AGENT_SHUTDOWN
+					else
+						echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
+					fi
 					advsec_restart_agent
 				elif [ "$ProcessName" == "AdvSecurityDns" ]
 				then
