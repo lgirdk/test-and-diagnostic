@@ -547,6 +547,9 @@ fi
                     fi
                 done
                 
+                SECURED_24=`dmcli eRT getv Device.WiFi.SSID.9.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+                SECURED_5=`dmcli eRT getv Device.WiFi.SSID.10.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+
                 #Check for Secured Xfinity hotspot briges and associate them properly if 
 		#not proper
                 #l2sd0.103 case
@@ -577,6 +580,15 @@ fi
                  else
                     echo "Xfinitywifi is enabled and l2sd0.104 is present"
                  fi
+                else
+                #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
+                #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
+                #connect
+                 if [ "$SECURED_24" = "true" ]; then
+                  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
+                  sysevent set multinet_7-status stopped
+                  $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                 fi
                 fi
                 
                 #Secured Xfinity 5
@@ -604,6 +616,12 @@ fi
                     fi
                  else
                     echo "Xfinitywifi is enabled and l2sd0.105 is present"
+                 fi
+                else
+                 if [ "$SECURED_5" = "true" ]; then
+                  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
+                  sysevent set multinet_8-status stopped
+                  $UTOPIA_PATH/service_multinet_exec multinet-start 8
                  fi
                 fi
                  
