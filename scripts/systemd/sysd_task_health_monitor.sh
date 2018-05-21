@@ -88,25 +88,27 @@ PSM_PID=`pidof PsmSsp`
 					echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Agent process is not running, need restart"
 					resetNeeded advsec_bin AdvSecurityAgent
 				fi
-				ADV_DNS_PID=`advsec_is_alive dnscap`
-				if [ "$ADV_DNS_PID" = "" ] ; then
-					echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Dnscap process is not running, need restart"
-					resetNeeded advsec_bin AdvSecurityDns
-				fi
 				ADV_DHCP_PID=`advsec_is_alive dhcpcap`
 				if [ "$ADV_DHCP_PID" = "" ] ; then
 					echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Dhcpcap process is not running, need restart"
 					resetNeeded advsec_bin AdvSecurityDhcp
 				fi
-				ADV_MDNS_PID=`advsec_is_alive mdnscap`
-				if [ "$ADV_MDNS_PID" = "" ] ; then
-					echo_t "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
-					resetNeeded advsec_bin AdvSecurityMdns
-				fi
-				ADV_P0F_PID=`advsec_is_alive p0f`
-				if [ "$ADV_P0F_PID" = "" ] ; then
-					echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity PoF process is not running, need restart"
-					resetNeeded advsec_bin AdvSecurityPof
+				if [ ! -f "$DAEMONS_HIBERNATING" ] ; then
+					ADV_DNS_PID=`advsec_is_alive dnscap`
+					if [ "$ADV_DNS_PID" = "" ] ; then
+						echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Dnscap process is not running, need restart"
+						resetNeeded advsec_bin AdvSecurityDns
+					fi
+					ADV_MDNS_PID=`advsec_is_alive mdnscap`
+					if [ "$ADV_MDNS_PID" = "" ] ; then
+						echo_t "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
+						resetNeeded advsec_bin AdvSecurityMdns
+					fi
+					ADV_P0F_PID=`advsec_is_alive p0f`
+					if [ "$ADV_P0F_PID" = "" ] ; then
+						echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity PoF process is not running, need restart"
+						resetNeeded advsec_bin AdvSecurityPof
+					fi
 				fi
 				ADV_SCAN_PID=`advsec_is_alive scannerd`
 				if [ "$ADV_SCAN_PID" = "" ] ; then
