@@ -702,41 +702,7 @@ diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void)
 #define DEVICE_PROPERTIES    "/etc/device.properties"
 diag_err_t diag_getPartnerID( char *partnerID )
 {
-	if( NULL == partnerID )
-	{
-		return DIAG_ERR_OTHER;
-	}
-	else
-	{
-		FILE	*deviceFilePtr;
-		char	*pBldTypeStr		= NULL;
-		char	 fileContent[ 255 ] = { '\0' };
-		int 	 offsetValue		= 0;
-		deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
-		
-		// Copy default string as "comcast"
-		sprintf( partnerID, "%s", "comcast" );
-
-		if ( deviceFilePtr ) 
-		{
-			while ( fscanf( deviceFilePtr , "%s", fileContent ) != EOF ) 
-			{
-				if ( ( pBldTypeStr = strstr( fileContent, "PARTNER_ID" ) ) != NULL ) 
-				{
-					offsetValue = strlen( "PARTNER_ID=" );
-					pBldTypeStr = pBldTypeStr + offsetValue ;
-					break;
-				}
-			}
-			
-			fclose( deviceFilePtr );
-		
-			if( pBldTypeStr )
-			{
-				sprintf( partnerID, "%s", pBldTypeStr );
-			}
-		}
-	}
+	getPartnerId ( partnerID ) ;
 	
 	return DIAG_ERR_OK;
 }
