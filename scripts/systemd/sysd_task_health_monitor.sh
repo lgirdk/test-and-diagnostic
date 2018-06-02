@@ -265,8 +265,14 @@ PSM_PID=`pidof PsmSsp`
 		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
 	fi
 
+    #Selfheal will run after 15mins of bootup, then by now the WIFI initialization must have 
+    #completed, so if still wifi_initilization not done, we have to recover the WIFI
+    #Restart the WIFI if initialization is not done with in 15mins of poweron.
 	SSID_DISABLED=0
 	BR_MODE=0
+    if [ -f "/tmp/wifi_initialized" ]
+    then
+    echo "[RDKB_SELFHEAL] : WiFi Initialization done"
 	ssidEnable=`dmcli eRT getv Device.WiFi.SSID.2.Enable`
 	ssidExecution=`echo $ssidEnable | grep "Execution succeed"`
 	if [ "$ssidExecution" != "" ]
@@ -287,6 +293,17 @@ PSM_PID=`pidof PsmSsp`
             echo "$ssidEnable"
        fi            
 	fi
+    else
+        echo "[RDKB_PLATFORM_ERROR] : WiFi initialization not done"
+        if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ]]; then
+            if [ -f "/tmp/.qtn_ready" ]
+            then
+                echo "[RDKB_PLATFORM_ERROR] : restarting the CcspWifiSsp"
+                systemctl stop ccspwifiagent
+                systemctl start ccspwifiagent
+            fi
+        fi
+    fi
 
         # RDKB-6895
         isBridging=`syscfg get bridge_mode`
