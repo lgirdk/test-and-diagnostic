@@ -265,6 +265,49 @@ PSM_PID=`pidof PsmSsp`
 		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
 	fi
 
+	# Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
+	MESH_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+	if [ "$MESH_ENABLE" = "true" ]
+	then
+	   echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
+	
+	   # Fetch mesh tunnels from the brlan0 bridge if they exist
+	   brctl0_ifaces=`brctl show brlan0 | egrep "pgd"` 
+	   br0_ifaces=`ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}'`
+	
+	   for ifn in $br0_ifaces; do
+	      brFound="false"
+	
+	      for br in $brctl0_ifaces; do
+	         if [ "$br" == "$ifn" ]; then
+	            brFound="true"
+	         fi
+	      done
+	      if [ "$brFound" == "false" ]; then
+	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
+	         brctl addif brlan0 $ifn;
+	      fi
+	   done
+	
+	   # Fetch mesh tunnels from the brlan1 bridge if they exist
+	   brctl1_ifaces=`brctl show brlan1 | egrep "pgd"` 
+	   br1_ifaces=`ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}'`
+	
+	   for ifn in $br1_ifaces; do
+	      brFound="false"
+	
+	      for br in $brctl1_ifaces; do
+	         if [ "$br" == "$ifn" ]; then
+	            brFound="true"
+	         fi
+	      done
+	      if [ "$brFound" == "false" ]; then
+	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
+	         brctl addif brlan1 $ifn;
+	      fi
+	   done
+	fi
+
     #Selfheal will run after 15mins of bootup, then by now the WIFI initialization must have 
     #completed, so if still wifi_initilization not done, we have to recover the WIFI
     #Restart the WIFI if initialization is not done with in 15mins of poweron.
