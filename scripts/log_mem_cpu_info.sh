@@ -54,7 +54,7 @@ DELAY=30
         total=`echo "$iccctlMemInfo" | cut -f4 -d: | cut -f2 -d" "`
 
         # Calculate the threshold if in use memory is greater than zero
-        if [ $inUse -ne 0 ]
+        if [ "$inUse" -ne 0 ]
         then
            echo_t "ICCCTL_IN_USE:$inUse"
            thresholdReached=$(( $inUse * 100 / $total ))
@@ -188,7 +188,7 @@ DELAY=30
 	########### df related ########
         TMPFS_CUR_USAGE=0
 	TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
-	if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
+	if [ "$TMPFS_CUR_USAGE" -ge "$TMPFS_THRESHOLD" ]
 	then
 		echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
 	fi
