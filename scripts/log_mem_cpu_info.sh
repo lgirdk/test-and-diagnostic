@@ -18,12 +18,13 @@
 # limitations under the License.
 #######################################################################################
 
-source /fss/gw/usr/ccsp/tad/corrective_action.sh
-source /etc/log_timestamp.sh
 
 if [ -f /etc/device.properties ]; then
    source /etc/device.properties
 fi
+
+source /usr/ccsp/tad/corrective_action.sh
+source /etc/log_timestamp.sh
 
 TMPFS_THRESHOLD=85
 max_count=12
