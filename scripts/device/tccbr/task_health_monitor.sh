@@ -556,7 +556,7 @@ fi
                    fi
                 fi
             else
-               echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+               echo_t "[RDKB_PLATFORM_ERROR] : wifi agent is off while checking 5G status."
 	           echo "$ssidStatus_5"
             fi
         fi
@@ -575,7 +575,7 @@ fi
                echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             fi
         else
-            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
+            echo_t "[RDKB_PLATFORM_ERROR] : wifi agent is off while checking 2.4G Enable"
 			echo "$ssidEnable_2"
         fi
 
@@ -601,7 +601,7 @@ fi
                     fi
                 fi
             else
-               echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+               echo_t "[RDKB_PLATFORM_ERROR] : wifi agent is off while checking 2.4G status."
 	           echo "$ssidStatus_2"
             fi
         fi
