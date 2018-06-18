@@ -834,14 +834,18 @@ fi
 			fi
 		fi
 
-		if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+
+                # Checking for erouter mode
+                LAST_EROUTER_MODE=`syscfg get last_erouter_mode`
+
+                if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
 			echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
 			wan_dhcp_client_v4=0
 		fi
 			
         if  [ "$WAN_TYPE" != "EPON" ] ;then
 	
-		if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+                if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
 			echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
 			wan_dhcp_client_v6=0
 		fi
