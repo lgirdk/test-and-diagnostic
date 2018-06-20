@@ -612,7 +612,11 @@ resetNeeded()
 				cd -		
 			elif [ "$ProcessName" == "CcspAdvSecuritySsp" ]
 			then
-				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
+					rm $ADVSEC_AGENT_SHUTDOWN
+				else
+					echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				fi
 				if [ -f $ADVSEC_LAUNCH_SCRIPT ]; then
 					$ADVSEC_LAUNCH_SCRIPT -enable &
 				fi

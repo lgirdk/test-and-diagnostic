@@ -77,7 +77,8 @@ PSM_PID=`pidof PsmSsp`
 	        DEVICE_FINGERPRINT_ENABLE=false
 	fi
 
-	if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ] ; then
+	advsec_bridge_mode=`syscfg get bridge_mode`
+	if [ "$DEVICE_FINGERPRINT_ENABLE" = "true" ] && [ "$advsec_bridge_mode" != "2" ]; then
 
 		if [ -f $ADVSEC_PATH ]
 		then
