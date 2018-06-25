@@ -528,15 +528,29 @@ PSM_PID=`pidof PsmSsp`
 
 		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
 		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
-
-			echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-			if [ -f "/etc/dibbler/server.conf" ]
-			then
-				dibbler-server stop
+			#ARRISXB6-7776 .. check if IANAEnable is set to 0
+			IANAEnable=`syscfg show | grep dhcpv6spool00::IANAEnable | cut -d "=" -f2`
+			if [ "$IANAEnable" = "0" ] ; then
+				echo "[`getDateTime`] IANAEnable disabled, enable and restart dhcp6 client and dibbler"
+				syscfg set dhcpv6spool00::IANAEnable 1
+				syscfg commit
 				sleep 2
-				dibbler-server start
+				#need to restart dhcp client to generate dibbler conf
+				sh $DHCPV6_HANDLER disable
+				sleep 2
+				sh $DHCPV6_HANDLER enable
 			else
-				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+				
+				echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+			
+				if [ -f "/etc/dibbler/server.conf" ]
+				then
+					dibbler-server stop
+					sleep 2
+					dibbler-server start
+				else
+					echo "[`getDateTime`] RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+				fi
 			fi
 		fi
 	fi
