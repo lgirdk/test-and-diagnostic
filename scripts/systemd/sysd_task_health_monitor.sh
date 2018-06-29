@@ -155,7 +155,7 @@ PSM_PID=`pidof PsmSsp`
 	# Checking lighttpd PID
 	LIGHTTPD_PID=`pidof lighttpd`
 	if [ "$LIGHTTPD_PID" = "" ]; then
-		isPortKilled=`netstat -anp | grep 21515`
+		isPortKilled=`netstat -an | grep 21515`
 		if [ "$isPortKilled" != "" ]
 		then
 		    echo "[`getDateTime`] Port 21515 is still alive. Killing processes associated to 21515"
