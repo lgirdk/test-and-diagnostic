@@ -40,7 +40,7 @@ if [ ! -f /usr/bin/GetConfigFile ];then
 fi
 IDLE_TIMEOUT=30
 source $UTOPIA_PATH/log_env_var.sh
-
+brlan1_firewall="/tmp/brlan1_firewall_rule_validated"
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -619,6 +619,17 @@ fi
 		#sysevent set firewall-restart
 		fi
      fi
+
+	if [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]
+	then
+		firewall_rules=`iptables-save`
+		check_if_brlan1=`echo $firewall_rules | grep brlan1`
+		if [ "$check_if_brlan1" == "" ]; then
+			echo_t "[RDKB_PLATFORM_ERROR]:brlan1_firewall_rules_missing,restarting firewall"
+			sysevent set firewall-restart
+		fi
+		touch $brlan1_firewall
+         fi
 
 #Logging to check the DHCP range corruption
     lan_ipaddr=`syscfg get lan_ipaddr`

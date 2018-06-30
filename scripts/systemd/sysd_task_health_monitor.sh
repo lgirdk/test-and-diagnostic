@@ -46,7 +46,7 @@ then
 fi
 rebootDeviceNeeded=0
 
-
+brlan1_firewall="/tmp/brlan1_firewall_rule_validated"
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
 PSM_PID=`pidof PsmSsp`
@@ -443,6 +443,17 @@ PSM_PID=`pidof PsmSsp`
 		#sysevent set firewall-restart
 		fi
      fi
+
+	if [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]
+	then
+		firewall_rules=`iptables-save`
+		check_if_brlan1=`echo $firewall_rules | grep brlan1`
+		if [ "$check_if_brlan1" == "" ]; then
+			echo_t "[RDKB_PLATFORM_ERROR]:brlan1_firewall_rules_missing,restarting firewall"
+			sysevent set firewall-restart
+		fi
+		touch $brlan1_firewall
+         fi
 
 #Logging to check the DHCP range corruption
     lan_ipaddr=`syscfg get lan_ipaddr`
