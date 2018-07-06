@@ -181,10 +181,13 @@ PSM_PID=`pidof PsmSsp`
 	echo "[`getDateTime`] [RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
 	if [ "$lanSelfheal" != "done" ]
 	then
-      # Check device is in router mode
-      # Get from syscfg instead of dmcli for performance reasons
-			check_device_in_bridge_mode=`syscfg get bridge_mode`
-			if [ "$check_device_in_bridge_mode" == "0" ]
+
+		check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+		check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
+		if [ "$check_param_get_succeed" != "" ]
+		then
+			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
+			if [ "$check_device_in_router_mode" != "" ]
 			then
 				check_if_brlan0_created=`ifconfig | grep brlan0`
 				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
@@ -219,6 +222,9 @@ PSM_PID=`pidof PsmSsp`
 				fi
 
 			fi
+		else
+				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+		fi
 	else
 		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
 	fi
@@ -349,14 +355,35 @@ PSM_PID=`pidof PsmSsp`
         fi
     fi
 
+        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
         # RDKB-6895
-        isBridging=`syscfg get bridge_mode`
-        if [ "$isBridging" != "0" ]
+        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+        if [ "$bridgeSucceed" != "" ]
         then
+           isBridging=`echo $bridgeMode | grep router`
+           if [ "$isBridging" = "" ]
+           then
                BR_MODE=1
                echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
+           fi
+        else
+            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+
+	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
+	    if [ "$pandm_timeout" != "" ]; then
+			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter time out"
+			cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
+			cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
+			if [ "$cr_timeout" != "" ]; then
+				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+				PANDM_PID=`pidof CcspPandMSsp`
+				rm -rf /tmp/pam_initialized
+				systemctl restart CcspPandMSsp.service
+			fi
+	    else
+			echo "$bridgeMode"
+	    fi
         fi
-        
 
 	# If bridge mode is not set and WiFI is not disabled by user,
 	# check the status of SSID
