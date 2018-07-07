@@ -730,16 +730,9 @@ fi
 # Checking snmp master PID
         if [ "$BOX_TYPE" = "XB3" ]; then
  		SNMP_MASTER_PID=`pidof snmp_agent_cm`
-		if [ "$SNMP_MASTER_PID" == "" ]
-		then
-			if [ ! -f "$SNMPMASTERCRASHED"  ]
-			then
-				echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm is crashed, need to reboot the device in maintanance window." 
+		if [ "$SNMP_MASTER_PID" == "" ] && [  ! -f "$SNMPMASTERCRASHED"  ];then
+				echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed" 
 				touch $SNMPMASTERCRASHED
-			fi
-			rebootDeviceNeeded=1
-
-
 		fi
 	fi
 
@@ -1331,11 +1324,6 @@ fi
 						echo_t "Setting Last reboot reason"
 						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
 						echo_t "SET succeeded"
-						sh /etc/calc_random_time_to_reboot_dev.sh "" &
-					elif [ -f "$SNMPMASTERCRASHED" ]
-					then
-						echo_t "RDKB_REBOOT : snmm_cm_agent crashed, rebooting the device."
-						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string snmp_master_agent_crashed
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
 						echo "rebootDeviceNeeded"
