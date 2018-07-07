@@ -474,163 +474,165 @@ fi
 			fi
 		fi
 	fi
-	
-	HOTSPOT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep value | cut -f3 -d : | cut -f2 -d" "`
-	if [ "$HOTSPOT_ENABLE" = "true" ]
-	then
-	
-		DHCP_ARP_PID=`pidof hotspot_arpd`
-		if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
-		     echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
-		     resetNeeded "" hotspot_arpd 
-		fi
 
-		#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
-		#If they are not present below code shall re-create them
-		#l2sd0.102 case , also adding a strict rule that they are up, since some
-                #devices we observed l2sd0 not up
-		ifconfig | grep l2sd0.102
-		if [ $? == 1 ]; then
-		     echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
-		     sysevent set multinet_3-status stopped
-		     $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                     ifconfig l2sd0.102 up
-		     ifconfig | grep l2sd0.102
-		     if [ $? == 1 ]; then
-		       echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
-		       sleep 2
-		       sysevent set multinet_3-status stopped
-		       $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                       ifconfig l2sd0.102 up
-		       ifconfig | grep l2sd0.102
-		       if [ $? == 1 ]; then
-		          echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
-		       fi
-		     else
-		       echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
-		     fi
-		else
-		   echo "XfinityWifi is enabled and l2sd0.102 is present"  
-		fi
+	if [ "$BOX_TYPE" = "XB3" ]; then
+		HOTSPOT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep value | cut -f3 -d : | cut -f2 -d" "`
+		if [ "$HOTSPOT_ENABLE" = "true" ]
+		then
+		
+			DHCP_ARP_PID=`pidof hotspot_arpd`
+			if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
+			     echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
+			     resetNeeded "" hotspot_arpd 
+			fi
 
-		#l2sd0.103 case
-		ifconfig | grep l2sd0.103
-		if [ $? == 1 ]; then
-		   echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
-		   sysevent set multinet_4-status stopped
-		   $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                   ifconfig l2sd0.103 up
-		   ifconfig | grep l2sd0.103
-		   if [ $? == 1 ]; then
-		      echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
-		      sleep 2
-		      sysevent set multinet_4-status stopped
-		      $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                      ifconfig l2sd0.103 up
-		      ifconfig | grep l2sd0.103
-		      if [ $? == 1 ]; then
-		         echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
-		      fi
-		   else
-		        echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
-		   fi
-		else
-		   echo "Xfinitywifi is enabled and l2sd0.103 is present"
-		fi
-                
-                #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
- 		#if found not attached , then add the device to bridges
-                for index in 2 3 4 5
-	        do
-                    grePresent=`ifconfig -a | grep $grePrefix.10$index`
-                    if [ -n "$grePresent" ]; then
-                      vlanAdded=`brctl show $brlanPrefix$index | grep $l2sd0Prefix.10$index`
-                      if [ -z "$vlanAdded" ]; then
-                        echo "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
-                        brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
-                      fi 
-                    fi
-                done
-                
-                SECURED_24=`dmcli eRT getv Device.WiFi.SSID.9.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
-                SECURED_5=`dmcli eRT getv Device.WiFi.SSID.10.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+			#When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
+			#If they are not present below code shall re-create them
+			#l2sd0.102 case , also adding a strict rule that they are up, since some
+			#devices we observed l2sd0 not up
+			ifconfig | grep l2sd0.102
+			if [ $? == 1 ]; then
+			     echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it" 
+			     sysevent set multinet_3-status stopped
+			     $UTOPIA_PATH/service_multinet_exec multinet-start 3
+			     ifconfig l2sd0.102 up
+			     ifconfig | grep l2sd0.102
+			     if [ $? == 1 ]; then
+			       echo "l2sd0.102 is not created at First Retry, try again after 2 sec"
+			       sleep 2
+			       sysevent set multinet_3-status stopped
+			       $UTOPIA_PATH/service_multinet_exec multinet-start 3
+			       ifconfig l2sd0.102 up
+			       ifconfig | grep l2sd0.102
+			       if [ $? == 1 ]; then
+				  echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
+			       fi
+			     else
+			       echo "[RDKB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
+			     fi
+			else
+			   echo "XfinityWifi is enabled and l2sd0.102 is present"  
+			fi
 
-                #Check for Secured Xfinity hotspot briges and associate them properly if 
-		#not proper
-                #l2sd0.103 case
-                
-		#Secured Xfinity 2.4
-                grePresent=`ifconfig -a | grep $grePrefix.104`
-                if [ -n "$grePresent" ]; then
-                 ifconfig | grep l2sd0.104
-                 if [ $? == 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.104 interface is not created try creatig it"
-                    sysevent set multinet_7-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                    ifconfig l2sd0.104 up
-                    ifconfig | grep l2sd0.104
-                    if [ $? == 1 ]; then
-                       echo "l2sd0.104 is not created at First Retry, try again after 2 sec"
-                       sleep 2
-                       sysevent set multinet_7-status stopped
-                       $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                       ifconfig l2sd0.104 up
-                       ifconfig | grep l2sd0.104
-                       if [ $? == 1 ]; then
-                          echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 is not created after Second Retry, no more retries !!!"
-                       fi
-                    else
-                         echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 created at First Retry itself"
-                    fi
-                 else
-                    echo "Xfinitywifi is enabled and l2sd0.104 is present"
-                 fi
-                else
-                #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
-                #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
-                #connect
-                 if [ "$SECURED_24" = "true" ]; then
-                  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
-                  sysevent set multinet_7-status stopped
-                  $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                 fi
-                fi
-                
-                #Secured Xfinity 5
-                grePresent=`ifconfig -a | grep $grePrefix.105`
-                if [ -n "$grePresent" ]; then
-                 ifconfig | grep l2sd0.105
-                 if [ $? == 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.105 interface is not created try creatig it"
-                    sysevent set multinet_8-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                    ifconfig l2sd0.105 up
-                    ifconfig | grep l2sd0.105
-                    if [ $? == 1 ]; then
-                       echo "l2sd0.105 is not created at First Retry, try again after 2 sec"
-                       sleep 2
-                       sysevent set multinet_8-status stopped
-                       $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                       ifconfig l2sd0.105 up
-                       ifconfig | grep l2sd0.105
-                       if [ $? == 1 ]; then
-                          echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 is not created after Second Retry, no more retries !!!"
-                       fi
-                    else
-                         echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 created at First Retry itself"
-                    fi
-                 else
-                    echo "Xfinitywifi is enabled and l2sd0.105 is present"
-                 fi
-                else
-                 if [ "$SECURED_5" = "true" ]; then
-                  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
-                  sysevent set multinet_8-status stopped
-                  $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                 fi
-                fi
-                 
-	fi
+			#l2sd0.103 case
+			ifconfig | grep l2sd0.103
+			if [ $? == 1 ]; then
+			   echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it" 
+			   sysevent set multinet_4-status stopped
+			   $UTOPIA_PATH/service_multinet_exec multinet-start 4
+			   ifconfig l2sd0.103 up
+			   ifconfig | grep l2sd0.103
+			   if [ $? == 1 ]; then
+			      echo "l2sd0.103 is not created at First Retry, try again after 2 sec"
+			      sleep 2
+			      sysevent set multinet_4-status stopped
+			      $UTOPIA_PATH/service_multinet_exec multinet-start 4
+			      ifconfig l2sd0.103 up
+			      ifconfig | grep l2sd0.103
+			      if [ $? == 1 ]; then
+				 echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
+			      fi
+			   else
+				echo "[RDKB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
+			   fi
+			else
+			   echo "Xfinitywifi is enabled and l2sd0.103 is present"
+			fi
+			
+			#RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
+			#if found not attached , then add the device to bridges
+			for index in 2 3 4 5
+			do
+			    grePresent=`ifconfig -a | grep $grePrefix.10$index`
+			    if [ -n "$grePresent" ]; then
+			      vlanAdded=`brctl show $brlanPrefix$index | grep $l2sd0Prefix.10$index`
+			      if [ -z "$vlanAdded" ]; then
+				echo "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
+				brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
+			      fi 
+			    fi
+			done
+			
+			SECURED_24=`dmcli eRT getv Device.WiFi.SSID.9.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+			SECURED_5=`dmcli eRT getv Device.WiFi.SSID.10.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+
+			#Check for Secured Xfinity hotspot briges and associate them properly if 
+			#not proper
+			#l2sd0.103 case
+			
+			#Secured Xfinity 2.4
+			grePresent=`ifconfig -a | grep $grePrefix.104`
+			if [ -n "$grePresent" ]; then
+			 ifconfig | grep l2sd0.104
+			 if [ $? == 1 ]; then
+			    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.104 interface is not created try creatig it"
+			    sysevent set multinet_7-status stopped
+			    $UTOPIA_PATH/service_multinet_exec multinet-start 7
+			    ifconfig l2sd0.104 up
+			    ifconfig | grep l2sd0.104
+			    if [ $? == 1 ]; then
+			       echo "l2sd0.104 is not created at First Retry, try again after 2 sec"
+			       sleep 2
+			       sysevent set multinet_7-status stopped
+			       $UTOPIA_PATH/service_multinet_exec multinet-start 7
+			       ifconfig l2sd0.104 up
+			       ifconfig | grep l2sd0.104
+			       if [ $? == 1 ]; then
+				  echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 is not created after Second Retry, no more retries !!!"
+			       fi
+			    else
+				 echo "[RDKB_PLATFORM_ERROR] : l2sd0.104 created at First Retry itself"
+			    fi
+			 else
+			    echo "Xfinitywifi is enabled and l2sd0.104 is present"
+			 fi
+			else
+			#RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
+			#but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
+			#connect
+			 if [ "$SECURED_24" = "true" ]; then
+			  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
+			  sysevent set multinet_7-status stopped
+			  $UTOPIA_PATH/service_multinet_exec multinet-start 7
+			 fi
+			fi
+			
+			#Secured Xfinity 5
+			grePresent=`ifconfig -a | grep $grePrefix.105`
+			if [ -n "$grePresent" ]; then
+			 ifconfig | grep l2sd0.105
+			 if [ $? == 1 ]; then
+			    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.105 interface is not created try creatig it"
+			    sysevent set multinet_8-status stopped
+			    $UTOPIA_PATH/service_multinet_exec multinet-start 8
+			    ifconfig l2sd0.105 up
+			    ifconfig | grep l2sd0.105
+			    if [ $? == 1 ]; then
+			       echo "l2sd0.105 is not created at First Retry, try again after 2 sec"
+			       sleep 2
+			       sysevent set multinet_8-status stopped
+			       $UTOPIA_PATH/service_multinet_exec multinet-start 8
+			       ifconfig l2sd0.105 up
+			       ifconfig | grep l2sd0.105
+			       if [ $? == 1 ]; then
+				  echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 is not created after Second Retry, no more retries !!!"
+			       fi
+			    else
+				 echo "[RDKB_PLATFORM_ERROR] : l2sd0.105 created at First Retry itself"
+			    fi
+			 else
+			    echo "Xfinitywifi is enabled and l2sd0.105 is present"
+			 fi
+			else
+			 if [ "$SECURED_5" = "true" ]; then
+			  echo "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
+			  sysevent set multinet_8-status stopped
+			  $UTOPIA_PATH/service_multinet_exec multinet-start 8
+			 fi
+			fi
+			 
+		fi
+        fi
 if [ -f "/etc/PARODUS_ENABLE" ]; then
 	# Checking parodus PID
         PARODUS_PID=`pidof parodus`
