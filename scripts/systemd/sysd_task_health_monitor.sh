@@ -59,7 +59,7 @@ PSM_PID=`pidof PsmSsp`
 			psm_health_timeout=`echo $psm_health | grep "CCSP_ERR_TIMEOUT"`
 			psm_health_notexist=`echo $psm_health | grep "CCSP_ERR_NOT_EXIST"`
 			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
-				echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
+				echo "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
 				systemctl restart PsmSsp.service
 			fi
 		fi
@@ -102,7 +102,7 @@ PSM_PID=`pidof PsmSsp`
 					fi
 					ADV_MDNS_PID=`advsec_is_alive mdnscap`
 					if [ "$ADV_MDNS_PID" = "" ] ; then
-						echo_t "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
+						echo "[`getDateTime`] RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
 						resetNeeded advsec_bin AdvSecurityMdns
 					fi
 					ADV_P0F_PID=`advsec_is_alive p0f`
@@ -119,14 +119,14 @@ PSM_PID=`pidof PsmSsp`
 				if [ -e ${SAFEBRO_ENABLE} ] ; then
 					ADV_SB_PID=`advsec_is_alive threatd`
 					if [ "$ADV_SB_PID" = "" ] ; then
-						echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
+						echo "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
 						resetNeeded advsec_bin AdvSecurityThreat
 					fi
 				fi
 				if [ -e ${SOFTFLOWD_ENABLE} ] ; then
 					ADV_SF_PID=`advsec_is_alive softflowd`
 					if [ "$ADV_SF_PID" = "" ] ; then
-						echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
+						echo "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
 						resetNeeded advsec_bin AdvSecuritySoftflowd
 					fi
 				fi
@@ -181,13 +181,10 @@ PSM_PID=`pidof PsmSsp`
 	echo "[`getDateTime`] [RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
 	if [ "$lanSelfheal" != "done" ]
 	then
-
-		check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-		check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
-		if [ "$check_param_get_succeed" != "" ]
-		then
-			check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
-			if [ "$check_device_in_router_mode" != "" ]
+      # Check device is in router mode
+      # Get from syscfg instead of dmcli for performance reasons
+			check_device_in_bridge_mode=`syscfg get bridge_mode`
+			if [ "$check_device_in_bridge_mode" == "0" ]
 			then
 				check_if_brlan0_created=`ifconfig | grep brlan0`
 				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
@@ -223,9 +220,7 @@ PSM_PID=`pidof PsmSsp`
 
 			fi
 		else
-				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
-		fi
-	else
+
 		echo "[`getDateTime`] [RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
 	fi
 			
@@ -276,7 +271,7 @@ PSM_PID=`pidof PsmSsp`
 	MESH_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
 	if [ "$MESH_ENABLE" = "true" ]
 	then
-	   echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
+	   echo "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
 	
 	   # Fetch mesh tunnels from the brlan0 bridge if they exist
 	   brctl0_ifaces=`brctl show brlan0 | egrep "pgd"` 
@@ -291,7 +286,7 @@ PSM_PID=`pidof PsmSsp`
 	         fi
 	      done
 	      if [ "$brFound" == "false" ]; then
-	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
+	         echo "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
 	         brctl addif brlan0 $ifn;
 	      fi
 	   done
@@ -309,7 +304,7 @@ PSM_PID=`pidof PsmSsp`
 	         fi
 	      done
 	      if [ "$brFound" == "false" ]; then
-	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
+	         echo "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
 	         brctl addif brlan1 $ifn;
 	      fi
 	   done
@@ -355,34 +350,42 @@ PSM_PID=`pidof PsmSsp`
         fi
     fi
 
-        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-        # RDKB-6895
-        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-        if [ "$bridgeSucceed" != "" ]
-        then
-           isBridging=`echo $bridgeMode | grep router`
-           if [ "$isBridging" = "" ]
+# RDKB-6895
+        isBridging=`syscfg get bridge_mode`
+        if [ "$isBridging" != "0" ]
+
            then
                BR_MODE=1
                echo "[`getDateTime`] [RDKB_SELFHEAL] : Device in bridge mode"
            fi
-        else
-            echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
 
-	    pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
-	    if [ "$pandm_timeout" != "" ]; then
-			echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm parameter time out"
-			cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
-			cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
-			if [ "$cr_timeout" != "" ]; then
-				echo "[`getDateTime`] [RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-				PANDM_PID=`pidof CcspPandMSsp`
-				rm -rf /tmp/pam_initialized
-				systemctl restart CcspPandMSsp.service
-			fi
-	    else
-			echo "$bridgeMode"
-	    fi
+        #check for PandM response
+        bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+        if [ "$bridgeSucceed" == "" ]
+        then
+            echo "[RDKB_SELFHEAL_DEBUG] : bridge mode = $bridgeMode"
+            serialNumber=`dmcli eRT getv Device.DeviceInfo.SerialNumber`
+            echo "[RDKB_SELFHEAL_DEBUG] : SerialNumber = $serialNumber"
+            modelName=`dmcli eRT getv Device.DeviceInfo.ModelName`
+            echo "[RDKB_SELFHEAL_DEBUG] : modelName = $modelName"
+
+            pandm_timeout=`echo $bridgeMode | grep "CCSP_ERR_TIMEOUT"`
+            pandm_notexist=`echo $bridgeMode | grep "CCSP_ERR_NOT_EXIST"`
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
+            then
+                echo "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
+                cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name`
+                cr_timeout=`echo $cr_query | grep "CCSP_ERR_TIMEOUT"`
+                cr_pam_notexist=`echo $cr_query | grep "CCSP_ERR_NOT_EXIST"`
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
+                then
+                        echo "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+
+                        rm -rf /tmp/pam_initialized
+                        systemctl restart CcspPandMSsp.service
+                fi
+            fi
         fi
 
 	# If bridge mode is not set and WiFI is not disabled by user,
@@ -476,7 +479,7 @@ PSM_PID=`pidof PsmSsp`
 		firewall_rules=`iptables-save`
 		check_if_brlan1=`echo $firewall_rules | grep brlan1`
 		if [ "$check_if_brlan1" == "" ]; then
-			echo_t "[RDKB_PLATFORM_ERROR]:brlan1_firewall_rules_missing,restarting firewall"
+			echo "[RDKB_PLATFORM_ERROR]:brlan1_firewall_rules_missing,restarting firewall"
 			sysevent set firewall-restart
 		fi
 		touch $brlan1_firewall
