@@ -577,6 +577,82 @@ fi
 	echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
 	echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 
+	#Check whether private SSID's are broadcasting during bridge-mode or not 
+	#if broadcasting then we need to disable that SSID's for pseduo mode(2)
+	#if device is in full bridge-mode(3) then we need to disable both radio and SSID's
+	if [ $BR_MODE -eq 1 ]; then
+	
+		isBridging=`syscfg get bridge_mode`
+		echo_t "[RDKB_SELFHEAL] : BR_MODE:$isBridging"
+
+		#full bridge-mode(3)
+		if [ "$isBridging" == "3" ]
+		then
+			# Check the status if 2.4GHz Wifi Radio
+	        RADIO_ENABLED_2G=0
+	        RadioEnable_2=`dmcli eRT getv Device.WiFi.Radio.1.Enable`
+	        RadioExecution_2=`echo $RadioEnable_2 | grep "Execution succeed"`
+
+	        if [ "$RadioExecution_2" != "" ]
+	        then
+	            isEnabled_2=`echo $RadioEnable_2 | grep "true"`
+	            if [ "$isEnabled_2" != "" ]
+	            then
+	               RADIO_ENABLED_2G=1
+	               echo_t "[RDKB_SELFHEAL] : Radio 2.4GHZ is Enabled"
+	            fi
+	        else
+	            echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G radio Enable"
+	            echo "$RadioEnable_2"
+	        fi
+	        
+			# Check the status if 5GHz Wifi Radio
+			RADIO_ENABLED_5G=0
+			RadioEnable_5=`dmcli eRT getv Device.WiFi.Radio.2.Enable`
+			RadioExecution_5=`echo $RadioEnable_5 | grep "Execution succeed"`
+			
+			if [ "$RadioExecution_5" != "" ]
+			then
+				isEnabled_5=`echo $RadioEnable_5 | grep "true"`
+				if [ "$isEnabled_5" != "" ]
+				then
+				   RADIO_ENABLED_5G=1
+				   echo_t "[RDKB_SELFHEAL] : Radio 5GHZ is Enabled"
+				fi
+			else
+				echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G radio Enable"
+				echo "$RadioEnable_5"
+			fi
+			
+			if [ $RADIO_ENABLED_5G -eq 1 ] || [ $RADIO_ENABLED_2G -eq 1 ]; then
+				dmcli eRT setv Device.WiFi.Radio.1.Enable bool false
+				sleep 2
+				dmcli eRT setv Device.WiFi.Radio.2.Enable bool false
+				sleep 2				
+				dmcli eRT setv Device.WiFi.SSID.3.Enable bool false
+				sleep 2				
+				IsNeedtoDoApplySetting=1
+			fi
+	    fi
+
+		if [ $SSID_DISABLED_2G -eq 0 ] || [ $SSID_DISABLED -eq 0 ]; then
+			dmcli eRT setv Device.WiFi.SSID.1.Enable bool false
+			sleep 2			
+			dmcli eRT setv Device.WiFi.SSID.2.Enable bool false
+			sleep 2			
+			IsNeedtoDoApplySetting=1
+		fi
+
+		if [ "$IsNeedtoDoApplySetting" == "1" ]
+		then
+			dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+			sleep 3			
+			dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+			sleep 3			
+			dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+		fi
+	fi
+
 	if [ $BR_MODE -eq 0 ] 
 	then
 		iptables-save -t nat | grep "A PREROUTING -i"
