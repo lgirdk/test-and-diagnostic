@@ -635,7 +635,7 @@ fi
                 fi
                  
 	fi
-if [ -f "/etc/PARODUS_ENABLE" ]; then
+
 	# Checking parodus PID
         PARODUS_PID=`pidof parodus`
 	PARODUSSTART_PID=`pidof parodusStart`
@@ -652,49 +652,19 @@ if [ -f "/etc/PARODUS_ENABLE" ]; then
 		 	 echo_t "parodusCmd.cmd does not exist in tmp, trying to start parodus"
 			 /usr/bin/parodusStart &
             	fi
-        else
-			# parodus process is running, check if connection over 8080 is established
-			isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED`
-			if [ "$isConnExists" != "" ]; then
-				isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
-				if [ "$isClientConnReady" = "" ]; then
-					# but nanomsg listener for libparodus connection port 6666 is not opened
-					# Implies parodus connection stuck issue, kill parodus to self heal
-					echo_t "Parodus Port 6666 is not opened but 8080 is opened. Killing parodus process."
-					kill -11 `pidof parodus`
-				fi
+	else
+		# parodus process is running, check if connection over 8080 is established
+		isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED`
+		if [ "$isConnExists" != "" ]; then
+			isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
+			if [ "$isClientConnReady" = "" ]; then
+				# but nanomsg listener for libparodus connection port 6666 is not opened
+				# Implies parodus connection stuck issue, kill parodus to self heal
+				echo_t "Parodus Port 6666 is not opened but 8080 is opened. Killing parodus process."
+				kill -11 `pidof parodus`
+			fi
             	fi
         fi
-else
-	# Checking webpa PID
-	WEBPA_PID=`pidof webpa`
-	if [ "$WEBPA_PID" = "" ]; then
-		ENABLEWEBPA=`cat /nvram/webpa_cfg.json | grep -r EnablePa | awk '{print $2}' | sed 's|[\"\",]||g'`
-		if [ "$ENABLEWEBPA" = "true" ];then
-		echo_t "RDKB_PROCESS_CRASHED : WebPA_process is not running, need restart"
-			#We'll set the reason only if webpa reconnect is not due to DNS resolve
-			syscfg get X_RDKCENTRAL-COM_LastReconnectReason | grep "Dns_Res_webpa_reconnect"
-			if [ $? != 0 ]; then
-				echo_t "setting reconnect reason from task_health_monitor.sh"
-			echo_t "Setting Last reconnect reason"
-			syscfg set X_RDKCENTRAL-COM_LastReconnectReason WebPa_crash
-			result=`echo $?`
-			if [ "$result" != "0" ]
-			then
-			    echo_t "SET for Reconnect Reason failed"
-			fi
-			syscfg commit
-			result=`echo $?`
-			if [ "$result" != "0" ]
-			then
-			    echo_t "Commit for Reconnect Reason failed"
-			fi
-			echo_t "SET succeeded"
-		fi
-			resetNeeded webpa webpa
-		fi
-	fi
-fi
 
 	#Check dropbear is alive to do rsync/scp to/fro ATOM
 	if [ "$ARM_INTERFACE_IP" != "" ]

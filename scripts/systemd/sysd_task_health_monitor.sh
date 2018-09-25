@@ -212,21 +212,19 @@ PSM_PID=`pidof PsmSsp`
 	fi
 
 	# Checking for parodus connection stuck issue
-	if [ -f "/etc/PARODUS_ENABLE" ]; then
-		# Checking parodus PID
-		PARODUS_PID=`pidof parodus`
-		if [ "$PARODUS_PID" != "" ]; then
-			# parodus process is running, check if connection over 8080 is established
-			isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED` 
-			if [ "$isConnExists" != "" ]; then 
-				isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
-				if [ "$isClientConnReady" = "" ]; then
-					# but nanomsg listener for libparodus connection port 6666 is not opened
-					# Implies parodus connection stuck issue, kill parodus to self heal
-					echo "[`getDateTime`] Parodus Port 6666 is not opened but 8080 is opened. Killing parodus process."
-					# want to generate minidump for further analysis hence using signal 11
-					systemctl kill --signal=11 parodus.service
-				fi
+	# Checking parodus PID
+	PARODUS_PID=`pidof parodus`
+	if [ "$PARODUS_PID" != "" ]; then
+		# parodus process is running, check if connection over 8080 is established
+		isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED` 
+		if [ "$isConnExists" != "" ]; then 
+			isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
+			if [ "$isClientConnReady" = "" ]; then
+				# but nanomsg listener for libparodus connection port 6666 is not opened
+				# Implies parodus connection stuck issue, kill parodus to self heal
+				echo "[`getDateTime`] Parodus Port 6666 is not opened but 8080 is opened. Killing parodus process."
+				# want to generate minidump for further analysis hence using signal 11
+				systemctl kill --signal=11 parodus.service
 			fi
 		fi
 	fi
