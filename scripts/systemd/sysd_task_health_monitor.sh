@@ -807,14 +807,28 @@ fi
 	if [ "$WAN_STATUS" = "started" ];then
 		wan_dhcp_client_v4=1
 		wan_dhcp_client_v6=1
+		UDHCPC_Enable=`syscfg get UDHCPEnable`
 
 		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" || "$WAN_TYPE" = "EPON" ]]; then
 			check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
 			check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
 		else
-			dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
-			check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
-			check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+		        if [ "$MODEL_NUM" = "TG3482G" ]; then
+				dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
+
+                                if [ "$UDHCPC_Enable" = "true" ]
+                                then
+                                        check_wan_dhcp_client_v4=`ps w | grep sbin/udhcpc | grep erouter`
+					check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+                                else
+					check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
+					check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+                                fi
+			else
+				dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
+				check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
+				check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+			fi
 		fi
 
 		if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
@@ -853,8 +867,20 @@ fi
 				echo "Calling epon_utility.sh to restart udhcpc "
 				sh /usr/ccsp/epon_utility.sh
 			else
-				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
-				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+                        	if [ "$MODEL_NUM" = "TG3482G" ] ; then
+
+                                	if [ "$UDHCPC_Enable" = "true" ]
+                                	then
+                                        	V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                                	else
+                                        	#For AXB6 b -4 option is added to avoid timeout.
+                                        	DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+                                        	V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
+                                	fi
+                        	else
+					DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+					V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+				fi
 			fi
 
 			echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
@@ -870,15 +896,36 @@ fi
 			if [ $? -ne 0 ] ; then
 				ifconfig $WAN_INTERFACE up
 				sleep 2
+
+
+
+                         if [ "$UDHCPC_Enable" = "true" ]
+                         then
+                                echo_t "restart udhcp"
+                                DHCPC_PID_FILE="/tmp/udhcpc.erouter0.pid"
+                          else
 				echo_t "restart ti_udhcp"
 				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
-				if [ -f $DHCPC_PID_FILE ]
-				then
-					echo_t "SERVICE_DHCP : Killing `cat $DHCPC_PID_FILE`"
-					kill -9 `cat $DHCPC_PID_FILE`
-					rm -f $DHCPC_PID_FILE
-				fi
-				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+                         fi
+
+
+			if [ -f $DHCPC_PID_FILE ]
+			then
+			echo_t "SERVICE_DHCP : Killing `cat $DHCPC_PID_FILE`"
+			kill -9 `cat $DHCPC_PID_FILE`
+			rm -f $DHCPC_PID_FILE
+			fi
+
+
+                                if [ "$UDHCPC_Enable" = "true" ]
+                                then
+					V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                                else
+                                	#For AXB6 b -4 option is added to avoid timeout.
+					V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
+                                fi
+
+
 				echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
 				eval "$V4_EXEC_CMD"
 				sleep 5
