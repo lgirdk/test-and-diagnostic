@@ -806,7 +806,7 @@ fi
 			echo_t "isIPv6 = $isIPv6"
 	        	 if [ "$isIPv6" == "" ]
 			 then
-				echo_t "[RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting ti_dhcp6c"
+				echo_t "[RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting dhcpv6 client"
 				rm -rf $DHCPV6_ERROR_FILE
 				sh $DHCPV6_HANDLER disable
 				sleep 2
@@ -819,6 +819,7 @@ fi
 		wan_dhcp_client_v4=1
 		wan_dhcp_client_v6=1
 		UDHCPC_Enable=`syscfg get UDHCPEnable`
+                dibbler_client_enable=`syscfg get dibbler_client_enable`
 
 		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" || "$WAN_TYPE" = "EPON" ]]; then
 			check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
@@ -830,11 +831,14 @@ fi
                                 if [ "$UDHCPC_Enable" = "true" ]
                                 then
                                         check_wan_dhcp_client_v4=`ps w | grep sbin/udhcpc | grep erouter`
-					check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
                                 else
 					check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
-					check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
                                 fi
+				if [ "$dibbler_client_enable" = "true" ]; then
+					check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
+				else
+					check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
+				fi
 			else
 				dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
 				check_wan_dhcp_client_v4=`echo $dhcp_cli_output | grep ti_udhcpc`
