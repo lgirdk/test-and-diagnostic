@@ -32,13 +32,13 @@ source /etc/log_timestamp.sh
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 #check whether syscfg is proper or not
-syscfg get redirection_flag
+syscfg get redirection_flag > /dev/null
 if [ $? == 0 ]; then
 	exit
 fi
 
 #check whether syscfg is proper or not once again
-syscfg get selfheal_enable
+syscfg get selfheal_enable > /dev/null
 if [ $? != 0 ]; then
 	echo_t "RDKB_SELFHEAL : syscfg queries are failing"
 	echo_t "RDKB_SELFHEAL : Memory Dump"
