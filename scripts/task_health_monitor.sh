@@ -153,9 +153,13 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                   SNMPv3_PID=`pidof snmpd`
                   if [ "$SNMPv3_PID" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
                       # Restart disconnected master and agent
-                      v3AgentPid=`ps -ww | grep cm_snmp_ma_2 | grep -v grep | tr -s ' ' | cut -d ' ' -f2`
+		      v3AgentPid=`ps | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
                       if [ ! -z "$v3AgentPid" ]; then
-                          kill -9 $v3AgentPid
+                           kill -9 $v3AgentPid
+                      fi
+                      pidOfListener=`ps  | grep -i inotify | grep 'run_snmpv3_agent.sh' | awk '{print $1}'`
+                      if [ ! -z "$pidOfListener" ]; then
+                           kill -9 $pidOfListener
                       fi
                       if [ -f /tmp/snmpd.conf ]; then
                           rm -f /tmp/snmpd.conf
@@ -163,14 +167,14 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                       if [ -f /lib/rdk/run_snmpv3_master.sh ]; then
                           sh /lib/rdk/run_snmpv3_master.sh &
                       fi
-                  fi
-				  
+                  else		  
 		### SNMPv3 sub agent self-heal ####
-				  v3AgentPid=`ps -ww | grep cm_snmp_ma_2 | grep -v grep | tr -s ' ' | cut -d ' ' -f2`
-				  if [ "$v3AgentPid" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
-				      # Restart failed sub agent
-					  if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
-                          sh /lib/rdk/run_snmpv3_agent.sh &
+                      v3AgentPid=`ps | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
+	              if [ "$v3AgentPid" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
+		         # Restart failed sub agent
+		         if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
+                               sh /lib/rdk/run_snmpv3_agent.sh &
+                         fi
                       fi
                   fi
 
