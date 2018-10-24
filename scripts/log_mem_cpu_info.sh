@@ -185,7 +185,8 @@ DELAY=30
 		fi
 
 		SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
-		if [ "$cur_hr" -ge 02 ] && [ "$cur_hr" -le 05 ] && [["$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]]
+		SNMP_RESTART_ENABLE=`syscfg get SNMP_RestartMaintenanceEnable`
+		if [ "$cur_hr" -ge 02 ] && [ "$cur_hr" -le 05 ] && [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]] && [ "$SNMP_RESTART_ENABLE" = "true" ]
 		then
 				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
 					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window" 
