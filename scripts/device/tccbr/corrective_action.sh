@@ -55,12 +55,21 @@ change() {
 getVendorName()
 {
 	vendorName=`dmcli eRT getv Device.DeviceInfo.Manufacturer | grep value | awk '{print $5}'`
+        if [ "$vendorName" = "" ]
+        then
+            vendorName=`cat /etc/device.properties | grep MANUFACTURE | cut -f2 -d=`
+        fi        
 	echo "$vendorName"
 }
 
 getModelName()
 {
 	modelName=`dmcli eRT getv Device.DeviceInfo.ModelName | grep value | awk '{print $5}'`
+        if [ "$modelName" = "" ]
+        then
+            modelName=`cat /etc/device.properties | grep MODEL_NUM | cut -f2 -d=`
+        fi
+        
 	echo "$modelName"
 }
 
@@ -434,8 +443,8 @@ resetNeeded()
 				
 				# Storing Information before corrective action
 		 		storeInformation
-				CMMac=`ifconfig wan0 | grep HWaddr | cut -f11 -d" "`
-				modelName=`cat $VERSION_FILE | grep image | cut -f2 -d= | cut -f1 -d_`
+				CMMac=`getCMMac`
+				modelName=`getModelName`
 				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 			else
 				# Storing Information before corrective action
