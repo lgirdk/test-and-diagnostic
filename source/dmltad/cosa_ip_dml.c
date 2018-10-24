@@ -83,6 +83,7 @@ static ULONG last_tick;
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 4096
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
+#define SPEEDTEST_AUTH_SIZE 512
 
 #ifndef ROUTEHOPS_HOST_STRING
 #define ROUTEHOPS_HOST_STRING		"Host"
@@ -99,6 +100,9 @@ BOOL g_run_speedtest = FALSE;
 BOOL g_is_pingtest_running = FALSE;
 
 char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
+char g_authentication_speedtest[SPEEDTEST_AUTH_SIZE + 1] = {0};
+int g_clienttype_speedtest = 2;
+int g_status_speedtest = 0;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -5848,6 +5852,8 @@ UDPEchoConfig_Rollback
     *  SpeedTest_GetParamBoolValue
     *  SpeedTest_GetParamStringValue
     *  SpeedTest_SetParamStringValue
+    *  SpeedTest_GetParamUlongValue
+    *  SpeedTest_SetParamUlongValue
   
 ***********************************************************************/
 /**********************************************************************
@@ -6185,14 +6191,29 @@ SpeedTest_GetParamStringValue
 
 	}
     }
+    else if ( AnscEqualString(ParamName, "Authentication", TRUE))
+    {
+        if (  *pUlSize > SPEEDTEST_AUTH_SIZE )
+        {
+                AnscTraceFlow(("SpeedTest Authentication get : %s : len :%d: *pUlSize:%d: \n",g_authentication_speedtest,len,*pUlSize));
+                AnscCopyString(pValue, g_authentication_speedtest);
+                return 0;
+        } else
+        {
+                AnscTraceWarning(("SpeedTest Authentication get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_authentication_speedtest,len, *pUlSize));
+
+                *pUlSize = SPEEDTEST_AUTH_SIZE+1;
+                return 1;
+
+        }
+    }
     else
     {
 
-		AnscTraceWarning(("SpeedTest Argument get :Unsupported parameter '%s'\n", ParamName));
-		return -1;
-    } 
+                AnscTraceWarning(("SpeedTest Argument/Authentication get :Unsupported parameter '%s'\n", ParamName));
+                return -1;
+    }
 }
-
 
 /**********************************************************************
 
@@ -6246,10 +6267,135 @@ SpeedTest_SetParamStringValue
 		AnscTraceWarning(("SpeedTest Argument set : string too long:  %s : string len : %d: \n",pString,len));
 		return FALSE;
 	}
+    }
+    else if ( AnscEqualString(ParamName, "Authentication", TRUE))
+    {
+        if ( len <= (SPEEDTEST_AUTH_SIZE ) ){
+                AnscTraceFlow(("SpeedTest Authentication set : %s : string len : %d: \n",pString,len));
+                AnscCopyString(g_authentication_speedtest, pString);
+                return TRUE;
+        } else
+        {
+                AnscTraceWarning(("SpeedTest Authentication set : string too long:  %s : string len : %d: \n",pString,len));
+                return FALSE;
+        }
     } else
     {
-     AnscTraceWarning(("SpeedTest Argument set : Unsupported parameter '%s'\n", ParamName));
+     AnscTraceWarning(("SpeedTest Argument/Authentication set : Unsupported parameter '%s'\n", ParamName));
     }
     return FALSE;
 }
 
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+	SpeedTest_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    )
+
+    description:
+
+        This function is called to retrieve ULONG parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                ULONG*                      pUlong
+                The buffer of returned ULONG value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+
+BOOL
+SpeedTest_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    )
+{
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "ClientType", TRUE))
+    {
+            AnscTraceFlow(("%s ClientType SpeedTest : %d\n",  __FUNCTION__, g_clienttype_speedtest));
+            *pUlong = g_clienttype_speedtest;
+            return TRUE;
+    } else
+    if ( AnscEqualString(ParamName, "Status", TRUE))
+    {
+            AnscTraceFlow(("%s Status Speedtest : %d \n", __FUNCTION__, g_status_speedtest));
+            *pUlong = g_status_speedtest;
+            return TRUE;
+    } else
+        AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+	SpeedTest_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       ulong
+    );
+
+    description:
+
+        This function is called to set ULONG parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                ULONG                      ulong
+                The updated ULONG value;
+
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+SpeedTest_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       ulong
+    )
+{
+
+    /* check the parameter name and set the corresponding value */
+    if ( AnscEqualString(ParamName, "ClientType", TRUE))
+    {
+        AnscTraceFlow(("%s ClientType Speedtest : %d \n", __FUNCTION__, ulong));
+        g_clienttype_speedtest = ulong;
+        return TRUE;
+    }
+    else if ( AnscEqualString(ParamName, "Status", TRUE))
+    {
+        AnscTraceFlow(("%s Status Speedtest : %d \n",__FUNCTION__, ulong));
+        g_status_speedtest = ulong;
+        return TRUE;
+    }
+
+    else
+    	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    return FALSE;
+}

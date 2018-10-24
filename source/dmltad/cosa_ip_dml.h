@@ -879,7 +879,8 @@ UDPEchoConfig_Rollback
     *  SpeedTest_Rollback
     *  SpeedTest_GetParamStringValue
     *  SpeedTest_SetParamStringValue
-  
+    *  SpeedTest_GetParamUlongValue
+    *  SpeedTest_SetParamUlongValue
 ***********************************************************************/
 BOOL
 SpeedTest_GetParamBoolValue
@@ -934,4 +935,21 @@ SpeedTest_SetParamStringValue
         char*                       strValue
     );
 
+
+BOOL
+SpeedTest_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    );
+
+
+BOOL
+SpeedTest_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                      uValuepUlong
+    );
 #endif

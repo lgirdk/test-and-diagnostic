@@ -645,6 +645,8 @@
 					<func_SetParamBoolValue>SpeedTest_SetParamBoolValue</func_SetParamBoolValue>
 					<func_GetParamStringValue>SpeedTest_GetParamStringValue</func_GetParamStringValue>
 					<func_SetParamStringValue>SpeedTest_SetParamStringValue</func_SetParamStringValue>
+					<func_GetParamUlongValue>SpeedTest_GetParamUlongValue</func_GetParamUlongValue>
+                    <func_SetParamUlongValue>SpeedTest_SetParamUlongValue</func_SetParamUlongValue>
 					</functions>
 					<parameters>
 					<parameter>
@@ -665,8 +667,26 @@
 						<syntax>string</syntax>
 			                        <writable>true</writable>
 					</parameter>
-					</parameters>
-				</object>
+                     <parameter>
+                            <name>ClientType</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                    </parameter>
+                     <parameter>
+                            <name>Authentication</name>
+                            <type>string(512)</type>
+                            <syntax>string</syntax>
+                            <writable>true</writable>
+                    </parameter>
+                     <parameter>
+                            <name>Status</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                    </parameter>
+		</parameters>
+		</object>
             </objects>
         </object>
         <object>
