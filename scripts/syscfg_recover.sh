@@ -25,6 +25,9 @@ UTOPIA_PATH="/etc/utopia/service.d"
 SYSCFG_SHM_FILE="/tmp/syscfg.shmid"
 SYSCFG_MOUNT=/nvram
 SYSCFG_FILE=$SYSCFG_MOUNT/syscfg.db
+SYSCFG_PERSISTENT_PATH=/opt/secure/data
+SYSCFG_NEW_FILE=$SYSCFG_PERSISTENT_PATH/syscfg.db
+
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
@@ -56,7 +59,12 @@ if [ $? != 0 ]; then
 
 	#Re-create syscfg create again
 	syscfg_create -f $SYSCFG_FILE
-	if [ $? == 0 ]; then
+	syscfg_oldDB=$?
+	if [ -d $SYSCFG_PERSISTENT_PATH ]; then
+		syscfg_create -f $SYSCFG_NEW_FILE
+		syscfg_newDB=$?
+	fi
+	if [ $syscfg_oldDB -eq 0 ] || [ $syscfg_newDB -eq 0 ]; then
 	   echo_t "RDKB_SELFHEAL : syscfg DB functional now"
 
 		SELFHEAL_ENABLE=`syscfg get selfheal_enable`
