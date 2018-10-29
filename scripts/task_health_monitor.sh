@@ -376,7 +376,7 @@ fi
 			echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
 		else
 			SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
-			if [ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ];then
+			if [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]];then
 				echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
 				resetNeeded snmp snmp_subagent 
 			fi
