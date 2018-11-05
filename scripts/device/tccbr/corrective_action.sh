@@ -779,6 +779,20 @@ checkMaintenanceWindow()
     start_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
     end_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
 
+	echo "$start_time" | grep "^[0-9]*$" > /dev/null 2>&1
+	res_Starttime=`echo $?`
+
+	echo "$end_time" | grep "^[0-9]*$"  > /dev/null 2>&1
+	res_Endtime=`echo $?`
+
+    if [[ $res_Starttime -ne 0 || $res_Endtime -ne 0 ]]
+	then
+	    reb_window=0
+		echo_t "[RDKB_SELFHEAL] : Firmware upgrade start time : $start_time"
+		echo_t "[RDKB_SELFHEAL] : Firmware upgrade end time : $end_time"
+	    return
+	fi	
+
     if [ "$start_time" -eq "$end_time" ]
     then
         echo_t "[RDKB_SELFHEAL] : Start time can not be equal to end time"
