@@ -275,7 +275,11 @@ CosaDmlGetSelfHealCfg(
         if ( pMyObject->Enable == TRUE )
         {
             system("/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-            system("/usr/ccsp/tad/resource_monitor.sh &");
+#if defined(_COSA_BCM_MIPS_)
+            system("/lib/rdk/xf3_wifi_self_heal.sh &");
+#endif
+	    system("/usr/ccsp/tad/resource_monitor.sh &");
+            
 	}  
 
 	memset(buf,0,sizeof(buf));
