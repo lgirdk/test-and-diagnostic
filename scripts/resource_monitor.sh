@@ -32,6 +32,8 @@ source /etc/log_timestamp.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
+touch /tmp/.resource_monitor_started
+
 DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
