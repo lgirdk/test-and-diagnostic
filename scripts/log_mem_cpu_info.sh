@@ -18,7 +18,7 @@
 # limitations under the License.
 #######################################################################################
 
-source /fss/gw/usr/ccsp/tad/corrective_action.sh
+source /usr/ccsp/tad/corrective_action.sh
 source /etc/log_timestamp.sh
 
 if [ -f /etc/device.properties ]; then
