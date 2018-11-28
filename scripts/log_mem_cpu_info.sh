@@ -174,7 +174,7 @@ DELAY=30
 		echo_t "[RDKB_SELFHEAL] : NVRAM2 IS READ-ONLY"
 	fi
 
-	if [ "$BOX_TYPE" = "XB3" ]; then
+	if [ "$BOX_TYPE" = "XB3"  || "$MODEL_NUM" = "TG3482G" ]; then
 		if [ "$UTC_ENABLE" == "true" ]
 		then
 			cur_hr=`LTime H`
@@ -191,9 +191,14 @@ DELAY=30
 				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
 					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window" 
 					touch /tmp/.snmp_agent_restarting
-					SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
-					kill -9 $SNMP_PID
-					resetNeeded snmp snmp_subagent
+					if [ "$MODEL_NUM" = "TG3482G" ] ; then
+						system("systemctl restart snmpSubAgent");
+						sleep 2;
+					else
+						SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+						kill -9 $SNMP_PID
+						resetNeeded snmp snmp_subagent
+					fi
 					rm -rf /tmp/.snmp_agent_restarting
 					touch /tmp/snmp_agent_restarted
 				fi
