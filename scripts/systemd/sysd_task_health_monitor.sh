@@ -813,6 +813,8 @@ fi
 
 	fi
     fi
+
+if [ "$MULTI_CORE" = "yes" ]; then
 	if [ -f $PING_PATH/ping_peer ]
 	then
 	## Check Peer ip is accessible
@@ -861,6 +863,7 @@ fi
 	else
 	   echo_t "RDKB_SELFHEAL : arping_peer command not found"
 	fi
+fi
 	
 	if [ "$rebootDeviceNeeded" -eq 1 ]
 	then
