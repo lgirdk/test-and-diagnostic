@@ -24,7 +24,7 @@ RDKLOGGER_PATH="/rdklogger"
 grePrefix="gretap0"
 brlanPrefix="brlan"
 l2sd0Prefix="l2sd0"
-
+PRIVATE_LAN="brlan0"
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
@@ -1084,7 +1084,6 @@ fi
 
 		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
 		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
-
                         DHCPv6EnableStatus=`syscfg get dhcpv6s00::serverenable`
                         if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                            echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
@@ -1092,9 +1091,16 @@ fi
 			   echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
 			   if [ -f "/etc/dibbler/server.conf" ]
 			   then
-				dibbler-server stop
-				sleep 2
-				dibbler-server start
+				BRLAN_CHKIPV6_DAD_FAILED=`ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed"`
+				if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
+	     				echo "DADFAILED : BRLAN0_DADFAILED"
+				elif [ ! -s  "/etc/dibbler/server.conf" ]; then	
+					echo "DIBBLER : Dibbler Server Config is empty"
+				else
+					dibbler-server stop
+					sleep 2
+					dibbler-server start
+				fi
 			   else
 				echo_t "RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
 			   fi

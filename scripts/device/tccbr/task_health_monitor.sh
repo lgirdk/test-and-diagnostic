@@ -21,7 +21,7 @@
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
-
+PRIVATE_LAN="brlan0"
 if [ -f /etc/device.properties ]
 then
     source /etc/device.properties
@@ -643,9 +643,8 @@ fi
 	DIBBLER_PID=`pidof dibbler-server`
 	if [ "$DIBBLER_PID" = "" ]; then
 
-#		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
-#		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
-		if [ "$BR_MODE" == "0" ]; then
+		DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
+		if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
                         DHCPv6EnableStatus=`syscfg get dhcpv6s00::serverenable`
                         if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                            echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
@@ -653,10 +652,17 @@ fi
 			   echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
 			   if [ -f "/etc/dibbler/server.conf" ]
 			   then
-				dibbler-server stop
-				sleep 2
-				dibbler-server start
-			    else
+				BRLAN_CHKIPV6_DAD_FAILED=`ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed"`
+				if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
+	     				echo "DADFAILED : BRLAN0_DADFAILED"
+				elif [ ! -s  "/etc/dibbler/server.conf" ]; then	
+					echo "DIBBLER : Dibbler Server Config is empty"
+				else
+					dibbler-server stop
+					sleep 2
+					dibbler-server start
+				fi
+			   else
 				echo_t "RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
 			    fi
 			fi
