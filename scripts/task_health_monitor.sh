@@ -54,7 +54,7 @@ if [ ! -f /usr/bin/GetConfigFile ];then
     echo "Error: GetConfigFile Not Found"
     exit
 fi
-IDLE_TIMEOUT=30
+IDLE_TIMEOUT=60
 source $UTOPIA_PATH/log_env_var.sh
 
 CCSP_ERR_TIMEOUT=191
@@ -119,13 +119,17 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
                   
           GetConfigFile $PEER_COMM_ID
 		  SSH_ATOM_TEST=$(ssh -I $IDLE_TIMEOUT -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
+		  echo_t "SSH_ATOM_TEST : $SSH_ATOM_TEST"
 		  SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
+		  SSH_TIMEOUT=`echo $SSH_ATOM_TEST | grep "Idle timeout"`
                   rm -f $PEER_COMM_ID
-		  if [ "$SSH_ERROR" != "" ]; then
+		  ATM_HANG_ERROR=0
+		  if [ "$SSH_ERROR" != "" ] || [ "$SSH_TIMEOUT" != "" ]; then
 				  echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
+				  ATM_HANG_ERROR=1
 		  fi
 
-		  if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
+		  if [ "$wifi_timeout" != "" ] && [ "$ATM_HANG_ERROR" == "1" ]
 		  then
 				  atom_hang_count=`sysevent get atom_hang_count`
 				  echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
