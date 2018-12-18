@@ -112,8 +112,12 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 	if [ "$BOX_TYPE" = "XB3" ]; then
 		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
 		  wifi_timeout=`echo $wifi_check | grep "$CCSP_ERR_TIMEOUT"`
-		  if [ "$wifi_timeout" != "" ]; then
+		  wifi_not_exist=`echo $wifi_check | grep "$CCSP_ERR_NOT_EXIST"`
+		  WIFI_QUERY_ERROR=0
+		  if [ "$wifi_timeout" != "" ] || [ "$wifi_not_exist" != "" ]; then
 				  echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
+                                  echo_t "WIFI_QUERY : $wifi_check"
+				  WIFI_QUERY_ERROR=1
 		  fi
 
                   
@@ -129,7 +133,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 				  ATM_HANG_ERROR=1
 		  fi
 
-		  if [ "$wifi_timeout" != "" ] && [ "$ATM_HANG_ERROR" == "1" ]
+		  if [ "$WIFI_QUERY_ERROR" == "1" ] && [ "$ATM_HANG_ERROR" == "1" ]
 		  then
 				  atom_hang_count=`sysevent get atom_hang_count`
 				  echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
