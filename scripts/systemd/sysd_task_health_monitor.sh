@@ -788,7 +788,7 @@ if [ "$WAN_STATUS" != "started" ]
 then
 	echo_t "WAN_STATUS : wan-status is $WAN_STATUS"
 fi
-    if [ "$WAN_TYPE" != "EPON" ]; then
+
 	if [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
 	then
 		          isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
@@ -802,12 +802,13 @@ fi
 				sh $DHCPV6_HANDLER enable
 	           	fi 
 	fi
+
 	
 	if [ "$WAN_STATUS" = "started" ];then
 		wan_dhcp_client_v4=1
 		wan_dhcp_client_v6=1
 
-		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
+		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" || "$WAN_TYPE" = "EPON" ]]; then
 			check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
 			check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
 		else
@@ -821,30 +822,36 @@ fi
 			wan_dhcp_client_v4=0
 		fi
 			
+        if  [ "$WAN_TYPE" != "EPON" ] ;then
+	
 		if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
 			echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
 			wan_dhcp_client_v6=0
 		fi
 
-		DHCP_STATUS_query=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus`
-		DHCP_STATUS_execution=`echo $DHCP_STATUS_query | grep "Execution succeed"`
-	DHCP_STATUS=`echo "$DHCP_STATUS_query" | grep value | cut -f3 -d : | awk '{print $1}'`
+			DHCP_STATUS_query=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus`
+			DHCP_STATUS_execution=`echo $DHCP_STATUS_query | grep "Execution succeed"`
+		DHCP_STATUS=`echo "$DHCP_STATUS_query" | grep value | cut -f3 -d : | awk '{print $1}'`
 		
-		if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
-			echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
-			if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
-				echo_t "DHCP_CLIENT : DHCPStatus is $DHCP_STATUS, restarting WAN"
-				sh /etc/utopia/service.d/service_wan.sh wan-stop
-				sh /etc/utopia/service.d/service_wan.sh wan-start
-				wan_dhcp_client_v4=1
-				wan_dhcp_client_v6=1
+			if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
+				echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
+				if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
+					echo_t "DHCP_CLIENT : DHCPStatus is $DHCP_STATUS, restarting WAN"
+					sh /etc/utopia/service.d/service_wan.sh wan-stop
+					sh /etc/utopia/service.d/service_wan.sh wan-start
+					wan_dhcp_client_v4=1
+					wan_dhcp_client_v6=1
+				fi
 			fi
-		fi
+	fi
 
 		if [ $wan_dhcp_client_v4 -eq 0 ];
 		then
 			if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
 				V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+			elif [ "$WAN_TYPE" = "EPON" ];then
+				echo "Calling epon_utility.sh to restart udhcpc "
+				sh /usr/ccsp/epon_utility.sh
 			else
 				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
 				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
@@ -886,6 +893,9 @@ fi
 				/etc/dibbler/dibbler-init.sh
 				sleep 2
 				/usr/sbin/dibbler-client start
+			elif [ "$WAN_TYPE" = "EPON" ];then
+				echo "Calling dibbler_starter.sh to restart dibbler-client "
+				sh /usr/ccsp/dibbler_starter.sh
 			else
 				sh $DHCPV6_HANDLER disable
 				sleep 2
@@ -895,7 +905,7 @@ fi
 		fi
 
 	fi
-    fi
+
 
 if [ "$MULTI_CORE" = "yes" ]; then
 	if [ -f $PING_PATH/ping_peer ]

@@ -238,33 +238,35 @@ db_clean_up_required()
 
 if [ "$log_nvram2" == "true" ]
 then   
+
+if [ "$WAN_TYPE" != "EPON" ]; then
 # Check for CM IP Address 
- 	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
-	 if [ "$isIPv4" == "" ]
-	 then
-        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
-        	 if [ "$isIPv6" != "" ]
+	 	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
+		 if [ "$isIPv4" == "" ]
 		 then
-			Check_CM_Ip=1
+	        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
+	        	 if [ "$isIPv6" != "" ]
+			 then
+				Check_CM_Ip=1
+			 else
+			   	Check_CM_Ip=0
+				echo_t "RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
+			 fi
 		 else
-		   	Check_CM_Ip=0
-			echo_t "RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
+			Check_CM_Ip=1
 		 fi
-	 else
-		Check_CM_Ip=1
-	 fi
 
 #Check whether system time is in 1970's
-	
-         if [ "$Check_CM_Ip" -eq 1 ]
-	 then
-		year_is=`date +"%Y"`
-		if [ "$year_is" == "1970" ]
-		then
-			echo_t "RDKB_SELFHEAL_BOOTUP : System time is in 1970's"
-		fi
-	 fi
-
+		
+	         if [ "$Check_CM_Ip" -eq 1 ]
+		 then
+			year_is=`date +"%Y"`
+			if [ "$year_is" == "1970" ]
+			then
+				echo_t "RDKB_SELFHEAL_BOOTUP : System time is in 1970's"
+			fi
+		 fi
+fi
 
 isIPv4=""
 isIPv6=""
@@ -284,96 +286,104 @@ isIPv6=""
 	 else
 		Check_WAN_Ip=1
 	 fi
-## Check Peer ip is accessible
-if [ -f $PING_PATH/ping_peer ]
+
+if [ "$BOX_TYPE" = "XB3" ]
 then
-loop=1
-	while [ "$loop" -le 3 ]
-	do
-	
-        PING_RES=`ping_peer`
-	CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
-	if [ "$CHECK_PING_RES" != "" ]
+	## Check Peer ip is accessible
+	if [ -f $PING_PATH/ping_peer ]
 	then
-		if [ "$CHECK_PING_RES" -ne 100 ] 
-		then
-			ping_success=1
-			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
-			break
-		else
-			ping_failed=1
-		fi
-	else
-			ping_failed=1
-	fi
+	loop=1
+		while [ "$loop" -le 3 ]
+		do
 	
-	if [ "$ping_failed" -eq 1 ]
-        then
-	     echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
-             # This test is done only for XB3 cases 
-       	     if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
-			RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
-			RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
-			if [ "$RPC_OK" != "" ]
-	         	then
-	    			echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
-			else
-			   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
-			fi
-	     else
-			echo_t "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
-	     fi
-      	 fi
+		PING_RES=`ping_peer`
+		CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
 
-	 if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
-	 then
-		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
-		echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-	 else
-		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-		echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-		if [ ! -f "/nvram/self_healreboot" ]
+		if [ "$CHECK_PING_RES" != "" ]
 		then
-			touch /nvram/self_healreboot
-			echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-			echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
-	       	        reason="Peer_down"
-        	        rebootCount=1
-      		        setRebootreason $reason $rebootCount
-			$RDKLOGGER_PATH/backupLogs.sh "true" ""
+			if [ "$CHECK_PING_RES" -ne 100 ] 
+			then
+				ping_success=1
+				echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP is success"
+				break
+			else
+				ping_failed=1
+			fi
 		else
-			rm -rf /nvram/self_healreboot
+				ping_failed=1
 		fi
+	
+		if [ "$ping_failed" -eq 1 ]
+		then
+		     echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
+		     # This test is done only for XB3 cases 
+	       	     if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
+				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+				if [ "$RPC_OK" != "" ]
+			 	then
+		    			echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is OK"
+				else
+				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
+				fi
+		     else
+				echo_t "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+		     fi
+	      	 fi
 
-		fi
-		loop=$((loop+1))
-		sleep 5
-	done
-else
-   echo_t "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
+		 if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
+		 then
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+			echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+		 else
+			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+			echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+			if [ ! -f "/nvram/self_healreboot" ]
+			then
+				touch /nvram/self_healreboot
+				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
+		       	        reason="Peer_down"
+			        rebootCount=1
+	      		        setRebootreason $reason $rebootCount
+				$RDKLOGGER_PATH/backupLogs.sh "true" ""
+			else
+				rm -rf /nvram/self_healreboot
+			fi
+
+			fi
+			loop=$((loop+1))
+			sleep 5
+		done
+	else
+	   echo_t "RDKB_SELFHEAL_BOOTUP : ping_peer command not found"
+	fi
 fi
 ##################
         # Check whether CR process is running
         crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
         isCRAlive=`echo $crTestop | grep "Execution succeed"`
         if [ "$isCRAlive" == "" ]; then
-				# Test CR Alive or not using rpcclient
-			    RPC_RES=`rpcclient $ATOM_ARPING_IP "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
-			    isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
-			    isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
-			    if [ "$isRpcOk" != "" ]
-			    then
-			        echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is OK"
-			    else
-			        echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is NOK"
-			    fi  
+        		
+				if [ "$WAN_TYPE" != "EPON" ]; then
+					# Test CR Alive or not using rpcclient
+				    RPC_RES=`rpcclient $ATOM_ARPING_IP "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
+				    isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
+				    isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
+				    if [ "$isRpcOk" != "" ]
+				    then
+				        echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is OK"
+				    else
+				        echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication between ARM and ATOM is NOK"
+				    fi  
 
-				if [ "$isCRAlive" != "" ]
-			    then
-					echo_t "RDKB_SELFHEAL_BOOTUP : CR process is alive thru RPC"
-				else
-				  	echo_t "RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
+					if [ "$isCRAlive" != "" ]
+				    then
+						echo_t "RDKB_SELFHEAL_BOOTUP : CR process is alive thru RPC"
+					else
+					  	echo_t "RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
+					fi
 				fi
 
                 # Retest by querying some other parameter
@@ -452,6 +462,8 @@ fi
 		echo_t "RDKB_SELFHEAL_BOOTUP : PAM_process is not running, need restart"
 		resetNeeded CcspPandMSsp
 	fi
+
+if [ "$WAN_TYPE" != "EPON" ]; then
 
 # Checking whether brlan0 and l2sd0.100 are created properly
 
@@ -558,6 +570,7 @@ fi
 		sysevent set multinet-up 2
 		sleep 10
 	fi
+fi
 
  	SYSEVENT_PID=`pidof syseventd`
 	if [ "$SYSEVENT_PID" == "" ]
@@ -575,6 +588,9 @@ fi
 		fi
 
 	fi
+
+
+if [ "$WAN_TYPE" != "EPON" ]; then	
 
     #Check whether dnsmasq is running or not
     DNS_PID=`pidof dnsmasq`
@@ -663,6 +679,7 @@ fi
 	         sysevent set dhcp_server-start
         fi
     fi
+fi
 
 	if [ "$BOX_TYPE" = "XB3" ]
 	then

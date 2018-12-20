@@ -251,34 +251,55 @@ else
         echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
 fi
 ########################################
-
-	atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
-	if [ x$atomOnlyReboot = x ];then
-		crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
- 		isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
-		if [ "$isCRAlive" != "" ]; then
-			# Retest by querying some other parameter
-			crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
- 			isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
-		  	if [ "$isCRAlive" != "" ]; then
-				echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
-				vendor=`getVendorName`
-				modelName=`getModelName`
-				CMMac=`getCMMac`
-				timestamp=`getDate`
-				#echo "Setting Last reboot reason"
-				reason="CR_crash"
-				rebootCount=1
-				#setRebootreason $reason $rebootCount
-				echo_t "SET succeeded"
-				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
-				touch $HAVECRASH
-				rebootNeeded RM "CR" $reason $rebootCount
-		 	fi		
+        if [ "$BOX_TYPE" = "XB3" ]; then
+		atomOnlyReboot=`dmesg -n 8 && dmesg | grep -i "Atom only"`
+		if [ x$atomOnlyReboot = x ];then
+			crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
+	 		isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
+			if [ "$isCRAlive" != "" ]; then
+				# Retest by querying some other parameter
+				crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+	 			isCRAlive=`echo $crReTestop | grep "Can't find destination compo"`
+			  	if [ "$isCRAlive" != "" ]; then
+					echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+					vendor=`getVendorName`
+					modelName=`getModelName`
+					CMMac=`getCMMac`
+					timestamp=`getDate`
+					#echo "Setting Last reboot reason"
+					reason="CR_crash"
+					rebootCount=1
+					#setRebootreason $reason $rebootCount
+					echo_t "SET succeeded"
+					echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+					touch $HAVECRASH
+					rebootNeeded RM "CR" $reason $rebootCount
+			 	fi		
+			fi
+		else
+			echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
 		fi
-	else
-		echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
+	elif [ "$WAN_TYPE" = "EPON" ]; then
+		CR_PID=`pidof CcspCrSsp`
+		if [ "$CR_PID" = "" ]; then
+			echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
+			vendor=`getVendorName`
+			modelName=`getModelName`
+			CMMac=`getCMMac`
+			timestamp=`getDate`
+			#echo "Setting Last reboot reason"
+			reason="CR_crash"
+			rebootCount=1
+			#setRebootreason $reason $rebootCount
+			echo_t "SET succeeded"
+			echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process died,need reboot"
+			touch $HAVECRASH
+			rebootNeeded RM "CR" $reason $rebootCount
+		fi
 	fi
+
+
+
 
 ###########################################
 
@@ -1278,7 +1299,7 @@ if [ "$WAN_STATUS" = "started" ];then
 	wan_dhcp_client_v4=1
 	wan_dhcp_client_v6=1
 
-	if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  || "$BOX_TYPE" = "TCCBR"  ]]; then
+	if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  || "$BOX_TYPE" = "TCCBR" || "$WAN_TYPE" = "EPON" ]]; then
 		check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
 		check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
 	else
@@ -1287,12 +1308,14 @@ if [ "$WAN_STATUS" = "started" ];then
 		check_wan_dhcp_client_v6=`echo $dhcp_cli_output | grep ti_dhcp6c`
 	fi
 
+	if [ "$BOX_TYPE" = "XB3" ]; then
 
-	if [ "x$check_wan_dhcp_client_v4" != "x" ] && [ "x$check_wan_dhcp_client_v6" != "x" ];then
-		if [ `cat /proc/net/dbrctl/mode`  = "standbay" ]
-		then
-			echo_t "RDKB_SELFHEAL : dbrctl mode is standbay, changing mode to registered"
-			echo "registered" > /proc/net/dbrctl/mode
+		if [ "x$check_wan_dhcp_client_v4" != "x" ] && [ "x$check_wan_dhcp_client_v6" != "x" ];then
+			if [ `cat /proc/net/dbrctl/mode`  = "standbay" ]
+			then
+				echo_t "RDKB_SELFHEAL : dbrctl mode is standbay, changing mode to registered"
+				echo "registered" > /proc/net/dbrctl/mode
+			fi
 		fi
 	fi
 
@@ -1301,24 +1324,26 @@ if [ "$WAN_STATUS" = "started" ];then
 		wan_dhcp_client_v4=0
 	fi
 
-	if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-		wan_dhcp_client_v6=0
-	fi
+        if  [ "$WAN_TYPE" != "EPON" ] ;then
+		if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+			echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+			wan_dhcp_client_v6=0
+		fi
 
-	DHCP_STATUS_query=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus`
-	DHCP_STATUS_execution=`echo $DHCP_STATUS_query | grep "Execution succeed"`
-	DHCP_STATUS=`echo "$DHCP_STATUS_query" | grep value | cut -f3 -d : | awk '{print $1}'`
+		DHCP_STATUS_query=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus`
+		DHCP_STATUS_execution=`echo $DHCP_STATUS_query | grep "Execution succeed"`
+		DHCP_STATUS=`echo "$DHCP_STATUS_query" | grep value | cut -f3 -d : | awk '{print $1}'`
 
-	if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
+		if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
 
-		echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
-		if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
-			echo_t "DHCP_CLIENT : DHCPStatus is not Bound, restarting WAN"
-			sh /etc/utopia/service.d/service_wan.sh wan-stop
-			sh /etc/utopia/service.d/service_wan.sh wan-start
-			wan_dhcp_client_v4=1
-			wan_dhcp_client_v6=1
+			echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
+			if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
+				echo_t "DHCP_CLIENT : DHCPStatus is not Bound, restarting WAN"
+				sh /etc/utopia/service.d/service_wan.sh wan-stop
+				sh /etc/utopia/service.d/service_wan.sh wan-start
+				wan_dhcp_client_v4=1
+				wan_dhcp_client_v6=1
+			fi
 		fi
 	fi
 
@@ -1326,6 +1351,9 @@ if [ "$WAN_STATUS" = "started" ];then
 	then
 		if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  ||  "$BOX_TYPE" = "TCCBR"  ]]; then
 			V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+		elif [ "$WAN_TYPE" = "EPON" ];then
+			echo "Calling epon_utility.sh to restart udhcpc "
+			sh /usr/ccsp/epon_utility.sh
 		else
 			DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
 			V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
@@ -1343,6 +1371,9 @@ if [ "$WAN_STATUS" = "started" ];then
 			/etc/dibbler/dibbler-init.sh
 			sleep 2
 			/usr/sbin/dibbler-client start
+		elif [ "$WAN_TYPE" = "EPON" ];then
+			echo "Calling dibbler_starter.sh to restart dibbler-client "
+			sh /usr/ccsp/dibbler_starter.sh
 		else
 			sh $DHCPV6_HANDLER disable
 			sleep 2
