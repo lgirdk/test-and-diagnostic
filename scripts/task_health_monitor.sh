@@ -739,10 +739,11 @@ fi
 		then
 			echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window." 
 			touch $SyseventdCrashed
+			echo_t "Setting Last reboot reason"
+			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
+			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 		fi
 		rebootDeviceNeeded=1
-
-
 	fi
 
 
