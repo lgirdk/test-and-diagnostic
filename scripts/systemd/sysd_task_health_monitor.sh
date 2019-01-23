@@ -874,7 +874,7 @@ fi
 
                                 	if [ "$UDHCPC_Enable" = "true" ]
                                 	then
-                                        	V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                                        	V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
                                 	else
                                         	#For AXB6 b -4 option is added to avoid timeout.
                                         	DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"

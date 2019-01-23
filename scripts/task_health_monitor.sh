@@ -1397,7 +1397,7 @@ if [ "$WAN_STATUS" = "started" ];then
                                                                                                                 
                                 if [ "$UDHCPC_Enable" = "true" ]                                                
                                 then                                                                            
-                                        V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                                        V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
                                 else                                                                                            
                                         DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"                                             
                                         V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
