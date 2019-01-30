@@ -182,7 +182,7 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 void FillEntryInList(PCOSA_DATAMODEL_SELFHEAL pSelfHeal,PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink,PingServerType type)
 {
 	PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4 = NULL;
-	PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv6 = NULL;
+	PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6 = NULL;
 	int Qdepth = 0;
     pSelfHealCxtLink = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)AnscAllocateMemory(sizeof(COSA_CONTEXT_SELFHEAL_LINK_OBJECT));
     if ( !pSelfHealCxtLink )
@@ -193,14 +193,18 @@ void FillEntryInList(PCOSA_DATAMODEL_SELFHEAL pSelfHeal,PCOSA_CONTEXT_SELFHEAL_L
 	{
 		Qdepth = AnscSListQueryDepth( &pSelfHeal->IPV4PingServerList );
 		/* now we have this link content */
-		pSelfHealCxtLink->hContext = (ANSC_HANDLE)pSelfHeal->pConnTest->pIPv4Table;
 		pSelfHealCxtLink->InstanceNumber =  pSelfHeal->ulIPv4NextInstanceNumber;
 		pSelfHeal->pConnTest->pIPv4Table[Qdepth].InstanceNumber =  pSelfHeal->ulIPv4NextInstanceNumber;
 		pSelfHeal->ulIPv4NextInstanceNumber++;
 		if (pSelfHeal->ulIPv4NextInstanceNumber == 0)
 			pSelfHeal->ulIPv4NextInstanceNumber = 1;
-	
-		pServerIpv4 = &pSelfHeal->pConnTest->pIPv4Table[Qdepth];
+
+		pServerIpv4 = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)
+			AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv4_SERVER_TABLE));
+		pServerIpv4->InstanceNumber =  pSelfHeal->ulIPv4NextInstanceNumber;
+		strncpy(pServerIpv4->Ipv4PingServerURI,
+			pSelfHeal->pConnTest->pIPv4Table[Qdepth].Ipv4PingServerURI,
+			sizeof(pServerIpv4->Ipv4PingServerURI));
 		pSelfHealCxtLink->hContext = (ANSC_HANDLE)pServerIpv4;
 		CosaSListPushEntryByInsNum(&pSelfHeal->IPV4PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
 	}
@@ -208,14 +212,18 @@ void FillEntryInList(PCOSA_DATAMODEL_SELFHEAL pSelfHeal,PCOSA_CONTEXT_SELFHEAL_L
 	{
 		Qdepth = AnscSListQueryDepth( &pSelfHeal->IPV6PingServerList );
 		/* now we have this link content */
-		pSelfHealCxtLink->hContext = (ANSC_HANDLE)pSelfHeal->pConnTest->pIPv6Table;
 		pSelfHealCxtLink->InstanceNumber =  pSelfHeal->ulIPv6NextInstanceNumber;
 		pSelfHeal->pConnTest->pIPv6Table[Qdepth].InstanceNumber =  pSelfHeal->ulIPv6NextInstanceNumber;
 		pSelfHeal->ulIPv6NextInstanceNumber++;
 		if (pSelfHeal->ulIPv6NextInstanceNumber == 0)
-			pSelfHeal->ulIPv6NextInstanceNumber = 1;
-		
-		pServerIpv6 = &pSelfHeal->pConnTest->pIPv6Table[Qdepth];
+			pSelfHeal->ulIPv6NextInstanceNumber = 1;		
+
+		pServerIpv6 = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)
+			AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv6_SERVER_TABLE));
+		pServerIpv6->InstanceNumber =  pSelfHeal->ulIPv6NextInstanceNumber;
+		strncpy(pServerIpv6->Ipv6PingServerURI,
+			pSelfHeal->pConnTest->pIPv6Table[Qdepth].Ipv6PingServerURI,
+			sizeof(pServerIpv6->Ipv6PingServerURI));
 		pSelfHealCxtLink->hContext = (ANSC_HANDLE)pServerIpv6;
 		CosaSListPushEntryByInsNum(&pSelfHeal->IPV6PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
 	}
