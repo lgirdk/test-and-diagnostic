@@ -159,8 +159,8 @@ runPingTest()
 
         if [ "$erouterIP6" != "" ]
         then
-           routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
-           IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/`
+           routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
+           IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d ' '`
 
  	   # If we don't get the Network prefix we need this additional check to 
            # retrieve the IPv6 GW Addr 
@@ -277,7 +277,8 @@ runPingTest()
 			resetNeeded "" PING
 		fi
 	else
-		echo_t "RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
+		echo_t "[RDKB_SELFHEAL] : GW IP Connectivity Test Successfull"
+		echo_t "[RDKB_SELFHEAL] : IPv6 Address is:$IPv6_Gateway_addr"
 	fi	
 
 	ping4_success=0
