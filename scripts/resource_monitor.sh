@@ -37,6 +37,7 @@ touch /tmp/.resource_monitor_started
 DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
+COUNTER=0
 
 sysevent set atom_hang_count 0
 
@@ -326,5 +327,15 @@ fi
 	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
-		
+	((COUNT++))
+    if [ "$COUNT" -eq 4 ]
+    then
+        ######DUMP MEMORY INFO######
+        echo_t "*************************"
+        echo_t "`date`"
+        echo_t "`top -mbn1 | sort -k4 -r`"
+        echo_t "`cat /proc/meminfo`"
+        COUNT=0
+    fi
+
 done
