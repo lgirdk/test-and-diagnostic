@@ -438,29 +438,17 @@ resetNeeded()
 
 			timestamp=`getDate`
 
-			if [ "$ProcessName" == "CcspPandMSsp" ]
-			then
-				
-				# Storing Information before corrective action
-		 		storeInformation
-				CMMac=`getCMMac`
-				modelName=`getModelName`
-				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[Not Available]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+			# Storing Information before corrective action
+			if [ "$ProcessName" == "CcspMoCA" ]; then
+				storeInformation "moca"
 			else
-				# Storing Information before corrective action
-				if [ "$ProcessName" == "CcspMoCA" ]; then
-					storeInformation "moca"
-				else
-					storeInformation
-				fi
-				vendor=`getVendorName`
-				modelName=`getModelName`
-				CMMac=`getCMMac`
-				echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
-			fi			
-
-
-
+				storeInformation
+			fi
+			
+			vendor=`getVendorName`
+			modelName=`getModelName`
+			CMMac=`getCMMac`
+			echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
 
 			if [ "$storedTime" == "" ] || [ "$storedTime" -eq 0 ]
 			then

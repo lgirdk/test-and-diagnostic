@@ -69,7 +69,12 @@ getVendorName()
 	vendorName=`dmcli eRT getv Device.DeviceInfo.Manufacturer | grep value | awk '{print $5}'`
 	if [ "$vendorName" = "" ]
 	then
-		vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
+		if [ "x$WAN_TYPE" == "xEPON" ]
+		then
+			vendorName=`cat /etc/device.properties | grep MANUFACTURE | cut -f2 -d=`
+		else
+			vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
+		fi
 	fi
 	echo "$vendorName"
 }
