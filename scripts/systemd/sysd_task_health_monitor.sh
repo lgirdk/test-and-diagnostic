@@ -1048,3 +1048,19 @@ fi
 			fi
 		fi
 	fi
+
+
+#check firmware download script is running.
+
+if [ "$WAN_TYPE" = "EPON" ]; then 
+   fDwnldPid=`ps w | grep -w xf3_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+else
+   fDwnldPid=`ps w | grep -w xb6_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+fi
+
+if [ "$fDwnldPid" == "" ]; then 
+        echo_t "Restarting firmwareDwnld script" 
+        systemctl stop CcspXconf.service
+        systemctl start CcspXconf.service
+fi
+

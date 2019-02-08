@@ -850,3 +850,13 @@ then
 		fi					
 	fi
 fi
+
+ #check firmware download script is running.
+ 
+ if [ "$BOX_TYPE" = "TCCBR" ]; then
+     fDwnldPid=`ps w | grep -w cbr_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+      if [ "$fDwnldPid" == "" ]; then
+         echo_t "Restarting CBR firmwareDwnld script"
+         exec  /etc/cbr_firmwareDwnld.sh &
+      fi
+ fi

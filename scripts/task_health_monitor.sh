@@ -1522,3 +1522,17 @@ fi
 			fi
 		fi
 	fi
+#check firmware download script is running.
+
+isPeriodicFWCheckEnable=`syscfg get PeriodicFWCheck_Enable`
+if [ "$isPeriodicFWCheckEnable" == "false" ]; then
+
+   if [ "$BOX_TYPE" = "XB3" ]; then
+      firmDwnldPid=`ps w | grep -w xb3_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+      if [ "$firmDwnldPid" == "" ]; then
+        echo_t "Restarting XB3 firmwareDwnld script"
+        exec  /etc/xb3_firmwareDwnld.sh &
+      fi
+   fi
+
+fi
