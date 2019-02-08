@@ -37,7 +37,7 @@ touch /tmp/.resource_monitor_started
 DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
-COUNTER=0
+COUNT=0
 
 sysevent set atom_hang_count 0
 
