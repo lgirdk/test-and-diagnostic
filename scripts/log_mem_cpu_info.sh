@@ -130,19 +130,19 @@ DELAY=30
 
 	if [ "$count" -eq "$max_count" ]
 	then
-		echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is"
-		echo_t ""
-		top -m -b n 1
+		echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
+		echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
+		top -m -b n 1 >> /rdklogs/logs/CPUInfo.txt.0
 		syscfg set process_memory_log_count 0	
 		syscfg commit
 	
 	else
 		# RDKB-6162
 		if [ "$USER_CPU" -ge "25" ]; then
-			echo_t "RDKB_PROC_USAGE_LOG: Top 5 CPU USAGE Process at $timestamp is"
-			echo_t ""
+			echo_t "RDKB_PROC_USAGE_LOG: Top 5 CPU USAGE Process at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
+			echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
 			top_cmd="top -bn1 | head -n10 | tail -6"
-			eval $top_cmd
+			eval $top_cmd >> /rdklogs/logs/CPUInfo.txt.0
 		fi
 		syscfg set process_memory_log_count $count	
 		syscfg commit
