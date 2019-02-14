@@ -327,7 +327,7 @@ fi
 	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
-	((COUNT++))
+	COUNT=$((COUNT+1))
     if [ "$COUNT" -eq 4 ]
     then
         ######DUMP MEMORY INFO######
