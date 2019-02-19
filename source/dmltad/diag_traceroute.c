@@ -174,8 +174,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         unsigned nhop = 0;
         tracert_hop_t *hops = NULL;
         void *ptr;
-        int idx;
-        char msg[300], dest_ip[65];
+        int idx, dest_reached=0;
+        char msg[300], dest_ip[65], query_ip[65], line_cpy[512];
         float *sum,val=0;
         int *counter,count=0;
         sum=&val;
@@ -201,6 +201,18 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             /* TR-181 doesn't like the format, let's convert it */
             convert_rtts(hops[nhop].rtts, sizeof(hops[nhop].rtts), sum, counter, timeout);
             hops[nhop].icmperr = 0; // TODO: we can use output: '!H, !S, ...'
+
+            strncpy(line_cpy,line,strlen(line));
+            char* savePtr;
+            char* token = strtok_r(line_cpy, "(",&savePtr);
+            while (token = strtok_r(savePtr, "(",&savePtr)) {
+                sscanf(token, "%[^)]",query_ip);
+                if (!strncmp(query_ip,dest_ip,strlen(query_ip))) {
+                  dest_reached=1;
+                  break;
+                }
+            }
+
             nhop++;
         }
         avgresptime=*sum/(*counter);
@@ -220,7 +232,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 	    int rtt_sum = 0, rtt_count = 0, resp =0;
 	    char rtts[256];
 	    char *rtt, *sp;
-	    if(nhop > 0 && (strncmp(dest_ip,hops[nhop-1].addr,65)==0))
+	    if(nhop > 0 && dest_reached==1)
 	    {
 	        strncpy(rtts,hops[nhop-1].rtts,256);
 		sp = rtts;
@@ -233,6 +245,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 		{
 		    resp = rtt_sum/rtt_count;
 		}
+                dest_reached=0;
 
 	    }
 	    stat->u.tracert.resptime = resp;
