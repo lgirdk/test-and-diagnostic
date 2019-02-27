@@ -179,9 +179,30 @@ if [ "$MULTI_CORE" = "yes" ]; then
 					echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
 					break
 				else
+                                        echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
 					ping_failed=1
 				fi
 			else
+ 					if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                         check_if_l2sd0_500_up=`ifconfig l2sd0.500 | grep UP `
+                         check_if_l2sd0_500_ip=`ifconfig l2sd0.500 | grep inet `
+                         if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]
+                         then
+                                echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"                                     
+                                rpc_ifconfig l2sd0.500 >/dev/null 2>&1
+					            sleep 3
+                         fi
+                         PING_RES=`ping_peer`
+                         CHECK_PING_RES=`echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1`
+                         if [ "$CHECK_PING_RES" != "" ]
+                         then
+                               if [ "$CHECK_PING_RES" -ne 100 ]
+                               then
+                                   echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
+                                   break
+                               fi
+                         fi
+                    fi
 				ping_failed=1
 			fi
 			
