@@ -27,11 +27,6 @@ source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 CM_INTERFACE=wan0
 
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
-
 if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
         ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
 else

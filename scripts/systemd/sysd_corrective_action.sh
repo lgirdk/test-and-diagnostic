@@ -28,12 +28,6 @@ then
     source $ADVSEC_PATH
 fi
 
-
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
-
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 WAN_INTERFACE=wan0
