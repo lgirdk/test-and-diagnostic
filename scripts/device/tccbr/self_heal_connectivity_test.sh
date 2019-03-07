@@ -20,13 +20,11 @@
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 
-source $UTOPIA_PATH/log_env_var.sh
+source $TAD_PATH/corrective_action.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 rand_num_old=""
-source $TAD_PATH/corrective_action.sh
-source /etc/log_timestamp.sh
-source /etc/device.properties
+
 
 # Generate random time to start 
 WAN_INTERFACE="erouter0"

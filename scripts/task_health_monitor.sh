@@ -25,10 +25,8 @@ grePrefix="gretap0"
 brlanPrefix="brlan"
 l2sd0Prefix="l2sd0"
 PRIVATE_LAN="brlan0"
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
+source $TAD_PATH/corrective_action.sh
+
 source /etc/log_timestamp.sh
 
 if [ -f /etc/mount-utils/getConfigFile.sh ];then
@@ -54,14 +52,14 @@ if [ ! -f /usr/bin/GetConfigFile ];then
     exit
 fi
 IDLE_TIMEOUT=60
-source $UTOPIA_PATH/log_env_var.sh
+
 
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
-source $TAD_PATH/corrective_action.sh
+
 
 if [ -f $ADVSEC_PATH ]
 then

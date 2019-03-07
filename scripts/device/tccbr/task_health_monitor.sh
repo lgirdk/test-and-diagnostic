@@ -22,11 +22,8 @@ UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
-if [ -f /etc/device.properties ]
-then
-    source /etc/device.properties
-fi
-source /etc/log_timestamp.sh
+source $TAD_PATH/corrective_action.sh
+
 ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
@@ -39,14 +36,14 @@ if [ ! -f /usr/bin/GetConfigFile ];then
     exit
 fi
 IDLE_TIMEOUT=30
-source $UTOPIA_PATH/log_env_var.sh
+
 
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
-source $TAD_PATH/corrective_action.sh
+
 
 rebootDeviceNeeded=0
 reb_window=0

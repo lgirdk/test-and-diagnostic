@@ -18,6 +18,13 @@
 # limitations under the License.
 #######################################################################################
 
+UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+
+if [ "$UPTIME" -lt 600 ]
+then
+    exit 0
+fi
+
 CM_INTERFACE="wan0"
 WAN_INTERFACE="erouter0"
 Check_CM_Ip=0
@@ -37,7 +44,7 @@ needSelfhealReboot="/nvram/self_healreboot"
 MF_WiFi_Index="5 6 9 10"
 PSM_CONFIG="/nvram/bbhm_cur_cfg.xml"
 WiFi_INIT_FILE="/tmp/wifi_initialized"
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
@@ -50,12 +57,7 @@ fi
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
 
-if [ "$UPTIME" -lt 600 ]
-then
-    exit 0
-fi
-
-log_nvram2=`syscfg get logbackup_enable`
+#log_nvram2=`syscfg get logbackup_enable`
 
 
 if [ ! -d "$LOG_SYNC_PATH" ] 
@@ -63,7 +65,7 @@ then
 	mkdir -p $LOG_SYNC_PATH
 fi
 
-if [ "$log_nvram2" == "true" ]
+if [ "$backupenable" == "true" ]
 then
 	exec 3>&1 4>&2 >>$SELFHEALFILE_BOOTUP 2>&1
 fi
@@ -236,7 +238,7 @@ db_clean_up_required()
 
 
 
-if [ "$log_nvram2" == "true" ]
+if [ "$backupenable" == "true" ]
 then   
 
 if [ "$WAN_TYPE" != "EPON" ]; then

@@ -21,9 +21,9 @@
 source /usr/ccsp/tad/corrective_action.sh
 source /etc/log_timestamp.sh
 
-if [ -f /etc/device.properties ]; then
-   source /etc/device.properties
-fi
+#if [ -f /etc/device.properties ]; then
+#   source /etc/device.properties
+#fi
 
 TMPFS_THRESHOLD=85
 max_count=12
