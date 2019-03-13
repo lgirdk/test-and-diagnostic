@@ -1214,6 +1214,9 @@ esac
 setRebootreason()
 {
     echo_t "Setting rebootReason to $1 and rebootCounter to $2"
+    if [ -e "/usr/bin/onboarding_log" ]; then
+	    /usr/bin/onboarding_log "Device reboot due to reason $1"
+	fi
 
     syscfg set X_RDKCENTRAL-COM_LastRebootReason $1
     result=`echo $?`
