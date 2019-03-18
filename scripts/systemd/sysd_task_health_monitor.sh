@@ -68,6 +68,14 @@ if [ "$MODEL_NUM" = "CGM4140COM" ] ; then
 
 fi
 
+#ARRISXB6-9443 temp fix. Need to generalize and improve.
+if [ "$MODEL_NUM" = "TG3482G" ] ; then
+  brctl show brlan0 | grep nmoca0 >> /dev/null
+  if [ $? != 0 ] ; then
+    echo_t "Moca is not part of brlan0.. adding it"
+    sysevent set multinet-syncMembers 1
+  fi
+fi
 
 PSM_PID=`pidof PsmSsp`
 	if [ "$PSM_PID" != "" ]; then
