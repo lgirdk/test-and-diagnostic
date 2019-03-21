@@ -407,9 +407,12 @@ fi
               echo_t "BWG doesn't support TR069Pa "
         else
 	TR69_PID=`pidof CcspTr069PaSsp`
-	if [ "$TR69_PID" = "" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
-		resetNeeded TR69 CcspTr069PaSsp
+        enable_TR69_Binary=`syscfg get EnableTR69Binary`
+        if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
+		if [ "$TR69_PID" = "" ]; then
+			echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
+			resetNeeded TR69 CcspTr069PaSsp
+		fi
 	fi
 	fi
 
