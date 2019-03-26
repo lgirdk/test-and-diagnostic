@@ -2489,6 +2489,20 @@ if [ "$DIBBLER_PID" = "" ]; then
                         BRLAN_CHKIPV6_DAD_FAILED=`ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed"`
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
+                            
+                            if [[ "$BOX_TYPE" = "XB6" && "$MODEL_NUM" = "CGM4140COM" ]]; then
+                                echo "DADFAILED : Recovering device from DADFAILED state"
+                                echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                sleep 1
+                                echo 0 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+
+                                sleep 1 
+
+                                dibbler-client stop 
+                                sleep 1
+                                dibbler-client start            
+                                sleep 5
+                            fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                             echo "DIBBLER : Dibbler Server Config is empty"
                         else
