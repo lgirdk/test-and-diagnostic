@@ -2503,6 +2503,18 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 dibbler-client start            
                                 sleep 5
                             fi
+                            if [[ "$BOX_TYPE" = "XB6" && "$MODEL_NUM" = "TG3482" ]]; then
+                                echo "DADFAILED : Recovering device from DADFAILED state"
+                                sh $DHCPV6_HANDLER disable
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
+                                sleep 1
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
+                                sleep 1
+                                sh $DHCPV6_HANDLER enable
+                                sleep 5
+                            fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                             echo "DIBBLER : Dibbler Server Config is empty"
                         else
