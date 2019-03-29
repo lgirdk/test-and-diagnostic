@@ -73,40 +73,6 @@ brlan1_firewall="/tmp/brlan1_firewall_rule_validated"
 
 LIGHTTPD_CONF="/var/lighttpd.conf"
 
-	# Checking PSM's PID
-	PSM_PID=`pidof PsmSsp`
-	if [ "$PSM_PID" = "" ]; then
-#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
-#		vendor=`getVendorName`
-#		modelName=`getModelName`
-#		CMMac=`getCMMac`
-#		timestamp=`getDate`
-#		echo "[`getDateTime`] Setting Last reboot reason"
-#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
-#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
-#		echo "[`getDateTime`] SET succeeded"
-#		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
-#		touch $HAVECRASH		
-#		rebootNeeded RM "PSM"
-		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
-		resetNeeded psm PsmSsp
-	else
-		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
-		psm_name_timeout=`echo $psm_name | grep "$CCSP_ERR_TIMEOUT"`
-		psm_name_notexist=`echo $psm_name | grep "$CCSP_ERR_NOT_EXIST"`
-		if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
-			psm_health=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health`
-			psm_health_timeout=`echo $psm_health | grep "$CCSP_ERR_TIMEOUT"`
-			psm_health_notexist=`echo $psm_health | grep "$CCSP_ERR_NOT_EXIST"`
-			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
-				echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
-				kill -9 `pidof PsmSsp`
-				resetNeeded psm PsmSsp
-			fi
-		fi
-	fi
-
 ###########################################
 	if [ "$BOX_TYPE" = "XB3" ]; then
 		  wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
@@ -303,6 +269,39 @@ fi
 
 ###########################################
 
+	# Checking PSM's PID
+	PSM_PID=`pidof PsmSsp`
+	if [ "$PSM_PID" = "" ]; then
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+#		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
+#		vendor=`getVendorName`
+#		modelName=`getModelName`
+#		CMMac=`getCMMac`
+#		timestamp=`getDate`
+#		echo "[`getDateTime`] Setting Last reboot reason"
+#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
+#		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+#		echo "[`getDateTime`] SET succeeded"
+#		echo "[`getDateTime`] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
+#		touch $HAVECRASH		
+#		rebootNeeded RM "PSM"
+		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
+		resetNeeded psm PsmSsp
+	else
+		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
+		psm_name_timeout=`echo $psm_name | grep "$CCSP_ERR_TIMEOUT"`
+		psm_name_notexist=`echo $psm_name | grep "$CCSP_ERR_NOT_EXIST"`
+		if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
+			psm_health=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health`
+			psm_health_timeout=`echo $psm_health | grep "$CCSP_ERR_TIMEOUT"`
+			psm_health_notexist=`echo $psm_health | grep "$CCSP_ERR_NOT_EXIST"`
+			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
+				echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
+				kill -9 `pidof PsmSsp`
+				resetNeeded psm PsmSsp
+			fi
+		fi
+	fi
 
 	PAM_PID=`pidof CcspPandMSsp`
 	if [ "$PAM_PID" = "" ]; then
