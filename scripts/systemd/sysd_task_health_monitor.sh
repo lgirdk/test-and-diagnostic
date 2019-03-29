@@ -237,6 +237,29 @@ PSM_PID=`pidof PsmSsp`
 		fi
 	fi
 
+#Checking if acsd is running and whether acsd core is generated or not
+if [[ "$MODEL_NUM" = "PX5001" || "$MODEL_NUM" = "PX5001B" ]]; then
+        ACSD_PID=`pidof acsd`
+        if [ "$ACSD_PID" = ""  ];then
+                echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
+        fi
+
+        ACSD_CORE=`ls /tmp | grep core.acsd`
+        if [ "$ACSD_CORE" != "" ]; then
+                echo_t "[ACSD_CRASH/RESTART] : ACSD core has been generated inside /tmp :  $ACSD_CORE"
+                ACSD_CORE_COUNT=`ls /tmp | grep core.acsd | wc -w`
+                echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp  are : $ACSD_CORE_COUNT"
+        fi
+fi
+
+#Checking Wheteher any core is generated inside /tmp folder
+CORE_TMP=`ls /tmp | grep core.`
+if [ "$CORE_TMP" != "" ]; then
+        echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
+        CORE_COUNT=`ls /tmp | grep core. | wc -w`
+        echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
+fi
+
 # Checking syseventd PID
  	SYSEVENT_PID=`pidof syseventd`
 	if [ "$SYSEVENT_PID" == "" ]
