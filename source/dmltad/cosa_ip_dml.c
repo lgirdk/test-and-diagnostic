@@ -5213,23 +5213,28 @@ UDPEchoConfig_GetParamUlongValue
 
     if ( AnscEqualString(ParamName, "BytesReceived", TRUE))
     {
-        pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
+        if ( pUdpEchoInfo && pUdpEchoInfo->Enable)
+        {
+            pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                         (
                             DSLH_DIAGNOSTIC_TYPE_UdpEcho
                         );
 
-        if ( pUdpEchoStats )
-        {
-            *puLong = pUdpEchoStats->BytesReceived;
-        }
-        else
-        {
-            AnscTraceWarning(("UDP echo Diagnostics---Failed to get BytesReceived\n!"));
+            if ( pUdpEchoStats )
+            {
+                *puLong = pUdpEchoStats->BytesReceived;
+            }
+            else
+            {
+                AnscTraceWarning(("UDP echo Diagnostics---Failed to get BytesReceived\n!"));
 
-            *puLong = 0;
-            return FALSE;
+                *puLong = 0;
+                return FALSE;
+           }
+        }  else 
+        {
+              AnscTraceWarning(("UDP echo Diagnostics---Not enabled\n!"));
         }
-
         return TRUE;
     }
 
