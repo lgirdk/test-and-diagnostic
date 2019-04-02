@@ -394,7 +394,15 @@ fi
 	if [ "$LM_PID" = "" ]; then
 		echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
 		resetNeeded lm CcspLMLite
-	
+	else
+                cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.lmlite.Name`
+                cr_timeout=`echo $cr_query | grep "$CCSP_ERR_TIMEOUT"`
+                cr_lmlite_notexist=`echo $cr_query | grep "$CCSP_ERR_NOT_EXIST"`
+                if [ "$cr_timeout" != "" ] || [ "$cr_lmlite_notexist" != "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : LMlite process is not responding. Restarting it"
+                        kill -9 `pidof CcspLMLite`
+                        resetNeeded lm CcspLMLite
+                fi
 	fi
 
 	# Checking XdnsSsp PID
