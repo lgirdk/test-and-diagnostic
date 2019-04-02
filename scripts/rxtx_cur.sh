@@ -21,8 +21,14 @@
 #This script is used to get the current rxtx counter after bootup
 #zhicheng_qiu@cable.comcast.com
 
+source /etc/device.properties
+
+if [ $BOX_TYPE = "XB3" ]; then
+    MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}' | cut -c 1-14`
+fi
+
 #ebtables -L --Lc | grep CONTINUE  | sort -k 2,2 | sed "N;s/\n/ /" | cut -d' ' -f2,8,12,20,24 | awk 'BEGIN{FS="[: ]";}{ printf "%2s:%2s:%2s:%2s:%2s:%2s|%s|%s|%s|%s\n", $1,$2,$3,$4,$5,$6,$7,$8,$8,$10; }' | tr ' ' '0' | sort -u > /tmp/rxtx_cur.txt
-traffic_count -L | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
+traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
