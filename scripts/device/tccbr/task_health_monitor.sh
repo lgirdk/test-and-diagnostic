@@ -27,6 +27,7 @@ source $TAD_PATH/corrective_action.sh
 ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
+PARCONNHEALTH_PATH="/tmp/parconnhealth.txt"
 PING_PATH="/usr/sbin"
 WAN_INTERFACE="erouter0"
 PEER_COMM_ID="/tmp/elxrretyt.swr"
@@ -358,6 +359,49 @@ fi
 		echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
 		#lighttpd -f $LIGHTTPD_CONF
 		sh /etc/webgui.sh
+	fi
+
+	# Checking for parodus connection stuck issue
+	# Checking parodus PID
+	PARODUS_PID=`pidof parodus`
+	if [ "$PARODUS_PID" != "" ]; then
+		# parodus process is running, 
+		kill_parodus_msg=""
+		#check if connection over 8080 is established
+		isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED` 
+		if [ "$isConnExists" != "" ]; then 
+			isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
+			if [ "$isClientConnReady" = "" ]; then
+				# but nanomsg listener for libparodus connection port 6666 is not opened
+				# Implies parodus connection stuck issue, kill parodus to self heal
+				kill_parodus_msg="Parodus Port 6666 is not opened but 8080 is opened."
+			fi
+		fi
+		# check if parodus is stuck in connecting
+		if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
+			wan_status=`sysevent get wan-status`
+			if [ "$wan_status" = "started" ]; then
+				time_line=`awk '/^\{START=[0-9]+\}$/' $PARCONNHEALTH_PATH` 
+			else
+				time_line=""
+			fi
+			start_conn_time=`echo "$time_line" | tr -d "}" | cut -d= -f2`
+			if [[ "$start_conn_time" != "" ]]; then
+				time_limit=$(($start_conn_time+900))
+				time_now=`date +%s`
+				time_now_val=$(($time_now+0))
+				if [ $time_now_val -ge $time_limit ]; then
+					# parodus connection health file has a recorded
+					# time stamp that is > 15 minutes old
+					kill_parodus_msg="Parodus Connection TimeStamp Expired."
+				fi
+			fi
+		fi
+		if [ "$kill_parodus_msg" != "" ]; then
+			echo "[`getDateTime`] $kill_parodus_msg Killing parodus process."
+			# want to generate minidump for further analysis hence using signal 11
+			systemctl kill --signal=11 parodus.service
+		fi
 	fi
 
 #Checking if acsd is running and whether acsd core is generated or not
