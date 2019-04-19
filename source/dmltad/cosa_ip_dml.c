@@ -76,7 +76,7 @@ static ULONG last_tick;
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 4096
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
-#define SPEEDTEST_AUTH_SIZE 512
+#define SPEEDTEST_AUTH_SIZE 2048
 
 #ifndef ROUTEHOPS_HOST_STRING
 #define ROUTEHOPS_HOST_STRING		"Host"
