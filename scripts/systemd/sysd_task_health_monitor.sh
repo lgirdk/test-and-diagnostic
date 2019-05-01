@@ -24,6 +24,8 @@ RDKLOGGER_PATH="/rdklogger"
 ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
 PRIVATE_LAN="brlan0"
 source $TAD_PATH/corrective_action.sh
+INTERFACE0="brlan0"
+INTERFACE1="brlan1"
 
 ping_failed=0
 ping_success=0
@@ -31,6 +33,16 @@ SyseventdCrashed="/rdklogs/syseventd_crashed"
 PING_PATH="/usr/sbin"
 
 PARCONNHEALTH_PATH="/tmp/parconnhealth.txt"
+
+DEVICE_MODEL_NUM=`dmcli eRT getv Device.DeviceInfo.ModelName | sed -nr '/value:/ s/.*value:([^"]+).*/\1/p' | awk '{$1=$1};1'`
+if [ "$DEVICE_MODEL_NUM" = "TG3492LG" ]
+then
+        echo "Box model is TG3492LG, use interfaces brlan0 and brlan3"
+        INTERFACE0="brlan0"
+        INTERFACE1="brlan3"
+else
+        echo "Use interfaces brlan0 and brlan1"
+fi
 
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
@@ -302,7 +314,7 @@ fi
 		rebootDeviceNeeded=1
 	fi
 	
-	# Checking whether brlan0 is created properly , if not recreate it
+	# Checking whether the first brlan interface is created properly , if not recreate it
 	lanSelfheal=`sysevent get lan_selfheal`
 	echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
 	if [ "$lanSelfheal" != "done" ]
@@ -312,12 +324,12 @@ fi
 			check_device_in_bridge_mode=`syscfg get bridge_mode`
 			if [ "$check_device_in_bridge_mode" == "0" ]
 			then
-				check_if_brlan0_created=`ifconfig | grep brlan0`
-				check_if_brlan0_up=`ifconfig brlan0 | grep UP`
-				check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
+				check_if_brlan0_created=`ifconfig | grep $INTERFACE0`
+				check_if_brlan0_up=`ifconfig $INTERFACE0 | grep UP`
+				check_if_brlan0_hasip=`ifconfig $INTERFACE0 | grep "inet addr"`
 				if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
 				then
-					echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
+					echo_t "[RDKB_PLATFORM_ERROR] : $INTERFACE0 is not completely up, setting event to recreate vlan and $INTERFACE0 interface"
 					logNetworkInfo
 
 					ipv4_status=`sysevent get ipv4_4-status`
@@ -346,10 +358,10 @@ fi
 
 			fi
 	else
-		echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+		echo_t "[RDKB_SELFHEAL] : $INTERFACE0 already restarted. Not restarting again"
 	fi
 			
-	# Checking whether brlan1 interface is created properly
+	# Checking whether the second brlan interface is created properly
 
 	l3netRestart=`sysevent get l3net_selfheal`
 	echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
@@ -357,13 +369,13 @@ fi
 	if [ "$l3netRestart" != "done" ]
 	then
 
-		check_if_brlan1_created=`ifconfig | grep brlan1`
-		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
-		check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+		check_if_brlan1_created=`ifconfig | grep $INTERFACE1`
+		check_if_brlan1_up=`ifconfig $INTERFACE1 | grep UP`
+		check_if_brlan1_hasip=`ifconfig $INTERFACE1 | grep "inet addr"`
 	
 		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ]
         	then
-	       		echo_t "[RDKB_PLATFORM_ERROR] : brlan1 is not completely up, setting event to recreate vlan and brlan1 interface"
+			echo_t "[RDKB_PLATFORM_ERROR] : $INTERFACE1 is not completely up, setting event to recreate vlan and $INTERFACE1 interface"
 
 			ipv5_status=`sysevent get ipv4_5-status`
 			lan_l3net=`sysevent get homesecurity_lan_l3net`
@@ -389,7 +401,7 @@ fi
 			sysevent set l3net_selfheal done
 		fi
 	else
-		echo_t "[RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
+		echo_t "[RDKB_SELFHEAL] : $INTERFACE1 already restarted. Not restarting again"
 	fi
 
 	# Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
@@ -398,8 +410,8 @@ fi
 	then
 	   echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
 	
-	   # Fetch mesh tunnels from the brlan0 bridge if they exist
-	   brctl0_ifaces=`brctl show brlan0 | egrep "pgd"` 
+	   # Fetch mesh tunnels from the first brlan bridge if they exist
+	   brctl0_ifaces=`brctl show $INTERFACE0 | egrep "pgd"`
 	   br0_ifaces=`ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}'`
 	
 	   for ifn in $br0_ifaces; do
@@ -411,13 +423,13 @@ fi
 	         fi
 	      done
 	      if [ "$brFound" == "false" ]; then
-	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
-	         brctl addif brlan0 $ifn;
+	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to $INTERFACE0"
+	         brctl addif $INTERFACE0 $ifn;
 	      fi
 	   done
 	
-	   # Fetch mesh tunnels from the brlan1 bridge if they exist
-	   brctl1_ifaces=`brctl show brlan1 | egrep "pgd"` 
+	   # Fetch mesh tunnels from the the second brlan bridge if they exist
+	   brctl1_ifaces=`brctl show $INTERFACE1 | egrep "pgd"`
 	   br1_ifaces=`ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}'`
 	
 	   for ifn in $br1_ifaces; do
@@ -429,8 +441,8 @@ fi
 	         fi
 	      done
 	      if [ "$brFound" == "false" ]; then
-	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
-	         brctl addif brlan1 $ifn;
+	         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to $INTERFACE1"
+	         brctl addif $INTERFACE1 $ifn;
 	      fi
 	   done
 	fi
@@ -682,9 +694,9 @@ fi
 	if [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]
 	then
 		firewall_rules=`iptables-save`
-		check_if_brlan1=`echo $firewall_rules | grep brlan1`
+		check_if_brlan1=`echo $firewall_rules | grep $INTERFACE1`
 		if [ "$check_if_brlan1" == "" ]; then
-			echo_t "[RDKB_PLATFORM_ERROR]:brlan1_firewall_rules_missing,restarting firewall"
+			echo_t "[RDKB_PLATFORM_ERROR]:$INTERFACE1 _firewall_rules_missing,restarting firewall"
 			sysevent set firewall-restart
 		fi
 		touch $brlan1_firewall
@@ -741,8 +753,8 @@ if [ "$WAN_TYPE" != "EPON" ]; then
    then
 		 echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"   
    else
-	     brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
-	     brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+	     brlan1up=`cat /var/dnsmasq.conf | grep $INTERFACE1`
+	     brlan0up=`cat /var/dnsmasq.conf | grep $INTERFACE0`
 
 
 	     IsAnyOneInfFailtoUp=0	
@@ -751,14 +763,14 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	     then
 			if [ "$brlan0up" == "" ]
 			then
-			    echo_t "[RDKB_SELFHEAL] : brlan0 info is not availble in dnsmasq.conf"
+			    echo_t "[RDKB_SELFHEAL] : $INTERFACE0 info is not availble in dnsmasq.conf"
 			    IsAnyOneInfFailtoUp=1
 			fi
 	     fi
 
 	     if [ "$brlan1up" == "" ]
 	     then
-	         echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
+	         echo_t "[RDKB_SELFHEAL] : $INTERFACE1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
 	     fi
 
@@ -1143,10 +1155,17 @@ fi
 				then
 					if [ "$rebootNeededforbrlan1" -eq 1 ]
 					then
-						echo_t "rebootNeededforbrlan1"
-						echo_t "RDKB_REBOOT : brlan1 interface is not up, rebooting the device."
+						echo_t "rebootNeededfor$INTERFACE1"
+						echo_t "RDKB_REBOOT : $INTERFACE1 interface is not up, rebooting the device."
 						echo_t "Setting Last reboot reason"
-						dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
+						if [ "$INTERFACE1" = "brlan1" ]
+                                                then
+                                                        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan1_down
+                                                fi
+                                                if [ "$INTERFACE1" = "brlan3" ]
+                                                then
+                                                        dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string brlan3_down
+                                                fi
 						echo_t "SET succeeded"
 						sh /etc/calc_random_time_to_reboot_dev.sh "" &
 					else 
