@@ -676,6 +676,29 @@ fi
         echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
     fi
 
+#Checking whether dnsmasq is running or not and if zombie for XF3
+if [ "$WAN_TYPE" == "EPON" ]; then
+        DNS_PID=`pidof dnsmasq`
+        if [ "$DNS_PID" == "" ];then
+                echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+        fi
+        checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
+        if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
+                for zombiepid in $checkIfDnsmasqIsZombie
+                do
+                        confirmZombie=`grep "State:" /proc/$zombiepid/status | grep -i "zombie"`
+                        if [ "$confirmZombie" != "" ] ; then
+                                echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+                                kill -9 `pidof dnsmasq`
+                                systemctl stop dnsmasq
+                                systemctl start dnsmasq
+                                break
+                        fi
+                done
+        fi
+
+fi
+
 #Checking whether dnsmasq is running or not
 if [ "$WAN_TYPE" != "EPON" ]; then
    DNS_PID=`pidof dnsmasq`
