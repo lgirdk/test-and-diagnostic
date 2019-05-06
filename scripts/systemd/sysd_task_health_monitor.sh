@@ -688,10 +688,14 @@ if [ "$WAN_TYPE" == "EPON" ]; then
                 do
                         confirmZombie=`grep "State:" /proc/$zombiepid/status | grep -i "zombie"`
                         if [ "$confirmZombie" != "" ] ; then
+				echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, stopping CcspXdns"
+				systemctl stop CcspXdnsSsp.service
                                 echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                                 kill -9 `pidof dnsmasq`
                                 systemctl stop dnsmasq
                                 systemctl start dnsmasq
+				echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting CcspXdns"
+				systemctl start CcspXdnsSsp.service
                                 break
                         fi
                 done
