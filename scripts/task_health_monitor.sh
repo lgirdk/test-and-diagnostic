@@ -43,6 +43,7 @@ ping_failed=0
 ping_success=0
 SyseventdCrashed="/rdklogs/syseventd_crashed"
 SNMPMASTERCRASHED="/tmp/snmp_cm_crashed"
+PARCONNHEALTH_PATH="/tmp/parconnhealth.txt"
 PING_PATH="/usr/sbin"
 WAN_INTERFACE="erouter0"
 PEER_COMM_ID="/tmp/elxrretyt.swr"
@@ -694,34 +695,66 @@ fi
                  
 	fi
 
+_start_parodus_() {
+	echo_t "RDKB_PROCESS_CRASHED : parodus process is not running, need restart"
+        echo_t "Check parodusCmd.cmd in /tmp"
+	if [ -e /tmp/parodusCmd.cmd ]; then
+		 echo_t "parodusCmd.cmd exists in tmp, but deleting it to recreate and fetch new values"
+		 rm -rf /tmp/parodusCmd.cmd
+		 #start parodus
+		 /usr/bin/parodusStart &
+		 echo_t "Started parodusStart in background"
+	else
+	 	 echo_t "parodusCmd.cmd does not exist in tmp, trying to start parodus"
+		/usr/bin/parodusStart &
+        fi
+}
+
 	# Checking parodus PID
         PARODUS_PID=`pidof parodus`
 	PARODUSSTART_PID=`pidof parodusStart`
         if [ "$PARODUS_PID" = "" ] && [ "$PARODUSSTART_PID" = "" ]; then
-		echo_t "RDKB_PROCESS_CRASHED : parodus process is not running, need restart"
-                echo_t "Check parodusCmd.cmd in /tmp"
-		if [ -e /tmp/parodusCmd.cmd ]; then
-			 echo_t "parodusCmd.cmd exists in tmp, but deleting it to recreate and fetch new values"
-			 rm -rf /tmp/parodusCmd.cmd
-			 #start parodus
-			 /usr/bin/parodusStart &
-			 echo_t "Started parodusStart in background"
-		else
-		 	 echo_t "parodusCmd.cmd does not exist in tmp, trying to start parodus"
-			 /usr/bin/parodusStart &
-            	fi
+            	_start_parodus_
 	else
-		# parodus process is running, check if connection over 8080 is established
+		# parodus process is running, 
+		kill_parodus_msg=""
+		# check if connection over 8080 is established
 		isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED`
 		if [ "$isConnExists" != "" ]; then
 			isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
 			if [ "$isClientConnReady" = "" ]; then
 				# but nanomsg listener for libparodus connection port 6666 is not opened
 				# Implies parodus connection stuck issue, kill parodus to self heal
-				echo_t "Parodus Port 6666 is not opened but 8080 is opened. Killing parodus process."
-				kill -11 `pidof parodus`
+				kill_parodus_msg="Parodus Port 6666 is not opened but 8080 is opened."
 			fi
             	fi
+		# check if parodus is stuck in connecting
+		if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
+			wan_status=`sysevent get wan-status`
+			if [ "$wan_status" = "started" ]; then
+				time_line=`awk '/^\{START=[0-9]+\}$/' $PARCONNHEALTH_PATH` 
+			else
+				time_line=""
+			fi
+			start_conn_time=`echo "$time_line" | tr -d "}" | cut -d= -f2`
+			if [[ "$start_conn_time" != "" ]]; then
+				time_limit=$(($start_conn_time+900))
+				time_now=`date +%s`
+				time_now_val=$(($time_now+0))
+				if [ $time_now_val -ge $time_limit ]; then
+					# parodus connection health file has a recorded
+					# time stamp that is > 15 minutes old
+					kill_parodus_msg="Parodus Connection TimeStamp Expired."
+				fi
+			fi
+		fi
+		if [ "$kill_parodus_msg" != "" ]; then
+			echo_t "$kill_parodus_msg Killing parodus process."
+			# want to generate minidump for further analysis hence using signal 11
+			kill -11 `pidof parodus`
+			sleep 1
+			_start_parodus_
+		fi
         fi
 
 	#Check dropbear is alive to do rsync/scp to/fro ATOM
