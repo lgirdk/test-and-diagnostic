@@ -918,10 +918,10 @@ checkMaintenanceWindow()
     start_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeStartTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
     end_time=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_MaintenanceWindow.FirmwareUpgradeEndTime | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
 
-	echo "$start_time" | grep "^[0-9]*$" > /dev/null 2>&1
+	echo "$start_time" | grep "^[0-9]\+$" > /dev/null 2>&1
 	res_Starttime=`echo $?`
 
-	echo "$end_time" | grep "^[0-9]*$"  > /dev/null 2>&1
+	echo "$end_time" | grep "^[0-9]\+$"  > /dev/null 2>&1
 	res_Endtime=`echo $?`
 
     if [[ $res_Starttime -ne 0 || $res_Endtime -ne 0 ]]
