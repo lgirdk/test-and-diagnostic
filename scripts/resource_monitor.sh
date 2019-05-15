@@ -299,13 +299,17 @@ fi
 ####################################################
 	
 #	sh $TAD_PATH/task_health_monitor.sh
+	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+       		batteryMode=0
+     	else
 	if [ -f  /usr/bin/Selfhealutil ]
   	then
   		Selfhealutil power_mode
   		batteryMode=$?
   	        echo_t "RDKB_SELFHEAL : batteryMode is  $batteryMode"
     	fi	
-     	   
+     	fi
+
   	if [ $batteryMode = 0 ]
   	then
 	    checkMaintenanceWindow
