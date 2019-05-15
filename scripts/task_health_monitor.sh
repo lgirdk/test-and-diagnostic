@@ -356,12 +356,16 @@ fi
 	fi
 	
 	# Checking MTA's PID
+	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+    		echo_t "BWG doesn't support voice"
+	else
 	MTA_PID=`pidof CcspMtaAgentSsp`
 	if [ "$MTA_PID" = "" ]; then
 #		echo "[`getDateTime`] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
 		echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
 		resetNeeded mta CcspMtaAgentSsp
 
+	fi
 	fi
 
 	# Checking CM's PID
@@ -399,10 +403,14 @@ fi
 #	fi
 
 	# Checking TR69's PID
+	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+              echo_t "BWG doesn't support TR069Pa "
+        else
 	TR69_PID=`pidof CcspTr069PaSsp`
 	if [ "$TR69_PID" = "" ]; then
 		echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
 		resetNeeded TR69 CcspTr069PaSsp
+	fi
 	fi
 
 	# Checking Test adn Daignostic's PID
