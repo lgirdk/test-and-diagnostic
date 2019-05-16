@@ -242,6 +242,8 @@ fi
 		if [ x$atomOnlyReboot = x ];then
 			crTestop=`dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name`
 	 		isCRAlive=`echo $crTestop | grep "Can't find destination compo"`
+			isCRHung=`echo $crTestop | grep "$CCSP_ERR_TIMEOUT"`
+
 			if [ "$isCRAlive" != "" ]; then
 				# Retest by querying some other parameter
 				crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
@@ -262,6 +264,28 @@ fi
 					rebootNeeded RM "CR" $reason $rebootCount
 			 	fi		
 			fi
+
+            if [ "$isCRHung" != "" ]; then
+                # Retest by querying some other parameter
+                crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+                isCRHung=`echo $crReTestop | grep "$CCSP_ERR_TIMEOUT"`
+                if [ "$isCRHung" != "" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : CR_process is not responding, need to reboot the unit"
+                    vendor=`getVendorName`
+                    modelName=`getModelName`
+                    CMMac=`getCMMac`
+                    timestamp=`getDate`
+                    #echo "Setting Last reboot reason"
+                    reason="CR_hang"
+                    rebootCount=1
+                    #setRebootreason $reason $rebootCount
+                    echo_t "SET succeeded"
+                    echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM CcspCrSsp process not responding, need reboot"
+                    touch $HAVECRASH
+                    rebootNeeded RM "CR" $reason $rebootCount
+                fi      
+            fi
+
 		else
 			echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
 		fi
