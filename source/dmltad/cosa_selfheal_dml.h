@@ -291,6 +291,27 @@ IPv6PingServerTable_Rollback
         ANSC_HANDLE                 hInsContext
     );
 
+ULONG
+CpuMemFrag_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    );
 
+ANSC_HANDLE
+CpuMemFrag_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    );
+
+ULONG
+CpuMemFrag_GetParamStringValue
+		(
+				ANSC_HANDLE 	hInsContext,
+				char* 			ParamName,
+				char* 			pValue,
+				ULONG*			pUlSize
+		);
 
 #endif

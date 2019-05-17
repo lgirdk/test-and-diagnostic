@@ -266,6 +266,119 @@ CosaDmlGetSelfHealMonitorCfg(
     return pRescTest;
 }
 
+
+
+void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
+{
+     char command[256] = {0};
+     if(bCollectnow == TRUE) 
+     {
+       if((uinterval >= 1 ) && ( uinterval <= 120 ))
+       {
+           CcspTraceInfo(("%s calling collection script\n",__FUNCTION__));
+           /*For Featching /proc/buddyinfo data immediatelly	*/
+           system("sh /usr/ccsp/tad/log_buddyinfo.sh &");
+       }
+       else
+          CcspTraceError(("%s, Time interval is not in range\n",__FUNCTION__));
+     }
+	/*For Featching /proc/buddyinfo data after interval	*/
+	sprintf(command, "sh /usr/ccsp/tad/cpumemfrag_cron.sh %d &",uinterval);
+	
+	system(command);
+
+
+}
+
+void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma )
+{
+	
+	char buf[128]={0};
+	if(pCpuMemFragDma->index == COSA_DML_HOST)
+	{
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Host_Dma", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->dma ,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Host_Dma32", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->dma32 ,buf );
+			
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Host_Normal", buf, sizeof(buf));
+                if(buf != NULL)
+	          strcpy(pCpuMemFragDma->normal,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Host_Highmem", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->highmem,buf );
+	}
+	else if(pCpuMemFragDma->index == COSA_DML_PEER)
+	{
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Peer_Dma", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->dma ,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Peer_Dma32", buf, sizeof(buf));
+                if(buf != NULL)
+		   strcpy(pCpuMemFragDma->dma32 ,buf );
+			
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Peer_Normal", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->normal,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Peer_Highmem", buf, sizeof(buf));
+                if(buf != NULL)
+		  strcpy(pCpuMemFragDma->highmem,buf );
+	}
+
+}
+
+PCOSA_DML_CPU_MEM_FRAG
+CosaDmlGetSelfHealCpuMemFragCfg(    
+        ANSC_HANDLE                 hThisObject
+    )
+{
+
+    PCOSA_DATAMODEL_SELFHEAL      pMyObject            = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+	PCOSA_DML_CPU_MEM_FRAG     pCpuMemFrag = (PCOSA_DML_CPU_MEM_FRAG)pMyObject->pCpuMemFrag;
+
+	pCpuMemFrag = (PCOSA_DML_CPU_MEM_FRAG)AnscAllocateMemory(sizeof(COSA_DML_CPU_MEM_FRAG));
+	if(!pCpuMemFrag) 
+	{
+			CcspTraceWarning(("\n %s Cpu Mem Frag allocation failed\n",__FUNCTION__));
+			return NULL;
+	}
+
+	pCpuMemFrag->pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)AnscAllocateMemory(sizeof(COSA_DML_CPU_MEM_FRAG_DMA) * 3);
+	if(!pCpuMemFrag->pCpuMemFragDma) 
+	{
+			CcspTraceWarning(("\n %s Cpu Mem Frag Dma allocation failed\n",__FUNCTION__));
+			return NULL;
+	}
+
+	CpuMemFragCronSchedule(pMyObject->CpuMemFragInterval,FALSE);
+	/*Get data of Host from syscfg 	*/
+	pCpuMemFrag->pCpuMemFragDma[0].index = COSA_DML_HOST;
+	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFrag->pCpuMemFragDma );
+	pCpuMemFrag->InstanceNumber++;
+	/*Get data of Peer from syscfg 	*/
+	pCpuMemFrag->pCpuMemFragDma[1].index = COSA_DML_PEER;
+	CosaDmlGetSelfHealCpuMemFragData((pCpuMemFrag->pCpuMemFragDma + 1));
+	pCpuMemFrag->InstanceNumber++;
+
+
+    return pCpuMemFrag;
+}
+
+
 PCOSA_DML_CONNECTIVITY_TEST
 CosaDmlGetSelfHealCfg(    
         ANSC_HANDLE                 hThisObject
@@ -301,6 +414,11 @@ CosaDmlGetSelfHealCfg(
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "max_reboot_count", buf, sizeof(buf));
 	pMyObject->MaxRebootCnt = atoi(buf);
+
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "CpuMemFrag_Interval", buf, sizeof(buf));
+	pMyObject->CpuMemFragInterval = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "max_reset_count", buf, sizeof(buf));
@@ -523,6 +641,7 @@ CosaSelfHealInitialize
 	
     pMyObject->pConnTest = CosaDmlGetSelfHealCfg((ANSC_HANDLE)pMyObject);
     pMyObject->pResMonitor = CosaDmlGetSelfHealMonitorCfg((ANSC_HANDLE)pMyObject);
+    pMyObject->pCpuMemFrag = CosaDmlGetSelfHealCpuMemFragCfg((ANSC_HANDLE)pMyObject);
 
     if ( returnStatus != ANSC_STATUS_SUCCESS )
     {

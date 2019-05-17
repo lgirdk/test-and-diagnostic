@@ -36,6 +36,10 @@
 #define  COSA_DML_RR_NAME_NATNextInsNumber               "NextInstanceNumber"
 #define  COSA_DML_RR_NAME_NATAlias                       "Alias"
 #define  COSA_DML_RR_NAME_NATbNew                        "bNew"
+
+#define COSA_DML_HOST		1
+#define COSA_DML_PEER		2
+
 typedef enum _PingServerType
 {
 	PingServerType_IPv4 = 0,
@@ -91,6 +95,28 @@ _COSA_DML_RESOUCE_MONITOR
 }
 COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
 
+
+typedef struct
+_COSA_DML_CPU_MEM_FRAG_DMA
+{
+    UCHAR       dma[128];
+    UCHAR       dma32[128];
+    UCHAR       normal[128];
+	UCHAR       highmem[128];
+	int 		index;
+}
+COSA_DML_CPU_MEM_FRAG_DMA,  *PCOSA_DML_CPU_MEM_FRAG_DMA;
+
+
+typedef struct
+_COSA_DML_CPU_MEM_FRAG
+{
+	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma;
+	ULONG							InstanceNumber;
+}
+COSA_DML_CPU_MEM_FRAG,  *PCOSA_DML_CPU_MEM_FRAG;
+
+
 #define  COSA_DATAMODEL_SELFHEAL_CLASS_CONTENT                                                  \
     /* duplication of the base object class content */                                      \
     COSA_BASE_CONTENT                                                                       \
@@ -107,10 +133,12 @@ COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
 	ULONG                       MaxInstanceNumber;                                    \
 	ULONG                       ulIPv4NextInstanceNumber;                                    \
 	ULONG                       ulIPv6NextInstanceNumber;                                    \
+	ULONG                       CpuMemFragInterval;                                    \
     SLIST_HEADER                IPV4PingServerList;                                        \
     SLIST_HEADER                IPV6PingServerList;                                        \
     PCOSA_DML_CONNECTIVITY_TEST    pConnTest;                                        \
-    PCOSA_DML_RESOUCE_MONITOR   pResMonitor;
+    PCOSA_DML_RESOUCE_MONITOR   pResMonitor;						\
+	PCOSA_DML_CPU_MEM_FRAG 		pCpuMemFrag;					\
 	ANSC_HANDLE                     hIrepFolderSelfHeal;                                         \
     ANSC_HANDLE                     hIrepFolderSelfHealCoTest;                                       \
     /* end of Diagnostic object class content */                                                    \
@@ -157,3 +185,5 @@ ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject,
 VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun );
 
 
+void CpuMemFragCronSchedule(ULONG uinterval, BOOL bConnectnow);
+void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma );

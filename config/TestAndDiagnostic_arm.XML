@@ -842,6 +842,12 @@
              <func_Rollback>SelfHeal_Rollback</func_Rollback>
             </functions>
             <parameters>
+				<parameter>
+					<name>X_RDKCENTRAL-COM_CpuMemFragInterval</name>
+					<type>unsignedInt[1:120]</type>
+					<syntax>uint32</syntax>
+					<writable>true</writable>
+				</parameter>
                 <parameter>
                       <name>X_RDKCENTRAL-COM_Enable</name>
                       <type>boolean</type>
@@ -898,6 +904,42 @@
 				</parameter>
 	           </parameters>
             <objects>
+		<object>
+			<name>CpuMemFrag</name>
+			<objectType>staticTable</objectType>
+			<maxInstance>3</maxInstance>
+			<functions>
+				<func_GetEntryCount>CpuMemFrag_GetEntryCount</func_GetEntryCount>
+				<func_GetEntry>CpuMemFrag_GetEntry</func_GetEntry>
+				<func_GetParamStringValue>CpuMemFrag_GetParamStringValue</func_GetParamStringValue>
+			</functions>
+			<parameters>
+				<parameter>
+					<name>DMA</name>
+					<type>string(64)</type>
+					<syntax>string</syntax>
+					<writable>false</writable>
+				</parameter>
+				<parameter>
+					<name>DMA32</name>
+					<type>string(64)</type>
+					<syntax>string</syntax>
+					<writable>false</writable>
+				</parameter>
+				<parameter>
+					<name>Normal</name>
+					<type>string(64)</type>
+					<syntax>string</syntax>
+					<writable>false</writable>
+				</parameter>
+				<parameter>
+					<name>Highmem</name>
+					<type>string(64)</type>
+					<syntax>string</syntax>
+					<writable>false</writable>
+				</parameter>
+			</parameters>
+		</object>
                 <object>
                     <name>ConnectivityTest</name>
                     <objectType>object</objectType>
