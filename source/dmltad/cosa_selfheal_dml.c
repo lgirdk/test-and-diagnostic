@@ -322,6 +322,12 @@ SelfHeal_GetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
 
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
+	{
+			*puLong = pMyObject->CpuMemFragInterval;
+			return TRUE;
+	}
+
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount", TRUE))
     {
         *puLong = pMyObject->MaxRebootCnt;
@@ -389,6 +395,36 @@ SelfHeal_SetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[8];
+
+
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
+	{
+		if((uValue >= 1) && (uValue <= 120))
+		{
+			memset(buf, 0, sizeof(buf));
+			snprintf(buf,sizeof(buf),"%d",uValue);
+
+			if (syscfg_set(NULL, "CpuMemFrag_Interval", buf) != 0)
+			{
+					CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+					return FALSE;
+			}
+			if (syscfg_commit() != 0)
+			{
+					CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
+					return FALSE;
+			}
+			pMyObject->CpuMemFragInterval = uValue;
+
+			CpuMemFragCronSchedule(uValue,TRUE);
+
+			return TRUE;
+		}
+		else
+		{
+			CcspTraceWarning(("%s: [ParamName: %s] Please Enter Value between 1 to 120 hrs \n", __FUNCTION__, ParamName));
+		}
+	}
 
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount", TRUE))
     {
@@ -1831,3 +1867,96 @@ ResourceMonitor_Rollback
 {
     return ANSC_STATUS_SUCCESS;
 }
+
+
+
+
+/***********************************************************************
+
+ APIs for Object:
+
+    Device.SelfHeal.CpuMemFrag.{i}.
+
+    *  CpuMemFrag_GetEntryCount
+    *  CpuMemFrag_GetEntry
+    *  CpuMemFrag_GetParamStringValue
+
+
+***********************************************************************/
+
+
+ULONG
+CpuMemFrag_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+	PCOSA_DATAMODEL_SELFHEAL	pMyObject	= (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+	PCOSA_DML_CPU_MEM_FRAG pCpuMemFrag = (PCOSA_DML_CPU_MEM_FRAG)pMyObject->pCpuMemFrag;
+
+	return ( pCpuMemFrag->InstanceNumber);
+}
+
+
+ANSC_HANDLE
+CpuMemFrag_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+	PCOSA_DATAMODEL_SELFHEAL	pMyObject	= (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+	PCOSA_DML_CPU_MEM_FRAG pCpuMemFrag = (PCOSA_DML_CPU_MEM_FRAG)pMyObject->pCpuMemFrag;
+
+	if ( pCpuMemFrag )
+	{
+			*pInsNumber  = nIndex + 1; 
+			return &pCpuMemFrag->pCpuMemFragDma[nIndex];
+	}
+	else
+			return NULL;
+}
+
+ULONG
+CpuMemFrag_GetParamStringValue
+		(
+				ANSC_HANDLE 								hInsContext,
+				char* 											ParamName,
+				char* 											pValue,
+				ULONG*											pUlSize
+		)
+{
+
+	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)hInsContext;
+	/*Get data of Host/Peer from syscfg 	*/
+	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
+
+	/* check the parameter name and return the corresponding value */
+	if( AnscEqualString(ParamName, "DMA", TRUE))
+	{
+		AnscCopyString( pValue, pCpuMemFragDma->dma);
+		return 0;
+	}
+
+	if( AnscEqualString(ParamName, "DMA32", TRUE))
+	{
+		AnscCopyString( pValue, pCpuMemFragDma->dma32);
+		return 0;
+	}
+
+	if( AnscEqualString(ParamName, "Normal", TRUE))
+	{
+		AnscCopyString( pValue, pCpuMemFragDma->normal);
+		return 0;
+	}
+
+	if( AnscEqualString(ParamName, "Highmem", TRUE))
+	{
+		AnscCopyString( pValue, pCpuMemFragDma->highmem);
+		return 0;
+	}
+
+return -1;
+}
+
