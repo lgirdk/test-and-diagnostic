@@ -466,35 +466,39 @@ resetNeeded()
 			then
 				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
         			hotspot_arpd -q 0  > /dev/null &
-			elif [ "$folderName" == "advsec_bin" ]
+			elif [ "$folderName" = "advsec_bin" ]
 			then
-				if [ "$ProcessName" == "AdvSecurityAgent" ]
+				if [ "$ProcessName" = "AdvSecurityAgent" ] || [ "$ProcessName" = "AdvSecurityRabid" ]
 				then
 					if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
 						rm $ADVSEC_AGENT_SHUTDOWN
 					else
 						echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
 					fi
-					advsec_restart_agent
-				elif [ "$ProcessName" == "AdvSecurityDns" ]
+					if [ "$ProcessName" = "AdvSecurityAgent" ]; then
+						advsec_restart_agent
+					else
+						advsec_restart_rabid
+					fi
+				elif [ "$ProcessName" = "AdvSecurityDns" ]
 				then
 					advsec_start_process dnscap
-				elif [ "$ProcessName" == "AdvSecurityDhcp" ]
+				elif [ "$ProcessName" = "AdvSecurityDhcp" ]
 				then
 					advsec_start_process dhcpcap
-				elif [ "$ProcessName" == "AdvSecurityMdns" ]
+				elif [ "$ProcessName" = "AdvSecurityMdns" ]
 				then
 					advsec_start_process mdnscap
-				elif [ "$ProcessName" == "AdvSecurityPof" ]
+				elif [ "$ProcessName" = "AdvSecurityPof" ]
 				then
 					advsec_start_process p0f
-				elif [ "$ProcessName" == "AdvSecuritySoftflowd" ]
+				elif [ "$ProcessName" = "AdvSecuritySoftflowd" ]
 				then
 					advsec_start_process softflowd
-                                elif [ "$ProcessName" == "AdvSecurityThreat" ]
+                                elif [ "$ProcessName" = "AdvSecurityThreat" ]
                                 then
                                         advsec_start_process threatd
-				elif [ "$ProcessName" == "AdvSecurityScanner" ]
+				elif [ "$ProcessName" = "AdvSecurityScanner" ]
 				then
 					advsec_start_process scannerd
 				fi
