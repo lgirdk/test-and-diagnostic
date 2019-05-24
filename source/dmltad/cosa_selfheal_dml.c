@@ -1293,7 +1293,7 @@ IPv4PingServerTable_Validate
     )
 
 {
-
+    return TRUE;
 }
 
 ULONG
@@ -1303,7 +1303,7 @@ IPv4PingServerTable_Commit
     )
 
 {
-
+    return 0;
 }
 
 ULONG
@@ -1313,7 +1313,7 @@ IPv4PingServerTable_Rollback
     )
 
 {
-
+    return 0;
 }
 
 

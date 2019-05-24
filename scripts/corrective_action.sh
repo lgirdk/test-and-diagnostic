@@ -31,6 +31,7 @@ case $BOX_TYPE in
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
     "CFG3") SELFHEAL_TYPE="BASE";;  # TBD?!
     "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
+    "HUB4") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -226,7 +227,7 @@ checkConditionsbeforeAction()
             loop=1
         ;;
         "SYSTEMD")
-            if [ "$1" != "RM" ] && [ "$WAN_TYPE" != "EPON" ];then
+            if [ "$1" != "RM" ] && [ "$WAN_TYPE" != "EPON" ] && [ "$WAN_TYPE" != "DSL" ];then
                 isIPv4=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
                 if [ "$isIPv4" = "" ]
                 then
