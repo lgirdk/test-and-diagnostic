@@ -32,6 +32,7 @@ case $BOX_TYPE in
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
     "CFG3") SELFHEAL_TYPE="BASE";;  # TBD?!
     "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
+    "HUB4") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -665,8 +666,11 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+if [ "$BOX_TYPE" != "HUB4" ]; then
+
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
+
         HOMESEC_PID=`pidof CcspHomeSecurity`
         if [ "$HOMESEC_PID" = "" ]; then
             case $SELFHEAL_TYPE in
@@ -792,6 +796,8 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
 esac
+
+fi #Not HUb4
 
 case $SELFHEAL_TYPE in
     "BASE")
@@ -1245,12 +1251,14 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
+      if [ "$BOX_TYPE" != "HUB4" ]; then
         #Checking dropbear PID
         DROPBEAR_PID=`pidof dropbear`
         if [ "$DROPBEAR_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
             sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
         fi
+      fi
     ;;
 esac
 
@@ -1739,6 +1747,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
+      if [ "$BOX_TYPE" != "HUB4" ]; then
         # Checking whether brlan0 is created properly , if not recreate it
         lanSelfheal=`sysevent get lan_selfheal`
         echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
@@ -1873,6 +1882,7 @@ case $SELFHEAL_TYPE in
                 done
             fi
         fi
+     fi #Not HUB4
     ;;
 esac
 
@@ -2255,7 +2265,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
-        if [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]
         then
             firewall_rules=`iptables-save`
             check_if_brlan1=`echo $firewall_rules | grep brlan1`
@@ -2580,7 +2590,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
+if [ "$BOX_TYPE" != "HUB4" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]
 then
     isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
     echo_t "isIPv6 = $isIPv6"
@@ -2601,7 +2611,7 @@ then
     fi
 fi
 
-if [ "$WAN_STATUS" = "started" ];then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
     case $SELFHEAL_TYPE in
@@ -2857,6 +2867,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
+      if [ "$BOX_TYPE" != "HUB4" ]; then
         if [ $wan_dhcp_client_v4 -eq 0 ];
         then
             if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
@@ -2948,6 +2959,7 @@ case $SELFHEAL_TYPE in
             fi
             wan_dhcp_client_v6=1
         fi
+     fi #Not HUB4
     ;;
 esac
 
@@ -3113,6 +3125,8 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         if [ "$WAN_TYPE" = "EPON" ]; then
             fDwnldPid=`ps w | grep -w xf3_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+	elif [ "$BOX_TYPE" = "HUB4" ]; then
+	    fDwnldPid=`ps w | grep -w Hub4_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
         else
             fDwnldPid=`ps w | grep -w xb6_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
         fi
