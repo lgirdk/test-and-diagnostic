@@ -36,6 +36,7 @@
 #define  COSA_DML_RR_NAME_NATNextInsNumber               "NextInstanceNumber"
 #define  COSA_DML_RR_NAME_NATAlias                       "Alias"
 #define  COSA_DML_RR_NAME_NATbNew                        "bNew"
+#define  SYSCFG_FILE                                     "/nvram/syscfg.db"
 typedef enum _PingServerType
 {
 	PingServerType_IPv4 = 0,

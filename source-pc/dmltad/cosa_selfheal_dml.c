@@ -324,16 +324,7 @@ SelfHeal_SetParamUlongValue
         char buf[8];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "max_reboot_count", buf) != 0)
-        {
-			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-			return FALSE;
-        }
-		if (syscfg_commit() != 0)
-		{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-			return FALSE;
-		}
+	 _set_db_value(SYSCFG_FILE,"max_reboot_count",buf);
         pMyObject->MaxRebootCnt = uValue;
         return TRUE;
     }
@@ -348,16 +339,7 @@ SelfHeal_SetParamUlongValue
         char buf[8];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "max_reset_count", buf) != 0)
-        {
-            CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-            return FALSE;
-        }
-        if (syscfg_commit() != 0)
-        {
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-            return FALSE;
-        }
+	 _set_db_value(SYSCFG_FILE,"max_reset_count",buf);
         pMyObject->MaxResetCnt = uValue;
         return TRUE;
     }
@@ -555,16 +537,7 @@ BOOL ConnectivityTest_SetParamBoolValue
         char buf[128];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", buf) != 0)
-		{
-			CcspTraceWarning(("%s syscfg set failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
-			return FALSE;
-		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
-		    return FALSE;
-        }
+         _set_db_value(SYSCFG_FILE,"ConnTest_CorrectiveAction",buf);
         pMyObject->pConnTest->CorrectiveAction = bValue;
         return TRUE;
     }
@@ -614,7 +587,7 @@ ConnectivityTest_GetParamUlongValue
     {
         /* collect value */
 	char buf[64]={0};
-	syscfg_get( NULL, "last_router_reboot_time", buf, sizeof(buf));
+	_get_db_value(SYSCFG_FILE, buf, sizeof(buf), "last_router_reboot_time");
 	if( buf[0] != '\0' )
 	{
 		*pUlong = atoi(buf);
@@ -646,7 +619,7 @@ ConnectivityTest_GetParamIntValue
     {
         /* collect value */
         char buf[16]={0};
-        syscfg_get( NULL, "todays_reset_count", buf, sizeof(buf));
+	_get_db_value(SYSCFG_FILE, buf, sizeof(buf), "todays_reset_count");
         if( buf[0] != '\0' )
         {
                     *pInt = atoi(buf);
@@ -683,16 +656,7 @@ ConnectivityTest_SetParamUlongValue
         /* save update to backup */
 		char value[10];
 		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_PingInterval", value) != 0)
-		{
-			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingInterval\n",__FUNCTION__));
-			return FALSE;
-		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_PingInterval\n",__FUNCTION__));
-		    return FALSE;
-        }
+		 _set_db_value(SYSCFG_FILE,"ConnTest_PingInterval",value);
         pMyObject->pConnTest->PingInterval = uValue;
         return TRUE;
     }
@@ -706,16 +670,7 @@ ConnectivityTest_SetParamUlongValue
          
 		char value[10];
 		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_NumPingsPerServer", value) != 0)
-		{
-			CcspTraceWarning(("%s syscfg set failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
-			return FALSE;
-		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
-		    return FALSE;
-        }
+		_set_db_value(SYSCFG_FILE,"ConnTest_NumPingsPerServer",value);
         /* save update to backup */
         pMyObject->pConnTest->PingCount = uValue;
         return TRUE;
@@ -730,16 +685,7 @@ ConnectivityTest_SetParamUlongValue
    
 		char value[10];
 		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_MinNumPingServer", value) != 0)
-		{
-			CcspTraceWarning(("%s syscfg set failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
-			return FALSE;
-		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
-		    return FALSE;
-        }     
+		_set_db_value(SYSCFG_FILE,"ConnTest_MinNumPingServer",value);
         /* save update to backup */
 		pMyObject->pConnTest->MinPingServer = uValue;
         return TRUE;
@@ -752,17 +698,8 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
 		char value[10];
-        snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_PingRespWaitTime", value) != 0)
-		{
-			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
-			return FALSE;
-		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
-		    return FALSE;
-        }     
+        	snprintf(value, sizeof(value), "%u", uValue);
+		_set_db_value(SYSCFG_FILE,"ConnTest_PingRespWaitTime",value);
         /* save update to backup */
 		pMyObject->pConnTest->WaitTime = uValue;
         return TRUE;
@@ -790,16 +727,7 @@ ConnectivityTest_SetParamIntValue
 	char cValue[10];
 	memset(cValue, 0, sizeof(cValue));
         snprintf(cValue, sizeof(cValue), "%d", pInt);
-	if (syscfg_set(NULL, "router_reboot_Interval", cValue) != 0)
-	{
-		CcspTraceWarning(("%s syscfg set failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
-		return FALSE;
-	}
-        if (syscfg_commit() != 0)
-	{
-		CcspTraceWarning(("%s syscfg commit failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
-		return FALSE;
-	}     
+	_set_db_value(SYSCFG_FILE,"router_reboot_Interval",cValue);
         /* save update to backup */
 	pMyObject->pConnTest->RouterRebootInterval = pInt;
         return TRUE;
@@ -962,17 +890,7 @@ IPv4PingServerTable_AddEntry
 	pSelfHeal->pConnTest->IPv4EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
 	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv4EntryCount);
-	if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
-	{
-		CcspTraceWarning(("syscfg_set failed\n"));
-	}
-	else 
-	{
-		if (syscfg_commit() != 0) 
-		{
-			CcspTraceWarning(("syscfg_commit failed\n"));
-		}
-	}
+	_set_db_value(SYSCFG_FILE,"Ipv4PingServer_Count",buf);
 	CosaSListPushEntryByInsNum(&pSelfHeal->IPV4PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
     return (ANSC_HANDLE)pSelfHealCxtLink;
 
@@ -1228,18 +1146,8 @@ IPv6PingServerTable_AddEntry
 	pSelfHeal->pConnTest->IPv6EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
 	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv6EntryCount);
-	if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
-	{
-		CcspTraceWarning(("syscfg_set failed\n"));
-	}
-	else 
-	{
-		if (syscfg_commit() != 0) 
-		{
-			CcspTraceWarning(("syscfg_commit failed\n"));
-		}
-	}
-		CosaSListPushEntryByInsNum(&pSelfHeal->IPV6PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
+	_set_db_value(SYSCFG_FILE,"Ipv6PingServer_Count",buf);
+	CosaSListPushEntryByInsNum(&pSelfHeal->IPV6PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
     return (ANSC_HANDLE)pSelfHealCxtLink;
 
 EXIT:
@@ -1481,16 +1389,7 @@ ResourceMonitor_SetParamUlongValue
         char buf[8];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
-        {
-	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-        }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
+	_set_db_value(SYSCFG_FILE,"resource_monitor_interval",buf);
 	pRescMonitor->MonIntervalTime = uValue;
 	return TRUE;
     }
@@ -1505,16 +1404,7 @@ ResourceMonitor_SetParamUlongValue
         char buf[8];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "avg_cpu_threshold", buf) != 0)
-        {
-	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-        }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
+	_set_db_value(SYSCFG_FILE,"avg_cpu_threshold",buf);
 	pRescMonitor->AvgCpuThreshold = uValue;
 	return TRUE;
     }
@@ -1529,16 +1419,7 @@ ResourceMonitor_SetParamUlongValue
         char buf[8];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "avg_memory_threshold", buf) != 0)
-        {
-	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-        }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
+	_set_db_value(SYSCFG_FILE,"avg_memory_threshold",buf);
 	pRescMonitor->AvgMemThreshold = uValue;
 	return TRUE;
     }
