@@ -28,7 +28,12 @@ if [ $BOX_TYPE = "XB3" ]; then
 fi
 
 #ebtables -L --Lc | grep CONTINUE  | sort -k 2,2 | sed "N;s/\n/ /" | cut -d' ' -f2,8,12,20,24 | awk 'BEGIN{FS="[: ]";}{ printf "%2s:%2s:%2s:%2s:%2s:%2s|%s|%s|%s|%s\n", $1,$2,$3,$4,$5,$6,$7,$8,$8,$10; }' | tr ' ' '0' | sort -u > /tmp/rxtx_cur.txt
-traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
+if [ -z "$MAC" ]
+then
+    traffic_count -L | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
+else
+    traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
+fi
 
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
