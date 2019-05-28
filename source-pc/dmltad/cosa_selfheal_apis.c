@@ -96,6 +96,51 @@ void copy_command_output(char * cmd, char * out, int len)
 
 }
 
+void _get_db_value(char * cmd, char * out, int len, char * val)
+{
+        FILE * fp = NULL;
+        char   buf[512] = {0};
+        char * p = NULL;
+
+        fp = fopen(cmd, "r");
+
+        if (fp)
+        {
+                while(fgets(buf, sizeof(buf), fp) != NULL){
+                        if((strstr(buf,val)) != NULL){
+                                p = strtok(buf,"=");
+                                p = strtok(NULL, "=");
+                                strncpy(out, p, len-1);
+                        }
+                }
+        }
+        fclose(fp);
+}
+
+void _set_db_value(char *file_name,char *current_string,char *value)
+{
+        FILE *fp = NULL;
+        char path[1024] = {0},buf[512] = {0},updated_str[512]={0},cmd[512]={0};
+        int count = 0;
+        sprintf(cmd,"%s=%s",current_string,value);
+        fp = fopen(file_name,"r");
+        if(fp)
+        {
+        while(fgets(path,sizeof(path),fp) != NULL)
+        {
+                if(strstr(path,current_string) != NULL)
+                {
+                        for(count=0;path[count]!='\n';count++)
+                                updated_str[count] = path[count];
+                        updated_str[count]='\0';
+                        sprintf(buf,"sed -i \"s/%s/%s/g\" %s",updated_str,cmd,file_name);
+                        system(buf);
+                }
+        }
+        }
+        fclose(fp);
+}
+
 int SyncServerlistInDb(PingServerType type, int EntryCount)
 {
 	int urlIndex =0;
@@ -244,15 +289,15 @@ CosaDmlGetSelfHealMonitorCfg(
     }
     char buf[8];
     memset(buf, 0, sizeof(buf));
-    syscfg_get(NULL, "resource_monitor_interval", buf, sizeof(buf));
+     _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "resource_monitor_interval");
     pRescTest->MonIntervalTime = atoi(buf);
 
     memset(buf, 0, sizeof(buf));
-    syscfg_get(NULL, "avg_cpu_threshold", buf, sizeof(buf));
+     _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "avg_cpu_threshold");
     pRescTest->AvgCpuThreshold = atoi(buf);
 
     memset(buf, 0, sizeof(buf));
-    syscfg_get(NULL, "avg_memory_threshold", buf, sizeof(buf));
+    _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "avg_memory_threshold");
     pRescTest->AvgMemThreshold = atoi(buf);
 
     return pRescTest;
@@ -287,37 +332,37 @@ CosaDmlGetSelfHealCfg(
 	}  
 
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "max_reboot_count", buf, sizeof(buf));
+	_get_db_value(SYSCFG_FILE, buf, sizeof(buf), "max_reboot_count");
 	pMyObject->MaxRebootCnt = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "max_reset_count", buf, sizeof(buf));
+	_get_db_value(SYSCFG_FILE, buf, sizeof(buf), "max_reset_count");
 	/* RDKB-13228 */
 	pMyObject->MaxResetCnt = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "ConnTest_PingInterval", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_PingInterval");
 	pConnTest->PingInterval = atoi(buf);
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "ConnTest_NumPingsPerServer", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_NumPingsPerServer");
 	pConnTest->PingCount = atoi(buf);
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "ConnTest_MinNumPingServer", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_MinNumPingServer");
 	pConnTest->MinPingServer = atoi(buf);
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "ConnTest_PingRespWaitTime", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_PingRespWaitTime");
 	pConnTest->WaitTime = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "ConnTest_CorrectiveAction", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_CorrectiveAction");
 	pConnTest->CorrectiveAction = (!strcmp(buf, "true")) ? TRUE : FALSE;
 
     memset(buf,0,sizeof(buf));
-    syscfg_get( NULL, "router_reboot_Interval", buf, sizeof(buf));
+    _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "router_reboot_Interval");
     pConnTest->RouterRebootInterval = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "Ipv4PingServer_Count", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "Ipv6PingServer_Count");
 	pConnTest->IPv4EntryCount = atoi(buf);
 	entryCountIPv4 = AnscSListQueryDepth(&pMyObject->IPV4PingServerList);
 	pConnTest->IPv4EntryCount = SyncServerlistInDb(PingServerType_IPv4, pConnTest->IPv4EntryCount);
@@ -342,7 +387,7 @@ CosaDmlGetSelfHealCfg(
 		FillEntryInList(pMyObject,pSelfHealCxtLink,PingServerType_IPv4);
 	}
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "Ipv6PingServer_Count", buf, sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "Ipv6PingServer_Count");
 	pConnTest->IPv6EntryCount = atoi(buf);
 	entryCountIPv6 = AnscSListQueryDepth(&pMyObject->IPV6PingServerList);
 	pConnTest->IPv6EntryCount = SyncServerlistInDb(PingServerType_IPv6,pConnTest->IPv6EntryCount);
@@ -546,17 +591,7 @@ void SavePingServerURI(PingServerType type, char *URL, int InstNum)
 		{
 			sprintf(recName, Ipv6_Server, InstNum);
 		}
-		if (syscfg_set(NULL, recName, uri) != 0) 
-		{
-			CcspTraceWarning(("syscfg_set failed\n"));
-		}
-		else 
-		{
-			if (syscfg_commit() != 0) 
-			{
-				CcspTraceWarning(("syscfg_commit failed\n"));
-			}
-		}
+		_set_db_value(SYSCFG_FILE,recName,uri);
 }
 
 ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum)
