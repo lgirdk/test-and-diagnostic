@@ -534,43 +534,44 @@ if [ "$WAN_TYPE" != "EPON" ]; then
         fi
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
-
-	check_if_brlan1_created=`ifconfig | grep brlan1`
-	check_if_brlan1_up=`ifconfig brlan1 | grep UP`
-        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
-
-        # l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
-        if [ "$BOX_TYPE" = "XB6" ]
-        then
-	    check_if_l2sd0_101_created="NotApplicable"
-	    check_if_l2sd0_101_up="NotApplicable"
-        else
-	    check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
-	    check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
-        fi
-	
-	if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
-        then
-		echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
-		ifconfig brlan1;ifconfig l2sd0.101; brctl show
-	       echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
-
-		ipv5_status=`sysevent get ipv4_5-status`
-	        lan_l3net=`sysevent get homesecurity_lan_l3net`
-
-		if [ "$lan_l3net" != "" ]
-		then
-			if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+	if [ "$IS_BCI" != "yes" ]; then
+		check_if_brlan1_created=`ifconfig | grep brlan1`
+		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+	        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
+		
+        	# l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
+        	if [ "$BOX_TYPE" = "XB6" ]
+        	then
+	    		check_if_l2sd0_101_created="NotApplicable"
+	    		check_if_l2sd0_101_up="NotApplicable"
+        	else
+	    		check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+	    		check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+        	fi
+		
+		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
+        	then
+			echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
+			ifconfig brlan1;ifconfig l2sd0.101; brctl show
+	       		echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+			
+			ipv5_status=`sysevent get ipv4_5-status`
+	        	lan_l3net=`sysevent get homesecurity_lan_l3net`
+			
+			if [ "$lan_l3net" != "" ]
 			then
-				echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
-				sysevent set ipv4-up $lan_l3net
-				sleep 5
+				if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+				then
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
+					sysevent set ipv4-up $lan_l3net
+					sleep 5
+				fi
 			fi
+			sysevent set multinet-down 2
+			sleep 5
+			sysevent set multinet-up 2
+			sleep 10
 		fi
-		sysevent set multinet-down 2
-		sleep 5
-		sysevent set multinet-up 2
-		sleep 10
 	fi
 fi
 
@@ -660,7 +661,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 			fi
 	  fi
 
-	  if [ "$brlan1up" == "" ]
+	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ]
 	  then
 	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
