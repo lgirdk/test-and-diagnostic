@@ -931,7 +931,7 @@ void COSA_IP_diag_FillDeviceDetails( void )
 	{
 		memset( pingtest_devdet->ecmMAC, 0, sizeof( pingtest_devdet->ecmMAC ));
 
-		COSA_IP_diag_getGetParamValue( "Device.X_CISCO_COM_CableModem.MACAddress", 
+		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.X_COMCAST-COM_CM_MAC", 
 									  pingtest_devdet->ecmMAC,
 									  sizeof( pingtest_devdet->ecmMAC ));
 	}
