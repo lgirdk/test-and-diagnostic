@@ -565,7 +565,7 @@ bbhmDownloadStartDiagTask
 
     while(s_result > 0)
     {
-#if _DEBUG
+#if 0 // _DEBUG --This piece of code breaks for binary files and work for text files.
 		recv_buffer[s_result] = '\0'; /* allocated one more byte, so no problem */
 		AnscTraceWarning(("%s", recv_buffer));
 #endif
