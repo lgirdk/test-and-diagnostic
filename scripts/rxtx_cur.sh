@@ -22,6 +22,7 @@
 #zhicheng_qiu@cable.comcast.com
 
 source /etc/device.properties
+PODMAC=/tmp/podmac.txt
 
 if [ $BOX_TYPE = "XB3" ]; then
     MAC=`ifconfig l2sd0 | grep HWaddr | awk '{print $5}' | cut -c 1-14`
@@ -34,6 +35,13 @@ then
 else
     traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 fi
+
+cat /nvram/dnsmasq.leases | grep -E "192.168.245.|169.254.0.|169.254.1." | cut -d' ' -f2 > $PODMAC
+
+while read pmac; do
+ pmac=$(echo $pmac | sed 's/\:/\\\:/g')
+ sed -i "/$pmac/Id" /tmp/rxtx_cur.txt
+done <$PODMAC
 
 ONETB=1099511627776
 OIFS=$IFS
@@ -69,9 +77,10 @@ if [ ! -z "$high_download_mac" ];then
 fi
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
+grep -v "\* \*" /nvram/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f2 > /tmp/cli47
 grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
 ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
-sort -u /tmp/cli4 /tmp/cli46 | tr '[a-z]' '[A-Z]' > /tmp/clilist
+sort -u /tmp/cli4 /tmp/cli46 /tmp/cli47 | tr '[a-z]' '[A-Z]' > /tmp/clilist
 diff /tmp/eblist /tmp/clilist | grep "^+" | grep -v "+++" | cut -d'+' -f2 > /tmp/nclilist
 for mac in $(cat /tmp/nclilist); do
   #ebtables -A INPUT -s $mac
