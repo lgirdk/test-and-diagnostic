@@ -1349,16 +1349,6 @@ esac
 if [ "$thisPARODUS_PID" != "" ]; then
     # parodus process is running,
     kill_parodus_msg=""
-    # check if connection over 8080 is established
-    isConnExists=`netstat -anp | grep 8080 | grep parodus | grep ESTABLISHED`
-    if [ "$isConnExists" != "" ]; then
-        isClientConnReady=`netstat -anp | grep 6666 | grep parodus`
-        if [ "$isClientConnReady" = "" ]; then
-            # but nanomsg listener for libparodus connection port 6666 is not opened
-            # Implies parodus connection stuck issue, kill parodus to self heal
-            kill_parodus_msg="Parodus Port 6666 is not opened but 8080 is opened."
-        fi
-    fi
     # check if parodus is stuck in connecting
     if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
         wan_status=`sysevent get wan-status`
@@ -1369,6 +1359,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
         fi
         start_conn_time=`echo "$time_line" | tr -d "}" | cut -d= -f2`
         if [[ "$start_conn_time" != "" ]]; then
+            echo_t "Parodus connecting" 
             time_limit=$(($start_conn_time+900))
             time_now=`date +%s`
             time_now_val=$(($time_now+0))
