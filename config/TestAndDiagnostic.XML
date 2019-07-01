@@ -1019,6 +1019,48 @@
             </object>
 		    </objects>
         </object>
+        <object>
+            <name>Thermal</name>
+            <objectType>object</objectType>
+            <objects>
+                <object>
+                    <name>Fan</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamBoolValue>Fan_GetParamBoolValue</func_GetParamBoolValue>
+                        <func_GetParamUlongValue>Fan_GetParamUlongValue</func_GetParamUlongValue>
+                        <func_GetParamStringValue>Fan_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamBoolValue>Fan_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>Fan_Validate</func_Validate>
+                        <func_Commit>Fan_Commit</func_Commit>
+                        <func_Rollback>Fan_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>Status</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>Speed</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>RotorLock</name>
+                            <type>string: Not_Applicable(1),True(2),False(3)</type>
+                            <syntax>uint32/mapped</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>MaxOverride</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                    </parameters>
+                </object>
+            </objects>
+        </object>
     </objects>
 </dataModelInfo>
 

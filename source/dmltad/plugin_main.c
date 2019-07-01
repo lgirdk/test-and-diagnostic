@@ -77,6 +77,8 @@
 
 #include "cosa_logbackup_dml.h"
 #include "cosa_powermgt_tcxb6_dml.h"
+#include "cosa_thermal_dml.h"
+
 /*
 #include "cosa_firewall_dml.h"
 #include "cosa_nat_dml.h"
@@ -252,6 +254,13 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Validate",  PowerManagement_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Commit",  PowerManagement_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Rollback",  PowerManagement_Rollback);    
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_GetParamBoolValue", Fan_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_SetParamBoolValue", Fan_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_GetParamUlongValue", Fan_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_Validate", Fan_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_Commit", Fan_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Fan_Rollback", Fan_Rollback);
 
     
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
