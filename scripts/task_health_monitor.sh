@@ -230,31 +230,32 @@ case $SELFHEAL_TYPE in
             fi
 
             ### SNMPv3 master agent self-heal ####
-
-            SNMPv3_PID=`pidof snmpd`
-            if [ "$SNMPv3_PID" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
-                # Restart disconnected master and agent
-                v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
-                if [ ! -z "$v3AgentPid" ]; then
-                    kill -9 $v3AgentPid
-                fi
-                pidOfListener=`ps ww | grep -i inotify | grep 'run_snmpv3_agent.sh' | awk '{print $1}'`
-                if [ ! -z "$pidOfListener" ]; then
-                    kill -9 $pidOfListener
-                fi
-                if [ -f /tmp/snmpd.conf ]; then
-                    rm -f /tmp/snmpd.conf
-                fi
-                if [ -f /lib/rdk/run_snmpv3_master.sh ]; then
-                    sh /lib/rdk/run_snmpv3_master.sh &
-                fi
-            else
-                ### SNMPv3 sub agent self-heal ####
-                v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
-                if [ "$v3AgentPid" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
-                    # Restart failed sub agent
-                    if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
-                        sh /lib/rdk/run_snmpv3_agent.sh &
+            if [ -f "/etc/SNMP_PA_ENABLE" ]; then
+                SNMPv3_PID=`pidof snmpd`
+                if [ "$SNMPv3_PID" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
+                    # Restart disconnected master and agent
+                    v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
+                    if [ ! -z "$v3AgentPid" ]; then
+                        kill -9 $v3AgentPid
+                    fi
+                    pidOfListener=`ps ww | grep -i inotify | grep 'run_snmpv3_agent.sh' | awk '{print $1}'`
+                    if [ ! -z "$pidOfListener" ]; then
+                        kill -9 $pidOfListener
+                    fi
+                    if [ -f /tmp/snmpd.conf ]; then
+                        rm -f /tmp/snmpd.conf
+                    fi
+                    if [ -f /lib/rdk/run_snmpv3_master.sh ]; then
+                        sh /lib/rdk/run_snmpv3_master.sh &
+                    fi
+                else
+                    ### SNMPv3 sub agent self-heal ####
+                    v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
+                    if [ "$v3AgentPid" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
+                        # Restart failed sub agent
+                        if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
+                            sh /lib/rdk/run_snmpv3_agent.sh &
+                        fi
                     fi
                 fi
             fi
@@ -617,15 +618,17 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking snmp v2 subagent PID
-        SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
-        if [ "$SNMP_PID" = "" ]; then
-            if [ -f /tmp/.snmp_agent_restarting ]; then
-                echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
-            else
-                SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
-                if [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]];then
-                    echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-                    resetNeeded snmp snmp_subagent
+        if [ -f "/etc/SNMP_PA_ENABLE" ]; then
+            SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+            if [ "$SNMP_PID" = "" ]; then
+                if [ -f /tmp/.snmp_agent_restarting ]; then
+                    echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
+                else
+                    SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
+                    if [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]];then
+                         echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
+                         resetNeeded snmp snmp_subagent
+                    fi
                 fi
             fi
         fi
@@ -1008,10 +1011,12 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking snmp subagent PID
-        SNMP_PID=`pidof snmp_subagent`
-        if [ "$SNMP_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-            resetNeeded snmp snmp_subagent
+        if [ -f "/etc/SNMP_PA_ENABLE" ]; then
+            SNMP_PID=`pidof snmp_subagent`
+            if [ "$SNMP_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
+                resetNeeded snmp snmp_subagent
+            fi
         fi
     ;;
     "SYSTEMD")

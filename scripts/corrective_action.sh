@@ -760,26 +760,28 @@ resetNeeded()
 
             if [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" == "snmp_subagent" ]
             then
-                case $SELFHEAL_TYPE in
-                    "BASE")
-                        echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                        cd /fss/gw/usr/ccsp/snmp/
-                        if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
-                            sh run_subagent.sh tcp:127.0.0.1:705 &
-                        else
+                if [ -f "/etc/SNMP_PA_ENABLE" ]; then
+                    case $SELFHEAL_TYPE in
+                        "BASE")
+                            echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                            cd /fss/gw/usr/ccsp/snmp/
+                            if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                                sh run_subagent.sh tcp:127.0.0.1:705 &
+                            else
+                                sh run_subagent.sh /var/tmp/cm_snmp_ma &
+                            fi
+                            cd -
+                        ;;
+                        "TCCBR")
+                            echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                            cd /usr/ccsp/snmp/
                             sh run_subagent.sh /var/tmp/cm_snmp_ma &
-                        fi
-                        cd -
-                    ;;
-                    "TCCBR")
-                        echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                        cd /usr/ccsp/snmp/
-                        sh run_subagent.sh /var/tmp/cm_snmp_ma &
-                        cd -
-                    ;;
-                    "SYSTEMD")
-                    ;;
-                esac
+                            cd -
+                        ;;
+                        "SYSTEMD")
+                        ;;
+                    esac
+                fi
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" == "CcspPandMSsp" ]
             then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
