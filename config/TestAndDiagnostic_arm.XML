@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
  If not stated otherwise in this file or this component's Licenses.txt file the
- following copyright and licenses apply:
+ following copyright and licenses apply: arm
 
  Copyright 2018 RDK Management
 
@@ -110,12 +110,12 @@
                         <func_Rollback>X_RDKCENTRAL_COM_PingTest_Rollback</func_Rollback>
                     </functions>
                     <parameters>
-						<parameter>
-							<name>Run</name>
-							<type>boolean</type>
-							<syntax>bool</syntax>
-							<writable>true</writable>
-						</parameter>
+                        <parameter>
+                            <name>Run</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
                         <parameter>
                             <name>PartnerID</name>
                             <type>string(64)</type>
@@ -126,16 +126,16 @@
                             <type>string(32)</type>
                             <syntax>string</syntax>
                         </parameter>
-						<parameter>
-							<name>DeviceID</name>
-							<type>string</type>
-							<syntax>string</syntax>
-						</parameter>
-						<parameter>
-							<name>DeviceModel</name>
-							<type>string</type>
-							<syntax>string</syntax>
-						</parameter>
+                        <parameter>
+                            <name>DeviceID</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>DeviceModel</name>
+                            <type>string</type>
+                            <syntax>string</syntax>
+                        </parameter>
                     </parameters>
                 </object>
                 <object>
@@ -648,7 +648,7 @@
                         <func_Rollback>SpeedTest_Rollback</func_Rollback>
                         <func_GetParamStringValue>SpeedTest_GetParamStringValue</func_GetParamStringValue>
                         <func_SetParamStringValue>SpeedTest_SetParamStringValue</func_SetParamStringValue>
-					<func_GetParamUlongValue>SpeedTest_GetParamUlongValue</func_GetParamUlongValue>
+                    <func_GetParamUlongValue>SpeedTest_GetParamUlongValue</func_GetParamUlongValue>
                     <func_SetParamUlongValue>SpeedTest_SetParamUlongValue</func_SetParamUlongValue>
                     </functions>
                     <parameters>
@@ -835,9 +835,9 @@
              <func_SetParamBoolValue>SelfHeal_SetParamBoolValue</func_SetParamBoolValue>
              <func_GetParamUlongValue>SelfHeal_GetParamUlongValue</func_GetParamUlongValue>
              <func_SetParamUlongValue>SelfHeal_SetParamUlongValue</func_SetParamUlongValue>
-			 <func_GetParamStringValue>SelfHeal_GetParamStringValue</func_GetParamStringValue>
-			 <func_SetParamStringValue>SelfHeal_SetParamStringValue</func_SetParamStringValue>
-		     <func_Validate>SelfHeal_Validate</func_Validate>
+             <func_GetParamStringValue>SelfHeal_GetParamStringValue</func_GetParamStringValue>
+             <func_SetParamStringValue>SelfHeal_SetParamStringValue</func_SetParamStringValue>
+             <func_Validate>SelfHeal_Validate</func_Validate>
              <func_Commit>SelfHeal_Commit</func_Commit>
              <func_Rollback>SelfHeal_Rollback</func_Rollback>
             </functions>
@@ -891,31 +891,31 @@
                       <syntax>uint32</syntax>
                       <writable>true</writable>
                 </parameter>
-				<parameter>
-					  <name>X_RDKCENTRAL-COM_DiagnosticMode</name>
-					  <type>boolean</type>
-					  <syntax>bool</syntax>
-					  <writable>true</writable>
-				</parameter>
-				<parameter>
-					  <name>X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency</name>
+                <parameter>
+                      <name>X_RDKCENTRAL-COM_DiagnosticMode</name>
+                      <type>boolean</type>
+                      <syntax>bool</syntax>
+                      <writable>true</writable>
+                </parameter>
+                <parameter>
+                      <name>X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency</name>
                       <type>unsignedInt</type>
                       <syntax>uint32</syntax>
                       <writable>true</writable>
-				</parameter>
-				<parameter>
-					  <name>X_RDKCENTRAL-COM_DNS_PINGTEST_Enable</name>
-					  <type>boolean</type>
-					  <syntax>bool</syntax>
-					  <writable>true</writable>
-				</parameter>
-				<parameter>
-					  <name>X_RDKCENTRAL-COM_DNS_URL</name>
-					  <type>string(512)</type>
-					  <syntax>string</syntax>
-					  <writable>true</writable>
-				</parameter>
-	           </parameters>
+                </parameter>
+                <parameter>
+                      <name>X_RDKCENTRAL-COM_DNS_PINGTEST_Enable</name>
+                      <type>boolean</type>
+                      <syntax>bool</syntax>
+                      <writable>true</writable>
+                </parameter>
+                <parameter>
+                      <name>X_RDKCENTRAL-COM_DNS_URL</name>
+                      <type>string(512)</type>
+                      <syntax>string</syntax>
+                      <writable>true</writable>
+                </parameter>
+               </parameters>
             <objects>
 		<object>
 			<name>CpuMemFrag</name>
@@ -964,11 +964,11 @@
                     <name>ConnectivityTest</name>
                     <objectType>object</objectType>
                     <functions>
-           	        <func_GetParamBoolValue>ConnectivityTest_GetParamBoolValue</func_GetParamBoolValue>
-	                <func_SetParamBoolValue>ConnectivityTest_SetParamBoolValue</func_SetParamBoolValue>
+                    <func_GetParamBoolValue>ConnectivityTest_GetParamBoolValue</func_GetParamBoolValue>
+                    <func_SetParamBoolValue>ConnectivityTest_SetParamBoolValue</func_SetParamBoolValue>
                         <func_GetParamUlongValue>ConnectivityTest_GetParamUlongValue</func_GetParamUlongValue>
                         <func_SetParamUlongValue>ConnectivityTest_SetParamUlongValue</func_SetParamUlongValue>
-			<func_GetParamIntValue>ConnectivityTest_GetParamIntValue</func_GetParamIntValue>
+                        <func_GetParamIntValue>ConnectivityTest_GetParamIntValue</func_GetParamIntValue>
                         <func_SetParamIntValue>ConnectivityTest_SetParamIntValue</func_SetParamIntValue>
                         <!--func_Validate>ConnectivityTest_Validate</func_Validate>
                         <func_Commit>ConnectivityTest_Commit</func_Commit>
@@ -1017,7 +1017,7 @@
                             <syntax>int</syntax>
                             <writable>true</writable>
                          </parameter>
-			<parameter>
+            <parameter>
                             <name>X_RDKCENTRAL-COM_CurrentCount</name>
                             <type>int</type>
                             <syntax>int</syntax>
@@ -1055,7 +1055,7 @@
                                         </parameter>
                                     </parameters>
                                 </object>
-								<object>
+                                <object>
                                     <name>IPv6PingServerTable</name>
                                     <objectType>writableTable</objectType>
                                     <maxInstance>128</maxInstance>
@@ -1116,7 +1116,7 @@
                         </parameter>
                  </parameters>
             </object>
-			</objects>
+            </objects>
         </object>
         <object>
             <name>LogBackup</name>
@@ -1124,7 +1124,7 @@
             <functions>
              <func_GetParamBoolValue>LogBackup_GetParamBoolValue</func_GetParamBoolValue>
              <func_SetParamBoolValue>LogBackup_SetParamBoolValue</func_SetParamBoolValue>
-			 <func_GetParamUlongValue>LogBackup_GetParamUlongValue</func_GetParamUlongValue>
+             <func_GetParamUlongValue>LogBackup_GetParamUlongValue</func_GetParamUlongValue>
              <func_SetParamUlongValue>LogBackup_SetParamUlongValue</func_SetParamUlongValue>
              <func_Validate>LogBackup_Validate</func_Validate>
              <func_Commit>LogBackup_Commit</func_Commit>
@@ -1137,7 +1137,7 @@
                     <syntax>bool</syntax>
                     <writable>true</writable>
                 </parameter>
-				<parameter>
+                <parameter>
                     <name>X_RDKCENTRAL-COM_Interval</name>
                     <type>unsignedInt</type>
                     <syntax>uint32</syntax>
@@ -1149,8 +1149,8 @@
                     <syntax>bool</syntax>
                     <writable>true</writable>
                 </parameter>
-			</parameters>	
-		</object>	
+            </parameters>	
+        </object>	
         <object>
               <name>PowerManagement</name>
               <objectType>object</objectType>
@@ -1168,7 +1168,49 @@
                             <syntax>bool</syntax>
                             <writable>true</writable>
                         </parameter>
-               </parameters>
+            </parameters>   
+        </object>   
+        <object>
+            <name>Thermal</name>
+            <objectType>object</objectType>
+            <objects>
+                <object>
+                    <name>Fan</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamBoolValue>Fan_GetParamBoolValue</func_GetParamBoolValue>
+                        <func_GetParamUlongValue>Fan_GetParamUlongValue</func_GetParamUlongValue>
+                        <func_GetParamStringValue>Fan_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamBoolValue>Fan_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>Fan_Validate</func_Validate>
+                        <func_Commit>Fan_Commit</func_Commit>
+                        <func_Rollback>Fan_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>Status</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>Speed</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>RotorLock</name>
+                            <type>string: Not_Applicable(1),True(2),False(3)</type>
+                            <syntax>uint32/mapped</syntax>
+                        </parameter>
+                        <parameter>
+                            <name>MaxOverride</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                    </parameters>
+                </object>
+            </objects>
         </object>
     </objects>
 </dataModelInfo>
