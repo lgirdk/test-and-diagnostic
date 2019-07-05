@@ -70,6 +70,10 @@
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 
+static char * SpeedTestServerCapability= "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Server.Capability";
+
+extern ANSC_HANDLE bus_handle;
+extern char        g_Subsystem[32];
 extern BOOL g_enable_speedtest;
 /**********************************************************************
 
@@ -164,6 +168,7 @@ CosaDiagInitialize
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo          = (PDSLH_TR143_UPLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo         = (PDSLH_TR143_UDP_ECHO_CONFIG)NULL;
     PCOSA_DML_DIAG_ARP_TABLE        pArpTable            = (PCOSA_DML_DIAG_ARP_TABLE)NULL;
+	PCOSA_DML_DIAG_SPEEDTEST_SERVER 		pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)NULL;
 
     pDiagPingInfo = AnscAllocateMemory(sizeof(DSLH_PING_INFO));
 
@@ -272,6 +277,7 @@ CosaDiagInitialize
 
     /* initiate ARPTable */
     pMyObject->pArpTable          = NULL;
+	pMyObject->pSpeedTestServer	= NULL;
     pMyObject->ArpEntryCount      = 0;
     pMyObject->PreviousVisitTime  = 0;
 
@@ -288,7 +294,37 @@ CosaDiagInitialize
 	g_enable_speedtest = FALSE ;
     }
 
-    /* Initiation all functions */
+    /* initiate Speed Test Server Capability */
+	int retPsmGet = CCSP_SUCCESS;
+	char *strValue = NULL;
+	
+	pSpeedTestServer = AnscAllocateMemory(sizeof(COSA_DML_DIAG_SPEEDTEST_SERVER));
+	
+	if (! pSpeedTestServer )
+	{
+		AnscFreeMemory(pMyObject->pSpeedTestServer);
+		pMyObject->pSpeedTestServer = NULL;
+		return ANSC_STATUS_RESOURCES;
+	}
+	else
+	{
+		pMyObject->pSpeedTestServer = pSpeedTestServer;
+		AnscTraceWarning(("RDK_LOG_WARN,TDM %s :Calling PSM GET to get Capability flag value\n",__FUNCTION__));
+		retPsmGet = PSM_Get_Record_Value2(bus_handle,g_Subsystem, SpeedTestServerCapability, NULL, &strValue);
+		if (retPsmGet == CCSP_SUCCESS) 
+		{
+			pSpeedTestServer->Capability = _ansc_atoi(strValue);
+			AnscTraceWarning(("RDK_LOG_WARN,TDM %s :Capability [%d]\n",__FUNCTION__,pSpeedTestServer->Capability));
+			AnscFreeMemory(strValue);
+			strValue = NULL;
+		}
+		else
+		{
+			pSpeedTestServer->Capability = FALSE;
+			AnscTraceWarning(("RDK_LOG_WARN,TDM %s :Capability [%d]\n",__FUNCTION__,pSpeedTestServer->Capability));
+		}
+	}
+	/* Initiation all functions */
 
     return returnStatus;
 }
@@ -362,6 +398,12 @@ CosaDiagRemove
     {
         AnscFreeMemory(pMyObject->pArpTable);
     }
+
+    if ( pMyObject->pSpeedTestServer )
+    {
+        AnscFreeMemory(pMyObject->pSpeedTestServer);
+    }
+
 
     /* Remove self */
     AnscFreeMemory((ANSC_HANDLE)pMyObject);

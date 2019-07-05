@@ -87,6 +87,16 @@ _COSA_DML_DIAG_ARP_TABLE
 }
 COSA_DML_DIAG_ARP_TABLE,  *PCOSA_DML_DIAG_ARP_TABLE;
 
+typedef  struct
+_COSA_DML_DIAG_SPEEDTEST_SERVER
+{
+    BOOLEAN                           Capability;
+    UCHAR                           Key[1024];
+    UCHAR                           Username[13];
+    UCHAR                           Password[13];
+}
+COSA_DML_DIAG_SPEEDTEST_SERVER,*PCOSA_DML_DIAG_SPEEDTEST_SERVER;
+
 /*******************************************************
     NSLookup Diagnostic Manager Object Definition
 ********************************************************/
@@ -104,6 +114,7 @@ COSA_DML_DIAG_ARP_TABLE,  *PCOSA_DML_DIAG_ARP_TABLE;
     ULONG                       PreviousVisitTime;                                    \
     ULONG                       ArpEntryCount;                                    \
     PCOSA_DML_DIAG_ARP_TABLE    pArpTable;                                        \
+    PCOSA_DML_DIAG_SPEEDTEST_SERVER    pSpeedTestServer;                                    \
     /* end of Diagnostic object class content */                                                    \
 
 typedef  struct
