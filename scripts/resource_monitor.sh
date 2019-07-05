@@ -152,6 +152,21 @@ do
 		echo_t "RDKB_SELFHEAL : Interrupts"
 		echo "`cat /proc/interrupts`"
 
+		if [ ! -f /tmp/CPUUsageReachedMAXThreshold ]
+		then
+			top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+			sed -i '/top/d' /tmp/Process_info.txt
+			Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
+			Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
+			Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
+			Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
+			Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
+			Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+			echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+			rm -rf /tmp/Process_info.txt
+			touch /tmp/CPUUsageReachedMAXThreshold
+		fi
+
 		echo_t "RDKB_SELFHEAL : Monitoring CPU Load in a 5 minutes window"
 	        Curr_CPULoad=0
 		# Calculating CPU avg in 5 mins window		
@@ -213,15 +228,26 @@ do
 
 		echo_t "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
 
-		if [ ! -f /tmp/CPUUsageReachedMAXThreshold ]
+		if [ ! -f /tmp/CPU5MinsUsageReachedMAXThreshold ]
 		then
 			if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
 				echo_t "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_Avg"
-				echo_t "RDKB_SELFHEAL : Top 5 tasks running on device"				
-				top -bn1 | head -n10 | tail -6
-				touch /tmp/CPUUsageReachedMAXThreshold
+				echo_t "RDKB_SELFHEAL : Top 5 tasks running on device"
+				top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+				sed -i '/top/d' /tmp/Process_info.txt
+				cat /tmp/Process_info.txt
+				Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
+				Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
+				Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
+				Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
+				Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
+				Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+				echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+				rm -rf /tmp/Process_info.txt
+				touch /tmp/CPU5MinsUsageReachedMAXThreshold
 			fi
 		fi
+
 
 		LOAD_AVG=`cat /proc/loadavg`
 		echo_t "RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"

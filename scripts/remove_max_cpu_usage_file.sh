@@ -41,3 +41,8 @@ if [ -f /tmp/CPUUsageReachedMAXThreshold ]; then
 	rm -rf /tmp/CPUUsageReachedMAXThreshold
 	echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPUUsageReachedMAXThreshold file after 24hrs uptime"
 fi
+
+if [ -f /tmp/CPU5MinsUsageReachedMAXThreshold ]; then
+	rm -rf /tmp/CPU5MinsUsageReachedMAXThreshold
+	echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPU5MinsUsageReachedMAXThreshold file after 24hrs uptime"
+fi
