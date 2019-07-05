@@ -945,4 +945,32 @@ SpeedTest_SetParamUlongValue
         char*                       ParamName,
         ULONG                      uValuepUlong
     );
+
+
+BOOL
+SpeedTestServer_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    );
+
+
+ULONG
+SpeedTestServer_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+
+BOOL
+SpeedTestServer_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    );
 #endif

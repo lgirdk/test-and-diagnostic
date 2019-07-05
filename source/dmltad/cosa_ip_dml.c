@@ -77,6 +77,9 @@ static ULONG last_tick;
 #define SPEEDTEST_ARG_SIZE 4096
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
 #define SPEEDTEST_AUTH_SIZE 2048
+#define SPEEDTEST_SERVER_KEY_SIZE	1024
+#define SPEEDTEST_SERVER_USERNAME_PASS_SIZE	12
+
 
 #ifndef ROUTEHOPS_HOST_STRING
 #define ROUTEHOPS_HOST_STRING		"Host"
@@ -6397,3 +6400,130 @@ SpeedTest_SetParamUlongValue
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;
 }
+
+
+
+BOOL
+SpeedTestServer_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
+
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "Capability", TRUE))
+    {
+		*pBool = 	pSpeedTestServer->Capability ;		
+		return TRUE;
+    }
+
+    return FALSE;
+}
+
+
+
+ULONG
+SpeedTestServer_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+
+	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
+
+    /* check the parameter name and return the corresponding value */
+    if ( AnscEqualString(ParamName, "Key", TRUE))
+    {    
+		AnscCopyString(pValue, pSpeedTestServer->Key);
+		return 0;
+	}
+
+	if ( AnscEqualString(ParamName, "Username", TRUE))
+	{
+		AnscCopyString(pValue, pSpeedTestServer->Username);
+		return 0;
+	}
+
+
+	if ( AnscEqualString(ParamName, "Password", TRUE))
+	{
+		AnscCopyString(pValue, pSpeedTestServer->Password);
+		return 0;
+	}
+
+    return 1;
+}
+
+
+BOOL
+SpeedTestServer_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pString
+    )
+{
+
+	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
+
+	int len = strlen(pString);
+
+  /* check the parameter name and set the corresponding value */
+	if ( AnscEqualString(ParamName, "Key", TRUE))
+	{
+		if(len < SPEEDTEST_SERVER_KEY_SIZE)
+		{
+			AnscCopyString(pSpeedTestServer->Key, pString);
+			return TRUE;
+		}
+		else
+        {
+              AnscTraceWarning(("SpeedTest Server Key set : string too long:  %s : string len : %d: \n",pString,len));
+              return FALSE;
+        }
+	}
+	
+	if ( AnscEqualString(ParamName, "Username", TRUE))
+	{	
+		if(len <= SPEEDTEST_SERVER_USERNAME_PASS_SIZE)
+		{
+			AnscCopyString(pSpeedTestServer->Username, pString);
+			pSpeedTestServer->Username[len+1] = '\0';
+			return TRUE;
+		}		
+		else
+        {
+              AnscTraceWarning(("SpeedTest Server User Name set : string too long:  %s : string len : %d: \n",pString,len));
+              return FALSE;
+        }
+	}
+	
+	
+	if ( AnscEqualString(ParamName, "Password", TRUE))
+	{		
+		if(len <= SPEEDTEST_SERVER_USERNAME_PASS_SIZE)
+		{
+			AnscCopyString(pSpeedTestServer->Password, pString);
+			pSpeedTestServer->Password[len+1] = '\0';
+			return TRUE;
+		}		
+		else
+        {
+              AnscTraceWarning(("SpeedTest Server Password set : string too long:  %s : string len : %d: \n",pString,len));
+              return FALSE;
+        }
+	}
+	
+return FALSE;
+
+}
+

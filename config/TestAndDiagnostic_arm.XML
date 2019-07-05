@@ -689,6 +689,43 @@
                             <writable>true</writable>
                     </parameter>
                     </parameters>
+					<objects>
+				        <object>
+				            <name>Server</name>
+				            <objectType>object</objectType>
+				            <functions>
+				                <func_GetParamBoolValue>SpeedTestServer_GetParamBoolValue</func_GetParamBoolValue>
+				                <func_GetParamStringValue>SpeedTestServer_GetParamStringValue</func_GetParamStringValue>
+				                <func_SetParamStringValue>SpeedTestServer_SetParamStringValue</func_SetParamStringValue>
+				            </functions>
+				            <parameters>
+				                <parameter>
+				                    <name>Capability</name>
+				                    <type>boolean</type>
+				                    <syntax>bool</syntax>
+				                    <writable>false</writable>
+				                </parameter>
+				                <parameter>
+				                    <name>Key</name>
+				                    <type>string(1024)</type>
+				                    <syntax>string</syntax>
+				                    <writable>true</writable>
+				                </parameter>
+				                <parameter>
+				                    <name>Username</name>
+				                    <type>string(12)</type>
+				                    <syntax>string</syntax>
+				                    <writable>true</writable>
+				                </parameter>
+				                <parameter>
+				                    <name>Password</name>
+				                    <type>string(12)</type>
+				                    <syntax>string</syntax>
+				                    <writable>true</writable>
+				                </parameter>
+				            </parameters>
+				        </object>
+					</objects>
                 </object>
             </objects>
         </object>
