@@ -1131,6 +1131,25 @@
                 </parameter>
 			</parameters>	
 		</object>	
+        <object>
+              <name>PowerManagement</name>
+              <objectType>object</objectType>
+              <functions>
+					    <func_GetParamBoolValue>PowerManagement_GetParamBoolValue</func_GetParamBoolValue>
+					    <func_SetParamBoolValue>PowerManagement_SetParamBoolValue</func_SetParamBoolValue>
+                        <func_Validate>PowerManagement_Validate</func_Validate>
+                        <func_Commit>PowerManagement_Commit</func_Commit>
+                        <func_Rollback>PowerManagement_Rollback</func_Rollback>
+               </functions>
+               <parameters>
+                        <parameter>
+                            <name>PciEPowerManagement</name>
+                            <type>boolean</type>
+                            <syntax>bool</syntax>
+                            <writable>true</writable>
+                        </parameter>
+               </parameters>
+        </object>
     </objects>
 </dataModelInfo>
 

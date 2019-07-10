@@ -76,6 +76,7 @@
 #include "cosa_dns_dml.h"
 
 #include "cosa_logbackup_dml.h"
+#include "cosa_powermgt_tcxb6_dml.h"
 /*
 #include "cosa_firewall_dml.h"
 #include "cosa_nat_dml.h"
@@ -245,6 +246,12 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Validate",  LogBackup_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Commit",  LogBackup_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_Rollback",  LogBackup_Rollback);    
+    
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_GetParamBoolValue", PowerManagement_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_SetParamBoolValue",  PowerManagement_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Validate",  PowerManagement_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Commit",  PowerManagement_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "PowerManagement_Rollback",  PowerManagement_Rollback);    
 
     
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
