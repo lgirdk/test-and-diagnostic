@@ -35,6 +35,38 @@ else
     traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 fi
 
+ONETB=1099511627776
+OIFS=$IFS
+IFS='|'
+while read mac rxpkts rxbytes txpkts txbytes other && [[ ! -z $mac ]]; do
+    if [ $txbytes -ge $ONETB ];then
+        high_upload_mac="${high_upload_mac}${high_upload_mac:+,}$mac"
+        high_upload_bytes="${high_upload_bytes}${high_upload_bytes:+,}${txbytes%|}"
+    fi
+    if [ $rxbytes -ge $ONETB ];then
+        high_download_mac="${high_download_mac}${high_download_mac:+,}$mac"
+        high_download_bytes="${high_download_bytes}${high_download_bytes:+,}$rxbytes"
+    fi
+done < /tmp/rxtx_cur.txt
+IFS=$OIFS
+if [ ! -z "$high_upload_mac" ];then
+    if [ $BOX_TYPE = "XB3" ]; then
+        rpcclient $ATOM_ARPING_IP "echo "High_UploadData_Usage_Client_Bytes:$high_upload_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
+        rpcclient $ATOM_ARPING_IP "echo "High_UploadData_Usage_Client_MAC:$high_upload_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
+    else
+        echo "High_UploadData_Usage_Client_Bytes:$high_upload_bytes" >> /rdklogs/logs/Harvesterlog.txt.0
+	echo "High_UploadData_Usage_Client_MAC:$high_upload_mac" >> /rdklogs/logs/Harvesterlog.txt.0
+    fi
+fi
+if [ ! -z "$high_download_mac" ];then
+    if [ $BOX_TYPE = "XB3" ]; then
+        rpcclient $ATOM_ARPING_IP "echo "High_DownloadData_Usage_Client_Bytes:$high_download_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
+        rpcclient $ATOM_ARPING_IP "echo "High_DownloadData_Usage_Client_MAC:$high_download_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
+    else
+        echo "High_DownloadData_Usage_Client_Bytes:$high_download_bytes" >> /rdklogs/logs/Harvesterlog.txt.0
+        echo "High_DownloadData_Usage_Client_MAC:$high_download_mac" >> /rdklogs/logs/Harvesterlog.txt.0
+    fi
+fi
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
 grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
