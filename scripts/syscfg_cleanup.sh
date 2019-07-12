@@ -36,8 +36,14 @@ if [ "$UPTIME" -lt 1800 ]; then
     exit 0
 fi
 
+SECURE_SYSCFG=`syscfg get UpdateNvram`
+SYSCFG_DB_FILE="/nvram/syscfg.db"
+if [ "$SECURE_SYSCFG" = "false" ]; then
+      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
+fi
+
 #Removing erouter0 "_inst_num" dynamic enteries from database
-erouter_inst_num=`cat /nvram/syscfg.db | grep tr_erouter0 |grep "_inst_num" | cut -d "=" -f1`
+erouter_inst_num=`cat $SYSCFG_DB_FILE | grep tr_erouter0 |grep "_inst_num" | cut -d "=" -f1`
 for entry in $erouter_inst_num
 do
         echo "$entry"
@@ -45,7 +51,7 @@ do
 done
 
 #Removing erouter0 "_alias" dynamic enteries from database
-erouter_alias=`cat /nvram/syscfg.db | grep tr_erouter0 |grep "_alias" | cut -d "=" -f1`
+erouter_alias=`cat $SYSCFG_DB_FILE | grep tr_erouter0 |grep "_alias" | cut -d "=" -f1`
 
 for entry in $erouter_alias
 do
@@ -54,7 +60,7 @@ do
 done
 
 #Removing brlan0 "_inst_num" dynamic enteries from database
-brlan_inst_num=`cat /nvram/syscfg.db | grep tr_brlan0 |grep "_inst_num" | cut -d "=" -f1`
+brlan_inst_num=`cat $SYSCFG_DB_FILE | grep tr_brlan0 |grep "_inst_num" | cut -d "=" -f1`
 
 for entry in $brlan_inst_num
 do
@@ -63,7 +69,7 @@ do
 done
 
 #Removing brlan0 "_alias" dynamic enteries from database
-brlan_alias=`cat /nvram/syscfg.db | grep tr_brlan0 |grep "_alias" | cut -d "=" -f1`
+brlan_alias=`cat $SYSCFG_DB_FILE | grep tr_brlan0 |grep "_alias" | cut -d "=" -f1`
 
 for entry in $brlan_alias
 do
@@ -73,10 +79,10 @@ done
 
 syscfg commit
 
-check_cleanup_erouter_inst_num=`cat /nvram/syscfg.db | grep tr_erouter0 |grep "_inst_num" `
-check_cleanup_erouter_alias=`cat /nvram/syscfg.db | grep tr_erouter0 |grep "_alias" `
-check_cleanup_brlan_inst_num=`cat /nvram/syscfg.db | grep tr_brlan0 |grep "_inst_num" `
-check_cleanup_brlan_alias=`cat /nvram/syscfg.db | grep tr_brlan0 |grep "_alias" `
+check_cleanup_erouter_inst_num=`cat $SYSCFG_DB_FILE | grep tr_erouter0 |grep "_inst_num" `
+check_cleanup_erouter_alias=`cat $SYSCFG_DB_FILE | grep tr_erouter0 |grep "_alias" `
+check_cleanup_brlan_inst_num=`cat $SYSCFG_DB_FILE | grep tr_brlan0 |grep "_inst_num" `
+check_cleanup_brlan_alias=`cat $SYSCFG_DB_FILE | grep tr_brlan0 |grep "_alias" `
 
 #Check that cleanup is successful or not
 if [ "$check_cleanup_erouter_inst_num" = "" ] && [ "$check_cleanup_erouter_alias" = "" ] && [ "$check_cleanup_brlan_inst_num" = "" ] && [ "$check_cleanup_brlan_alias" = "" ] ;then
