@@ -758,6 +758,13 @@ resetNeeded()
                 cd /usr/ccsp/wifi/
                 $BINPATH/CcspWifiSsp -subsys $Subsys
                 cd -
+            
+            elif [ "$ProcessName" == "CcspHotspot" ]
+			then
+				echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+				cd /usr/ccsp/hotspot
+				$BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
+				cd -
 
             elif [ "$ProcessName" == "hotspotfd" ]
             then

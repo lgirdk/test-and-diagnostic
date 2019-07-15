@@ -1060,6 +1060,12 @@ then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
         resetNeeded "" hotspot_arpd
     fi
+    
+    HOTSPOT_PID=`pidof CcspHotspot`
+	if [ "$HOTSPOT_PID" = "" ]; then
+		echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
+		resetNeeded "" CcspHotspot
+	fi
 fi
 
 case $SELFHEAL_TYPE in
