@@ -1011,10 +1011,10 @@ storeInformation()
 
         numberOfEntries=`dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDeviceNumberOfEntries | grep value | awk '{print $5}'`
 
-        if [ "$numberOfEntries" -ne 0 ]
+        if [ 0$numberOfEntries -ne 0 ]
         then
             assocDev=1
-            while [ "$assocDev" -le "$numberOfEntries" ]
+            while [ $assocDev -le 0$numberOfEntries ]
             do
                 MACADDRESS=`dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.MACAddress | grep value | awk '{print $5}'`
                 RSSI=`dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.SignalStrength | grep value | awk '{print $5}'`
