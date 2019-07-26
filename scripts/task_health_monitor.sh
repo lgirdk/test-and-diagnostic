@@ -684,7 +684,10 @@ if [ "$BOX_TYPE" != "HUB4" ]; then
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
 
-        HOMESEC_PID=`pidof CcspHomeSecurity`
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+          echo_t "Disabling CcpsHomeSecurity for BWG "
+        else
+          HOMESEC_PID=`pidof CcspHomeSecurity`
         if [ "$HOMESEC_PID" = "" ]; then
             case $SELFHEAL_TYPE in
                 "BASE")
@@ -700,7 +703,7 @@ case $SELFHEAL_TYPE in
             esac
             resetNeeded "" CcspHomeSecurity
         fi
-
+        fi
         advsec_bridge_mode=`syscfg get bridge_mode`
         DF_ENABLED=`syscfg get Advsecurity_DeviceFingerPrint`
         case $SELFHEAL_TYPE in
