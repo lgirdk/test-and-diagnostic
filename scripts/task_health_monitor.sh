@@ -1076,8 +1076,8 @@ case $SELFHEAL_TYPE in
             #If they are not present below code shall re-create them
             #l2sd0.102 case , also adding a strict rule that they are up, since some
             #devices we observed l2sd0 not up
-
-
+            grePresent=`ifconfig -a | grep $grePrefix.102`
+            if [ -n "$grePresent" ]; then 
             ifconfig | grep l2sd0.102
             if [ $? == 1 ]; then
                 echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it"
@@ -1108,10 +1108,15 @@ case $SELFHEAL_TYPE in
             else
                 echo_t "XfinityWifi is enabled and l2sd0.102 is present"
             fi
+            else                    
+                   echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
+                   rcount=$((rcount+1))                     
+            fi
 
             #l2sd0.103 case
 
-
+            grePresent=`ifconfig -a | grep $grePrefix.103`
+            if [ -n "$grePresent" ]; then 
             ifconfig | grep l2sd0.103
             if [ $? == 1 ]; then
                 echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it"
@@ -1141,6 +1146,10 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t "Xfinitywifi is enabled and l2sd0.103 is present"
+            fi
+            else                      
+                  echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
+                  rcount=$((rcount+1))                     
             fi
 
             #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
@@ -1195,9 +1204,8 @@ case $SELFHEAL_TYPE in
                 #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
                 #connect
                 if [ "$SECURED_24" = "true" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
-                    sysevent set multinet_7-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                   echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
+                  rcount=$((rcount+1)) 
                 fi
             fi
 
@@ -1230,10 +1238,12 @@ case $SELFHEAL_TYPE in
             else
                 if [ "$SECURED_5" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
-                    sysevent set multinet_8-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 8
+                    rcount=$((rcount+1))  
                 fi
             fi
+            if [ $rcount -gt 1 ] ; then
+                    sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover  
+            fi	
         fi  # [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
     ;;
     "TCCBR")
