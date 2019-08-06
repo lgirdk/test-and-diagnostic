@@ -691,9 +691,7 @@ case $SELFHEAL_TYPE in
             "TCCBR")
             ;;
             "SYSTEMD")
-                if [ "$BOX_TYPE" != "XF3" ]; then
-                    RABID_ENABLED=`syscfg get Advsecurity_RabidEnable`
-                fi
+                RABID_ENABLED=`syscfg get Advsecurity_RabidEnable`
             ;;
         esac
         if [ "$advsec_bridge_mode" != "2" ]; then
