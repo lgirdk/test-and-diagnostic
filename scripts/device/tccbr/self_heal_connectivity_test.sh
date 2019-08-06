@@ -154,10 +154,34 @@ runPingTest()
         IPv6_Gateway_addr=""
         erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d:`
 
-        if [ $erouterIP6 != "" ]
+	if [ "$erouterIP6" != "" ]
         then
-           routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
-           IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d " "`
+           routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
+           IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
+
+           # If IPv6_Gateway_addr is empty #RDKB-21946
+           if [ "$IPv6_Gateway_addr" = "" ]
+           then
+                routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
+                IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/`
+           
+           	# If we don't get the Network prefix we need this additional check to
+           	# retrieve the IPv6 GW Addr, here route entry and IPv6_Gateway_addr(which is retrived from above execution)
+                # are same
+           	if [ "$IPv6_Gateway_addr" = "" ] && [ "$routeEntry" != "" ]
+           	then
+                	IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d ' '`
+           	fi
+	   fi
+        fi
+
+	#RDKB-21946
+        #If GW IPv6 is missing in both route list and neighbour list checking for Link Local GW ipv6 in neighbour list
+        if [ "$IPv6_Gateway_addr" = "" ]
+        then
+           erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
+           routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
+           IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
         fi
 
 	if [ "$IPv4_Gateway_addr" != "" ]
@@ -260,6 +284,8 @@ runPingTest()
 		fi
 	else
 		echo_t "RDKB_SELFHEAL : GW IP Connectivity Test Successfull"
+		echo_t "[RDKB_SELFHEAL] : IPv4 GW  Address is:$IPv4_Gateway_addr"
+                echo_t "[RDKB_SELFHEAL] : IPv6 GW  Address is:$IPv6_Gateway_addr"
 	fi	
 
 	ping4_success=0
