@@ -2654,43 +2654,63 @@ if [ "$WAN_STATUS" = "started" ];then
                     fi
                 fi
             fi
+
+            if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+                wan_dhcp_client_v4=0
+            fi
         ;;
         "TCCBR")
+            if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+                wan_dhcp_client_v4=0
+            fi
         ;;
         "SYSTEMD")
-            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
                 #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                 LAST_EROUTER_MODE=`syscfg get last_erouter_mode`
+            fi
+
+            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+                #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+                if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+                    wan_dhcp_client_v4=0
+                fi
+            else
+                if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+                    wan_dhcp_client_v4=0
+                fi
             fi
         ;;
     esac
 
-    if [ "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$MODEL_NUM" = "TG3482G" -o "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-        #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-        if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-            wan_dhcp_client_v4=0
-        fi
-    else
-        if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-            wan_dhcp_client_v4=0
-        fi
-    fi
 
     if [ "$thisWAN_TYPE" != "EPON" ]; then
-        if [ "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$MODEL_NUM" = "TG3482G" -o "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-            #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-            if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                wan_dhcp_client_v6=0
-            fi
-        else
-            if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                wan_dhcp_client_v6=0
-            fi
-        fi
+        case $SELFHEAL_TYPE in
+            "BASE"|"TCCBR")
+                if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+                    wan_dhcp_client_v6=0
+                fi
+            ;;
+            "SYSTEMD")
+                if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
+                    #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+                    if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
+                        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+                        wan_dhcp_client_v6=0
+                    fi
+                else
+                    if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
+                        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+                        wan_dhcp_client_v6=0
+                    fi
+                fi
+            ;;
+        esac
 
         DHCP_STATUS_query=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus`
         DHCP_STATUS_execution=`echo $DHCP_STATUS_query | grep "Execution succeed"`
