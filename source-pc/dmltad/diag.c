@@ -665,8 +665,8 @@ diag_err_t diag_getPartnerID( char *partnerID )
 		int 	 offsetValue		= 0;
 		deviceFilePtr = fopen( DEVICE_PROPERTIES, "r" );
 		
-		// changed from default "comcast" to "RDKM"
-		sprintf( partnerID, "%s", "RDKM" );
+		// changed from default "comcast" to "comcast"
+		sprintf( partnerID, "%s", "comcast" );
 
 		if ( deviceFilePtr ) 
 		{
