@@ -168,7 +168,7 @@ runPingTest()
            	# If we don't get the Network prefix we need this additional check to
            	# retrieve the IPv6 GW Addr, here route entry and IPv6_Gateway_addr(which is retrived from above execution)
                 # are same
-           	if [ "$IPv6_Gateway_addr" = "" ] && [ "$routeEntry" != "" ]
+           	if [ "$routeEntry" = "$IPv6_Gateway_addr" ] && [ "$routeEntry" != "" ]
            	then
                 	IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d ' '`
            	fi
@@ -176,8 +176,12 @@ runPingTest()
         fi
 
 	#RDKB-21946
-        #If GW IPv6 is missing in both route list and neighbour list checking for Link Local GW ipv6 in neighbour list
-        if [ "$IPv6_Gateway_addr" = "" ]
+        #If GW IPv6 is missing in both route list and neighbour list checking for Link Local GW ipv6 in neighbour list and 
+	#Checking if route list returns Box_IPv6_addr as IPv6_Gateway_addr
+
+        Box_IPv6_addr=`ifconfig erouter0 | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d\/`
+
+        if [ "$IPv6_Gateway_addr" = "" ] || [ "$IPv6_Gateway_addr" = "$Box_IPv6_addr" ]
         then
            erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
            routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
