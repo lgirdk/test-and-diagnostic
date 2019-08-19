@@ -28,6 +28,7 @@ source $TAD_PATH/corrective_action.sh
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
+    "XB7") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
     "CFG3") SELFHEAL_TYPE="BASE";;  # TBD?!
@@ -112,6 +113,7 @@ case $SELFHEAL_TYPE in
         thisREADYFILE="/tmp/.qtn_ready"
         case $MACHINE_IMAGE_NAME in
             *CGM4331COM*) thisREADYFILE="/tmp/.brcm_wifi_ready";;
+            *TG4482A*) thisREADYFILE="/tmp/.qtn_ready";; ## This will need to change during integration effort
                        *) ;;
         esac
     ;;
@@ -423,7 +425,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "$MODEL_NUM" = "CGM4140COM" ] ; then
+        if [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
             Check_If_Erouter_Exists=`ifconfig -a | grep $WAN_INTERFACE`
             ifconfig $WAN_INTERFACE > /dev/null
             wan_exists=$?
@@ -438,7 +440,7 @@ case $SELFHEAL_TYPE in
         fi
 
         #ARRISXB6-9443 temp fix. Need to generalize and improve.
-        if [ "$MODEL_NUM" = "TG3482G" ] ; then
+        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
             brctl show brlan0 | grep nmoca0 >> /dev/null
             if [ $? != 0 ] ; then
                 echo_t "Moca is not part of brlan0.. adding it"
@@ -648,7 +650,7 @@ case $SELFHEAL_TYPE in
                 wifi_name_timeout=`echo $wifi_name | grep "$CCSP_ERR_TIMEOUT"`
                 wifi_name_notexist=`echo $wifi_name | grep "$CCSP_ERR_NOT_EXIST"`
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
-                    if [ "$BOX_TYPE" = "XB6" ]; then
+                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]; then
                         if [ -f "$thisREADYFILE" ]
                         then
                             echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
@@ -1962,7 +1964,7 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t  "[RDKB_PLATFORM_ERROR] : WiFi initialization not done"
-                if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" ]]; then
+                if ( [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ] ) && [ "$MANUFACTURE" = "Technicolor" ]; then
                     if [ -f "$thisREADYFILE" ]
                     then
                         echo_t  "[RDKB_PLATFORM_ERROR] : restarting the CcspWifiSsp"
@@ -2446,7 +2448,7 @@ case $SELFHEAL_TYPE in
         CHKIPV6_DAD_FAILED=`ip -6 addr show dev erouter0 | grep "scope link tentative dadfailed"`
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
-            if [[ "$BOX_TYPE" = "XB6" && "$MODEL_NUM" = "CGM4140COM" ]]; then
+            if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
                 partner_id=`syscfg get PartnerID`
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
@@ -2481,7 +2483,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
                             
-                            if [[ "$BOX_TYPE" = "XB6" && "$MODEL_NUM" = "CGM4140COM" ]]; then
+                            if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                 sleep 1
@@ -2493,8 +2495,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 sleep 1
                                 dibbler-client start            
                                 sleep 5
-                            fi
-                            if [[ "$BOX_TYPE" = "XB6" && "$MODEL_NUM" = "TG3482" ]]; then
+                            elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 sh $DHCPV6_HANDLER disable
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
@@ -2636,11 +2637,11 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
             UDHCPC_Enable=`syscfg get UDHCPEnable`
             dibbler_client_enable=`syscfg get dibbler_client_enable`
 
-            if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  || "$BOX_TYPE" = "TCCBR" || "$WAN_TYPE" = "EPON" ]]; then
+            if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
                 check_wan_dhcp_client_v4=`ps w | grep udhcpc | grep erouter`
                 check_wan_dhcp_client_v6=`ps w | grep dibbler-client | grep -v grep`
             else
-                if [ "$MODEL_NUM" = "TG3482G" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
+                if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
                     dhcp_cli_output=`ps w | grep ti_ | grep erouter0`
 
                     if [ "$UDHCPC_Enable" = "true" ]
@@ -2765,13 +2766,13 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
         "BASE")
             if [ $wan_dhcp_client_v4 -eq 0 ];
             then
-                if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  ||  "$BOX_TYPE" = "TCCBR"  ]]; then
+                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ];then
                     echo "Calling epon_utility.sh to restart udhcpc "
                     sh /usr/ccsp/epon_utility.sh
                 else
-                    if [[ "$BOX_TYPE" = "XB6" && "$MFG_NAME" = "Arris" || "$BOX_TYPE" = "XB3" ]]; then
+                    if ( ( [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ] ) && [ "$MANUFACTURE" = "Arris" ] ) || [ "$BOX_TYPE" = "XB3" ]; then
 
                         if [ "$UDHCPC_Enable" = "true" ]
                         then
@@ -2794,7 +2795,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
             if [ $wan_dhcp_client_v6 -eq 0 ];
             then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor"  || "$BOX_TYPE" = "TCCBR"  ]]; then
+                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                     /etc/dibbler/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
@@ -2887,13 +2888,13 @@ case $SELFHEAL_TYPE in
       if [ "$BOX_TYPE" != "HUB4" ]; then
         if [ $wan_dhcp_client_v4 -eq 0 ];
         then
-            if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
+            if [ "$MANUFACTURE" = "Technicolor" ]; then
                 V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
             elif [ "$WAN_TYPE" = "EPON" ];then
                 echo "Calling epon_utility.sh to restart udhcpc "
                 sh /usr/ccsp/epon_utility.sh
             else
-                if [ "$MODEL_NUM" = "TG3482G" ] ; then
+                if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
 
                     if [ "$UDHCPC_Enable" = "true" ]
                     then
@@ -2917,7 +2918,7 @@ case $SELFHEAL_TYPE in
 
         #ARRISXB6-8319
         #check if interface is down or default route is missing.
-        if [ "$MODEL_NUM" = "TG3482G" ] ; then
+        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
             ip route show default | grep default
             if [ $? -ne 0 ] ; then
                 ifconfig $WAN_INTERFACE up
@@ -2962,7 +2963,7 @@ case $SELFHEAL_TYPE in
         if [ $wan_dhcp_client_v6 -eq 0 ];
         then
             echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-            if [[ "$BOX_TYPE" = "XB6" && "$MANUFACTURE" = "Technicolor" || "$BOX_TYPE" = "TCCBR" ]]; then
+            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                 /etc/dibbler/dibbler-init.sh
                 sleep 2
                 /usr/sbin/dibbler-client start
