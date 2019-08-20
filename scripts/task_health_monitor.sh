@@ -2737,6 +2737,10 @@ wan_dhcp_client_v6=1
 if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
+
+    #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    LAST_EROUTER_MODE=`syscfg get last_erouter_mode`
+
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
             UDHCPC_Enable=$(syscfg get UDHCPEnable)
@@ -2784,69 +2788,28 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
                 fi
             fi
 
-            if [ "$check_wan_dhcp_client_v4" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
-                wan_dhcp_client_v4=0
-            fi
         ;;
         "TCCBR")
-            if [ "$check_wan_dhcp_client_v4" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
-                wan_dhcp_client_v4=0
-            fi
         ;;
         "SYSTEMD")
-            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-                #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-                LAST_EROUTER_MODE=$(syscfg get last_erouter_mode)
-            fi
-
-            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-                #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-                if [ "$check_wan_dhcp_client_v4" = "" ] && [ "$LAST_EROUTER_MODE" != "2" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
-                    wan_dhcp_client_v4=0
-                fi
-            else
-                if [ "$check_wan_dhcp_client_v4" = "" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
-                    wan_dhcp_client_v4=0
-                fi
-            fi
         ;;
     esac
 
+    #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+    if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
+          echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+          t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+	  wan_dhcp_client_v4=0
+    fi
 
     if [ "$thisWAN_TYPE" != "EPON" ]; then
-        case $SELFHEAL_TYPE in
-            "BASE"|"TCCBR")
-                if [ "$check_wan_dhcp_client_v6" = "" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                    t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
-                    wan_dhcp_client_v6=0
-                fi
-            ;;
-            "SYSTEMD")
-                if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
-                    #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-                    if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$LAST_EROUTER_MODE" != "1" ]; then
-                        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
-                        wan_dhcp_client_v6=0
-                    fi
-                else
-                    if [ "$check_wan_dhcp_client_v6" = "" ]; then
-                        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
-                        wan_dhcp_client_v6=0
-                    fi
-                fi
-            ;;
-        esac
+                    
+        #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
+	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
+        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+		wan_dhcp_client_v6=0
+	fi
 
         DHCP_STATUS_query=$(dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
         DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
@@ -3013,6 +2976,7 @@ case $SELFHEAL_TYPE in
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
                         fi
                     else
+ 
                         DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
                         V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                     fi
