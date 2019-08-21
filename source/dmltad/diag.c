@@ -48,6 +48,12 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include "diag_inter.h"
+#include "dslh_definitions_database.h"
+#include "plugin_main_apis.h"
+
+extern  ANSC_HANDLE         bus_handle;
+extern  unsigned int        g_TracerouteTest_WriteID;
+extern  unsigned int        g_PingTest_WriteID;
 
 /* XXX: if there are more instances, we may use a dynamic list to 
  * handle these instances, or with dynamic load. */
@@ -476,6 +482,10 @@ static void *diag_task(void *arg)
         else
             diag->err = DIAG_ERR_OTHER;
         break;
+    }
+    if (((diag->mode == DIAG_MD_PING ) && (g_PingTest_WriteID == DSLH_MPA_ACCESS_CONTROL_ACS )) || ((diag->mode == DIAG_MD_TRACERT ) && (g_TracerouteTest_WriteID == DSLH_MPA_ACCESS_CONTROL_ACS )))
+    {
+        CcspBaseIf_SenddiagCompleteSignal(bus_handle);
     }
     pthread_mutex_unlock(&diag->mutex);
 
