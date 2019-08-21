@@ -43,10 +43,15 @@
 #include <string.h>
 #include <assert.h>
 #include "diag_inter.h"
+#include "dslh_definitions_database.h"
+#include "plugin_main_apis.h"
 
 #define PING_DEF_CNT        1
 #define PING_DEF_TIMO       10
 #define PING_DEF_SIZE       56
+
+extern  ANSC_HANDLE         bus_handle;
+extern  unsigned int        g_PingTest_WriteID;
 
 static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *st);
 static diag_err_t ping_stop(diag_obj_t *diag);
@@ -167,6 +172,10 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     if (copy == 5 || copy == 2) { /* RTT may not exist */
         st->u.ping.failure = sent - st->u.ping.success;
         pclose(fp);
+        if (g_PingTest_WriteID == DSLH_MPA_ACCESS_CONTROL_ACS)
+        {
+            CcspBaseIf_SenddiagCompleteSignal(bus_handle);
+        }
         return DIAG_ERR_OK;
     }
 
