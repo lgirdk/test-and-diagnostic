@@ -43,6 +43,16 @@ DELAY=30
 
     # RDKB-7017	
     echo_t "USED_MEM:$usedMemSys"
+    t2ValNotify "USED_MEM_ATOM_split" "$usedMemSys"
+    echo "USED_MEM:$usedMemSys" | grep -q "USED_MEM:55"
+    if [ $? -eq 0 ]; then 
+        t2ValNotify "SYS_ERROR_MemAbove550"
+    fi
+    echo "USED_MEM:$usedMemSys" | grep -q "USED_MEM:6"
+    if [ $? -eq 0 ]; then 
+        t2ValNotify "SYS_ERROR_MemAbove600"
+    fi
+    
     echo_t "FREE_MEM:$freeMemSys"
 
     # RDKB-7195
@@ -66,8 +76,10 @@ DELAY=30
            if [ $thresholdReached -gt 25 ]
            then
               echo_t "ICCCTL_INFO:ICC Memory is above threshold $thresholdReached"
+              t2CountNotify "SYS_ERROR_ICC_ABOVE_THRESHOLD"
            else
               echo_t "ICCCTL_INFO:ICC Memory is below threshold $thresholdReached"
+              t2CountNotify "SYS_ERROR_ICC_BELOW_THRESHOLD"
            fi
         else
             echo_t "ICCCTL_IN_USE:0"
@@ -82,6 +94,25 @@ DELAY=30
     #RDKB-7411
     LOAD_AVG_15=`echo $LOAD_AVG | cut -f3 -d:`
     echo_t "LOAD_AVERAGE:$LOAD_AVG_15"
+    t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
+    
+    # Feature overkill - follow up with triage for marker cleanup. Required data is already sent above
+    echo $LOAD_AVG_15 | grep -q '2.' 
+    if [ $? -eq 0 ]; then 
+        t2CountNotify "SYS_ERROR_LoadAbove2"
+    fi
+    echo $LOAD_AVG_15 | grep -q '3.' 
+    if [ $? -eq 0 ]; then 
+        t2CountNotify "SYS_ERROR_LoadAbove3"
+    fi
+    echo $LOAD_AVG_15 | grep -q '4.' 
+    if [ $? -eq 0 ]; then 
+        t2CountNotify "SYS_ERROR_LoadAbove4"
+    fi
+    echo $LOAD_AVG_15 | grep -q '5.' 
+    if [ $? -eq 0 ]; then 
+        t2CountNotify "SYS_ERROR_LoadAbove5"
+    fi
     
     #Record the start statistics
 
@@ -108,7 +139,11 @@ DELAY=30
 	timestamp=`getDate`
     # RDKB-7017	
     echo_t "RDKB_CPU_USAGE : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+    if [ $Curr_CPULoad -eq 100 ]; then 
+        t2CountNotify "SYS_ERROR_CPU100"
+    fi
     echo_t "USED_CPU:$Curr_CPULoad"
+    t2ValNotify "USED_CPU_ATOM_split" "$Curr_CPULoad"
 
     # RDKB-7412
    	CPU_INFO=`mpstat 1 1 | tail -1 | tr -s ' ' ':' | cut -d':' -f3-`
@@ -124,6 +159,7 @@ DELAY=30
 	echo_t "MPSTAT_NICE:$MPSTAT_NICE"
 	echo_t "MPSTAT_IRQ:$MPSTAT_IRQ"
 	echo_t "MPSTAT_SOFT:$MPSTAT_SOFT"
+	t2ValNotify "MPSTAT_SOFT_split" "$MPSTAT_SOFT"
 	echo_t "MPSTAT_IDLE:$MPSTAT_IDLE"
 
 	USER_CPU=`echo $MPSTAT_USR | cut -d'.' -f1`
@@ -165,6 +201,7 @@ DELAY=30
 	if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
 	then
 		echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
+		t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
 	fi
 
 	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
