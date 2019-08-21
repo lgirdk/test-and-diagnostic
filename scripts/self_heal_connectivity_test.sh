@@ -38,6 +38,7 @@ ping6_success=0
 ping4_failed=0
 ping6_failed=0
 
+
 getCorrectiveActionState() {
     Corrective_Action=`syscfg get ConnTest_CorrectiveAction`
     echo "$Corrective_Action"
@@ -269,6 +270,7 @@ runPingTest()
                  	  echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                	else
                   	 echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                  	 t2CountNotify "RF_ERROR_IPV4PingFailed"
                    	echo_t "PING_FAILED:$IPv4_Gateway_addr"
             fi
             if [ "$IPv6_Gateway_addr" == "" ]
@@ -276,6 +278,7 @@ runPingTest()
                   	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                	else
                       echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address failed."
+                      t2CountNotify "RF_ERROR_IPV6PingFailed"
                       echo_t "PING_FAILED:$IPv6_Gateway_addr"
             fi
  
@@ -289,6 +292,7 @@ runPingTest()
                 if [ "$IPv4_Gateway_addr" != "" ]
                 then
                    echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                   t2CountNotify "RF_ERROR_IPV4PingFailed"
         	   echo_t "PING_FAILED:$IPv4_Gateway_addr"	
                 else
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
@@ -314,6 +318,7 @@ runPingTest()
                 if [ "$IPv6_Gateway_addr" != "" ]
                 then
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+		            t2CountNotify "RF_ERROR_IPV6PingFailed"
 		            echo_t "PING_FAILED:$IPv6_Gateway_addr"
                 else
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
@@ -436,6 +441,7 @@ runPingTest()
 	elif [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed."
+		t2CountNotify "RF_ERROR_IPV4IPV6PingFailed"
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo_t "RDKB_SELFHEAL : Taking corrective action"
