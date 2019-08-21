@@ -77,6 +77,8 @@ extern ANSC_HANDLE          g_MessageBusHandle_Irep;
 extern char                 g_SubSysPrefix_Irep[32];
 extern char                 g_Subsystem[32];
 extern  BOOL                g_bActive;
+unsigned int                g_PingTest_WriteID;
+unsigned int                g_TracerouteTest_WriteID;
 
 #ifdef _ANSC_LINUX
 ANSC_STATUS
@@ -121,7 +123,6 @@ ssp_TadMbi_MessageBusEngage
 
     /* Base interface implementation that will be used cross components */
     cb.getParameterValues     = CcspCcMbi_GetParameterValues;
-    cb.setParameterValues     = CcspCcMbi_SetParameterValues;
     cb.setCommit              = CcspCcMbi_SetCommit;
     cb.setParameterAttributes = CcspCcMbi_SetParameterAttributes;
     cb.getParameterAttributes = CcspCcMbi_GetParameterAttributes;
@@ -131,6 +132,7 @@ ssp_TadMbi_MessageBusEngage
     cb.currentSessionIDSignal = CcspCcMbi_CurrentSessionIdSignal;
 
     /* Base interface implementation that will only be used by tad */
+    cb.setParameterValues     = ssp_TadMbi_SetParameterValues;
     cb.initialize             = ssp_TadMbi_Initialize;
     cb.finalize               = ssp_TadMbi_Finalize;
     cb.freeResources          = ssp_TadMbi_FreeResources;
@@ -262,3 +264,38 @@ ssp_TadMbi_FreeResources
     return ( returnStatus == ANSC_STATUS_SUCCESS ) ? 0 : 1;
 }
 
+int
+ssp_TadMbi_SetParameterValues
+    (
+        int sessionId,
+        unsigned int writeID,
+        parameterValStruct_t *val,
+        int size,
+        dbus_bool commit,
+        char ** invalidParameterName,
+        void * user_data
+    )
+{
+    int retCode;
+    int i;
+    if((val != NULL) && (writeID != NULL))
+    {
+        for (i = 0; i < size; i++)
+        {
+            if( 0 == strcmp(val[i].parameterName, "Device.IP.Diagnostics.IPPing.DiagnosticsState"))
+            {
+                g_PingTest_WriteID=writeID;
+            }
+            if( 0 == strcmp(val[i].parameterName, "Device.IP.Diagnostics.TraceRoute.DiagnosticsState"))
+            {
+                g_TracerouteTest_WriteID=writeID;
+            }
+        }
+    }
+    retCode = CcspCcMbi_SetParameterValues(sessionId, writeID, val, size, commit, invalidParameterName, user_data);
+    if(retCode != CCSP_SUCCESS)
+    {
+        CcspTraceError((" !!! SetParameterValues Failure !!!\n"));
+    }
+    return retCode;
+}
