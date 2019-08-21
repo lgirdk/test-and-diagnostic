@@ -299,6 +299,10 @@ runPingTest()
                       echo_t "PING_FAILED:$IPv6_Gateway_addr"
             fi
  
+		# check if erouter0 is up
+		echo_t "RDKB_SELFHEAL : checking erouter0 status"
+		ifconfig erouter0
+
 		if [ `getCorrectiveActionState` = "true" ]
 		then
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
