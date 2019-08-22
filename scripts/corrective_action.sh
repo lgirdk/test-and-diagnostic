@@ -176,6 +176,13 @@ getCMMac()
             fi
         ;;
         "SYSTEMD")
+            ETHWAN_MODE=`syscfg get eth_wan_enabled`
+            if [ "$ETHWAN_MODE" = "true" ]; then
+                CMMac=`sysevent get eth_wan_mac`
+                if [ "$CMMac" = "" ] ; then
+                    CMMac=`dmcli eRT getv Device.DeviceInfo.X_COMCAST-COM_CM_MAC | grep value | awk '{print $5}'`
+                fi
+            fi
         ;;
     esac
     echo "$CMMac"
