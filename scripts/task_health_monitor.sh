@@ -2561,8 +2561,9 @@ if [ "$DIBBLER_PID" = "" ]; then
 fi
 
 #Checking the zebra is running or not
+WAN_STATUS=`sysevent get wan-status`
 ZEBRA_PID=`pidof zebra`
-if [ "$ZEBRA_PID" = "" ]; then
+if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$BR_MODE" == "0" ]; then
 
         echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
