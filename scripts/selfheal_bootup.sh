@@ -661,7 +661,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 			fi
 	  fi
 
-	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ]
+	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ]
 	  then
 	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
