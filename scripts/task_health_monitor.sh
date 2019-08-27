@@ -2382,7 +2382,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" == "" ]
+                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ]
                 then
                     echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
                     IsAnyOneInfFailtoUp=1
