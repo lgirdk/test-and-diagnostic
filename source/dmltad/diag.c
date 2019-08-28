@@ -174,7 +174,7 @@ static int inet_is_local(const struct in_addr *addr)
      * 3. unicast to address in same network e.g,. "xxx.xxx.xxx.xxx/xx" 
      */
      snprintf(cmd, sizeof(cmd), "ip route show table local");
-#ifdef _PLATFORM_RASPBERRYPI_
+#if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
 /*
 rb mode is not supported to create pipe
 */
@@ -414,7 +414,7 @@ static void *diag_task(void *arg)
     pthread_mutex_lock(&diag->mutex);
     cfg = diag->cfg;
     pthread_mutex_unlock(&diag->mutex);
-#ifdef _PLATFORM_RASPBERRYPI_
+#if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
 /**
  inet_pton is failing because of extra quotes in ip address (cfg.host)
 **/
