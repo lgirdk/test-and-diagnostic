@@ -189,7 +189,12 @@ runPingTest()
            IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '` 	
 	fi	
 
-	if [ "$IPv4_Gateway_addr" != "" ]
+    if [ "$BOX_TYPE" = "HUB4" ]
+    then
+        IPv6_Gateway_addr=`ip -6 neigh show | grep $WAN_INTERFACE | grep lladdr |cut -f1 -d ' '`
+    fi
+
+	if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ]
 	then
 		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv4_Gateway_addr`
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
@@ -211,7 +216,19 @@ runPingTest()
 		fi
 	fi
 
-	if [ "$IPv6_Gateway_addr" != "" ]
+    # For HUB4, Using IPOE Health Check Status
+    if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" = "HUB4" ]
+    then
+        IPOE_HEALTH_CHECK_STATUS_IPV4=`sysevent get ipoe_health_check_ipv4_status`
+        if [ "$IPOE_HEALTH_CHECK_STATUS_IPV4" = "success" ]
+        then
+            ping4_success=1
+        else
+            ping4_failed=1
+        fi
+    fi
+
+	if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ]
 	then
 		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv6_Gateway_addr`
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
@@ -232,6 +249,18 @@ runPingTest()
 			ping6_failed=1
 		fi
 	fi
+
+    # For HUB4, Using IPOE Health Check Status
+    if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" = "HUB4" ]
+    then
+        IPOE_HEALTH_CHECK_STATUS_IPV6=`sysevent get ipoe_health_check_ipv6_status`
+        if [ "$IPOE_HEALTH_CHECK_STATUS_IPV6" = "success" ]
+        then
+            ping6_success=1
+        else
+            ping6_failed=1
+        fi
+    fi
 
 		if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 		then
