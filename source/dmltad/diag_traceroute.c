@@ -43,11 +43,16 @@
 #include <string.h>
 #include <assert.h>
 #include "diag_inter.h"
+#include "dslh_definitions_database.h"
+#include "plugin_main_apis.h"
 
 #define TRACERT_DEF_CNT     3
 #define TRACERT_DEF_TIMO    5
 #define TRACERT_DEF_SIZE    38
 #define TRACERT_DEF_MAXHOP  30
+
+extern  ANSC_HANDLE         bus_handle;
+extern  unsigned int        g_TracerouteTest_WriteID;
 
 static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *stat);
 static diag_err_t tracert_stop(diag_obj_t *diag);
@@ -249,6 +254,10 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
 	    }
 	    stat->u.tracert.resptime = resp;
+            if (g_TracerouteTest_WriteID == DSLH_MPA_ACCESS_CONTROL_ACS)
+            {
+                CcspBaseIf_SenddiagCompleteSignal(bus_handle);
+            }
 	    err = DIAG_ERR_OK;
         }
     }
