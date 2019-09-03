@@ -113,8 +113,11 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         cnt = PING_DEF_CNT; /* or never return */
     else
         cnt = cfg->cnt;
-
+#if defined(_PLATFORM_TURRIS_)
+    left -= snprintf(cmd + strlen(cmd), left, "ping ");
+#else
     left -= snprintf(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+#endif
     if (strlen(cfg->ifname))
         left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
     if (cnt)
@@ -126,6 +129,10 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 #ifdef PING_HAS_QOS
     if (cfg->tos)
         left -= snprintf(cmd + strlen(cmd), left, "-Q %u ", cfg->tos);
+#endif
+
+#if defined(_PLATFORM_TURRIS_)
+    left -= snprintf(cmd + strlen(cmd), left, "%s ", cfg->host);
 #endif
     left -= snprintf(cmd + strlen(cmd), left, "2>&1 ");
 
