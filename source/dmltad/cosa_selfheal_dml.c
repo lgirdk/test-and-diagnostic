@@ -322,6 +322,19 @@ SelfHeal_GetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
 
+
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold", TRUE))
+	{
+			*puLong = pMyObject->FreeMemThreshold;
+			return TRUE;
+	}
+
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold", TRUE))
+	{
+			*puLong = pMyObject->MemFragThreshold;
+			return TRUE;
+	}
+
 	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
 	{
 			*puLong = pMyObject->CpuMemFragInterval;
@@ -396,6 +409,45 @@ SelfHeal_SetParamUlongValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[8];
 
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold", TRUE))
+	{
+		memset(buf, 0, sizeof(buf));
+		snprintf(buf,sizeof(buf),"%d",uValue);
+
+		if (syscfg_set(NULL, "Free_Mem_Threshold", buf) != 0)
+		{
+			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+			return FALSE;
+		}
+		if (syscfg_commit() != 0)
+		{
+			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
+			return FALSE;
+		}
+                CcspTraceWarning(("%s : %d \n",ParamName,uValue));
+		pMyObject->FreeMemThreshold = uValue;
+		return TRUE;
+	}
+
+	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold", TRUE))
+	{
+		memset(buf, 0, sizeof(buf));
+		snprintf(buf,sizeof(buf),"%d",uValue);
+
+		if (syscfg_set(NULL, "Mem_Frag_Threshold", buf) != 0)
+		{
+			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+			return FALSE;
+		}
+		if (syscfg_commit() != 0)
+		{
+			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
+			return FALSE;
+		}
+                CcspTraceWarning(("%s : %d \n",ParamName,uValue));
+		pMyObject->MemFragThreshold = uValue;
+		return TRUE;
+	}
 
 	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
 	{
@@ -1912,6 +1964,8 @@ CpuMemFrag_GetEntry
 	if ( pCpuMemFrag )
 	{
 			*pInsNumber  = nIndex + 1; 
+//			/*Get data of Host/Peer from syscfg 	*/
+//			CosaDmlGetSelfHealCpuMemFragData(&pCpuMemFrag->pCpuMemFragDma[nIndex]);
 			return &pCpuMemFrag->pCpuMemFragDma[nIndex];
 	}
 	else
@@ -1929,6 +1983,7 @@ CpuMemFrag_GetParamStringValue
 {
 
 	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)hInsContext;
+
 	/*Get data of Host/Peer from syscfg 	*/
 	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
 
@@ -1959,4 +2014,30 @@ CpuMemFrag_GetParamStringValue
 
 return -1;
 }
+
+BOOL
+CpuMemFrag_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                        pInt
+    )
+{
+
+	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)hInsContext;
+
+	/*Get data of Host/Peer from syscfg 	*/
+	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
+
+	/* check the parameter name and return the corresponding value */
+	if( AnscEqualString(ParamName, "FragPercentage", TRUE))
+	{
+		 /* collect value */
+		*pInt = pCpuMemFragDma->FragPercentage;
+		return TRUE;
+	}
+
+return FALSE;
+}
+
 

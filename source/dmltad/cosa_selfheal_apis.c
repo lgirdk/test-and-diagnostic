@@ -74,6 +74,8 @@
 static char *Ipv4_Server ="Ipv4_PingServer_%d";
 static char *Ipv6_Server ="Ipv6_PingServer_%d";
 
+//static int count=0; /*RDKB-24432 : Memory usage and fragmentation selfheal*/
+
 void copy_command_output(char * cmd, char * out, int len)
 {
     FILE * fp;
@@ -292,8 +294,12 @@ void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
 
 void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma )
 {
-	
-	char buf[128]={0};
+        char buf[128]={0};
+        /* RDKB-24432 : Memory usage and fragmentation selfheal
+  	if (count > 1){   
+            system("sh /usr/ccsp/tad/log_buddyinfo.sh ");
+        }
+        count++;*/
 	if(pCpuMemFragDma->index == COSA_DML_HOST)
 	{
 		memset(buf ,0 ,sizeof(buf));
@@ -315,6 +321,10 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		syscfg_get( NULL, "CpuMemFrag_Host_Highmem", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->highmem,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Host_Percentage", buf, sizeof(buf));
+		pCpuMemFragDma->FragPercentage = atoi(buf);
 	}
 	else if(pCpuMemFragDma->index == COSA_DML_PEER)
 	{
@@ -337,6 +347,10 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		syscfg_get( NULL, "CpuMemFrag_Peer_Highmem", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->highmem,buf );
+
+		memset(buf ,0 ,sizeof(buf));
+		syscfg_get( NULL, "CpuMemFrag_Peer_Percentage", buf, sizeof(buf));
+		pCpuMemFragDma->FragPercentage = atoi(buf);
 	}
 
 }
@@ -415,6 +429,13 @@ CosaDmlGetSelfHealCfg(
 	syscfg_get( NULL, "max_reboot_count", buf, sizeof(buf));
 	pMyObject->MaxRebootCnt = atoi(buf);
 
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "Free_Mem_Threshold", buf, sizeof(buf));
+	pMyObject->FreeMemThreshold= atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+	syscfg_get( NULL, "Mem_Frag_Threshold", buf, sizeof(buf));
+	pMyObject->MemFragThreshold = atoi(buf);
 
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "CpuMemFrag_Interval", buf, sizeof(buf));
