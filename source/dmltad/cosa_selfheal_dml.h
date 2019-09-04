@@ -313,5 +313,12 @@ CpuMemFrag_GetParamStringValue
 				char* 			pValue,
 				ULONG*			pUlSize
 		);
+BOOL
+CpuMemFrag_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLen
+    );
 
 #endif

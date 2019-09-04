@@ -842,6 +842,19 @@
              <func_Rollback>SelfHeal_Rollback</func_Rollback>
             </functions>
             <parameters>
+		<parameter>
+			<name>X_RDKCENTRAL-COM_FreeMemThreshold</name>
+			<type>unsignedInt</type>
+			<syntax>uint32</syntax>
+			<writable>true</writable>
+		</parameter>
+
+		<parameter>
+			<name>X_RDKCENTRAL-COM_MemFragThreshold</name>
+			<type>unsignedInt</type>
+			<syntax>uint32</syntax>
+			<writable>true</writable>
+		</parameter>
 				<parameter>
 					<name>X_RDKCENTRAL-COM_CpuMemFragInterval</name>
 					<type>unsignedInt[1:120]</type>
@@ -912,6 +925,7 @@
 				<func_GetEntryCount>CpuMemFrag_GetEntryCount</func_GetEntryCount>
 				<func_GetEntry>CpuMemFrag_GetEntry</func_GetEntry>
 				<func_GetParamStringValue>CpuMemFrag_GetParamStringValue</func_GetParamStringValue>
+				<func_GetParamUlongValue>CpuMemFrag_GetParamUlongValue</func_GetParamUlongValue>
 			</functions>
 			<parameters>
 				<parameter>
@@ -936,6 +950,12 @@
 					<name>Highmem</name>
 					<type>string(64)</type>
 					<syntax>string</syntax>
+					<writable>false</writable>
+				</parameter>
+				<parameter>
+					<name>FragPercentage</name>
+					<type>unsignedInt</type>
+					<syntax>uint32</syntax>
 					<writable>false</writable>
 				</parameter>
 			</parameters>

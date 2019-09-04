@@ -25,6 +25,9 @@ source /etc/log_timestamp.sh
 #   source /etc/device.properties
 #fi
 
+FW_START="/nvram/.FirmwareUpgradeStartTime"
+FW_END="/nvram/.FirmwareUpgradeEndTime"
+
 TMPFS_THRESHOLD=85
 max_count=12
 DELAY=30
@@ -224,3 +227,72 @@ DELAY=30
         echo vmInfoHeader: swpd,free,buff,cache,si,so
         echo vmInfoValues: $swaped,$freeMemSys,$buff,$cache,$swaped_in,$swaped_out
         # end of swap usage information block
+
+        if [ "$UTC_ENABLE" == "true" ]
+        then
+            cur_hr=`LTime H | sed 's/^0*//'`
+            cur_min=`LTime M | sed 's/^0*//'`
+            cur_sec=`date +"%S" | sed 's/^0*//'`
+        else
+            cur_hr=`date +"%H" | sed 's/^0*//'`
+            cur_min=`date +"%M" | sed 's/^0*//'`
+            cur_sec=`date +"%S" | sed 's/^0*//'`
+        fi
+
+        curr_hr_in_sec=$((cur_hr*60*60))
+        curr_min_in_sec=$((cur_min*60))
+        curr_time_in_sec=$((curr_hr_in_sec+curr_min_in_sec+cur_sec))
+
+# Extract maintenance window start and end time
+        if [ -f "$FW_START" ] && [ -f "$FW_END" ]
+        then
+           start_time=`cat $FW_START`
+           end_time=`cat $FW_END`
+        else
+           start_time=7200
+           end_time=14400
+        fi
+
+	 if [ $curr_time_in_sec -ge $start_time ] && [ $curr_time_in_sec -le $end_time ] ; then
+
+                if [ ! -f "/tmp/mem_frag_calc" ]; then
+
+                        touch /tmp/mem_frag_calc
+                        free_memory_reach=0
+                        mem_frag_reach=0
+
+                        free_memory_threshold=`syscfg get Free_Mem_Threshold`
+                        free_memory_threshold=`expr $free_memory_threshold \* 1024`
+                        if [ $free_memory_threshold -ne 0 ]; then
+                        	echo_t "[RDKB_SELFHEAL] : Free memory = $freeMemSys, Memory Threshold = $free_memory_threshold"
+                                if [ $freeMemSys -le $free_memory_threshold ]; then
+                                        free_memory_reach=1
+                                        echo_t "Free memory threshold reached..."
+                                fi
+                        fi
+
+                        memory_frag_threshold=`syscfg get Mem_Frag_Threshold`
+                        if [ $memory_frag_threshold -ne 0 ]; then
+                             sh /usr/ccsp/tad/log_buddyinfo.sh
+                             mem_frag_calc=`syscfg get CpuMemFrag_Host_Percentage`
+                             echo_t "[RDKB_SELFHEAL] : Fragmentation percentage = $mem_frag_calc, Fragmentation threshold =  $memory_frag_threshold"
+                             if [ $mem_frag_calc -ge $memory_frag_threshold ]; then
+                                mem_frag_reach=1
+                                echo_t "Memory fragmentation threshold reached..."
+                             fi
+
+                        fi
+
+
+                        if [ $free_memory_reach -eq 1 ] || [ $mem_frag_reach -eq 1 ]; then
+                                reason="Low_Memory"
+                                rebootCount=1
+                                echo_t "[RDKB_SELFHEAL] : Device reboot due to Low Memory"
+                                rebootNeeded RM "" $reason $rebootCount
+                        fi
+              fi
+        else
+                if [ -f "/tmp/mem_frag_calc" ]; then
+                        rm "/tmp/mem_frag_calc"
+                fi
+        fi

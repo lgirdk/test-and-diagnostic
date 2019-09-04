@@ -44,10 +44,16 @@ parse_buddyinfo()
      then
         syscfg set CpuMemFrag_Host_Normal $data
         echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
+	FragPercentage=`MemFrag_Calc $data`
+	syscfg set CpuMemFrag_Host_Percentage $FragPercentage
+	echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
      elif [ "$2" = "peer" ]
      then
         syscfg set CpuMemFrag_Peer_Normal $data
         echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
+	FragPercentage=`MemFrag_Calc $data`
+	syscfg set CpuMemFrag_Peer_Percentage $FragPercentage
+	echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
      fi
   elif [ "`echo $1 | grep DMA | grep -v DMA32`" != "" ]
   then

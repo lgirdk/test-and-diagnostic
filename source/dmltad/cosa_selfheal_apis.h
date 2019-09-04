@@ -104,6 +104,7 @@ _COSA_DML_CPU_MEM_FRAG_DMA
     UCHAR       normal[128];
 	UCHAR       highmem[128];
 	int 		index;
+	ULONG 		FragPercentage;
 }
 COSA_DML_CPU_MEM_FRAG_DMA,  *PCOSA_DML_CPU_MEM_FRAG_DMA;
 
@@ -133,6 +134,8 @@ COSA_DML_CPU_MEM_FRAG,  *PCOSA_DML_CPU_MEM_FRAG;
 	ULONG                       MaxInstanceNumber;                                    \
 	ULONG                       ulIPv4NextInstanceNumber;                                    \
 	ULONG                       ulIPv6NextInstanceNumber;                                    \
+	ULONG                       FreeMemThreshold;                                    \
+	ULONG                       MemFragThreshold;                                    \
 	ULONG                       CpuMemFragInterval;                                    \
     SLIST_HEADER                IPV4PingServerList;                                        \
     SLIST_HEADER                IPV6PingServerList;                                        \
