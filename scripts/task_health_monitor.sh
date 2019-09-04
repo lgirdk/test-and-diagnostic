@@ -3128,21 +3128,10 @@ then
     doMaintReboot=1
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
-            if [ "$UTC_ENABLE" == "true" ]
-            then
-                cur_hr=`LTime H`
-                cur_min=`LTime M`
-            else
-                cur_hr=`date +"%H"`
-                cur_min=`date +"%M"`
-            fi
-            if [ $cur_hr -ge 02 ] && [ $cur_hr -le 03 ]
-            then
-                inMaintWindow=1
-                if [ $cur_hr -eq 03 ] && [ $cur_min -ne 00 ]
-                then
-                    doMaintReboot=0
-                fi
+            inMaintWindow=1
+            checkMaintenanceWindow
+            if [ $reb_window -eq 0 ]; then
+                doMaintReboot=0
             fi
         ;;
         "TCCBR")
