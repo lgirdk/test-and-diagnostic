@@ -961,7 +961,7 @@ int	COSA_IP_diag_Startpingtest( void )
 {
 	CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
 	parameterValStruct_t   param_val[ 1 ]    = { "Device.IP.Diagnostics.IPPing.DiagnosticsState", "Requested", ccsp_string };
-	char				   component[ 256 ]  = "eRT.com.cisco.spvtg.ccsp.tdm";
+	char				   component[ 256 ]  = "com.cisco.spvtg.ccsp.tdm";
 	char				   bus[256]		     = "/com/cisco/spvtg/ccsp/tdm";
 	char*				   faultParam 	     = NULL;
 	int 				   ret			     = 0;	
