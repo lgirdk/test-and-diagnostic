@@ -200,7 +200,7 @@ DELAY=30
 					else
 						SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
 						kill -9 $SNMP_PID
-						resetNeeded snmp snmp_subagent
+						resetNeeded snmp snmp_subagent maintanance_window
 					fi
 					rm -rf /tmp/.snmp_agent_restarting
 					touch /tmp/snmp_agent_restarted

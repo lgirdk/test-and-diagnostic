@@ -619,6 +619,7 @@ resetNeeded()
 
     folderName=$1
     ProcessName=$2
+    resetType=$3
 
     BASEQUEUE=1
     keepalive_args="-n `sysevent get wan_ifname` -e 1"
@@ -708,7 +709,12 @@ resetNeeded()
             vendor=`getVendorName`
             modelName=`getModelName`
             CMMac=`getCMMac`
-            echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+
+            if [ "$resetType" == "maintanance_window" ]; then
+		echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process restarting in maintanance window"
+            else
+		echo_t "RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM $ProcessName process not running , restarting it"
+            fi
 
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
