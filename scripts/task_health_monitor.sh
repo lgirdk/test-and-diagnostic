@@ -2487,7 +2487,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
         fi
 
         case $SELFHEAL_TYPE in
-            "BASE"|"SYSTEMD")
+            "BASE"|"SYSTEMD"|"TCCBR")
                 checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
                     for zombiepid in $checkIfDnsmasqIsZombie
@@ -2503,8 +2503,6 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                         fi
                     done
                 fi
-            ;;
-            "TCCBR")
             ;;
         esac
     fi   # [ "$DNS_PID" == "" ]
