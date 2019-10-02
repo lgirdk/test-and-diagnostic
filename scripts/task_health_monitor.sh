@@ -1345,10 +1345,16 @@ case $SELFHEAL_TYPE in
                     echo_t "Port 21515 is still alive. Killing processes associated to 21515"
                     fuser -k 21515/tcp
                 fi
-                echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
-                t2CountNotify "SYS_SH_lighttpdCrash"
-                #lighttpd -f $LIGHTTPD_CONF
-                sh /etc/webgui.sh
+		if [ -f "/tmp/wifi_initialized" ]
+		then
+                	echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+                        t2CountNotify "SYS_SH_lighttpdCrash"
+                	#lighttpd -f $LIGHTTPD_CONF
+		else
+			#if wifi is not initialized, still starting lighttpd to have gui access. Not a crash.
+			echo_t "WiFi is not initialized yet. Starting lighttpd for GUI access."
+		fi
+		sh /etc/webgui.sh
             fi
         fi
     ;;
