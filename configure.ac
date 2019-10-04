@@ -83,6 +83,8 @@ AC_CONFIG_FILES(
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
 	source/util/Makefile
+        source/cpu_load/Makefile
+        source/memory_load/Makefile
 	source/Makefile
 	source-pc/TandDSsp/Makefile
 	source-pc/dmltad/Makefile
