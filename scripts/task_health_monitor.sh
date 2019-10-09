@@ -3251,27 +3251,18 @@ case $SELFHEAL_TYPE in
 esac
 
 # Checking telemetry2_0 health and recovery
-case $SELFHEAL_TYPE in
-    "SYSTEMD")
-        # Now enabled only in TXB6
-        if [ "x$MODEL_NUM" == "xCGM4140COM" ]; then
-            T2_0_BIN="/usr/bin/telemetry2_0"
-            T2_0_APP="telemetry2_0"
-            T2_ENABLE=`syscfg get T2Enable`
-            if [ ! -f $T2_0_BIN ]; then
-                T2_ENABLE="false"
-            fi
-            echo_t "Telemetry 2.0 feature is $T2_ENABLE"
-            if [ "x$T2_ENABLE" == "xtrue" ]; then
-                T2_PID=`pidof $T2_0_APP`
-                if [ "$T2_PID" = "" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
-                    ${T2_0_BIN}
-                fi
-            fi
-        fi
-    ;;
-    "BASE")
-    ;;
-esac
+T2_0_BIN="/usr/bin/telemetry2_0"
+T2_0_APP="telemetry2_0"
+T2_ENABLE=`syscfg get T2Enable`
+if [ ! -f $T2_0_BIN ]; then
+    T2_ENABLE="false"
+fi
+echo_t "Telemetry 2.0 feature is $T2_ENABLE"
+if [ "x$T2_ENABLE" == "xtrue" ]; then
+    T2_PID=`pidof $T2_0_APP`
+    if [ "$T2_PID" = "" ]; then
+        echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
+        ${T2_0_BIN}
+    fi
+fi
 
