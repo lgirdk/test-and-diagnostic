@@ -45,8 +45,24 @@ needSelfhealReboot="/nvram/self_healreboot"
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
-#log_nvram2=`syscfg get logbackup_enable`
+T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
 
+t2CountNotify() {
+    if [ -f $T2_MSG_CLIENT ]; then
+        marker=$1
+        $T2_MSG_CLIENT  "$marker" "1"
+    fi
+}
+
+t2ValNotify() {
+    if [ -f $T2_MSG_CLIENT ]; then
+        marker=$1
+        shift
+        $T2_MSG_CLIENT "$marker" "$*"
+    fi
+}
+
+#log_nvram2=`syscfg get logbackup_enable`
 
 if [ ! -d "$LOG_SYNC_PATH" ] 
 then
@@ -282,9 +298,11 @@ loop=1
 	 if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
 	 then
 		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed in iteration $loop"
+		t2CountNotify "SYS_SH_pingPeerIP_Failed"
 		echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
 	 else
 		echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+		t2CountNotify "SYS_SH_pingPeerIP_Failed"
 		echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
 		if [ ! -f "/nvram/self_healreboot" ]
 		then
@@ -384,6 +402,7 @@ fi
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
 		echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+		t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
 		echo_t "RDKB_SELFHEAL_BOOTUP : PAM_process is not running, need restart"
 		resetNeeded CcspPandMSsp
 	fi
@@ -429,6 +448,7 @@ fi
                 	  Check_Iptable_Rules=`iptables-save -t nat | grep "A PREROUTING -i"`
 		          if [ "$Check_Iptable_Rules" == "" ]; then
         	    	      	 echo_t "[RDKB_SELFHEAL_BOOTUP] : iptable corrupted."
+        	    	      	 t2CountNotify "SYS_ERROR_iptable_corruption"
 		          	 #sysevent set firewall-restart
 		          fi	
 		   fi
@@ -458,6 +478,7 @@ fi
     if [ "$DNS_PID" == "" ]
     then
           echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
+          t2CountNotify "SYS_SH_dnsmasq_restart"
     else
           brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
 

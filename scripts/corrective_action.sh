@@ -23,6 +23,24 @@ if [ -f /etc/device.properties ];then
 source /etc/device.properties
 fi
 
+
+T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
+
+t2CountNotify() {
+    if [ -f $T2_MSG_CLIENT ]; then
+        marker=$1
+        $T2_MSG_CLIENT  "$marker" "1"
+    fi
+}
+
+t2ValNotify() {
+    if [ -f $T2_MSG_CLIENT ]; then
+        marker=$1
+        shift
+        $T2_MSG_CLIENT "$marker" "$*"
+    fi
+}
+
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
@@ -206,6 +224,7 @@ checkConditionsbeforeAction()
                     else
                         CMRegComplete=0
                         echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                        t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                         return 1
                     fi
                 else
@@ -226,6 +245,7 @@ checkConditionsbeforeAction()
                     else
                         CMRegComplete=0
                         echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                        t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                         return 1
                     fi
                 else
@@ -246,6 +266,7 @@ checkConditionsbeforeAction()
                     else
                         CMRegComplete=0
                         echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                        t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                         return 1
                     fi
                 else
@@ -315,6 +336,7 @@ resetRouter()
                     else
                         CMRegComplete=0
                         echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                        t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                         return 1
                     fi
                 else
@@ -335,6 +357,7 @@ resetRouter()
                 else
                     CMRegComplete=0
                     echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                    t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                     return 1
                 fi
             else
@@ -354,6 +377,7 @@ resetRouter()
                     else
                         CMRegComplete=0
                         echo_t "RDKB_SELFHEAL : eCM is not fully registered on its CMTS,returning failure"
+                        t2CountNotify "SYS_ERROR_NotRegisteredOnCMTS"
                         return 1
                     fi
                 else
@@ -892,6 +916,7 @@ resetNeeded()
                         rm $ADVSEC_AGENT_SHUTDOWN
                     else
                         echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
+                        t2CountNotify "SYS_SH_CUJO_restart"
                     fi
                     if [ "$ProcessName" = "AdvSecurityAgent" ]; then
                         advsec_restart_agent

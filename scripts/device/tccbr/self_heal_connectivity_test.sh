@@ -237,6 +237,7 @@ runPingTest()
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 Gateway Address failed."
+		t2CountNotify "RF_ERROR_IPV4IPV6PingFailed"
 		echo_t "IPERROR_Ping: IP_Host=[$IPv4_Gateway_addr], Ping_Error = [$output_ipv4]"
 		echo_t "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"		
 		if [ `getCorrectiveActionState` = "true" ]
@@ -249,6 +250,7 @@ runPingTest()
                 if [ "$IPv4_Gateway_addr" != "" ]
                 then
                    echo_t "RDKB_SELFHEAL : Ping to IPv4 Gateway Address failed."
+                   t2CountNotify "RF_ERROR_IPV4PingFailed"
                 else
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
@@ -275,6 +277,7 @@ runPingTest()
                 if [ "$IPv6_Gateway_addr" != "" ]
                 then
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
+		            t2CountNotify "RF_ERROR_IPV6PingFailed"
                 else
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                 fi
@@ -400,6 +403,7 @@ runPingTest()
 	elif [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
 	then
 		echo_t "RDKB_SELFHEAL : Ping to both IPv4 and IPv6 servers are failed."
+		t2CountNotify "RF_ERROR_IPV4IPV6PingFailed"
 				if [ `getCorrectiveActionState` = "true" ]
 				then
 					echo_t "RDKB_SELFHEAL : Taking corrective action"

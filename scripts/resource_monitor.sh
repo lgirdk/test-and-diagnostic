@@ -39,6 +39,7 @@ threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 COUNT=0
 
+
 sysevent set atom_hang_count 0
 
 while [ $SELFHEAL_ENABLE = "true" ]
@@ -144,6 +145,9 @@ do
 	Curr_CPULoad=$(( $active * 100 / $total ))
 
 	echo_t "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
+	if [ $Curr_CPULoad -eq 100 ]; then 
+	    t2CountNotify "SYS_ERROR_CPU100"
+	fi
 	CPU_THRESHOLD=`syscfg get avg_cpu_threshold`
 
 	count_val=0
@@ -227,6 +231,7 @@ do
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
 
 		echo_t "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
+		t2CountNotify "SYS_ERROR_avg_cpu"
 
 		if [ ! -f /tmp/CPU5MinsUsageReachedMAXThreshold ]
 		then
@@ -333,6 +338,9 @@ fi
   		Selfhealutil power_mode
   		batteryMode=$?
   	        echo_t "RDKB_SELFHEAL : batteryMode is  $batteryMode"
+  	        if [ $batteryMode -eq 1 ]; then 
+  	            t2CountNotify "SYS_INFO_Invoke_batterymode"
+  	        fi
     	fi	
      	fi
 

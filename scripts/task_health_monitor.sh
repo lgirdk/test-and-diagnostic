@@ -189,6 +189,7 @@ case $SELFHEAL_TYPE in
             WIFI_QUERY_ERROR=0
             if [ "$wifi_timeout" != "" ] || [ "$wifi_not_exist" != "" ]; then
                 echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
+                t2CountNotify "WIFI_ERROR_Wifi_query_timeout"
                 echo_t "WIFI_QUERY : $wifi_check"
                 WIFI_QUERY_ERROR=1
             fi
@@ -317,9 +318,11 @@ case $SELFHEAL_TYPE in
                     if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
                     then
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                         echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                     else
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                         echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                         echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
                         #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
@@ -380,6 +383,7 @@ case $SELFHEAL_TYPE in
                     isCRHung=`echo $crReTestop | grep "$CCSP_ERR_TIMEOUT"`
                     if [ "$isCRHung" != "" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not responding, need to reboot the unit"
+                        t2CountNotify "SYS_SH_CMReset_PingFailed"
                         vendor=`getVendorName`
                         modelName=`getModelName`
                         CMMac=`getCMMac`
@@ -444,6 +448,7 @@ case $SELFHEAL_TYPE in
             brctl show brlan0 | grep nmoca0 >> /dev/null
             if [ $? != 0 ] ; then
                 echo_t "Moca is not part of brlan0.. adding it"
+                t2CountNotify "SYS_SH_MOCA_add_brlan0"
                 sysevent set multinet-syncMembers 1
             fi
         fi
@@ -486,6 +491,7 @@ else
         psm_health_notexist=`echo $psm_health | grep "$CCSP_ERR_NOT_EXIST"`
         if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
+            t2CountNotify "SYS_SH_PSMHung"
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
                     kill -9 `pidof PsmSsp`
@@ -506,6 +512,7 @@ case $SELFHEAL_TYPE in
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
             echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+            t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
             resetNeeded pam CcspPandMSsp
         fi
 
@@ -578,6 +585,7 @@ case $SELFHEAL_TYPE in
         LM_PID=`pidof CcspLMLite`
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
+            t2CountNotify "SYS_SH_LM_restart"
             resetNeeded lm CcspLMLite
         else
             cr_query=`dmcli eRT getv com.cisco.spvtg.ccsp.lmlite.Name`
@@ -626,6 +634,7 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
         fi
+
     ;;
     "TCCBR")
     ;;
@@ -656,9 +665,11 @@ case $SELFHEAL_TYPE in
                             echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
                             systemctl restart ccspwifiagent
                             WiFi_Flag=true
+                            t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                         fi
                     else
                         echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
+                        t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                         systemctl restart ccspwifiagent
                         WiFi_Flag=true
                     fi
@@ -678,11 +689,13 @@ case $SELFHEAL_TYPE in
             case $SELFHEAL_TYPE in
                 "BASE")
                         echo_t "RDKB_PROCESS_CRASHED : HomeSecurity_process is not running, need restart"
+                        t2CountNotify "SYS_SH_HomeSecurity_restart"
                 ;;
                 "TCCBR")
                 ;;
                 "SYSTEMD")
                         echo_t "RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
+                        t2CountNotify "SYS_SH_HomeSecurity_restart"
                 ;;
             esac
             resetNeeded "" CcspHomeSecurity
@@ -727,6 +740,7 @@ case $SELFHEAL_TYPE in
                                 ADV_AG_PID=`advsec_is_alive agent`
                                 if [ "$ADV_AG_PID" = "" ] ; then
                                     echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Agent process is not running, need restart"
+                                    t2CountNotify "SYS_ERROR_AdvSecurity_NotRunning"
                                     resetNeeded advsec_bin AdvSecurityAgent
                                 fi
                                 ADV_DHCP_PID=`advsec_is_alive dhcpcap`
@@ -811,6 +825,7 @@ case $SELFHEAL_TYPE in
             wifi_timeout=`echo $wifi_check | grep "$CCSP_ERR_TIMEOUT"`
             if [ "$wifi_timeout" != "" ]; then
                 echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
+                t2CountNotify "WIFI_ERROR_Wifi_query_timeout"
             fi
 
 
@@ -875,9 +890,11 @@ case $SELFHEAL_TYPE in
                     if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
                     then
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                         echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                     else
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                         echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                         echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
                         echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
@@ -941,6 +958,7 @@ case $SELFHEAL_TYPE in
             rm -rf /tmp/pam_initialized
             echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
             resetNeeded pam CcspPandMSsp
+            t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
         fi
 
         # Checking MTA's PID
@@ -969,6 +987,7 @@ case $SELFHEAL_TYPE in
                 wifi_name_notexist=`echo $wifi_name | grep "$CCSP_ERR_NOT_EXIST"`
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is restarting"
+                    t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                     # Remove the wifi initialized flag
                     rm -rf /tmp/wifi_initialized
                     resetNeeded wifi CcspWifiSsp
@@ -1020,6 +1039,7 @@ case $SELFHEAL_TYPE in
         LM_PID=`pidof CcspLMLite`
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
+            t2CountNotify "SYS_SH_LM_restart"
             resetNeeded lm CcspLMLite
 
         fi
@@ -1058,6 +1078,7 @@ then
     DHCP_ARP_PID=`pidof hotspot_arpd`
     if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
+        t2CountNotify "SYS_SH_DhcpArpProcess_restart"
         resetNeeded "" hotspot_arpd
     fi
     
@@ -1110,6 +1131,7 @@ case $SELFHEAL_TYPE in
             fi
             else                    
                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
+                   t2CountNotify "SYS_ERROR_GRETunnel_restored"
                    rcount=$((rcount+1))                     
             fi
 
@@ -1149,6 +1171,7 @@ case $SELFHEAL_TYPE in
             fi
             else                      
                   echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
+                  t2CountNotify "SYS_ERROR_GRETunnel_restored"
                   rcount=$((rcount+1))                     
             fi
 
@@ -1205,6 +1228,7 @@ case $SELFHEAL_TYPE in
                 #connect
                 if [ "$SECURED_24" = "true" ]; then
                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
+                   t2CountNotify "SYS_ERROR_GRETunnel_restored"
                   rcount=$((rcount+1)) 
                 fi
             fi
@@ -1238,6 +1262,7 @@ case $SELFHEAL_TYPE in
             else
                 if [ "$SECURED_5" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
+                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=$((rcount+1))  
                 fi
             fi
@@ -1319,6 +1344,7 @@ case $SELFHEAL_TYPE in
                     fuser -k 21515/tcp
                 fi
                 echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+                t2CountNotify "SYS_SH_lighttpdCrash"
                 #lighttpd -f $LIGHTTPD_CONF
                 sh /etc/webgui.sh
             fi
@@ -1330,6 +1356,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         _start_parodus_() {
             echo_t "RDKB_PROCESS_CRASHED : parodus process is not running, need restart"
+            t2CountNotify "WIFI_SH_Parodus_restart"
             echo_t "Check parodusCmd.cmd in /tmp"
             if [ -e /tmp/parodusCmd.cmd ]; then
                 echo_t "parodusCmd.cmd exists in tmp, but deleting it to recreate and fetch new values"
@@ -1471,6 +1498,7 @@ case $SELFHEAL_TYPE in
                    fuser -k 21515/tcp
                 fi
                 echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+                t2CountNotify "SYS_SH_lighttpdCrash"
                 #lighttpd -f $LIGHTTPD_CONF
                 sh /etc/webgui.sh
             fi
@@ -1661,6 +1689,7 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+                t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
             fi
 
 
@@ -1750,9 +1779,11 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+                t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
             fi
         else
             echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+            t2CountNotify "SYS_SH_brlan0_restarted"
         fi
     ;;
     "SYSTEMD")
@@ -1802,6 +1833,7 @@ case $SELFHEAL_TYPE in
             fi
         else
             echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+            t2CountNotify "SYS_SH_brlan0_restarted"
         fi
 
         # Checking whether brlan1 interface is created properly
@@ -1910,12 +1942,14 @@ case $SELFHEAL_TYPE in
             then
                 SSID_DISABLED=1
                 echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+                t2CountNotify "WIFI_INFO_5G_DISABLED"
             fi
         else
             destinationError=`echo $ssidEnable | grep "Can't find destination component"`
             if [ "$destinationError" != "" ]
             then
                 echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                t2CountNotify "WIFI_ERROR_WifiDmCliError"
             else
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
                 echo "$ssidEnable"
@@ -1941,6 +1975,7 @@ case $SELFHEAL_TYPE in
                 if [ "$destinationError" != "" ]
                 then
                     echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                    t2CountNotify "WIFI_ERROR_WifiDmCliError"
                 else
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
                     echo "$ssidEnable"
@@ -1973,6 +2008,7 @@ case $SELFHEAL_TYPE in
                     if [ "$destinationError" != "" ]
                     then
                         echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                        t2CountNotify "WIFI_ERROR_WifiDmCliError"
                     else
                         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
                         echo "$ssidEnable"
@@ -2006,6 +2042,7 @@ then
     fi
 else
     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+    t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
     echo_t "LanMode dmcli called failed with error $bridgeMode"
     isBridging=`syscfg get bridge_mode`
     if [ "$isBridging" != "0" ]
@@ -2120,9 +2157,11 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
                     case $SELFHEAL_TYPE in
                         "BASE"|"SYSTEMD")
                             echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
+                            t2CountNotify "WIFI_INFO_5GPrivateSSID_OFF"
                         ;;
                         "TCCBR")
                             echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID is off."
+                            t2CountNotify "WIFI_INFO_5GPrivateSSID_OFF"
                         ;;
                     esac
                 else
@@ -2132,6 +2171,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
             fi
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
+            t2CountNotify "WIFI_ERROR_DMCLI_crash_5G_Status"
             echo "$ssidStatus_5"
         fi
     fi
@@ -2148,6 +2188,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
         then
             SSID_DISABLED_2G=1
             echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
+            t2CountNotify "WIFI_INFO_2G_DISABLED"
         fi
     else
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
@@ -2170,6 +2211,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
                 isDown=`echo $ssidStatus_2 | grep "Down"`
                 if [ "$isDown" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
+                    t2CountNotify "WIFI_INFO_2GPrivateSSID_OFF"
                 else
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."
                     echo "$ssidStatus_2"
@@ -2177,6 +2219,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
             fi
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
+            t2CountNotify "WIFI_ERROR_DMCLI_crash_2G_Status"
             echo "$ssidStatus_2"
         fi
     fi
@@ -2185,6 +2228,9 @@ fi
 FIREWALL_ENABLED=`syscfg get firewall_enabled`
 
 echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
+if [ $BR_MODE -eq 1 ]; then 
+    t2CountNotify "SYS_INFO_BridgeMode"
+fi
 echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 
 #Check whether private SSID's are broadcasting during bridge-mode or not
@@ -2268,6 +2314,7 @@ then
     iptables-save -t nat | grep "A PREROUTING -i"
     if [ $? == 1 ]; then
         echo_t "[RDKB_PLATFORM_ERROR] : iptable corrupted."
+        t2CountNotify "SYS_ERROR_iptable_corruption"
         #sysevent set firewall-restart
     fi
 fi
@@ -2312,6 +2359,7 @@ if [ "$thisWAN_TYPE" == "EPON" ]; then
     DNS_PID=`pidof dnsmasq`
     if [ "$DNS_PID" == "" ];then
         echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+        t2CountNotify "SYS_SH_dnsmasq_restart"
     fi
     checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -2326,10 +2374,12 @@ if [ "$thisWAN_TYPE" == "EPON" ]; then
                     ;;
                     "SYSTEMD")
                         echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, stopping CcspXdns"
+                        t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                         systemctl stop CcspXdnsSsp.service
                     ;;
                 esac
                 echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+                t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                 kill -9 `pidof dnsmasq`
                 systemctl stop dnsmasq
                 systemctl start dnsmasq
@@ -2340,6 +2390,7 @@ if [ "$thisWAN_TYPE" == "EPON" ]; then
                     ;;
                     "SYSTEMD")
                         echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting CcspXdns"
+                        t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                         systemctl start CcspXdnsSsp.service
                     ;;
                 esac
@@ -2356,6 +2407,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
     if [ "$DNS_PID" == "" ]
     then
         echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+        t2CountNotify "SYS_SH_dnsmasq_restart"
     else
         brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
         case $SELFHEAL_TYPE in
@@ -2440,6 +2492,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                         confirmZombie=`grep "State:" /proc/$zombiepid/status | grep -i "zombie"`
                         if [ "$confirmZombie" != "" ] ; then
                             echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+                            t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                             kill -9 `pidof dnsmasq`
                             sysevent set dhcp_server-stop
                             sysevent set dhcp_server-start
@@ -2464,6 +2517,7 @@ case $SELFHEAL_TYPE in
         CHKIPV6_DAD_FAILED=`ip -6 addr show dev erouter0 | grep "scope link tentative dadfailed"`
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
+            t2CountNotify "SYS_ERROR_linkLocalDad_failed"
             if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
                 partner_id=`syscfg get PartnerID`
                 if [ "$partner_id" != "comcast" ]; then
@@ -2474,6 +2528,7 @@ case $SELFHEAL_TYPE in
                     sysctl -w net.ipv6.conf.erouter0.accept_dad=1
                     dibbler-client start
                     echo_t "IPV6_DAD_FAILURE : successfully recovered for partner id $partner_id"
+                    t2ValNotify "dadrecoverypartner_split" "$partner_id"
                 fi
             fi
         fi
@@ -2493,11 +2548,13 @@ if [ "$DIBBLER_PID" = "" ]; then
                     echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                    t2CountNotify "SYS_SH_Dibbler_restart"
                     if [ -f "/etc/dibbler/server.conf" ]
                     then
                         BRLAN_CHKIPV6_DAD_FAILED=`ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed"`
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
+                            t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
                             
                             if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
@@ -2525,6 +2582,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                             fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                             echo "DIBBLER : Dibbler Server Config is empty"
+                            t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                         else
                             dibbler-server stop
                             sleep 2
@@ -2549,13 +2607,16 @@ if [ "$DIBBLER_PID" = "" ]; then
                     sh $DHCPV6_HANDLER enable
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                    t2CountNotify "SYS_SH_Dibbler_restart"
                     if [ -f "/etc/dibbler/server.conf" ]
                     then
                         BRLAN_CHKIPV6_DAD_FAILED=`ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed"`
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
+                            t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                             echo "DIBBLER : Dibbler Server Config is empty"
+                            t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                         else
                             dibbler-server stop
                             sleep 2
@@ -3031,8 +3092,10 @@ case $SELFHEAL_TYPE in
                     if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt 3 ]
                     then
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                     else
                         echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
                         echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
                         echo_t "Setting Last reboot reason Peer_down"
                         reason="Peer_down"
@@ -3173,3 +3236,29 @@ case $SELFHEAL_TYPE in
         fi
     ;;
 esac
+
+# Checking telemetry2_0 health and recovery
+case $SELFHEAL_TYPE in
+    "SYSTEMD")
+        # Now enabled only in TXB6
+        if [ "x$MODEL_NUM" == "xCGM4140COM" ]; then
+            T2_0_BIN="/usr/bin/telemetry2_0"
+            T2_0_APP="telemetry2_0"
+            T2_ENABLE=`syscfg get T2Enable`
+            if [ ! -f $T2_0_BIN ]; then
+                T2_ENABLE="false"
+            fi
+            echo_t "Telemetry 2.0 feature is $T2_ENABLE"
+            if [ "x$T2_ENABLE" == "xtrue" ]; then
+                T2_PID=`pidof $T2_0_APP`
+                if [ "$T2_PID" = "" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
+                    ${T2_0_BIN}
+                fi
+            fi
+        fi
+    ;;
+    "BASE")
+    ;;
+esac
+
