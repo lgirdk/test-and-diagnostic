@@ -239,6 +239,9 @@ CheckandRebootBasedOnCurrentHealth()
 	#Check and reboot the device
 	if [ $IsNeedtoRebootDevice -eq 1 ]; then
 	    echo_t "RDKB_SELFHEAL_BOOTUP : Device is going to reboot Reason[$RebootReason]"
+	    if [ -e "/usr/bin/onboarding_log" ]; then
+	        /usr/bin/onboarding_log "RDKB_SELFHEAL_BOOTUP : Device is going to reboot Reason[$RebootReason]"
+	    fi
 	    syscfg set X_RDKCENTRAL-COM_LastRebootReason "$RebootReason"
 	    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
             syscfg set gw_health "$bitmask"
