@@ -158,23 +158,36 @@ runPingTest()
 
         if [ "$erouterIP6" != "" ]
         then
-           routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
-           IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
+	   if [ "$BOX_TYPE" = "XF3" ]
+           then
+              #XF3-5270
+              #Getting CMTS MAC from `ip -4 neigh show`(arp -an)
+              CMTS_MAC=`ip -4 neigh show dev erouter0 | grep $IPv4_Gateway_addr | grep lladdr | cut -f3 -d' '`
+              IPv6_Gateway_addr=`ip -6 neigh show dev erouter0 | grep $CMTS_MAC |grep  lladdr | grep $erouterIP6 | cut -f1 -d' '`
 
-	   # If IPv6_Gateway_addr is empty #RDKB-21946
-	   if [ "$IPv6_Gateway_addr" = "" ]
-	   then
-		routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
-           	IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/` 
+              if [ "$IPv6_Gateway_addr" = "" ]
+              then
+                 IPv6_Gateway_addr=`ip -6 neigh show dev erouter0 | grep $CMTS_MAC |grep  lladdr | grep fe80 | cut -f1 -d' '`
+              fi
+           else      
+              routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
+              IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
+
+	       # If IPv6_Gateway_addr is empty #RDKB-21946
+	       if [ "$IPv6_Gateway_addr" = "" ]
+	       then
+		  routeEntry=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
+           	  IPv6_Gateway_addr=`echo "$routeEntry" | cut -f1 -d\/` 
 	  
- 	   	# If we don't get the Network prefix we need this additional check to 
-           	# retrieve the IPv6 GW Addr , here route entry and IPv6_Gateway_addr(which is retrived from above execution)
-		# are same   
-           	if [ "$routeEntry" = "$IPv6_Gateway_addr" ] && [ "$routeEntry" != "" ]
-           	then
-                	IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d ' '`
-           	fi
-	   fi     
+ 	   	  # If we don't get the Network prefix we need this additional check to 
+           	  # retrieve the IPv6 GW Addr , here route entry and IPv6_Gateway_addr(which is retrived from above execution)
+		  # are same   
+           	  if [ "$routeEntry" = "$IPv6_Gateway_addr" ] && [ "$routeEntry" != "" ]
+           	  then
+                     IPv6_Gateway_addr=`echo $routeEntry | cut -f1 -d ' '`
+           	  fi
+	       fi
+	    fi     
         fi
 
 	#RDKB-21946
@@ -183,12 +196,16 @@ runPingTest()
 
 	Box_IPv6_addr=`ifconfig erouter0 | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d\/`	
 	
-        if [ "$IPv6_Gateway_addr" = "" ] || [ "$IPv6_Gateway_addr" = "$Box_IPv6_addr" ]
+	if [ "$BOX_TYPE" != "XF3" ]
 	then
-	   erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
-	   routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
-           IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '` 	
+           if [ "$IPv6_Gateway_addr" = "" ]  || [ "$IPv6_Gateway_addr" = "$Box_IPv6_addr" ]
+	   then
+	      erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
+	      routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
+              IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '` 	
+    	   fi
 	fi	
+
 
     if [ "$BOX_TYPE" = "HUB4" ]
     then
