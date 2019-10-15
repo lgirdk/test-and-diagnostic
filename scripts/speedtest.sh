@@ -39,7 +39,7 @@ then
   else
     # NodeJS speedtest client
     echo "Executing run_speedtest.sh for xb3a" > /dev/console
-    rpcclient "$ATOM_ARPING_IP" "/etc/speedtest/run_speedtest.sh &"
+    rpcclient "$ATOM_ARPING_IP" sh /etc/speedtest/run_speedtest.sh
   fi
 elif [ "$BOX_TYPE" = XB6 ] && ( [ "$MODEL_NUM" = CGM4140COM ] || [ "$MODEL_NUM" = TG3482G ] )
 then
@@ -87,7 +87,7 @@ then
   else
     # NodeJS speedtest client
     echo "Executing run_speedtest.sh for xb3c" > /dev/console
-    rpcclient "$ATOM_ARPING_IP" "/etc/speedtest/run_speedtest.sh &"
+    rpcclient "$ATOM_ARPING_IP" sh /etc/speedtest/run_speedtest.sh
   fi
 elif [ "$BOX_TYPE" = XB3 ] && [ "$MODEL_NUM" = DPC3941B ]
 then
@@ -99,7 +99,7 @@ then
   else
     # NodeJS speedtest client
     echo "Executing run_speedtest.sh for xb3c" > /dev/console
-    rpcclient "$ATOM_ARPING_IP" "/etc/speedtest/run_speedtest.sh &"
+    rpcclient "$ATOM_ARPING_IP" sh /etc/speedtest/run_speedtest.sh
   fi
 elif [ "$BOX_TYPE" = XF3 ]
 then
