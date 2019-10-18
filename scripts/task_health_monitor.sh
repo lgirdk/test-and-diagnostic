@@ -1094,6 +1094,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         if [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
         then
+            rcount=0
             #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
             #If they are not present below code shall re-create them
             #l2sd0.102 case , also adding a strict rule that they are up, since some
@@ -1133,7 +1134,7 @@ case $SELFHEAL_TYPE in
             else                    
                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                   rcount=$((rcount+1))                     
+                   rcount=1
             fi
 
             #l2sd0.103 case
@@ -1173,7 +1174,7 @@ case $SELFHEAL_TYPE in
             else                      
                   echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
                   t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                  rcount=$((rcount+1))                     
+                  rcount=1
             fi
 
             #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
@@ -1230,7 +1231,7 @@ case $SELFHEAL_TYPE in
                 if [ "$SECURED_24" = "true" ]; then
                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                  rcount=$((rcount+1)) 
+                  rcount=1
                 fi
             fi
 
@@ -1264,10 +1265,10 @@ case $SELFHEAL_TYPE in
                 if [ "$SECURED_5" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=$((rcount+1))  
+                    rcount=1
                 fi
             fi
-            if [ $rcount -gt 1 ] ; then
+            if [ $rcount -eq 1 ] ; then
                     sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover  
             fi	
         fi  # [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
