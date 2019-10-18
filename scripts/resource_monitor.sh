@@ -34,7 +34,9 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 touch /tmp/.resource_monitor_started
 
-DELAY=30
+#DELAY=30
+//Modification for tech summit exercise. The delay is reduced for faster results
+DELAY=3
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 COUNT=0
@@ -48,7 +50,9 @@ do
 	then
 		RESOURCE_MONITOR_INTERVAL=15
 	fi 
-	RESOURCE_MONITOR_INTERVAL=$(($RESOURCE_MONITOR_INTERVAL*60))
+	#RESOURCE_MONITOR_INTERVAL=$(($RESOURCE_MONITOR_INTERVAL*60))
+	//Modification for tech summit exercise. The loop count is reduced for faster results
+	RESOURCE_MONITOR_INTERVAL=$(($RESOURCE_MONITOR_INTERVAL*5)) 
 
 	sleep $RESOURCE_MONITOR_INTERVAL
 	
