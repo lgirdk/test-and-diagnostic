@@ -20,7 +20,7 @@
 
 CRONTAB_DIR=/var/spool/cron/crontabs/
 CRONTAB_FILE=$CRONTAB_DIRroot
-CRONFILE_BK="/tmp/cron_tab.txt"
+CRONFILE_BK="/tmp/cron_tab$$.txt"
 
 if [ "$1" = "" ]
 then

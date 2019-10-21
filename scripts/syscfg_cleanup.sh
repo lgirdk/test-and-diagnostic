@@ -21,7 +21,7 @@ source /etc/device.properties
 source /etc/utopia/service.d/log_capture_path.sh
 
 CRONTAB_DIR="/var/spool/cron/crontabs/"
-CRON_FILE_BK="/tmp/crontab.txt"
+CRON_FILE_BK="/tmp/crontab$$.txt"
 SCRIPT_NAME="syscfg_cleanup"
 
 if [ -f "/nvram/syscfg_clean" ]; then
