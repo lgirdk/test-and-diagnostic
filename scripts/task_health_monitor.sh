@@ -1077,7 +1077,7 @@ HOTSPOT_ENABLE=`dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
 then
     DHCP_ARP_PID=`pidof hotspot_arpd`
-    if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ]; then
+    if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ] && [ ! -f /tmp/tunnel_destroy_flag ] ; then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
         t2CountNotify "SYS_SH_DhcpArpProcess_restart"
         resetNeeded "" hotspot_arpd
@@ -1085,8 +1085,10 @@ then
     
     HOTSPOT_PID=`pidof CcspHotspot`
 	if [ "$HOTSPOT_PID" = "" ]; then
+           if [ ! -f /tmp/tunnel_destroy_flag ] ; then
 		echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
 		resetNeeded "" CcspHotspot
+           fi
 	fi
 fi
 
