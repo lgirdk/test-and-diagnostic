@@ -74,7 +74,7 @@ BOOL Fan_GetParamBoolValue
         BOOL*                       bValue
     )
 {
-#ifdef _XB7_PRODUCT_REQ_
+#ifdef FAN_THERMAL_CTR
     if( AnscEqualString(ParamName, "Status", TRUE))
     {
         *bValue = platform_hal_getFanStatus();
@@ -121,7 +121,7 @@ BOOL Fan_SetParamBoolValue
         BOOL                        bValue
     )
 {
-#ifdef _XB7_PRODUCT_REQ_
+#ifdef FAN_THERMAL_CTR
     if( AnscEqualString(ParamName, "MaxOverride", TRUE))
     {
         platform_hal_setFanMaxOverride( bValue );
@@ -169,7 +169,7 @@ Fan_GetParamUlongValue
         ULONG*                      pUlong
     )
 {
-#ifdef _XB7_PRODUCT_REQ_
+#ifdef FAN_THERMAL_CTR
     if( AnscEqualString(ParamName, "Speed", TRUE))
     {
         *pUlong= platform_hal_getRPM();
