@@ -634,6 +634,14 @@ case $SELFHEAL_TYPE in
             resetNeeded moca CcspMoCA
         fi
 
+	if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+          # Checking mocadlfw PID
+          MOCADLFW_PID=`pidof mocadlfw`
+          if [ "$MOCADLFW_PID" = "" ]; then
+              echo_t "OEM_PROCESS_MOCADLFW_CRASHED : mocadlfw process is not running, need restart"
+              /usr/sbin/mocadlfw &
+          fi
+        fi
     ;;
     "TCCBR")
     ;;
