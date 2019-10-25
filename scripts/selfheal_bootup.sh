@@ -312,6 +312,9 @@ isIPv6=""
 if [ "$BOX_TYPE" = "XB3" ]
 then
 
+	#RDKB-21681 Need RDKlogging for All SQUASHFS errors
+	dmesg | grep SQUASHFS >> /rdklogs/logs/Consolelog.txt.0
+
 	## Check Peer ip is accessible
 	if [ -f $PING_PATH/ping_peer ]
 	then
