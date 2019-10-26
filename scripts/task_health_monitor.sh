@@ -992,6 +992,10 @@ case $SELFHEAL_TYPE in
                     t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                     # Remove the wifi initialized flag
                     rm -rf /tmp/wifi_initialized
+		    
+		    #TCCBR-4286 Workaround for wifi process hung
+		    sh $TAD_PATH/oemhooks.sh "CCSP_WIFI_HUNG"
+	
                     resetNeeded wifi CcspWifiSsp
                     WiFi_Flag=true
                 fi
