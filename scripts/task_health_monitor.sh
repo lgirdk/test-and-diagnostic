@@ -28,7 +28,6 @@ source $TAD_PATH/corrective_action.sh
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
-    "XB7") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
     "CFG3") SELFHEAL_TYPE="BASE";;  # TBD?!
@@ -659,7 +658,7 @@ case $SELFHEAL_TYPE in
                 wifi_name_timeout=`echo $wifi_name | grep "$CCSP_ERR_TIMEOUT"`
                 wifi_name_notexist=`echo $wifi_name | grep "$CCSP_ERR_NOT_EXIST"`
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
-                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]; then
+                    if [ "$BOX_TYPE" = "XB6" ]; then
                         if [ -f "$thisREADYFILE" ]
                         then
                             echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
@@ -2019,7 +2018,7 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t  "[RDKB_PLATFORM_ERROR] : WiFi initialization not done"
-                if ( [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ] ) && [ "$MANUFACTURE" = "Technicolor" ]; then
+                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ]; then
                     if [ -f "$thisREADYFILE" ]
                     then
                         echo_t  "[RDKB_PLATFORM_ERROR] : restarting the CcspWifiSsp"
@@ -2519,7 +2518,7 @@ case $SELFHEAL_TYPE in
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
-            if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
+            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
                 partner_id=`syscfg get PartnerID`
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
@@ -2557,7 +2556,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
                             t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
                             
-                            if ([ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ]) && [ "$MANUFACTURE" = "Technicolor" ] ; then
+                            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                 sleep 1
@@ -2851,7 +2850,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
                     echo "Calling epon_utility.sh to restart udhcpc "
                     sh /usr/ccsp/epon_utility.sh
                 else
-                    if ( ( [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "XB7" ] ) && [ "$MANUFACTURE" = "Arris" ] ) || [ "$BOX_TYPE" = "XB3" ]; then
+                    if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$BOX_TYPE" = "XB3" ]; then
 
                         if [ "$UDHCPC_Enable" = "true" ]
                         then
