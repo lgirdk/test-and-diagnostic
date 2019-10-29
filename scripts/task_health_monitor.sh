@@ -1303,6 +1303,13 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
             sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
         fi
+        if [ -f "/nvram/ETHWAN_ENABLE" ];then
+           NUMPROC=`netstat -tulpn | grep ":22 " | grep "dropbear"| wc -l`
+           if [ $NUMPROC -lt 2 ] ; then
+              echo_t "EWAN mode : Dropbear not listening on ipv6 address, restarting dropbear "
+              sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+           fi
+        fi
       fi
     ;;
 esac
