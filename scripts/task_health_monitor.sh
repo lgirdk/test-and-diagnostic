@@ -767,11 +767,6 @@ case $SELFHEAL_TYPE in
                                         resetNeeded advsec_bin AdvSecurityPof
                                     fi
                                 fi
-                                ADV_SCAN_PID=`advsec_is_alive scannerd`
-                                if [ "$ADV_SCAN_PID" = "" ] ; then
-                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Scanner process is not running, need restart"
-                                    resetNeeded advsec_bin AdvSecurityScanner
-                                fi
                                 if [ -e ${SAFEBRO_ENABLE} ] ; then
                                     ADV_SB_PID=`advsec_is_alive threatd`
                                     if [ "$ADV_SB_PID" = "" ] ; then
