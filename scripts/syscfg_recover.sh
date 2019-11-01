@@ -30,6 +30,13 @@ source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
+# skipping the run if uptime is lessthan 15 mins to avoid the race condtion 
+UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+if [ "$UPTIME" -lt 900 ]
+then
+    echo_t "RDKB_SELFHEAL : Uptime is lessthan 15 mins, so exiting the run at $UPTIME"
+    exit 0
+fi
 
 #check whether syscfg is proper or not
 syscfg get redirection_flag > /dev/null
