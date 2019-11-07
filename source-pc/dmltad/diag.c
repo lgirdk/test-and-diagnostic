@@ -382,6 +382,8 @@ static void *diag_task(void *arg)
     diag_stat_t stat;
     diag_err_t  err;
     char        buf[IFNAMSIZ];
+    diag_cfg_t  cfgtemp;
+    int retrycount = 0;
 
     if (!diag)
         return NULL;
@@ -410,6 +412,21 @@ static void *diag_task(void *arg)
     if (!strlen(cfg.ifname) && assign_iface(cfg.host, buf, sizeof(buf))) {
         snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", buf);
         fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, buf);
+    }
+/*If Diagstate comes first and wait for daig params to set*/
+   if(!strlen(cfg.host))
+    {
+      do
+      {
+        sleep(1);
+        diag_getcfg(DIAG_MD_PING, &cfgtemp);
+        cfg = cfgtemp;
+        if(strlen(cfg.host))
+            break;
+        else
+        retrycount++;
+      }while(retrycount == 5);
+
     }
 
     err = diag->op_start(diag, &cfg, &stat);
@@ -526,6 +543,10 @@ diag_err_t diag_setcfg(diag_mode_t mode, const diag_cfg_t *cfg)
         return DIAG_ERR_PARAM;
 
     pthread_mutex_lock(&diag->mutex);
+/*From TR-181, "If the ACS sets the value of this parameter to Requested, the CPE MUST initiate the corresponding diagnostic test. When writing, the only allowed value is Requested. To ensure the use of the proper test parameters (the writable parameters in this object), the test parameters MUST be set either prior to or at the same time as (in the same SetParameterValues) setting the DiagnosticsState to Requested."
+Mamidi:If we stop the diag test here that is causing the actual test to stop  and assigning the diag state to none(if setparams comes with Diagstate and params comes in a sigle call). This logic is expecting that always set params like host, numberofRepetions... comes in one setparams call and Requested comes in a separate setparams calls.
+*/
+#if 0
     /* need recyle even DIAG_ST_COMPLETE/ERROR */
     if (diag->state != DIAG_ST_NONE) {
         if ((err = __diag_stop(diag)) != DIAG_ERR_OK) {
@@ -534,6 +555,7 @@ diag_err_t diag_setcfg(diag_mode_t mode, const diag_cfg_t *cfg)
             return err;
         }
     }
+#endif
 
     memcpy(&diag->cfg, cfg, sizeof(diag_cfg_t));
 
