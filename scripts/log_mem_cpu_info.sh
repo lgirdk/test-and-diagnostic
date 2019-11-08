@@ -254,10 +254,10 @@ DELAY=30
         # vmInfoValues: <int>,<int>,<int>,<int>,<int>,<int>
         echo "VM STATS SINCE BOOT ARM"
         swaped=`free | awk 'FNR == 4 {print $3}'`
-        cache=`cat /proc/meminfo | awk 'FNR == 4 {print $2}'`
-        buff=`cat /proc/meminfo | awk 'FNR == 3 {print $2}'`
-        swaped_in=`cat /proc/vmstat | grep pswpin | cut -d ' ' -f2`
-        swaped_out=`cat /proc/vmstat | grep pswpout | cut -d ' ' -f2`
+        cache=`awk 'FNR == 4 {print $2}' /proc/meminfo`
+        buff=`awk 'FNR == 3 {print $2}' /proc/meminfo`
+        swaped_in=`grep pswpin /proc/vmstat | cut -d ' ' -f2`
+        swaped_out=`grep pswpout /proc/vmstat | cut -d ' ' -f2`
         # conversion to kb assumes 4kb page, which is quite standard
         swaped_in_kb=$((swaped_in * 4))
         swaped_out_kb=$((swaped_out * 4))
