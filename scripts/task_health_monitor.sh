@@ -2426,15 +2426,15 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
         echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
         t2CountNotify "SYS_SH_dnsmasq_restart"
     else
-        brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+        brlan0up=`grep brlan0 /var/dnsmasq.conf`
         case $SELFHEAL_TYPE in
             "BASE")
-                brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
+                brlan1up=`grep brlan1 /var/dnsmasq.conf`
                 lnf_ifname=`syscfg get iot_ifname`
                 if [ "$lnf_ifname" != "" ]
                 then
                     echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
-                    infup=`cat /var/dnsmasq.conf | grep $lnf_ifname`
+                    infup=`grep $lnf_ifname /var/dnsmasq.conf`
                 else
                     echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
                     #Set some value so that dnsmasq won't restart
@@ -2444,7 +2444,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
             "TCCBR")
             ;;
             "SYSTEMD")
-                brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
+                brlan1up=`grep brlan1 /var/dnsmasq.conf`
             ;;
         esac
 

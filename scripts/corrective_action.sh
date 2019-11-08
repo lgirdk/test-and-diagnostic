@@ -131,15 +131,15 @@ getVendorName()
             "BASE"|"SYSTEMD")
                 if [ "x$WAN_TYPE" == "xEPON" ]
                 then
-                    vendorName=`cat /etc/device.properties | grep MANUFACTURE | cut -f2 -d=`
+                    vendorName=$MANUFACTURE
                 else
-                    vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
+                    vendorName=`echo $MFG_NAME | tr '[:lower:]' '[:upper:]'`
                 fi
             ;;
             "TCCBR")
                 #       if [ "x$WAN_TYPE" == "xEPON" ]
                 #       then
-                vendorName=`cat /etc/device.properties | grep MANUFACTURE | cut -f2 -d=`
+                vendorName=$MANUFACTURE
                 #       else
                 #           vendorName=`cat /etc/device.properties | grep MFG_NAME | cut -f2 -d= | tr '[:lower:]' '[:upper:]'`
                 #       fi
@@ -154,7 +154,7 @@ getModelName()
     modelName=`dmcli eRT getv Device.DeviceInfo.ModelName | grep value | awk '{print $5}'`
     if [ "$modelName" = "" ]
     then
-        modelName=`cat /etc/device.properties | grep MODEL_NUM | cut -f2 -d=`
+        modelName=$MODEL_NUM
     fi
     echo "$modelName"
 }

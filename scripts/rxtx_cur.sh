@@ -36,7 +36,7 @@ else
     traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 fi
 
-cat /nvram/dnsmasq.leases | grep -E "192.168.245.|169.254.0.|169.254.1." | cut -d' ' -f2 > $PODMAC
+grep -E "192.168.245.|169.254.0.|169.254.1." /nvram/dnsmasq.leases | cut -d' ' -f2 > $PODMAC
 
 while read pmac; do
  pmac=$(echo $pmac | sed 's/\:/\\\:/g')

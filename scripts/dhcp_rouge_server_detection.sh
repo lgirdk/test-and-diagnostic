@@ -18,7 +18,7 @@
 # limitations under the License.
 #######################################################################################
 
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+UPTIME=`awk '{print $1}' /proc/uptime | awk -F '.' '{print $1}'`
 
 if [ "$UPTIME" -lt 3600 ]
 then

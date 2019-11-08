@@ -18,7 +18,7 @@
 # limitations under the License.
 #######################################################################################
 
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+UPTIME=`awk '{print $1}' /proc/uptime | awk -F '.' '{print $1}'`
 
 if [ "$UPTIME" -lt 600 ]
 then
@@ -241,7 +241,7 @@ db_clean_up_required()
 	entries_needs_to_delete=""
 	for index in $MF_WiFi_Index
 	do
-		MF_Table=`cat "$PSM_CONFIG"  | grep "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.$index.MacFilter." | grep -v MacFilterMode | grep -v MacFilterList | awk -F '"' '{print $2}'`
+		MF_Table=`grep "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.WiFi.AccessPoint.$index.MacFilter." $PSM_CONFIG | grep -v MacFilterMode | grep -v MacFilterList | awk -F '"' '{print $2}'`
 		for entry in $MF_Table
 		do
 			entries_needs_to_delete="$entries_needs_to_delete $entry"
@@ -651,13 +651,13 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				  fi
 			  fi
     else
-	  brlan1up=`cat /var/dnsmasq.conf | grep brlan1`
-          brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
+	  brlan1up=`grep brlan1 /var/dnsmasq.conf`
+          brlan0up=`grep brlan0 /var/dnsmasq.conf`
           lnf_ifname=`syscfg get iot_ifname`
           if [ "$lnf_ifname" != "" ]
           then
              echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface is: $lnf_ifname"
-             infup=`cat /var/dnsmasq.conf | grep $lnf_ifname`
+             infup=`grep $lnf_ifname /var/dnsmasq.conf`
           else
              echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface not available in DB"
              #Set some value so that dnsmasq won't restart
