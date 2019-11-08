@@ -97,19 +97,19 @@ DELAY=30
     t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
     
     # Feature overkill - follow up with triage for marker cleanup. Required data is already sent above
-    echo $LOAD_AVG_15 | grep -q '2.' 
+    echo $LOAD_AVG_15 | grep -q '2\.' 
     if [ $? -eq 0 ]; then 
         t2CountNotify "SYS_ERROR_LoadAbove2"
     fi
-    echo $LOAD_AVG_15 | grep -q '3.' 
+    echo $LOAD_AVG_15 | grep -q "3\." 
     if [ $? -eq 0 ]; then 
         t2CountNotify "SYS_ERROR_LoadAbove3"
     fi
-    echo $LOAD_AVG_15 | grep -q '4.' 
+    echo $LOAD_AVG_15 | grep -q "4\." 
     if [ $? -eq 0 ]; then 
         t2CountNotify "SYS_ERROR_LoadAbove4"
     fi
-    echo $LOAD_AVG_15 | grep -q '5.' 
+    echo $LOAD_AVG_15 | grep -q "5\." 
     if [ $? -eq 0 ]; then 
         t2CountNotify "SYS_ERROR_LoadAbove5"
     fi
