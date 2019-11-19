@@ -30,7 +30,6 @@ case $BOX_TYPE in
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
-    "CFG3") SELFHEAL_TYPE="BASE";;  # TBD?!
     "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
     "HUB4") SELFHEAL_TYPE="SYSTEMD";;
     *)
