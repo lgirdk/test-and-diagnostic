@@ -2721,7 +2721,55 @@ then
         sh $DHCPV6_HANDLER enable
     fi
 fi
-
+#Logic added in reference to RDKB-25714
+#to check erouter0 has Global IPv6 or not and accordingly kill the process
+#responsible for the same. The killed processes will get restarted
+#by the later stages of this script.
+erouter0_up_check=`ifconfig $WAN_INTERFACE | grep "UP"`
+erouter0_globalv6_test=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d:`
+if [ "x$erouter0_globalv6_test" == "x" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ]; then
+        case $SELFHEAL_TYPE in
+        "SYSTEMD")
+                                if [ "x$erouter0_up_check" == "x" ]; then
+                                    echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
+                                    ifconfig $WAN_INTERFACE up
+                                fi
+                                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
+                                    echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
+                                    /usr/sbin/dibbler-client stop
+                                elif [ "$BOX_TYPE" = "XB6" ]; then
+                                    echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
+                                    sh $DHCPV6_HANDLER disable
+                                fi
+                ;;
+        "BASE")
+                        task_to_be_killed=`ps | grep -i dhcp6c | grep -i erouter0 | cut -f1 -d " "`
+                        if [ "x$task_to_be_killed" = "x" ]; then
+                                task_to_be_killed=`ps | grep -i dhcp6c | grep -i erouter0 | cut -f2 -d " "`
+                        fi
+                        if [ "x$erouter0_up_check" == "x" ]; then
+                                        echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
+                                        ifconfig $WAN_INTERFACE up
+                        fi
+                        if [ "x$task_to_be_killed" != "x" ]; then
+                                echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
+                                kill $task_to_be_killed
+                                sleep 3
+                        fi
+                                ;;
+        "TCCBR")
+                        if [ "x$erouter0_up_check" == "x" ]; then
+                                echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
+                                ifconfig $WAN_INTERFACE up
+                        fi
+                        echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
+                        /usr/sbin/dibbler-client stop
+                ;;
+        esac
+else
+        echo_t "[RDKB_SELFHEAL] : Global IPv6 is present"
+fi
+#Logic ends here for RDKB-25714
 if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
