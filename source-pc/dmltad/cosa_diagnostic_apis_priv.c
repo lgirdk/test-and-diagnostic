@@ -68,21 +68,63 @@
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 
+#include "arpa/inet.h"                          
+#include <utctx.h>                             
+#include <utctx_api.h>				
+#include <utapi.h>			
+
+#define ARP_CACHE_FILE "/tmp/.tmp_arp_cache"	
 
 #if (defined(_COSA_SIM_))
 
-static COSA_DML_DIAG_ARP_TABLE   g_diag_arptable[] =
-    {
-        {
-            {
-                "\x40\x40\x40\x01"
-            },
-            {
-                "\x01\x00\x0c\x07\x08\x09"
-            }
-        }
-    };
+static void s_parse_arp_cache (char *line, arpHost_t *host_info)
+{
+ char stub[64], is_static[32];
+    sscanf(line, "%s %s %s %s %s %s",
+                 host_info->ipaddr,
+                 stub,
+                 host_info->interface,
+                 stub,
+                 host_info->macaddr,
+                 is_static);
+    host_info->is_static = ( 0 == strcmp(is_static, "PERMANENT")) ? TRUE : FALSE;
+}
 
+static int _GetARPCacheEntries (int *count, arpHost_t **out_hosts)
+{
+    char line[512];
+    int ct = 0;
+
+    *out_hosts = NULL;
+
+    arpHost_t *hosts = NULL;
+
+    unlink(ARP_CACHE_FILE);
+    snprintf(line, sizeof(line), "ip neigh show > %s", ARP_CACHE_FILE);
+    system(line);
+//Check for host connections
+    FILE *fp = fopen(ARP_CACHE_FILE, "r");
+    if (fp) {
+        while (fgets(line, sizeof(line), fp)) {
+           hosts = (arpHost_t *) realloc(hosts, sizeof(arpHost_t) * (ct+1));
+           if (NULL == hosts) {
+               unlink(ARP_CACHE_FILE);
+               fclose(fp); 
+               return ERR_INSUFFICIENT_MEM;
+           }
+	//Compare existing entries in table with new host connected
+           s_parse_arp_cache(line, &hosts[ct]);
+           ct++;
+        }
+        fclose(fp);
+    }
+    unlink(ARP_CACHE_FILE);
+
+    *count = ct;
+    *out_hosts = hosts;
+
+    return UT_SUCCESS;
+}
 
 /**********************************************************************
 
@@ -113,22 +155,35 @@ CosaDmlDiagGetARPTablePriv
         PULONG                      pulCount
     )
 {
-    PCOSA_DML_DIAG_ARP_TABLE        pARPTable = NULL;
-
-    pARPTable = (PCOSA_DML_DIAG_ARP_TABLE)AnscAllocateMemory( sizeof(g_diag_arptable) );
-
-    if ( pARPTable )
-    {
-         AnscCopyMemory(pARPTable, g_diag_arptable, sizeof(g_diag_arptable) );
-
-        *pulCount = sizeof(g_diag_arptable)/sizeof(COSA_DML_DIAG_ARP_TABLE);
+    arpHost_t *host = NULL;
+    PCOSA_DML_DIAG_ARP_TABLE pTable = NULL;
+    int i = 0, count;
+    unsigned int mac[6];
+    *pulCount = 0;
+    if( UT_SUCCESS == _GetARPCacheEntries(&count, &host) && count != 0){                           
+        if( NULL != (pTable = (PCOSA_DML_DIAG_ARP_TABLE)AnscAllocateMemory(count * sizeof(COSA_DML_DIAG_ARP_TABLE)))){
+             while(i < count){
+                strncpy(pTable[i].IPAddress, host[i].ipaddr, sizeof(pTable[i].IPAddress));
+                sscanf(host[i].macaddr, "%x:%x:%x:%x:%x:%x", &(mac[0]), &(mac[1]), &(mac[2]), &(mac[3]), &(mac[4]), &mac[5]);
+                pTable[i].MACAddress[0] = (UCHAR)mac[0];
+                pTable[i].MACAddress[1] = (UCHAR)mac[1];
+                pTable[i].MACAddress[2] = (UCHAR)mac[2];
+                pTable[i].MACAddress[3] = (UCHAR)mac[3];
+                pTable[i].MACAddress[4] = (UCHAR)mac[4];
+                pTable[i].MACAddress[5] = (UCHAR)mac[5];
+                pTable[i].Static = host[i].is_static;
+                i++;
+            }                                                                      
+            *pulCount = count;
+        }
     }
-    else
+
+    if(host)
     {
-        *pulCount = 0;
+        free(host);
     }
 
-    return pARPTable;
+    return pTable;
 }
 
 #else
@@ -167,6 +222,5 @@ CosaDmlDiagGetARPTablePriv
 
     return NULL;
 }
-
 
 #endif
