@@ -2327,6 +2327,9 @@ echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] :  lost_and_found_enable = $lost_and
 if [ "$lost_and_found_enable" == "true" ]
 then
     iot_ifname=`syscfg get iot_ifname`
+    if [ $iot_ifname == "l2sd0.106" ]; then
+     iot_ifname=`syscfg get iot_brname`
+    fi
     iot_dhcp_start=`syscfg get iot_dhcp_start`
     iot_dhcp_end=`syscfg get iot_dhcp_end`
     iot_netmask=`syscfg get iot_netmask`
@@ -2395,6 +2398,9 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
             "BASE")
                 brlan1up=`grep brlan1 /var/dnsmasq.conf`
                 lnf_ifname=`syscfg get iot_ifname`
+                if [ $lnf_ifname == "l2sd0.106" ]; then
+                 lnf_ifname=`syscfg get iot_brname`
+                fi
                 if [ "$lnf_ifname" != "" ]
                 then
                     echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
