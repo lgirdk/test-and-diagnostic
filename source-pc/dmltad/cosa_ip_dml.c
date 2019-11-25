@@ -1796,10 +1796,11 @@ IPPing_SetParamUlongValue
 		memset(buf,0,sizeof(buf));
 		cfg.size = uValue;
 		sprintf(buf, "%d",cfg.size);
-        	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
+		_set_db_value(SYSCFG_FILE,"selfheal_ping_DataBlockSize",buf);
+        	/*if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
 		{
 			syscfg_commit();
-		}
+		}*/
 	}
    else if( AnscEqualString(ParamName, "DSCP", TRUE))
        cfg.tos = uValue;
@@ -6037,7 +6038,9 @@ SpeedTest_Commit
     char cmd[128] = {0};
 
     memset(buf,0,sizeof(buf));
-    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    //if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+     _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "enable_speedtest");	
+    if((strlen(buf) > 0) && (buf[0] != '\0'))
     {
             speedtest_setting = (!strcmp(buf, "true")) ? TRUE : FALSE;
     }
@@ -6046,7 +6049,8 @@ SpeedTest_Commit
     {
         char buf[8]={0};
         snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
-        if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+	 _set_db_value(SYSCFG_FILE,"enable_speedtest",buf);
+        /*if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
         {
             AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
             return 1;
@@ -6055,7 +6059,7 @@ SpeedTest_Commit
         {
             AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
             return 1;
-        }
+        }*/
     }
 
     if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
@@ -6102,7 +6106,9 @@ SpeedTest_Rollback
     char buf[128];
 
     memset(buf,0,sizeof(buf));
-    if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+    //if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+     _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "enable_speedtest");
+    if((strlen(buf) > 0) && (buf[0] != '\0'))	
     {
             g_enable_speedtest = (!strcmp(buf, "true")) ? TRUE : FALSE;
     }

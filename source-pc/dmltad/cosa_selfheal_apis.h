@@ -96,6 +96,8 @@ COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
     /* duplication of the base object class content */                                      \
     COSA_BASE_CONTENT                                                                       \
     BOOL                       Enable;                                    \
+    BOOL                        DNSPingTest_Enable;                            \
+    CHAR                        DNSPingTest_URL[ 512 ];                             \
     ULONG                       MaxRebootCnt;                                    \
     ULONG                       MaxResetCnt;                                    \
     ULONG                       PreviousVisitTime;                                    \
@@ -142,4 +144,9 @@ CosaSelfHealRemove
     );
 void SavePingServerURI(PingServerType type, char *URL, int InstNum);
 ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum);
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject,
+                                                                                                                                BOOL            bValue );
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject,
+                                                                                                                          PCHAR           pString );
 
