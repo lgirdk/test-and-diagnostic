@@ -86,6 +86,8 @@
 #include "bbhm_upload_interface.h"
 #include "bbhm_udpecho_interface.h"
 
+#define SYSCFG_FILE "/nvram/syscfg.db"
+
 
 extern PCOSA_DIAG_PLUGIN_INFO             g_pCosaDiagPluginInfo;
 extern COSAGetParamValueStringProc        g_GetParamValueString;

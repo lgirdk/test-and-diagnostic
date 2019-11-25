@@ -859,8 +859,8 @@
                       <type>unsignedInt</type>
                       <syntax>uint32</syntax>
                       <writable>true</writable>
-                </parameter>
-                <parameter>
+                </parameter> 
+              <!--  <parameter>
                       <name>X_RDKCENTRAL-COM_NoWaitLogSync</name>
                       <type>boolean</type>
                       <syntax>bool</syntax>
@@ -883,7 +883,7 @@
                       <type>unsignedInt</type>
                       <syntax>uint32</syntax>
                       <writable>true</writable>
-				</parameter>
+				</parameter> -->
 				<parameter>
 					  <name>X_RDKCENTRAL-COM_DNS_PINGTEST_Enable</name>
 					  <type>boolean</type>
