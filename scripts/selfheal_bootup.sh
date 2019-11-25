@@ -654,6 +654,9 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	  brlan1up=`grep brlan1 /var/dnsmasq.conf`
           brlan0up=`grep brlan0 /var/dnsmasq.conf`
           lnf_ifname=`syscfg get iot_ifname`
+          if [ $lnf_ifname == "l2sd0.106" ]; then
+           lnf_ifname=`syscfg get iot_brname`
+          fi
           if [ "$lnf_ifname" != "" ]
           then
              echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface is: $lnf_ifname"
