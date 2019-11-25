@@ -96,11 +96,12 @@ void copy_command_output(char * cmd, char * out, int len)
 
 }
 
-void _get_db_value(char * cmd, char * out, int len, char * val)
+void  _get_db_value(char * cmd, char * out, int len, char * val)
 {
         FILE * fp = NULL;
-        char   buf[512] = {0};
+        char   buf[512] = {0},tem_buf[512] = {0};
         char * p = NULL;
+	int i = 0;
 
         fp = fopen(cmd, "r");
 
@@ -110,35 +111,45 @@ void _get_db_value(char * cmd, char * out, int len, char * val)
                         if((strstr(buf,val)) != NULL){
                                 p = strtok(buf,"=");
                                 p = strtok(NULL, "=");
-                                strncpy(out, p, len-1);
+                                strncpy(tem_buf, p, len-1);
+				for(i=0; tem_buf[i] != '\n'; i++)
+					out[i] = tem_buf[i];
+				out[i]='\0';
                         }
                 }
         }
         fclose(fp);
 }
 
-void _set_db_value(char *file_name,char *current_string,char *value)
+void  _set_db_value(char *file_name,char *current_string,char *value)
 {
-        FILE *fp = NULL;
-        char path[1024] = {0},buf[512] = {0},updated_str[512]={0},cmd[512]={0};
-        int count = 0;
-        sprintf(cmd,"%s=%s",current_string,value);
-        fp = fopen(file_name,"r");
-        if(fp)
-        {
-        while(fgets(path,sizeof(path),fp) != NULL)
-        {
-                if(strstr(path,current_string) != NULL)
-                {
-                        for(count=0;path[count]!='\n';count++)
-                                updated_str[count] = path[count];
-                        updated_str[count]='\0';
-                        sprintf(buf,"sed -i \"s/%s/%s/g\" %s",updated_str,cmd,file_name);
-                        system(buf);
-                }
-        }
-        }
-        fclose(fp);
+	FILE *fp = NULL;
+	char path[1024] = {0},buf[512] = {0},updated_str[512]={0},cmd[512]={0};
+	int count = 0;
+	char *ch = NULL;
+	sprintf(cmd,"%s=%s",current_string,value);
+	fp = fopen(file_name,"r");
+	if(fp)
+	{
+		while(fgets(path,sizeof(path),fp) != NULL)
+		{
+			ch = strstr(path,current_string);
+			if(ch != NULL)
+			{
+				for(count=0;path[count]!='\n';count++)
+					updated_str[count] = path[count];
+				updated_str[count]='\0';
+				sprintf(buf,"sed -i \"s/%s/%s/g\" %s",updated_str,cmd,file_name);
+				system(buf);
+			}
+		}
+		if(ch == NULL)
+		{
+			sprintf(buf,"sed -i '$ a %s' %s",cmd,file_name);
+			system(buf);
+		}
+	}
+	fclose(fp);
 }
 
 int SyncServerlistInDb(PingServerType type, int EntryCount)
@@ -203,7 +214,7 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 		snprintf(buf,sizeof(buf),"%d",i);
 		if(type == PingServerType_IPv4)
 		{
-			if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
+			/*if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
 			}
@@ -213,11 +224,13 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 				{
 					CcspTraceWarning(("syscfg_commit failed\n"));
 				}
-			}
+			}*/
+		        _set_db_value(SYSCFG_FILE,"Ipv4PingServer_Count",buf);
 		}
 		else
 		{
-			if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
+		        _set_db_value(SYSCFG_FILE,"Ipv6PingServer_Count",buf);
+			/*if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
 			}
@@ -227,7 +240,7 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 				{
 					CcspTraceWarning(("syscfg_commit failed\n"));
 				}
-			}
+			}*/
 
 		}
 	return i;
@@ -314,7 +327,7 @@ CosaDmlGetSelfHealCfg(
 	int i=0;
 	int urlIndex;
 	char recName[64];
-	char buf[10];
+	char buf[10] ,dnsURL[512];
 	ULONG entryCountIPv4 = 0;
 	ULONG entryCountIPv6 = 0;
 
@@ -323,7 +336,7 @@ CosaDmlGetSelfHealCfg(
 	pConnTest = (PCOSA_DML_CONNECTIVITY_TEST)AnscAllocateMemory(sizeof(COSA_DML_CONNECTIVITY_TEST));
 	pMyObject->pConnTest = pConnTest;
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "selfheal_enable", buf, sizeof(buf));
+	 _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "selfheal_enable");
 	pMyObject->Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
         if ( pMyObject->Enable == TRUE )
         {
@@ -339,6 +352,22 @@ CosaDmlGetSelfHealCfg(
 	_get_db_value(SYSCFG_FILE, buf, sizeof(buf), "max_reset_count");
 	/* RDKB-13228 */
 	pMyObject->MaxResetCnt = atoi(buf);
+
+	memset(buf,0,sizeof(buf));
+        _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "selfheal_dns_pingtest_enable");
+	pMyObject->DNSPingTest_Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
+
+	memset(dnsURL,0,sizeof(dnsURL));
+        _get_db_value(SYSCFG_FILE,dnsURL, sizeof(dnsURL), "selfheal_dns_pingtest_url");
+        if( '\0' != dnsURL[ 0 ] )
+        {
+                AnscCopyString(pMyObject->DNSPingTest_URL, dnsURL);
+        }
+        else
+        {
+                pMyObject->DNSPingTest_URL[ 0 ] = '\0';
+        }
+
 
 	memset(buf,0,sizeof(buf));
         _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "ConnTest_PingInterval");
@@ -623,4 +652,82 @@ ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum)
 		return returnStatus;
 }
 
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject,
+                                                                                                                            BOOL        bValue )
+{
+        ANSC_STATUS             ReturnStatus    = ANSC_STATUS_SUCCESS;
+        BOOLEAN                 bProcessFurther = TRUE;
+
+        /* Validate received param  */
+        if( NULL == hThisObject )
+        {
+                bProcessFurther = FALSE;
+                ReturnStatus    = ANSC_STATUS_FAILURE;
+                CcspTraceError(("[%s] hThisObject is NULL\n", __FUNCTION__ ));
+        }
+
+        if( bProcessFurther )
+        {
+                PCOSA_DATAMODEL_SELFHEAL          pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+
+                /* Modify the DNS ping test flag */
+         /*       if ( 0 == syscfg_set( NULL,
+                                                          "selfheal_dns_pingtest_enable",
+                                                          ( ( bValue == TRUE ) ? "true" : "false" ) ) )
+                {
+                        if ( 0 == syscfg_commit( ) )
+                        {
+                                pMyObject->DNSPingTest_Enable = bValue;
+                        }
+                }*/
+
+		 _set_db_value(SYSCFG_FILE,"selfheal_dns_pingtest_enable",( ( bValue == TRUE ) ? "true" : "false" ) );
+                CcspTraceInfo(("[%s] DNSPingTest_Enable:[ %d ]\n",
+                                                                        __FUNCTION__,
+                                                                        pMyObject->DNSPingTest_Enable ));
+        }
+
+        return ReturnStatus;
+}
+
+ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject,
+                                                                                                                          PCHAR           pString )
+{
+        ANSC_STATUS             ReturnStatus    = ANSC_STATUS_SUCCESS;
+        BOOLEAN                 bProcessFurther = TRUE;
+
+        /* Validate received param  */
+        if(( NULL == hThisObject ) || \
+           ( NULL == pString )
+           )
+        {
+                bProcessFurther = FALSE;
+                ReturnStatus    = ANSC_STATUS_FAILURE;
+                CcspTraceError(("[%s] hThisObject/pString is NULL\n", __FUNCTION__ ));
+        }
+
+        if( bProcessFurther )
+        {
+                PCOSA_DATAMODEL_SELFHEAL          pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
+
+                /* Modify the DNS ping test flag */
+                /*if ( 0 == syscfg_set( NULL,
+                                                          "selfheal_dns_pingtest_url",
+                                                          pString ) )
+                {
+                        if ( 0 == syscfg_commit( ) )
+                        {
+                                memset(pMyObject->DNSPingTest_URL, 0, sizeof( pMyObject->DNSPingTest_URL ));
+                                AnscCopyString(pMyObject->DNSPingTest_URL, pString);
+                        }
+                }*/
+		
+	        _set_db_value(SYSCFG_FILE,"selfheal_dns_pingtest_url",pString);
+                CcspTraceInfo(("[%s] DNSPingTest_URL:[ %s ]\n",
+                                                                        __FUNCTION__,
+                                                                        pMyObject->DNSPingTest_URL ));
+        }
+
+        return ReturnStatus;
+}
 

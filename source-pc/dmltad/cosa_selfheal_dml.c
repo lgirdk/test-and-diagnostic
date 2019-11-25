@@ -38,6 +38,8 @@
     *  SelfHeal_SetParamBoolValue
     *  SelfHeal_GetParamUlongValue
     *  SelfHeal_SetParamUlongValue
+    *  SelfHeal_GetParamStringValue
+    *  SelfHeal_SetParamStringValue
     *  SelfHeal_Validate
     *  SelfHeal_Commit
     *  SelfHeal_Rollback
@@ -86,6 +88,13 @@ BOOL SelfHeal_GetParamBoolValue
         *bValue = pMyObject->Enable;
         return TRUE;
     }
+    
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    {
+        *bValue = pMyObject->DNSPingTest_Enable;
+        return TRUE;
+    }
+
 
     return FALSE;
 }
@@ -137,18 +146,20 @@ BOOL SelfHeal_SetParamBoolValue
         char buf[128];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-        if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
+	_set_db_value(SYSCFG_FILE,"selfheal_enable",buf);
+        //if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
+	if(strcmp(buf,"false") == 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
         else 
         { 
-	    if (syscfg_commit() != 0)
+	   /* if (syscfg_commit() != 0)
 	    {
                 CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
-	    }
+	    }*/
 
 	    char cmd[128];
             if ( bValue == TRUE )
@@ -215,6 +226,20 @@ BOOL SelfHeal_SetParamBoolValue
 	    pMyObject->Enable = bValue;
 	}
         return TRUE;
+    }
+
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    {
+        if( pMyObject->DNSPingTest_Enable == bValue )
+        {
+            return TRUE;
+        }
+
+                /* To change the PING Test Enable status */
+                if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDNSPingTestStatus( pMyObject, bValue ) )
+                {
+                        return TRUE;
+                }
     }
 
     return FALSE;
@@ -345,6 +370,58 @@ SelfHeal_SetParamUlongValue
     }
 
     return FALSE;
+}
+
+ULONG
+SelfHeal_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+    {
+        /* collect value */
+        if ( AnscSizeOfString(pMyObject->DNSPingTest_URL) < *pUlSize)
+        {
+            AnscCopyString(pValue, pMyObject->DNSPingTest_URL);
+                    return 0;
+        }
+        else
+        {
+            *pUlSize = AnscSizeOfString(pMyObject->DNSPingTest_URL)+1;
+            return 1;
+        }
+    }
+            return -1;
+}
+
+BOOL
+SelfHeal_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    )
+
+{
+    PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+
+        if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+    {
+                if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDNSPingTestURL( pMyObject, strValue ) )
+                {
+                        return TRUE;
+                }
+        }
+
+        return FALSE;
 }
 
 /**********************************************************************^M

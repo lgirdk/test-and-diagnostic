@@ -59,6 +59,8 @@ static diag_obj_t *diag_ping;
 static diag_obj_t *diag_tracert;
 diag_pingtest_stat_t diag_pingtest_stat;
 
+#define SYSCFG_FILE "/nvram/syscfg.db"
+
 static void trim(char *line)
 {
     char *cp;
@@ -633,7 +635,8 @@ diag_err_t diag_init_blocksize(void)
         
 	syscfg_init();
 	memset(buf,0,sizeof(buf));
-	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
+	//syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
+	 _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "selfheal_ping_DataBlockSize");
 	cfg.size = atoi(buf);
 
     if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
