@@ -425,10 +425,8 @@ case $SELFHEAL_TYPE in
 
         ###########################################
     ;;
-    "TCCBR")
-    ;;
-    "SYSTEMD")
-        if [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
+    "SYSTEMD"|"TCCBR")
+        if [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$BOX_TYPE" = "TCCBR" ]; then
             Check_If_Erouter_Exists=`ifconfig -a | grep $WAN_INTERFACE`
             ifconfig $WAN_INTERFACE > /dev/null
             wan_exists=$?
@@ -824,49 +822,6 @@ case $SELFHEAL_TYPE in
     "BASE")
     ;;
     "TCCBR")
-        ##################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
-            wifi_check=`dmcli eRT getv Device.WiFi.SSID.1.Enable`
-            wifi_timeout=`echo $wifi_check | grep "$CCSP_ERR_TIMEOUT"`
-            if [ "$wifi_timeout" != "" ]; then
-                echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
-                t2CountNotify "WIFI_ERROR_Wifi_query_timeout"
-            fi
-
-
-            GetConfigFile $PEER_COMM_ID
-            SSH_ATOM_TEST=$(ssh -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
-            SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
-            rm -f $PEER_COMM_ID
-            if [ "$SSH_ERROR" != "" ]; then
-                echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
-            fi
-
-            if [ "$wifi_timeout" != "" ] && [ "$SSH_ERROR" != "" ]
-            then
-                atom_hang_count=`sysevent get atom_hang_count`
-                echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
-                if [ $atom_hang_count -ge 2 ]; then
-                    CheckRebootCretiriaForAtomHang
-                    atom_hang_reboot_count=`syscfg get todays_atom_reboot_count`
-                    if [ $atom_hang_reboot_count -eq 0 ]; then
-                        echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
-                        reason="ATOM_HANG"
-                        rebootCount=1
-                        setRebootreason $reason $rebootCount
-                        rebootNeeded $reason ""
-                    else
-                        echo_t "[RDKB_SELFHEAL] : Reboot allowed for only one time per day. It will reboot in next 24hrs."
-                    fi
-                else
-                    atom_hang_count=$((atom_hang_count + 1))
-                    sysevent set atom_hang_count $atom_hang_count
-                fi
-            else
-                sysevent set atom_hang_count 0
-            fi
-        fi
-        ###########################################
 
         if [ "$MULTI_CORE" = "yes" ]; then
             if [ -f $PING_PATH/ping_peer ]
@@ -2579,28 +2534,18 @@ if [ "$DIBBLER_PID" = "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
                             t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
                             
-                            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+                           
+			    if [ "$BOX_TYPE" = "TCCBR" ];then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                 sleep 1
                                 echo 0 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
 
-                                sleep 1 
+                                sleep 1
 
-                                dibbler-client stop 
+                                dibbler-client stop
                                 sleep 1
-                                dibbler-client start            
-                                sleep 5
-                            elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-                                echo "DADFAILED : Recovering device from DADFAILED state"
-                                sh $DHCPV6_HANDLER disable
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
-                                sleep 1
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
-                                sleep 1
-                                sh $DHCPV6_HANDLER enable
+                                dibbler-client start
                                 sleep 5
                             fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
@@ -2686,6 +2631,14 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "TCCBR")
+	#Checking the ntpd is running or not for TCCBR
+        if [ "$WAN_TYPE" != "EPON" ]; then
+            NTPD_PID=`pidof ntpd`
+            if [ "$NTPD_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
+                sysevent set ntpd-restart
+            fi
+	fi
     ;;
     "SYSTEMD")
         #All CCSP Processes Now running on Single Processor. Add those Processes to Test & Diagnostic
