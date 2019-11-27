@@ -790,7 +790,9 @@ case $SELFHEAL_TYPE in
                             else
                                 ADV_RABID_PID=`advsec_is_alive rabid`
                                 if [ "$ADV_RABID_PID" = "" ] ; then
-                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
+                                    if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
+                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
+                                    fi
                                     resetNeeded advsec_bin AdvSecurityRabid
                                 fi
                             fi
