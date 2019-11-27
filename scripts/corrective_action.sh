@@ -411,6 +411,12 @@ resetRouter()
         echo_t "RDKB_SELFHEAL : Ipv6 Route Information:"
         ip -6 route
         echo_t "-------------------------------------------------------"
+        echo_t "RDKB_SELFHEAL : Ipv6 Neighbor Information:"
+        ip -6 neighbor
+        echo_t "-------------------------------------------------------"
+        echo_t "RDKB_SELFHEAL : WAN INTERFACE $WAN_INTERFACE Information:"
+        ifconfig $WAN_INTERFACE
+        echo_t "-------------------------------------------------------"
 
         echo_t "RDKB_REBOOT : Reset router due to PING connectivity test failure"
 
