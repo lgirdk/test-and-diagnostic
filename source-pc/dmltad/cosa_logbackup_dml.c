@@ -143,7 +143,8 @@ BOOL LogBackup_SetParamBoolValue
         char buf[128];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
+	_set_db_value(SYSCFG_FILE,"logbackup_enable",buf);
+        /*if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
         {
 	    	CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	   	return FALSE;
@@ -153,7 +154,7 @@ BOOL LogBackup_SetParamBoolValue
 	{
 	      	CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
-	}
+	}*/
 	
         g_logbackup_enable = bValue;
         return TRUE;
@@ -264,7 +265,8 @@ LogBackup_SetParamUlongValue
         char buf[128];
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
+	_set_db_value(SYSCFG_FILE,"logbackup_interval",buf);
+        /*if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
         {
 		CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
@@ -273,7 +275,7 @@ LogBackup_SetParamUlongValue
 	{
         	CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
-	}
+	}*/
         g_logbackup_interval = uValue;
         return TRUE;
     }
@@ -393,7 +395,9 @@ void get_logbackupcfg()
 	char buf[128];
 	
 	memset(buf,0,sizeof(buf));
-	if((syscfg_get( NULL, "logbackup_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+	//if((syscfg_get( NULL, "logbackup_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
+	 _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "logbackup_enable");
+	if((strlen(buf) > 0) && (buf[0] != '\0'))
 	{
 			g_logbackup_enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
 	}
@@ -401,7 +405,8 @@ void get_logbackupcfg()
 	{
 	        memset(buf, 0, sizeof(buf));
 	        snprintf(buf,sizeof(buf),"true");
-	        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
+		 _set_db_value(SYSCFG_FILE,"logbackup_enable",buf);
+	        /*if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
 	        {
 		    	CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
 		   	
@@ -413,11 +418,13 @@ void get_logbackupcfg()
 			      	CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
 				
 			}
-		}
+		}*/
 	}
 
 	memset(buf,0,sizeof(buf));
-	if((syscfg_get( NULL, "logbackup_interval", buf, sizeof(buf)) == 0) && (buf[0] != '\0'))
+	//if((syscfg_get( NULL, "logbackup_interval", buf, sizeof(buf)) == 0) && (buf[0] != '\0'))
+	 _get_db_value(SYSCFG_FILE, buf, sizeof(buf), "logbackup_interval");
+	if((strlen(buf) > 0) && (buf[0] != '\0'))
 	{
 		g_logbackup_interval = atoi(buf);
 	}
@@ -425,7 +432,8 @@ void get_logbackupcfg()
 	{
 	        memset(buf, 0, sizeof(buf));
 	        snprintf(buf,sizeof(buf),"30");
-	        if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
+		 _set_db_value(SYSCFG_FILE,"logbackup_interval",buf);
+	        /*if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
 	        {
 			CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
 	        }
@@ -435,7 +443,7 @@ void get_logbackupcfg()
 			{
 		        	CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
 			}
-	        }
+	        }*/
 	
 	}
 
