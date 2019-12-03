@@ -661,8 +661,8 @@ CosaDmlDiagGetARPTable
         PULONG                      pulCount
     )
 {
-//	return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //RDKB-EMU
-    return NULL;
+	return CosaDmlDiagGetARPTablePriv(hContext, pulCount); //RDKB-EMU
+//    return NULL;
 }
 
 ANSC_STATUS
