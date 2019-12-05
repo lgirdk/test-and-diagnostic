@@ -36,11 +36,11 @@ else
     traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 fi
 
-grep -E "192.168.245.|169.254.0.|169.254.1." /nvram/dnsmasq.leases | cut -d' ' -f2 > $PODMAC
+grep -E "192.168.245.|169.254.0.|169.254.1." /nvram/dnsmasq.leases | cut -d' ' -f2 | tr '[a-z]' '[A-Z]' > $PODMAC
 
 while read pmac; do
  pmac=$(echo $pmac | sed 's/\:/\\\:/g')
- sed -i "/$pmac/Id" /tmp/rxtx_cur.txt
+ sed -i "/$pmac/d" /tmp/rxtx_cur.txt
 done <$PODMAC
 
 ONETB=1099511627776
