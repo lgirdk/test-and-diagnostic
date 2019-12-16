@@ -3210,12 +3210,11 @@ then
     fi  # [ $inMaintWindow -eq 1 ]
 fi  # [ "$rebootDeviceNeeded" -eq 1 ]
 
+isPeriodicFWCheckEnable=`syscfg get PeriodicFWCheck_Enable`
+if [ "$isPeriodicFWCheckEnable" == "false" ] || [ "$isPeriodicFWCheckEnable" == "" ]; then
 #check firmware download script is running.
 case $SELFHEAL_TYPE in
     "BASE")
-        isPeriodicFWCheckEnable=`syscfg get PeriodicFWCheck_Enable`
-        if [ "$isPeriodicFWCheckEnable" == "false" ]; then
-
             if [ "$BOX_TYPE" = "XB3" ]; then
                 firmDwnldPid=`ps w | grep -w xb3_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
                 if [ "$firmDwnldPid" == "" ]; then
@@ -3223,8 +3222,6 @@ case $SELFHEAL_TYPE in
                     exec  /etc/xb3_firmwareDwnld.sh &
                 fi
             fi
-
-        fi
     ;;
     "TCCBR")
         if [ "$BOX_TYPE" = "TCCBR" ]; then
@@ -3251,6 +3248,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
 esac
+fi
 
 # Checking telemetry2_0 health and recovery
 T2_0_BIN="/usr/bin/telemetry2_0"
