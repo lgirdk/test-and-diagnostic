@@ -22,6 +22,8 @@ UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
+BR_MODE=0
+
 source $TAD_PATH/corrective_action.sh
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
@@ -2820,6 +2822,8 @@ else
         echo_t "[RDKB_SELFHEAL] : Global IPv6 is present"
 fi
 #Logic ends here for RDKB-25714
+    wan_dhcp_client_v4=1
+    wan_dhcp_client_v6=1
 if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
