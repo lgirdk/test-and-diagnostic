@@ -85,12 +85,32 @@ static diag_obj_t diag_tracert = {
  * for the third case the response comes from different nodes
  * as TR181 do not support that, let's discard the "address(name)" info.
  */
-static void convert_rtts(char *rtts, size_t size, float *sum, int *counter, int timeout)
+static void convert_rtts(char *rtts, size_t size
+#if !defined (_PLATFORM_RASPBERRYPI_)
+, float *sum, int *counter, int timeout
+#endif
+)
 {
     char *tok1, *tok2, *delim = " \t\r\n", *sp;
     char *start, buf[1024];
     float f;
-	buf[0] = '\0';
+
+    buf[0] = '\0';
+#if defined(_PLATFORM_RASPBERRYPI_)
+    for (start = rtts; 
+            (tok1 = strtok_r(start, delim, &sp)) && (tok2 = strtok_r(NULL, delim, &sp));
+            start = NULL) {
+        if (strcmp(tok2, "ms") == 0) {
+            sscanf(tok1, "%f", &f);
+            if (start)
+                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d", (int)f);
+            else
+                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), ",%d", (int)f);
+        } else if (tok2[0] == '(') {
+            continue;
+        } else {
+            return; // bad format
+#else
 	if(rtts=="")
 	{
 		*sum = *sum+timeout;
@@ -116,6 +136,7 @@ static void convert_rtts(char *rtts, size_t size, float *sum, int *counter, int 
 		else
 		{
             continue;
+#endif
         }   
     }   
 
@@ -131,19 +152,23 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 {
     char cmd[512];
     char line[512];
-    float avgresptime=0;
     size_t left;
     FILE *fp;
+#if !defined(_PLATFORM_RASPBERRYPI_)
     int timeout;
+    float avgresptime=0;
+#endif
     diag_err_t err = DIAG_ERR_INTERNAL;
     assert(diag == &diag_tracert);
 
     cmd[0] = '\0', left = sizeof(cmd);
-
+#if !defined(_PLATFORM_RASPBERRYPI_)
     timeout=cfg->timo;
     timeout=timeout*1000;
-
     left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+#else
+    left -= snprintf(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
+#endif
     if (strlen(cfg->ifname))
         left -= snprintf(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
     if (cfg->cnt)
@@ -179,13 +204,16 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         unsigned nhop = 0;
         tracert_hop_t *hops = NULL;
         void *ptr;
-        int idx, dest_reached=0;
-        char msg[300], dest_ip[65], query_ip[65], line_cpy[512];
+        int idx;
+        char msg[300], dest_ip[65];
+#if !defined(_PLATFORM_RASPBERRYPI_)
+	int dest_reached=0;
+        char query_ip[65], line_cpy[512];
         float *sum,val=0;
         int *counter,count=0;
         sum=&val;
         counter=&count;
-
+#endif
         /* traceroute to xxx.cisco.com (10.112.0.118), 30 hops max, 60 byte packets */
         sscanf(line,"%[^(] (%[^)])",msg,dest_ip);
 
@@ -204,9 +232,13 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             sscanf(line, "%d %s (%[^)]) %[^\n]",
                     &idx, hops[nhop].host, hops[nhop].addr, hops[nhop].rtts);
             /* TR-181 doesn't like the format, let's convert it */
+#if !defined(_PLATFORM_RASPBERRYPI_)
             convert_rtts(hops[nhop].rtts, sizeof(hops[nhop].rtts), sum, counter, timeout);
+#else
+            convert_rtts(hops[nhop].rtts, sizeof(hops[nhop].rtts));
+#endif
             hops[nhop].icmperr = 0; // TODO: we can use output: '!H, !S, ...'
-
+#if !defined(_PLATFORM_RASPBERRYPI_)
             strncpy(line_cpy,line,strlen(line));
             char* savePtr;
             char* token = strtok_r(line_cpy, "(",&savePtr);
@@ -217,13 +249,15 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
                   break;
                 }
             }
-
+#endif
             nhop++;
         }
+#if !defined(_PLATFORM_RASPBERRYPI_)
         avgresptime=*sum/(*counter);
         stat->u.tracert.resptime = avgresptime;
         *sum = 0;
         *counter = 0;
+#endif
         stat->u.tracert.nhop = nhop;
         stat->u.tracert.hops = hops;
 
@@ -237,7 +271,11 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 	    int rtt_sum = 0, rtt_count = 0, resp =0;
 	    char rtts[256];
 	    char *rtt, *sp;
+#if !defined(_PLATFORM_RASPBERRYPI_)
 	    if(nhop > 0 && dest_reached==1)
+#else
+	    if(nhop > 0 && (strncmp(dest_ip,hops[nhop-1].addr,65)==0))
+#endif
 	    {
 	        strncpy(rtts,hops[nhop-1].rtts,256);
 		sp = rtts;
@@ -250,8 +288,9 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 		{
 		    resp = rtt_sum/rtt_count;
 		}
+#if !defined(_PLATFORM_RASPBERRYPI_)
                 dest_reached=0;
-
+#endif
 	    }
 	    stat->u.tracert.resptime = resp;
             if (g_TracerouteTest_WriteID == DSLH_MPA_ACCESS_CONTROL_ACS)
