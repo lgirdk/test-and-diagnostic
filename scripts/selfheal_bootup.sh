@@ -40,7 +40,7 @@ PING_PATH="/usr/sbin"
 ping_failed=0
 ping_success=0
 needSelfhealReboot="/nvram/self_healreboot"
-
+crash_count=0
 MF_WiFi_Index="5 6 9 10"
 PSM_CONFIG="/nvram/bbhm_cur_cfg.xml"
 WiFi_INIT_FILE="/tmp/wifi_initialized"
@@ -363,17 +363,16 @@ then
 			echo_t "RDKB_SELFHEAL_BOOTUP : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
 			t2CountNotify "SYS_SH_pingPeerIP_Failed"
 			echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-			if [ ! -f "/nvram/self_healreboot" ]
+			if [ ! -f "$needSelfhealReboot" ]
 			then
-				touch /nvram/self_healreboot
+				touch $needSelfhealReboot
+				crash_count=1
 				echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 				echo_t "RDKB_REBOOT : Setting Last reboot reason as Peer_down"
 		       	        reason="Peer_down"
 			        rebootCount=1
 	      		        setRebootreason $reason $rebootCount
 				$RDKLOGGER_PATH/backupLogs.sh "true" ""
-			else
-				rm -rf /nvram/self_healreboot
 			fi
 
 			fi
@@ -421,6 +420,7 @@ fi
                         if [ ! -f "$needSelfhealReboot" ]
                         then
                                 touch $needSelfhealReboot
+				crash_count=1
 				if [ "$ping_failed" == "1" ]
 				then
 					echo_t "RDKB_PROCESS_CRASHED : Ping peer failed and CR_process not running"
@@ -432,12 +432,8 @@ fi
 				fi
                                 rebootCount=1
                                 setRebootreason $reason $rebootCount
-
                                 $RDKLOGGER_PATH/backupLogs.sh "true" $backupreason
-                        else
-                                rm -rf $needSelfhealReboot
-                        fi
-
+			fi
                  fi
         fi
 
@@ -458,9 +454,8 @@ fi
 			if [ ! -f "$needSelfhealReboot" ]
 			then
 				touch $needSelfhealReboot
+				crash_count=1
 				$RDKLOGGER_PATH/backupLogs.sh "true" "PSM"
-			else
-				rm -rf $needSelfhealReboot
 			fi
 	else
 		psm_name=`dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name`
@@ -471,9 +466,14 @@ fi
 			psm_health_timeout=`echo $psm_health | grep "$CCSP_ERR_TIMEOUT"`
 			psm_health_notexist=`echo $psm_health | grep "$CCSP_ERR_NOT_EXIST"`
 			if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
-				echo_t "RDKB_SELFHEAL_BOOTUP : PSM_process is not responding, need reboot"
-				dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_hang
-				$RDKLOGGER_PATH/backupLogs.sh "true" "PSM"
+				if [ ! -f "$needSelfhealReboot" ]
+				then
+					touch $needSelfhealReboot
+                                 	crash_count=1
+					echo_t "RDKB_SELFHEAL_BOOTUP : PSM_process is not responding, need reboot"
+					dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_hang
+					$RDKLOGGER_PATH/backupLogs.sh "true" "PSM"
+				fi
 			fi
 		fi
 	fi
@@ -615,10 +615,9 @@ fi
 			    dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
 			    dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
 			    touch $needSelfhealReboot
+			    crash_count=1
 			    $RDKLOGGER_PATH/backupLogs.sh "true" "syseventd"
             fi
-		else
-			rm -rf $needSelfhealReboot
 		fi
     fi
 
@@ -803,3 +802,7 @@ if [ "$MODEL_NUM" = "TG3482G" ];then
 
 fi
 
+if [ -f "$needSelfhealReboot" ] && [ $crash_count -eq 0 ]
+then
+	rm -rf $needSelfhealReboot
+fi
