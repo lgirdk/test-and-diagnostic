@@ -1382,38 +1382,50 @@ if [ "$thisPARODUS_PID" != "" ]; then
     kill_parodus_msg=""
     # check if parodus is stuck in connecting
     if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
-        wan_status=`sysevent get wan-status`
+	wan_status=`sysevent get wan-status`
         if [ "$wan_status" = "started" ]; then
-            time_line=`awk '/^\{START=[0-9]+\}$/' $PARCONNHEALTH_PATH`
+            time_line=`awk '/^\{START=[0-9\,]+\}$/' $PARCONNHEALTH_PATH`
         else
             time_line=""
         fi
-        start_conn_time=`echo "$time_line" | tr -d "}" | cut -d= -f2`
-        if [[ "$start_conn_time" != "" ]]; then
-            echo_t "Parodus connecting" 
-            time_limit=$(($start_conn_time+900))
+        health_time_pair=`echo "$time_line" | tr -d "}" | cut -d= -f2`
+        if [[ "$health_time_pair" != "" ]]; then
+            conn_start_time=`echo "$health_time_pair" | cut -d, -f1`
+            conn_retry_time=`echo "$health_time_pair" | cut -d, -f2`
+            echo_t "Parodus connecting time '$health_time_pair'" 
             time_now=`date +%s`
             time_now_val=$(($time_now+0))
+            time_limit=$(($conn_retry_time+1800))
             if [ $time_now_val -ge $time_limit ]; then
                 # parodus connection health file has a recorded
-                # time stamp that is > 15 minutes old
+                # time stamp that is > 30 minutes old, seems parodus conn is stuck
                 kill_parodus_msg="Parodus Connection TimeStamp Expired."
+            fi
+            time_limit=$(($conn_start_time+900))
+            if [ $time_now_val -ge $time_limit ]; then
+                echo_t "Parodus connection lost since 15 minutes"
             fi
         fi
     fi
     if [ "$kill_parodus_msg" != "" ]; then
         case $SELFHEAL_TYPE in
             "BASE")
-                echo_t "$kill_parodus_msg Killing parodus process."
-                # want to generate minidump for further analysis hence using signal 11
-                kill -11 `pidof parodus`
-                sleep 1
+                ppid=`pidof parodus`
+                if [ "$ppid" != "" ]; then
+                  echo_t "$kill_parodus_msg Killing parodus process."
+                  # want to generate minidump for further analysis hence using signal 11
+                  kill -11 $ppid
+                  sleep 1  
+                fi
                 _start_parodus_
             ;;
             "TCCBR"|"SYSTEMD")
-                echo "[`getDateTime`] $kill_parodus_msg Killing parodus process."
-                # want to generate minidump for further analysis hence using signal 11
-                systemctl kill --signal=11 parodus.service
+                ppid=`pidof parodus`
+                if [ "$ppid" != "" ]; then
+                  echo "[`getDateTime`] $kill_parodus_msg Killing parodus process."
+                  # want to generate minidump for further analysis hence using signal 11
+                  systemctl kill --signal=11 parodus.service
+                fi
             ;;
         esac
     fi
