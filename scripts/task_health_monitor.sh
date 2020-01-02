@@ -2589,6 +2589,31 @@ if [ "$DIBBLER_PID" = "" ]; then
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
                             t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
+
+                            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+                                echo "DADFAILED : Recovering device from DADFAILED state"
+                                echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                sleep 1
+                                echo 0 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+
+                                sleep 1 
+
+                                dibbler-client stop 
+                                sleep 1
+                                dibbler-client start            
+                                sleep 5
+                            elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                                echo "DADFAILED : Recovering device from DADFAILED state"
+                                sh $DHCPV6_HANDLER disable
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
+                                sleep 1
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
+                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
+                                sleep 1
+                                sh $DHCPV6_HANDLER enable
+                                sleep 5
+                            fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                             echo "DIBBLER : Dibbler Server Config is empty"
                             t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
