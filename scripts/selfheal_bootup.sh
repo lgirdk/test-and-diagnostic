@@ -602,19 +602,24 @@ fi
  	SYSEVENT_PID=`pidof syseventd`
 	if [ "$SYSEVENT_PID" == "" ]
 	then
-                if [ ! -f "$needSelfhealReboot" ]
-                then
-			echo_t "[RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
-			echo_t "Setting Last reboot reason"
-			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
-			dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
-			touch $needSelfhealReboot
-			$RDKLOGGER_PATH/backupLogs.sh "true" "syseventd"
+        if [ ! -f "$needSelfhealReboot" ]
+        then
+            #Needs to avoid false alarm
+            rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
+            echo_t "[syseventd] Previous rebootCounter:$rebootCounter"
+
+            if [ "$rebootCounter" != "1" ] ; then
+      			echo_t "[RDKB_SELFHEAL_BOOTUP] : syseventd is crashed, need to reboot the unit." 
+			    echo_t "Setting Last reboot reason"
+			    dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
+			    dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+			    touch $needSelfhealReboot
+			    $RDKLOGGER_PATH/backupLogs.sh "true" "syseventd"
+            fi
 		else
 			rm -rf $needSelfhealReboot
 		fi
-
-	fi
+    fi
 
 
 if [ "$WAN_TYPE" != "EPON" ]; then	

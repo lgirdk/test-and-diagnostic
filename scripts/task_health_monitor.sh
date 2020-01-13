@@ -1549,21 +1549,27 @@ esac
 SYSEVENT_PID=`pidof syseventd`
 if [ "$SYSEVENT_PID" == "" ]
 then
-    if [ ! -f "$SyseventdCrashed"  ]
-    then
-        echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window."
-        touch $SyseventdCrashed
-        case $SELFHEAL_TYPE in
-            "BASE"|"SYSTEMD")
-                echo_t "Setting Last reboot reason"
-                dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
-                dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
-            ;;
-            "TCCBR")
-            ;;
-        esac
+    #Needs to avoid false alarm
+    rebootCounter=`syscfg get X_RDKCENTRAL-COM_LastRebootCounter`
+    echo_t "[syseventd] Previous rebootCounter:$rebootCounter" 
+
+    if [ "$rebootCounter" != "1" ] ; then
+       if [ ! -f "$SyseventdCrashed"  ]
+       then
+           echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window."
+           touch $SyseventdCrashed
+           case $SELFHEAL_TYPE in
+               "BASE"|"SYSTEMD")
+                   echo_t "Setting Last reboot reason"
+                   dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Syseventd_crash
+                   dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootCounter int 1
+                ;;
+                "TCCBR")
+                ;;
+           esac
+       fi
+       rebootDeviceNeeded=1
     fi
-    rebootDeviceNeeded=1
 fi
 
 
