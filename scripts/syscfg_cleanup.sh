@@ -37,10 +37,10 @@ if [ "$UPTIME" -lt 1800 ]; then
     exit 0
 fi
 
-SECURE_SYSCFG=`syscfg get UpdateNvram`
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
 SYSCFG_DB_FILE="/nvram/syscfg.db"
-if [ "$SECURE_SYSCFG" = "false" ]; then
-      SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
+else
+SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
 fi
 
 #Removing erouter0 "_inst_num" dynamic enteries from database
