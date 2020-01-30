@@ -2026,6 +2026,12 @@ then
     then
         BR_MODE=1
         echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+	Bridge_Mode_Type=`echo $bridgeMode | grep -oE "(full-bridge-static|bridge-static)"`
+	if [ "$Bridge_Mode_Type" = "full-bridge-static" ];then
+		echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+	elif [ "$Bridge_Mode_Type" = "bridge-static" ];then
+		echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+	fi
     fi
 else
     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
@@ -2036,6 +2042,11 @@ else
     then
         BR_MODE=1
         echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+	if [ "$isBridging" = "3" ];then
+	        echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        elif [ "$isBridging" = "2" ];then
+	        echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        fi
     fi
 
     case $SELFHEAL_TYPE in
@@ -2215,7 +2226,7 @@ fi
 FIREWALL_ENABLED=`syscfg get firewall_enabled`
 
 echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
-if [ $BR_MODE -eq 1 ]; then 
+if [ $BR_MODE -eq 1 ]; then
     t2CountNotify "SYS_INFO_BridgeMode"
 fi
 echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
