@@ -272,6 +272,8 @@ case $SELFHEAL_TYPE in
             fi
             if [ -f $PING_PATH/ping_peer ]
             then
+	      WAN_STATUS=`sysevent get wan-status`
+	      if [ "$WAN_STATUS" = "started" ]; then
                 ## Check Peer ip is accessible
                 loop=1
                 while [ "$loop" -le 3 ]
@@ -333,6 +335,9 @@ case $SELFHEAL_TYPE in
                     loop=$((loop+1))
                     sleep 5
                 done
+	      else
+		echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
+	      fi
             else
                 echo_t "RDKB_SELFHEAL : ping_peer command not found"
             fi
