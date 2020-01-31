@@ -157,15 +157,4 @@ ssp_TadMbi_WaitConditionReady
 		char*							src_component_id
 	);
 
-int
-ssp_TadMbi_SetParameterValues
-    (
-        int sessionId,
-        unsigned int writeID,
-        parameterValStruct_t *val,
-        int size,
-        dbus_bool commit,
-        char ** invalidParameterName,
-        void * user_data
-    );
 #endif
