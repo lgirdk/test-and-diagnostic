@@ -2762,6 +2762,15 @@ if [ "x$erouter0_globalv6_test" == "x" ] && [ "$WAN_STATUS" = "started" ] && [ "
                                     ifconfig $WAN_INTERFACE up
                                 fi
                                 if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
+                                    #Adding to kill ipv4 process, later restarted to solve RDKB-27177
+                                    task_to_be_killed=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                                    if [ "x$task_to_be_killed" = "x" ]; then
+                                        task_to_be_killed=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                                    fi
+                                    if [ "x$task_to_be_killed" != "x" ]; then
+                                        kill $task_to_be_killed
+                                    fi
+                                    #RDKB-27177 addition ends here
                                     echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                                     /usr/sbin/dibbler-client stop
                                 elif [ "$BOX_TYPE" = "XB6" ]; then
@@ -2785,6 +2794,15 @@ if [ "x$erouter0_globalv6_test" == "x" ] && [ "$WAN_STATUS" = "started" ] && [ "
                         fi
                                 ;;
         "TCCBR")
+                        #Adding to kill ipv4 process, later restarted to solve RDKB-27177
+                        task_to_be_killed=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                        if [ "x$task_to_be_killed" = "x" ]; then
+                                task_to_be_killed=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                        fi
+                        if [ "x$task_to_be_killed" != "x" ]; then
+                                kill $task_to_be_killed
+                        fi
+                        #RDKB-27177 addition ends here
                         if [ "x$erouter0_up_check" == "x" ]; then
                                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                                 ifconfig $WAN_INTERFACE up
