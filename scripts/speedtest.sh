@@ -65,13 +65,25 @@ then
     echo "Executing run_speedtest.sh for CBR" > /dev/console
     sh /etc/speedtest/run_speedtest.sh
   fi
-elif [ "$BOX_TYPE" = XB3 ] && ( [ "$MODEL_NUM" = DPC3941 ] || [ "$MODEL_NUM" = DPC3941B ] )
+elif [ "$BOX_TYPE" = XB3 ] && [ "$MODEL_NUM" = DPC3941 ]
 then
   if [ "x$ST_CLIENT_TYPE" = 'x1' ]
   then
     # C speedtest client
-    echo "Downloading and/or executing native c speedtest-client for xb3c" > /dev/console
-    rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+    echo "Executing native c speedtest-client for xb3c" > /dev/console
+    rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client &"
+  else
+    # NodeJS speedtest client
+    echo "Executing run_speedtest.sh for xb3c" > /dev/console
+    rpcclient "$ATOM_ARPING_IP" sh /etc/speedtest/run_speedtest.sh
+  fi
+elif [ "$BOX_TYPE" = XB3 ] && [ "$MODEL_NUM" = DPC3941B ]
+then
+  if [ "x$ST_CLIENT_TYPE" = 'x1' ]
+  then
+    # C speedtest client
+    echo "Executing native c speedtest-client for xb3c" > /dev/console
+    rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client &"
   else
     # NodeJS speedtest client
     echo "Executing run_speedtest.sh for xb3c" > /dev/console
