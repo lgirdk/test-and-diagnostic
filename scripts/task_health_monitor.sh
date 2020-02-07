@@ -2540,7 +2540,7 @@ esac
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=`pidof dibbler-server`
 if [ "$DIBBLER_PID" = "" ]; then
-    IPV6_STATUS=`sysevent get ipv6-status`
+
     DHCPV6C_ENABLED=`sysevent get dhcpv6c_enabled`
     if [ "$BR_MODE" == "0" ] && [ "$DHCPV6C_ENABLED" == "1" ]; then
         case $SELFHEAL_TYPE in
@@ -2548,9 +2548,6 @@ if [ "$DIBBLER_PID" = "" ]; then
                 DHCPv6EnableStatus=`syscfg get dhcpv6s00::serverenable`
                 if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                     echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
-		elif [ "$IPV6_STATUS" = "" ];then
-		    #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
-		    echo_t "IPV6 not Started. Skip Dibbler Server restart for now" 
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
@@ -2600,9 +2597,6 @@ if [ "$DIBBLER_PID" = "" ]; then
                     sh $DHCPV6_HANDLER disable
                     sleep 2
                     sh $DHCPV6_HANDLER enable
-		elif [ "$IPV6_STATUS" = "" ];then
-		    #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
-		    echo_t "IPV6 not Started. Skip Dibbler Server restart for now" 
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
