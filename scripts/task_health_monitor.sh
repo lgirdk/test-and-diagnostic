@@ -2631,18 +2631,23 @@ if [ "$DIBBLER_PID" = "" ]; then
 
                             if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
+                                # save global ipv6 address before disable it
+                                v6addr=`ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}'`
                                 echo 1 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                 sleep 1
                                 echo 0 > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-
+                                # re-add global ipv6 address after enabled it
+                                ip -6 addr add $v6addr dev $PRIVATE_LAN
                                 sleep 1 
 
-                                dibbler-client stop 
+                                dibbler-server stop
                                 sleep 1
-                                dibbler-client start            
+                                dibbler-server start
                                 sleep 5
                             elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
+                                # save global ipv6 address before disable it
+                                v6addr=`ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}'`
                                 sh $DHCPV6_HANDLER disable
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
@@ -2651,6 +2656,8 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
                                 sleep 1
                                 sh $DHCPV6_HANDLER enable
+                                # re-add global ipv6 address after enabled it
+                                ip -6 addr add $v6addr dev $PRIVATE_LAN
                                 sleep 5
                             fi
                         elif [ ! -s  "/etc/dibbler/server.conf" ]; then
