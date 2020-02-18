@@ -37,6 +37,17 @@ RebootReason=""
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
+##TELEMETRY 2.0 SUPPORT ##RDKB-26620
+T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
+
+t2ValNotify() {
+    if [ -f $T2_MSG_CLIENT ]; then
+        marker=$1
+        shift
+        $T2_MSG_CLIENT "$marker" "$*"
+    fi
+}
+
 CheckandSetCMStatus()
 {
 	cm_status=""
@@ -49,7 +60,7 @@ CheckandSetCMStatus()
 	else
 		cm_status_bit=0
 	fi
-#	echo_t "cm_status=$cm_status_bit"
+	echo_t "cm_status=$cm_status_bit"
 #	echo_t "bitmask=$bitmask"
 }
 
@@ -57,33 +68,40 @@ CheckandSetCMIPStatus()
 {
 	cm_ipv4=""
 	cm_ipv6=""
-	cm_ipv4=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPAddress | grep value | awk '{print $5}'`
+	cm_prov=""
+	cm_prov=`dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '{print $5}'`
 
-	if [ "$cm_ipv4" == "" ];then
-		cm_ipv4=`ifconfig $CM_INTERFACE | grep "inet addr" | awk '{print $(NF-2)}' | cut -f2 -d:`
-	fi
+	echo_t "cm_prov=$cm_prov"
 
-	cm_ipv6=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPv6Address | grep value | awk '{print $5}'`
+	if [ "x$cm_prov" == "xIPv4" ] || [ "x$cm_prov" == "xIPV4" ];then
 
-	if [ "$cm_ipv6" == "" ];then
-		cm_ipv6=`ifconfig $CM_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d\/`
-	fi
+		cm_ipv4=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPAddress | grep value | awk '{print $5}'`
+		echo_t "cm_ipv4=$cm_ipv4"
 
-	echo_t "cm_ipv4=$cm_ipv4"
-	echo_t "cm_ipv6=$cm_ipv6"
-
-	if [ "$cm_ipv4" != "" ] && [ "$cm_ipv4" != "0.0.0.0" ];then
-		cm_ipv4_bit=1
+		if [ "$cm_ipv4" != "" ] && [ "$cm_ipv4" != "0.0.0.0" ];then
+			cm_ipv4_bit=1
+		else
+			cm_ipv4_bit=0
+		fi
 	else
-		cm_ipv4_bit=0
+        	cm_ipv4_bit=0
 	fi
+
+	if [ "x$cm_prov" == "xIPv6" ] || [ "x$cm_prov" == "xIPV6" ];then
+
+		cm_ipv6=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPv6Address | grep value | awk '{print $5}'`
+		echo_t "cm_ipv6=$cm_ipv6"
+
+		if [ "$cm_ipv6" != "" ] && [ "$cm_ipv6" != "0000::0000" ];then
+			cm_ipv6_bit=1
+		else
+			cm_ipv6_bit=0
+		fi
+	else
+        	cm_ipv6_bit=0
+	fi
+
 #	echo_t "cm_ipv4_bit=$cm_ipv4_bit"
-
-	if [ "$cm_ipv6" != "" ] && [ "$cm_ipv6" != "0000::0000" ];then
-		cm_ipv6_bit=1
-	else
-		cm_ipv6_bit=0
-	fi
 #	echo_t "cm_ipv6_bit=$cm_ipv6_bit"
 
 	if [ "$cm_ipv4_bit" == "1" ] || [ "$cm_ipv6_bit" == "1" ];then
@@ -93,7 +111,7 @@ CheckandSetCMIPStatus()
 		cm_ip_bit=0
 	fi
 
-#	echo_t "cm_ip_status=$cm_ip_bit"
+	echo_t "cm_ip_status=$cm_ip_bit"
 #	echo_t "bitmask=$bitmask"
 }
 
@@ -137,7 +155,7 @@ CheckandSetWANIPStatus()
 		wan_ip_bit=0
 	fi
 
-#	echo_t "wan_ip_status=$wan_ip_bit"
+	echo_t "wan_ip_status=$wan_ip_bit"
 #	echo_t "bitmask=$bitmask"
 }
 
@@ -157,8 +175,8 @@ CheckandSetIPv4PingStatus()
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
 		if [ "$CHECK_PACKET_RECEIVED" != "" ]
-		then	
-			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
+		then
+			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ]
 			then
 				ping4_success=1
 				bitmask=$((bitmask | IPv4PingStatus_mask))
@@ -180,21 +198,22 @@ CompareStoredAndCurrGWHealthStatus()
 	IsCMIPFailure=0
 	IsWANIPFailure=0
 	IsIPv4Failure=0
+	timestamp=`date +%Y-%m-%d_%H-%M-%S`
 
 	#CM_Status
-	stored_CMstatus=$((stored_gw_health & CMStatus_mask))	
+	stored_CMstatus=$((stored_gw_health & CMStatus_mask))
 	current_CMstatus=$((bitmask & CMStatus_mask))
 
 	#CM_IP_Status
-	stored_CMIPstatus=$((stored_gw_health & CMIPStatus_mask))	
+	stored_CMIPstatus=$((stored_gw_health & CMIPStatus_mask))
 	current_CMIPstatus=$((bitmask & CMIPStatus_mask))
 
 	#WAN_IP_Status
-	stored_WANIPstatus=$((stored_gw_health & WANIPStatus_mask))	
+	stored_WANIPstatus=$((stored_gw_health & WANIPStatus_mask))
 	current_WANIPstatus=$((bitmask & WANIPStatus_mask))
 
 	#IPv4_Ping_Status
-	stored_IPv4Pingstatus=$((stored_gw_health & IPv4PingStatus_mask))	
+	stored_IPv4Pingstatus=$((stored_gw_health & IPv4PingStatus_mask))
 	current_IPv4Pingstatus=$((bitmask & IPv4PingStatus_mask))
 
 	if [ $current_CMstatus -eq 0 ] && [ $current_CMstatus -ne $stored_CMstatus ]; then
@@ -202,21 +221,23 @@ CompareStoredAndCurrGWHealthStatus()
 	fi
 
 	if [ $current_CMIPstatus -eq 0 ] && [ $current_CMIPstatus -ne $stored_CMIPstatus ]; then
-	   IsCMIPFailure=1	
+	   IsCMIPFailure=1
 	fi
 
 	if [ $current_WANIPstatus -eq 0 ] && [ $current_WANIPstatus -ne $stored_WANIPstatus ]; then
-	   IsWANIPFailure=1	
+	   IsWANIPFailure=1
 	fi
 
 	if [ $current_IPv4Pingstatus -eq 0 ] && [ $current_IPv4Pingstatus -ne $stored_IPv4Pingstatus ]; then
-	   IsIPv4Failure=1	
+	   IsIPv4Failure=1
 	fi
 
 	#Check whether we need to reboot the device or not
 	if [ $IsCMFailure -eq 1 ] || [ $IsCMIPFailure -eq 1 ] || [ $IsWANIPFailure -eq 1 ] || [ $IsIPv4Failure -eq 1 ]; then
-  	   IsNeedtoRebootDevice=1
-	   RebootReason="No_Block_sync"
+	   IsNeedtoRebootDevice=1
+	   RebootReason="wan_link_heal"
+	   t2ValNotify "RDKB_SELFHEAL:WAN_Link_Heal" "$timestamp"
+	   echo_t "RDKB_SELFHEAL:WAN_Link_Heal"
 	fi
 	echo_t "IsNeedtoRebootDevice = $IsNeedtoRebootDevice"
 }
@@ -244,7 +265,7 @@ CheckandRebootBasedOnCurrentHealth()
 	    fi
 	    syscfg set X_RDKCENTRAL-COM_LastRebootReason "$RebootReason"
 	    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
-            syscfg set gw_health "$bitmask"
+	    syscfg set gw_health "$bitmask"
 	    syscfg commit
 	    /rdklogger/backupLogs.sh true
 	fi
@@ -278,15 +299,17 @@ case "$1" in
 	LastrebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
 	echo_t "LastrebootReason = $LastrebootReason"
 	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ]; then
+		echo_t "Wan Link Heal for bootup-check invoked"
 		CheckandRebootBasedOnCurrentHealth
 	fi
 
-   ;;	
+   ;;
 
    store-health)
 
+	echo_t "Wan Link Heal for store-health invoked"
 	CheckandStoreCurrentHealth
-   ;;	
+   ;;
 
 esac
 
