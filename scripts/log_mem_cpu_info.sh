@@ -43,7 +43,12 @@ DELAY=30
 
     # RDKB-7017	
     echo_t "USED_MEM:$usedMemSys"
-    t2ValNotify "USED_MEM_ATOM_split" "$usedMemSys"
+    if [ "$BOX_TYPE" = "XB3" ]; then
+        t2ValNotify "UsedMem_split" "$usedMemSys"
+    else
+        t2ValNotify "USED_MEM_ATOM_split" "$usedMemSys"
+    fi
+
     echo "USED_MEM:$usedMemSys" | grep -q "USED_MEM:55"
     if [ $? -eq 0 ]; then 
         t2ValNotify "SYS_ERROR_MemAbove550"
@@ -94,7 +99,11 @@ DELAY=30
     #RDKB-7411
     LOAD_AVG_15=`echo $LOAD_AVG | cut -f3 -d:`
     echo_t "LOAD_AVERAGE:$LOAD_AVG_15"
-    t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
+    if [ "$BOX_TYPE" = "XB3" ]; then
+        t2ValNotify "LoadAvg_split" "$LOAD_AVG_15"
+    else
+        t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
+    fi
     
     # Feature overkill - follow up with triage for marker cleanup. Required data is already sent above
     echo $LOAD_AVG_15 | grep -q '2\.' 
@@ -143,7 +152,11 @@ DELAY=30
         t2CountNotify "SYS_ERROR_CPU100"
     fi
     echo_t "USED_CPU:$Curr_CPULoad"
-    t2ValNotify "USED_CPU_ATOM_split" "$Curr_CPULoad"
+    if [ "$BOX_TYPE" = "XB3" ]; then
+        t2ValNotify "UsedCPU_split" "$Curr_CPULoad"
+    else
+        t2ValNotify "USED_CPU_ATOM_split" "$Curr_CPULoad"
+    fi
 
     # RDKB-7412
    	CPU_INFO=`mpstat 1 1 | tail -1 | tr -s ' ' ':' | cut -d':' -f3-`
