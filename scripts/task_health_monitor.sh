@@ -230,14 +230,15 @@ case $SELFHEAL_TYPE in
             fi
 
             ### SNMPv3 master agent self-heal ####
+
             SNMPv3_PID=`pidof snmpd`
             if [ "$SNMPv3_PID" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
                 # Restart disconnected master and agent
-                v3AgentPid=`ps | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
+                v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
                 if [ ! -z "$v3AgentPid" ]; then
                     kill -9 $v3AgentPid
                 fi
-                pidOfListener=`ps  | grep -i inotify | grep 'run_snmpv3_agent.sh' | awk '{print $1}'`
+                pidOfListener=`ps ww | grep -i inotify | grep 'run_snmpv3_agent.sh' | awk '{print $1}'`
                 if [ ! -z "$pidOfListener" ]; then
                     kill -9 $pidOfListener
                 fi
@@ -249,7 +250,7 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 ### SNMPv3 sub agent self-heal ####
-                v3AgentPid=`ps | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
+                v3AgentPid=`ps ww | grep -i snmp_subagent | grep -v grep | grep -i cm_snmp_ma_2  | awk '{print $1}'`
                 if [ "$v3AgentPid" == "" ] && [ "x$ENABLE_SNMPv3" == "xtrue" ]; then
                     # Restart failed sub agent
                     if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
