@@ -658,6 +658,27 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
+        case $BOX_TYPE in
+            "HUB4") 
+               Harvester_PID=`pidof harvester`
+               if [ "$Harvester_PID" != "" ]; then
+                  Harvester_CPU=`top -bn1 | grep harvester | grep -v grep | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//' | awk '{$1=$1};1'`
+                  if [ "$Harvester_CPU" != "" ] && [ $Harvester_CPU -ge 30 ]; then
+                     echo_t "[RDKB_PLATFORM_ERROR] : harvester process is hung and taking $Harvester_CPU% CPU, restarting it"
+                     systemctl restart harvester.service
+                  fi
+               fi
+            ;;
+        esac
+    ;;
+esac
+
+case $SELFHEAL_TYPE in
+    "BASE")
+    ;;
+    "TCCBR")
+    ;;
+    "SYSTEMD")
         WiFi_Flag=false
         WiFi_PID=`pidof CcspWifiSsp`
         if [ "$WiFi_PID" != "" ]; then
