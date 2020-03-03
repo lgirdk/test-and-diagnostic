@@ -1255,6 +1255,28 @@
                 </object>
             </objects>
         </object>
+        <object>
+            <name>X_RDK_hwHealthTest</name>
+            <objectType>object</objectType>
+            <functions>
+                <func_GetParamBoolValue>hwHealthTest_GetParamBoolValue</func_GetParamBoolValue>
+                <func_SetParamBoolValue>hwHealthTest_SetParamBoolValue</func_SetParamBoolValue>
+                <func_GetParamStringValue>hwHealthTest_GetParamStringValue</func_GetParamStringValue>
+            </functions>
+            <parameters>
+                <parameter>
+                    <name>executeTest</name>
+                    <type>boolean</type>
+                    <syntax>bool</syntax>
+                    <writable>true</writable>
+                </parameter>
+                <parameter>
+                    <name>Results</name>
+                    <type>string(512)</type>
+                    <syntax>string</syntax>
+                </parameter>
+            </parameters>
+        </object>
     </objects>
 </dataModelInfo>
 
