@@ -147,84 +147,77 @@ BOOL SelfHeal_SetParamBoolValue
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
 	_set_db_value(SYSCFG_FILE,"selfheal_enable",buf);
-        //if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
-	if(strcmp(buf,"false") == 0)
-        {
-	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-        }
-        else 
-        { 
-	   /* if (syscfg_commit() != 0)
-	    {
-                CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-		return FALSE;
-	    }*/
+	
+	char cmd[128];
+	if ( bValue == TRUE )
+	{
+		memset(cmd, 0, sizeof(cmd));
+		memset(buf, 0, sizeof(buf));
+		sprintf(cmd, "pidof -x process_monitor.sh");
+		copy_command_output(cmd, buf, sizeof(buf));
+		buf[strlen(buf)] = '\0';
 
-	    char cmd[128];
-            if ( bValue == TRUE )
-            {
+		if (!strcmp(buf, "")) {
+			CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
+		} else {
+			CcspTraceWarning(("%s: Stop Process Monitor script\n", __FUNCTION__));
+			sprintf(cmd, "kill -9 %s", buf);
+			system(cmd);
+		}
 
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof process_monitor.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
+		memset(cmd, 0, sizeof(cmd));
+		memset(buf, 0, sizeof(buf));
+		sprintf(cmd, "pidof -x self_heal_connectivity_test.sh");
+		copy_command_output(cmd, buf, sizeof(buf));
+		buf[strlen(buf)] = '\0';
 
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop Process Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
-                    system(cmd);
-                }
-    
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-                system(cmd); 
+		if (!strcmp(buf, "")) {
+			CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
+		} else {
+			CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
+			sprintf(cmd, "kill -9 %s", buf);
+			system(cmd);
+		}
+		memset(cmd, 0, sizeof(cmd));
+		AnscCopyString(cmd, "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+		system(cmd);
 
-                /*memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/fss/gw/usr/ccsp/tad/resource_monitor.sh &");
-                system(cmd); */ //RDKB-EMU
-	    }
-            else
-	    {
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof self_heal_connectivity_test.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
-                    system(cmd);
-                }
-    
-               /* memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof resource_monitor.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
-                    system(cmd);
-                }*/ //RDKB-EMU   
-
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/etc/process_monitor.sh &");
-	        CcspTraceWarning(("%s: Starting process Monitor script\n", __FUNCTION__));
-                system(cmd);  
-	    }
-	    pMyObject->Enable = bValue;
+		memset(cmd, 0, sizeof(cmd));
+		AnscCopyString(cmd, "/usr/ccsp/tad/resource_monitor.sh &");
+		system(cmd);
 	}
+	else
+	{
+		memset(cmd, 0, sizeof(cmd));
+		memset(buf, 0, sizeof(buf));
+		sprintf(cmd, "pidof -x self_heal_connectivity_test.sh");
+		copy_command_output(cmd, buf, sizeof(buf));
+		buf[strlen(buf)] = '\0';
+
+		if (!strcmp(buf, "")) {
+			CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
+		} else {
+			CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
+			sprintf(cmd, "kill -9 %s", buf);
+			system(cmd);
+		}
+
+		memset(cmd, 0, sizeof(cmd));
+		memset(buf, 0, sizeof(buf));
+		sprintf(cmd, "pidof -x resource_monitor.sh");
+		copy_command_output(cmd, buf, sizeof(buf));
+		buf[strlen(buf)] = '\0';
+
+		if (!strcmp(buf, "")) {
+			CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
+		} else {
+			CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
+			sprintf(cmd, "kill -9 %s", buf);
+			system(cmd);
+		}
+
+	}
+	pMyObject->Enable = bValue;
         return TRUE;
     }
 
