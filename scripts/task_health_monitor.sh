@@ -3330,7 +3330,7 @@ case $SELFHEAL_TYPE in
         if [ "$WAN_TYPE" = "EPON" ]; then
             fDwnldPid=`ps w | grep -w xf3_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
 	elif [ "$BOX_TYPE" = "HUB4" ]; then
-	    fDwnldPid=`ps w | grep -w Hub4_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
+	    fDwnldPid=`ps w | grep -w hub4_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
         else
             fDwnldPid=`ps w | grep -w xb6_firmwareDwnld.sh | grep -v grep | awk '{print $1}'`
         fi
