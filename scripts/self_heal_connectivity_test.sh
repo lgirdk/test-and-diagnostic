@@ -196,7 +196,7 @@ runPingTest()
 	then
            if [ "$IPv6_Gateway_addr" = "" ]  || [ "$IPv6_Gateway_addr" = "$Box_IPv6_addr" ]
 	   then
-	      erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
+	      erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | head -n 1 | awk '{print $(NF-1)}' | cut -f1 -d:`
 	      routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
               IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '` 	
     	   fi
