@@ -748,7 +748,7 @@ case $SELFHEAL_TYPE in
             ;;
         esac
         if [ "$advsec_bridge_mode" != "2" ]; then
-            if [ "$DF_ENABLED" = "1" ] || [ "$RABID_ENABLED" = "1" ]; then
+            if [ "$DF_ENABLED" = "1" ] && [ "$RABID_ENABLED" = "1" ]; then
                 if [ -f $ADVSEC_PATH ]
                 then
                     isADVPID=0
@@ -770,64 +770,19 @@ case $SELFHEAL_TYPE in
                     if [ $isADVPID -eq 0 ]; then
                         if [ ! -f $ADVSEC_INITIALIZING ]
                         then
-                            if [ "$RABID_ENABLED" != "1" ] && [ ! -f ${ADVSEC_RABID_ENABLED_PATH} ]; then
-                                ADV_AG_PID=`advsec_is_alive agent`
-                                if [ "$ADV_AG_PID" = "" ] ; then
-                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Agent process is not running, need restart"
-                                    t2CountNotify "SYS_ERROR_AdvSecurity_NotRunning"
-                                    resetNeeded advsec_bin AdvSecurityAgent
+                            ADV_RABID_PID=`advsec_is_alive rabid`
+                            if [ "$ADV_RABID_PID" = "" ] ; then
+                                if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
+                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
                                 fi
-                                ADV_DHCP_PID=`advsec_is_alive dhcpcap`
-                                if [ "$ADV_DHCP_PID" = "" ] ; then
-                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dhcpcap process is not running, need restart"
-                                    resetNeeded advsec_bin AdvSecurityDhcp
-                                fi
-                                if [ ! -f "$DAEMONS_HIBERNATING" ] ; then
-                                    ADV_DNS_PID=`advsec_is_alive dnscap`
-                                    if [ "$ADV_DNS_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Dnscap process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecurityDns
-                                    fi
-                                    ADV_MDNS_PID=`advsec_is_alive mdnscap`
-                                    if [ "$ADV_MDNS_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Mdnscap process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecurityMdns
-                                    fi
-                                    ADV_P0F_PID=`advsec_is_alive p0f`
-                                    if [ "$ADV_P0F_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity PoF process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecurityPof
-                                    fi
-                                fi
-                                if [ -e ${SAFEBRO_ENABLE} ] ; then
-                                    ADV_SB_PID=`advsec_is_alive threatd`
-                                    if [ "$ADV_SB_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Threat process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecurityThreat
-                                    fi
-                                fi
-                                if [ -e ${SOFTFLOWD_ENABLE} ] ; then
-                                    ADV_SF_PID=`advsec_is_alive softflowd`
-                                    if [ "$ADV_SF_PID" = "" ] ; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Softflowd process is not running, need restart"
-                                        resetNeeded advsec_bin AdvSecuritySoftflowd
-                                    fi
-                                fi
-                            else
-                                ADV_RABID_PID=`advsec_is_alive rabid`
-                                if [ "$ADV_RABID_PID" = "" ] ; then
-                                    if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
-                                        echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
-                                    fi
-                                    resetNeeded advsec_bin AdvSecurityRabid
-                                fi
+                                resetNeeded advsec_bin AdvSecurityRabid
                             fi
                         fi
                     fi
                 else
                     case $SELFHEAL_TYPE in
                         "BASE")
-                            if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+                            if [[ "$MODEL_NUM" = "DPC3941" ]]; then
                                 /usr/sbin/cujo_download.sh &
                             fi
                         ;;

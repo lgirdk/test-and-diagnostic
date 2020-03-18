@@ -66,7 +66,7 @@ case $SELFHEAL_TYPE in
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
 
-        if [[ "$MODEL_NUM" = "DPC3939" || "$MODEL_NUM" = "DPC3941" ]]; then
+        if [[ "$MODEL_NUM" = "DPC3941" ]]; then
             ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
         else
             ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
@@ -914,7 +914,7 @@ resetNeeded()
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$folderName" = "advsec_bin" ]
             then
-                if [ "$ProcessName" = "AdvSecurityAgent" ] || [ "$ProcessName" = "AdvSecurityRabid" ]
+                if [ "$ProcessName" = "AdvSecurityRabid" ]
                 then
                     if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
                         rm $ADVSEC_AGENT_SHUTDOWN
@@ -922,29 +922,7 @@ resetNeeded()
                         echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
                         t2CountNotify "SYS_SH_CUJO_restart"
                     fi
-                    if [ "$ProcessName" = "AdvSecurityAgent" ]; then
-                        advsec_restart_agent
-                    else
-                        advsec_restart_rabid
-                    fi
-                elif [ "$ProcessName" = "AdvSecurityDns" ]
-                then
-                    advsec_start_process dnscap
-                elif [ "$ProcessName" = "AdvSecurityDhcp" ]
-                then
-                    advsec_start_process dhcpcap
-                elif [ "$ProcessName" = "AdvSecurityMdns" ]
-                then
-                    advsec_start_process mdnscap
-                elif [ "$ProcessName" = "AdvSecurityPof" ]
-                then
-                    advsec_start_process p0f
-                elif [ "$ProcessName" = "AdvSecuritySoftflowd" ]
-                then
-                    advsec_start_process softflowd
-                elif [ "$ProcessName" = "AdvSecurityThreat" ]
-                then
-                    advsec_start_process threatd
+                    advsec_restart_rabid
                 fi
 
             elif [ "$ProcessName" == "PING" ]
