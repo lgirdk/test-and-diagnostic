@@ -23,23 +23,7 @@ if [ -f /etc/device.properties ];then
 source /etc/device.properties
 fi
 
-
-T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
-
-t2CountNotify() {
-    if [ -f $T2_MSG_CLIENT ]; then
-        marker=$1
-        $T2_MSG_CLIENT  "$marker" "1"
-    fi
-}
-
-t2ValNotify() {
-    if [ -f $T2_MSG_CLIENT ]; then
-        marker=$1
-        shift
-        $T2_MSG_CLIENT "$marker" "$*"
-    fi
-}
+source /lib/rdk/t2Shared_api.sh
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
@@ -796,6 +780,7 @@ resetNeeded()
             elif [ "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" == "CcspWifiSsp" ]
             then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+		t2CountNotify "SYS_SH_WIFIAGENT_restart"
                 cd /usr/ccsp/wifi/
                 $BINPATH/CcspWifiSsp -subsys $Subsys
                 cd -
@@ -845,6 +830,7 @@ resetNeeded()
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" == "PsmSsp" ]
             then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+		t2CountNotify "SYS_SH_PSMProcess_restart"
                 cd /usr/ccsp
                 $BINPATH/PsmSsp -subsys $Subsys
                 cd -
