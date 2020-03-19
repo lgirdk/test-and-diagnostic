@@ -28,6 +28,7 @@ SYSCFG_FILE=$SYSCFG_TMP_LOCATION/syscfg.db
 
 source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
+source /lib/rdk/t2Shared_api.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 # skipping the run if uptime is lessthan 15 mins to avoid the race condtion 
@@ -78,6 +79,7 @@ if [ $? != 0 ]; then
 			SelfHealScript_PID=`pidof resource_monitor.sh`
 			if [ "$SelfHealScript_PID" == "" ]; then
 				echo_t "Restarting resource monitor script"
+				t2CountNotify "SYS_SH_ResourceMonitor_restart"
 				$TAD_PATH/resource_monitor.sh & 
 			fi
 		fi

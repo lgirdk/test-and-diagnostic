@@ -288,6 +288,7 @@ runPingTest()
             if [ "$IPv6_Gateway_addr" == "" ]
               	then
                   	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
+			 t2CountNotify "SYS_INFO_NoIPv6_Address"
                	else
                       echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address failed."
                       t2CountNotify "RF_ERROR_IPV6PingFailed"
@@ -321,6 +322,7 @@ runPingTest()
                       if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
                       then
                           echo_t "EROUTER_DHCP_STATUS:Rebinding"
+			  t2CountNotify "RF_ERROR_DHCP_Rebinding"
                       fi
                 fi
 
@@ -338,6 +340,7 @@ runPingTest()
 		            echo_t "PING_FAILED:$IPv6_Gateway_addr"
                 else
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
+		    t2CountNotify "SYS_INFO_NoIPv6_Address"
                 fi
 		
 		if [ `getCorrectiveActionState` = "true" ]
