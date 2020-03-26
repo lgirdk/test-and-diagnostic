@@ -53,7 +53,7 @@ then
     echo "Executing run_speedtest.sh for xb6t/xb7t" > /dev/console
     sh /etc/speedtest/run_speedtest.sh
   fi
-elif [ "$BOX_TYPE" = TCCBR ] && [ "$MODEL_NUM" = CGA4131COM ]
+elif [ "$BOX_TYPE" = TCCBR ]
 then
   if [ "x$ST_CLIENT_TYPE" = 'x1' ]
   then
