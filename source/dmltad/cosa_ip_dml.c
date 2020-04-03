@@ -71,6 +71,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_ip_dml.h"
 #include "diag.h"
+#include "ansc_string_util.h"
 
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
@@ -1780,7 +1781,8 @@ IPPing_SetParamUlongValue
     )
 {
     diag_cfg_t                      cfg;
-
+    #define MIN 1
+    #define MAX 4
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
@@ -1794,7 +1796,12 @@ IPPing_SetParamUlongValue
     }
 
     if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
-        cfg.cnt = uValue;
+    {
+        if((uValue<MIN) || (uValue>MAX))
+            return FALSE;
+        else
+            cfg.cnt = uValue;
+    }
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
         cfg.timo = uValue / 1000;
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
@@ -1860,6 +1867,10 @@ IPPing_SetParamStringValue
     diag_cfg_t cfg;
 
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+        return FALSE;
+
+    /* check if pString doesn't hold null or whitespaces */
+    if(AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
     if( AnscEqualString(ParamName, "Interface", TRUE))
@@ -2524,6 +2535,10 @@ TraceRoute_SetParamStringValue
     diag_cfg_t                      cfg;
 
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+        return FALSE;
+   
+    /* check if strValue doesn't hold null or whitespaces */
+    if(AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
     /* check the parameter name and set the corresponding value */
