@@ -1043,6 +1043,8 @@ case $SELFHEAL_TYPE in
         if [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
         then
             rcount=0
+            OPEN_24=`dmcli eRT getv Device.WiFi.SSID.5.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
+            OPEN_5=`dmcli eRT getv Device.WiFi.SSID.6.Enable | grep value | cut -f3 -d : | cut -f2 -d" "`
             #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
             #If they are not present below code shall re-create them
             #l2sd0.102 case , also adding a strict rule that they are up, since some
@@ -1079,10 +1081,12 @@ case $SELFHEAL_TYPE in
             else
                 echo_t "XfinityWifi is enabled and l2sd0.102 is present"
             fi
-            else                    
+            else
+                if [ "$OPEN_24" = "true" ]; then
                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
                    rcount=1
+                fi
             fi
 
             #l2sd0.103 case
@@ -1119,10 +1123,12 @@ case $SELFHEAL_TYPE in
             else
                 echo_t "Xfinitywifi is enabled and l2sd0.103 is present"
             fi
-            else                      
-                  echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
-                  t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                  rcount=1
+            else
+                if [ "$OPEN_5" = "true" ]; then                  
+                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
+                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                    rcount=1
+                fi
             fi
 
             #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
