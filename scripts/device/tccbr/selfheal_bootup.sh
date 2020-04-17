@@ -383,7 +383,6 @@ fi
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
 		echo_t "Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
-		t2CountNotify "SYS_ERROR_PSMCrash_reboot"
 		echo_t "SET succeeded"
 		touch $HAVECRASH		
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
@@ -428,7 +427,6 @@ fi
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
 		   then
 			   echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
-			   t2CountNotify "SYS_ERROR_brlan0_not_created"
 			   ipv4_status=`sysevent get ipv4_4-status`
 			   lan_status=`sysevent get lan-status`
 
