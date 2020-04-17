@@ -438,7 +438,6 @@ case $SELFHEAL_TYPE in
             if [ "$Check_If_Erouter_Exists" = "" ] && [ $wan_exists -ne 0 ];then
                 echo_t "RDKB_REBOOT : Erouter0 interface is not up ,Rebooting device"
                 echo_t "Setting Last reboot reason Erouter_Down"
-		t2CountNotify "SYS_ERROR_ErouterDown_reboot"
                 reason="Erouter_Down"
                 rebootCount=1
                 rebootNeeded RM "" $reason $rebootCount
@@ -573,7 +572,6 @@ case $SELFHEAL_TYPE in
             TR69_PID=`pidof CcspTr069PaSsp`
             if [ "$TR69_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
-		t2CountNotify "SYS_SH_TR69Restart"
                 resetNeeded TR69 CcspTr069PaSsp
             fi
         fi
@@ -627,7 +625,6 @@ case $SELFHEAL_TYPE in
                 SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
                 if [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]];then
                     echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-		    t2CountNotify "SYS_SH_SNMP_NotRunning"
                     resetNeeded snmp snmp_subagent
                 fi
             fi
@@ -990,7 +987,7 @@ case $SELFHEAL_TYPE in
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
-	    resetNeeded lm CcspLMLite
+            resetNeeded lm CcspLMLite
 
         fi
 
@@ -1014,7 +1011,6 @@ case $SELFHEAL_TYPE in
         SNMP_PID=`pidof snmp_subagent`
         if [ "$SNMP_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
-	    t2CountNotify "SYS_SH_SNMP_NotRunning"	    
             resetNeeded snmp snmp_subagent
         fi
     ;;
@@ -1037,7 +1033,6 @@ then
 	if [ "$HOTSPOT_PID" = "" ]; then
            if [ ! -f /tmp/tunnel_destroy_flag ] ; then
 		echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
-		t2CountNotify "WIFI_SH_hotspot_restart"
 		resetNeeded "" CcspHotspot
            fi
 	fi
@@ -1244,7 +1239,6 @@ case $SELFHEAL_TYPE in
             if [ "$DROPBEAR_ENABLE" == "" ]
             then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-        	t2CountNotify "SYS_SH_DhcpArp_restart"
                 dropbear -E -s -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
             fi
         fi
@@ -1255,7 +1249,6 @@ case $SELFHEAL_TYPE in
         DROPBEAR_PID=`pidof dropbear`
         if [ "$DROPBEAR_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-            t2CountNotify "SYS_SH_DhcpArp_restart"
             sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
         fi
         if [ -f "/nvram/ETHWAN_ENABLE" ];then
@@ -1384,7 +1377,6 @@ if [ "$thisPARODUS_PID" != "" ]; then
                 # parodus connection health file has a recorded
                 # time stamp that is > 30 minutes old, seems parodus conn is stuck
                 kill_parodus_msg="Parodus Connection TimeStamp Expired."
-		t2CountNotify "SYS_ERROR_parodus_TimeStampExpired"
             fi
             time_limit=$(($conn_start_time+900))
             if [ $time_now_val -ge $time_limit ]; then
@@ -1398,7 +1390,6 @@ if [ "$thisPARODUS_PID" != "" ]; then
                 ppid=`pidof parodus`
                 if [ "$ppid" != "" ]; then
                   echo_t "$kill_parodus_msg Killing parodus process."
-		  t2CountNotify "SYS_SH_Parodus_Killed"
                   # want to generate minidump for further analysis hence using signal 11
                   kill -11 $ppid
                   sleep 1  
@@ -1409,7 +1400,6 @@ if [ "$thisPARODUS_PID" != "" ]; then
                 ppid=`pidof parodus`
                 if [ "$ppid" != "" ]; then
                   echo "[`getDateTime`] $kill_parodus_msg Killing parodus process."
-		  t2CountNotify "SYS_SH_Parodus_Killed"
                   # want to generate minidump for further analysis hence using signal 11
                   systemctl kill --signal=11 parodus.service
                 fi
@@ -1428,7 +1418,6 @@ case $SELFHEAL_TYPE in
             if [ "$DROPBEAR_ENABLE" == "" ]
             then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-        	t2CountNotify "SYS_SH_DhcpArp_restart"
                 DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
                 DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
                 if [ ! -d '/tmp/.dropbear' ]; then
@@ -1520,10 +1509,6 @@ case $SELFHEAL_TYPE in
         CORE_TMP=`ls /tmp | grep core.`
         if [ "$CORE_TMP" != "" ]; then
             echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
-	    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
-	    then
-	 	t2CountNotify "SYS_ERROR _snmpSubagentcrash"
-	    fi
             CORE_COUNT=`ls /tmp | grep core. | wc -w`
             echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
         fi
@@ -1548,10 +1533,6 @@ case $SELFHEAL_TYPE in
         CORE_TMP=`ls /tmp | grep core.`
         if [ "$CORE_TMP" != "" ]; then
             echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
-	    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
-	    then
-		t2CountNotify "SYS_ERROR _snmpSubagentcrash"
-	    fi
             CORE_COUNT=`ls /tmp | grep core. | wc -w`
             echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
         fi
@@ -1569,7 +1550,6 @@ then
     if [ ! -f "$SyseventdCrashed"  ] && [ "$rebootCounter" != "1" ] 
     then
         echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window."
-	t2CountNotify "SYS_ERROR_syseventdCrashed"
         touch $SyseventdCrashed
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
@@ -1629,10 +1609,6 @@ case $SELFHEAL_TYPE in
         CORE_TMP=`ls /tmp | grep core.`
         if [ "$CORE_TMP" != "" ]; then
             echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
-	    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
-	    then
-		t2CountNotify "SYS_ERROR _snmpSubagentcrash"
-	    fi
             CORE_COUNT=`ls /tmp | grep core. | wc -w`
             echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
         fi
@@ -1753,7 +1729,6 @@ case $SELFHEAL_TYPE in
                     if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
                     then
                         echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate brlan0 interface"
-			t2CountNotify "SYS_ERROR_brlan0_not_created"
                         logNetworkInfo
 
                         ipv4_status=`sysevent get ipv4_4-status`
@@ -1808,7 +1783,6 @@ case $SELFHEAL_TYPE in
                 if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]
                 then
                     echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
-		    t2CountNotify "SYS_ERROR_brlan0_not_created"
                     logNetworkInfo
 
                     ipv4_status=`sysevent get ipv4_4-status`
@@ -1889,7 +1863,6 @@ case $SELFHEAL_TYPE in
         if [ "$MESH_ENABLE" = "true" ]
         then
             echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
-	    t2CountNotify "WIFI_INFO_mesh_enabled" 
 
             # Fetch mesh tunnels from the brlan0 bridge if they exist
             brctl0_ifaces=`brctl show brlan0 | egrep "pgd"`
@@ -2081,7 +2054,6 @@ else
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
                 then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-		    t2CountNotify "SYS_SH_PAM_Restart"
                     PANDM_PID=`pidof CcspPandMSsp`
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 $PANDM_PID
@@ -2105,7 +2077,6 @@ else
                 cr_timeout=`echo $cr_query | grep "$CCSP_ERR_TIMEOUT"`
                 if [ "$cr_timeout" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-		    t2CountNotify "SYS_SH_PAM_Restart"
                     PANDM_PID=`pidof CcspPandMSsp`
                     rm -rf /tmp/pam_initialized
                     systemctl restart CcspPandMSsp.service
@@ -2141,7 +2112,6 @@ case $SELFHEAL_TYPE in
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
                 then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-		    t2CountNotify "SYS_SH_PAM_Restart"
                     PANDM_PID=`pidof CcspPandMSsp`
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 $PANDM_PID
@@ -2209,7 +2179,6 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" == "false" ]; then
             SSID_DISABLED_2G=1
             echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             t2CountNotify "WIFI_INFO_2G_DISABLED"
-	    t2CountNotify "SYS_INFO_2G_DISABLED"
         fi
     else
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
@@ -2691,7 +2660,6 @@ if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$BR_MODE" == "0" ]; then
 
         echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
-	t2CountNotify "SYS_SH_Zebra_restart"
         /etc/utopia/registration.d/20_routing restart
         sysevent set zebra-restart
     fi
@@ -2742,10 +2710,6 @@ case $SELFHEAL_TYPE in
         if [ "$WAN_STATUS" != "started" ]
         then
             echo_t "WAN_STATUS : wan-status is $WAN_STATUS"
-	    if [ "$WAN_STATUS" = "stopped" ]
-            then
-                t2CountNotify "RF_ERROR_WAN_stopped"
-            fi
         fi
     ;;
     "TCCBR")
@@ -2893,14 +2857,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
 
             if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-		t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                 wan_dhcp_client_v4=0
             fi
         ;;
         "TCCBR")
             if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-		t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                 wan_dhcp_client_v4=0
             fi
         ;;
@@ -2914,13 +2876,11 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
                 #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                 if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-		    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                     wan_dhcp_client_v4=0
                 fi
             else
                 if [ "x$check_wan_dhcp_client_v4" = "x" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-		    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                     wan_dhcp_client_v4=0
                 fi
             fi
@@ -2933,7 +2893,6 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
             "BASE"|"TCCBR")
                 if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-		    t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
                     wan_dhcp_client_v6=0
                 fi
             ;;
@@ -2942,13 +2901,11 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ];then
                     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                     if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-			t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
                         wan_dhcp_client_v6=0
                     fi
                 else
                     if [ "x$check_wan_dhcp_client_v6" = "x" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-			t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
                         wan_dhcp_client_v6=0
                     fi
                 fi
@@ -3059,7 +3016,6 @@ case $SELFHEAL_TYPE in
         if [ "$MESH_ENABLE" = "true" ]
         then
             echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
-            t2CountNotify  "WIFI_INFO_mesh_enabled"
 
             # Fetch mesh tunnels from the brlan0 bridge if they exist
             brctl0_ifaces=`brctl show brlan0 | egrep "pgd"`

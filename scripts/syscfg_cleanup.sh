@@ -19,7 +19,6 @@
 ##########################################################################
 source /etc/device.properties
 source /etc/utopia/service.d/log_capture_path.sh
-source /lib/rdk/t2Shared_api.sh
 
 CRONTAB_DIR="/var/spool/cron/crontabs/"
 CRON_FILE_BK="/tmp/crontab.txt"
@@ -88,7 +87,6 @@ check_cleanup_brlan_alias=`grep tr_brlan0 $SYSCFG_DB_FILE | grep "_alias" `
 #Check that cleanup is successful or not
 if [ "$check_cleanup_erouter_inst_num" = "" ] && [ "$check_cleanup_erouter_alias" = "" ] && [ "$check_cleanup_brlan_inst_num" = "" ] && [ "$check_cleanup_brlan_alias" = "" ] ;then
 	echo "Database clean up success"
-	t2CountNotify "SYS_INFO_DBCleanup"
         touch /nvram/syscfg_clean
 else
 	echo "Database clean up failed"

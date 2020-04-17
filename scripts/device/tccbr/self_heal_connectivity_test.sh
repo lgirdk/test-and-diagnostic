@@ -264,7 +264,6 @@ runPingTest()
                       if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
                       then
                           echo_t "EROUTER_DHCP_STATUS:Rebinding"
-			  t2CountNotify "RF_ERROR_DHCP_Rebinding"
                       fi
                 fi
 
@@ -281,7 +280,6 @@ runPingTest()
 		            t2CountNotify "RF_ERROR_IPV6PingFailed"
                 else
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
-		    t2CountNotify "SYS_INFO_NoIPv6_Address"
                 fi
 
 		echo "IPERROR_Ping: IP_Host=[$IPv6_Gateway_addr], Ping_Error = [$output_ipv6]"	
