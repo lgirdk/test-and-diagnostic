@@ -477,28 +477,39 @@ fi
 
 	fi
 
+    BR_MODE=0
+    bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+    bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+    if [ "$bridgeSucceed" != "" ]
+    then
+       isBridging=`echo $bridgeMode | grep router`
+       if [ "$isBridging" = "" ]
+       then
+           BR_MODE=1
+       fi
+    fi
+
     #Check whether dnsmasq is running or not
-    DNS_PID=`pidof dnsmasq`
+    DNS_PID=`pidof dnsmasq`    
     if [ "$DNS_PID" == "" ]
     then
-          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
-          t2CountNotify "SYS_SH_dnsmasq_restart"
+          InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
+          if [ "x$InterfaceInConf" = "x" ] && [ $BR_MODE -eq 1 ] ; then
+             if [ ! -f /tmp/dnsmaq_noiface ]; then 
+                 echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                 touch /tmp/dnsmaq_noiface
+             fi
+          else
+              echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
+              t2CountNotify "SYS_SH_dnsmasq_restart"
+          fi
     else
           brlan0up=`cat /var/dnsmasq.conf | grep brlan0`
-
+      if [ -f /tmp/dnsmaq_noiface ]; then
+          rm -rf /tmp/dnsmasq_noiface
+      fi
 	  IsAnyOneInfFailtoUp=0	
-	  BR_MODE=0
-	  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-          bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-          if [ "$bridgeSucceed" != "" ]
-          then
-               isBridging=`echo $bridgeMode | grep router`
-               if [ "$isBridging" = "" ]
-               then
-                   BR_MODE=1
-               fi
-          fi
-
+	
 	  if [ $BR_MODE -eq 0 ]
 	  then
 			if [ "$brlan0up" == "" ]

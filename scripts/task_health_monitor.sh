@@ -2398,8 +2398,22 @@ fi
 if [ "$thisWAN_TYPE" == "EPON" ]; then
     DNS_PID=`pidof dnsmasq`
     if [ "$DNS_PID" == "" ];then
-        echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
-        t2CountNotify "SYS_SH_dnsmasq_restart"
+        InterfaceInConf=""
+        Bridge_Mode_t=`syscfg get bridge_mode`
+        InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
+        if [ "x$InterfaceInConf" = "x" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+            if [ ! -f /tmp/dnsmaq_noiface ]; then
+                echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                touch /tmp/dnsmaq_noiface
+            fi
+        else
+            echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+            t2CountNotify "SYS_SH_dnsmasq_restart"
+        fi
+    else
+         if [ -f /tmp/dnsmaq_noiface ]; then
+            rm -rf /tmp/dnsmaq_noiface
+         fi
     fi
     checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -2446,8 +2460,18 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
     DNS_PID=`pidof dnsmasq`
     if [ "$DNS_PID" == "" ]
     then
-        echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
-        t2CountNotify "SYS_SH_dnsmasq_restart"
+        InterfaceInConf=""
+        Bridge_Mode_t=`syscfg get bridge_mode`
+        InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
+        if [ "x$InterfaceInConf" = "x" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+            if [ ! -f /tmp/dnsmaq_noiface ]; then
+                echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                touch /tmp/dnsmaq_noiface
+            fi
+        else
+            echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+            t2CountNotify "SYS_SH_dnsmasq_restart"
+        fi
     else
         brlan0up=`grep brlan0 /var/dnsmasq.conf`
         case $SELFHEAL_TYPE in
@@ -2474,6 +2498,9 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
             ;;
         esac
 
+        if [ -f /tmp/dnsmaq_noiface ]; then
+            rm -rf /tmp/dnsmaq_noiface
+        fi
         IsAnyOneInfFailtoUp=0
 
         if [ $BR_MODE -eq 0 ]

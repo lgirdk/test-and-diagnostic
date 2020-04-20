@@ -629,8 +629,6 @@ if [ "$WAN_TYPE" != "EPON" ]; then
     DNS_PID=`pidof dnsmasq`
     if [ "$DNS_PID" == "" ]
     then
-          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
-          t2CountNotify "SYS_SH_dnsmasq_restart"
 		  BR_MODE=0
 		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
 			  bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
@@ -643,6 +641,17 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				   fi
 			  fi
 
+              InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
+              if [ "x$InterfaceInConf" = "x" ] && [ $BR_MODE -eq 1 ] ; then
+                    if [ ! -f /tmp/dnsmaq_noiface ]; then
+                        echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                        touch /tmp/dnsmaq_noiface
+                    fi
+              else
+                    echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
+                    t2CountNotify "SYS_SH_dnsmasq_restart"
+              fi
+
 			  if [ $BR_MODE -eq 1 ]
 			  then
 				  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Device is in bridge mode"
@@ -650,7 +659,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				  if [ "" == "`sysevent get lan_status-dhcp`" ] ; then
 					  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting lan_status-dhcp event to started"
 					  sysevent set lan_status-dhcp started
-                                          echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
+                      echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
 					  sysevent set dhcp_server-stop
 					  sysevent set dhcp_server-start
 				  fi
@@ -671,6 +680,10 @@ if [ "$WAN_TYPE" != "EPON" ]; then
              #Set some value so that dnsmasq won't restart
              infup="NA"
           fi
+
+      if [ -f /tmp/dnsmaq_noiface ]; then
+          rm -rf /tmp/dnsmasq_noiface
+      fi
 
 	  IsAnyOneInfFailtoUp=0	
 	  BR_MODE=0
