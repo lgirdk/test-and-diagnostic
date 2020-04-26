@@ -740,18 +740,8 @@ case $SELFHEAL_TYPE in
         fi
         advsec_bridge_mode=`syscfg get bridge_mode`
         DF_ENABLED=`syscfg get Advsecurity_DeviceFingerPrint`
-        case $SELFHEAL_TYPE in
-            "BASE")
-                RABID_ENABLED=`syscfg get Advsecurity_RabidEnable`
-            ;;
-            "TCCBR")
-            ;;
-            "SYSTEMD")
-                RABID_ENABLED=`syscfg get Advsecurity_RabidEnable`
-            ;;
-        esac
         if [ "$advsec_bridge_mode" != "2" ]; then
-            if [ "$DF_ENABLED" = "1" ] && [ "$RABID_ENABLED" = "1" ]; then
+            if [ "$DF_ENABLED" = "1" ]; then
                 if [ -f $ADVSEC_PATH ]
                 then
                     isADVPID=0
@@ -776,7 +766,7 @@ case $SELFHEAL_TYPE in
                             ADV_RABID_PID=`advsec_is_alive rabid`
                             if [ "$ADV_RABID_PID" = "" ] ; then
                                 if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
-                                    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
+                               	    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
                                 fi
                                 resetNeeded advsec_bin AdvSecurityRabid
                             fi
@@ -795,7 +785,7 @@ case $SELFHEAL_TYPE in
                         ;;
                     esac
                 fi  # [ -f $ADVSEC_PATH ]
-            fi  # [ "$DF_ENABLED" = "1" ] || [ "$RABID_ENABLED" = "1" ]
+            fi  # [ "$DF_ENABLED" = "1" ]
         fi  # [ "$advsec_bridge_mode" != "2" ]
     ;;
     "TCCBR")
