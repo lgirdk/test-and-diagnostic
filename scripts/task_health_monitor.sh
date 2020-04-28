@@ -3121,7 +3121,7 @@ case $SELFHEAL_TYPE in
 
         #ARRISXB6-8319
         #check if interface is down or default route is missing.
-        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+        if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
             ip route show default | grep default
             if [ $? -ne 0 ] ; then
                 ifconfig $WAN_INTERFACE up
