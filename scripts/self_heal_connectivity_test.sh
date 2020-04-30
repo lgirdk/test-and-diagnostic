@@ -182,6 +182,18 @@ runPingTest()
               then
                   IPv6_Gateway_addr=`ip -6 route list | grep "default via" | grep $WAN_INTERFACE | grep fe80 | cut -f3 -d' '`
                   echo "IPv6 default route $IPv6_Gateway_addr"
+
+		  routeEntry_global=`ip -6 route list | grep $WAN_INTERFACE | grep $erouterIP6`
+		  IPv6_Gateway_addr_global=`echo "$routeEntry_global" | cut -f1 -d\/`
+
+		  # If we don't get the Network prefix we need this additional check to
+		  # retrieve the IPv6 GW Addr , here route entry and IPv6_Gateway_addr_global(which is retrived from above execution)
+		  # are same
+		  if [ "$routeEntry_global" = "$IPv6_Gateway_addr_global" ] && [ "$routeEntry_global" != "" ]
+		  then
+		    IPv6_Gateway_addr_global =`echo $routeEntry_global | cut -f1 -d ' '`
+		  fi
+		  echo "IPv6 global route $IPv6_Gateway_addr_global"
               fi
            fi
 	fi	
@@ -263,6 +275,28 @@ runPingTest()
 		fi
 	fi
 
+	if [ "$ping6_failed" -eq 1 ] && [ "$IPv6_Gateway_addr_global" != "" ] && [ "$BOX_TYPE" != "HUB4" ]
+	then
+		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv6_Gateway_addr_global`
+		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+
+		if [ "$CHECK_PACKET_RECEIVED" != "" ]
+		then
+			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ]
+			then
+				ping6_success=1
+				PING_LATENCY="PING_LATENCY_GWIPv6:"
+				PING_LATENCY_VAL=`echo $PING_OUTPUT | awk 'BEGIN {FS="ms"} { for(i=1;i<=NF;i++) print $i}' | grep "time=" | cut -d"=" -f4`
+				PING_LATENCY_VAL=${PING_LATENCY_VAL%?};
+				echo $PING_LATENCY$PING_LATENCY_VAL|sed 's/ /,/g'
+			else
+				ping6_failed=1
+			fi
+		else
+			ping6_failed=1
+		fi
+	fi
+
     # For HUB4, Using IPOE Health Check Status
     if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" = "HUB4" ]
     then
@@ -285,7 +319,7 @@ runPingTest()
                   	 t2CountNotify "RF_ERROR_IPV4PingFailed"
                    	echo_t "PING_FAILED:$IPv4_Gateway_addr"
             fi
-            if [ "$IPv6_Gateway_addr" == "" ]
+            if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ]
               	then
                   	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
                	else
@@ -331,7 +365,7 @@ runPingTest()
 		fi
 	elif [ "$ping6_success" -ne 1 ]
 	then
-                if [ "$IPv6_Gateway_addr" != "" ]
+                if [ "$IPv6_Gateway_addr" != "" ] || [ "$IPv6_Gateway_addr_global" != "" ]
                 then
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
 		            t2CountNotify "RF_ERROR_IPV6PingFailed"
@@ -349,6 +383,7 @@ runPingTest()
 		echo_t "[RDKB_SELFHEAL] : GW IP Connectivity Test Successfull"
 		echo_t "[RDKB_SELFHEAL] : IPv4 GW  Address is:$IPv4_Gateway_addr"
 		echo_t "[RDKB_SELFHEAL] : IPv6 GW  Address is:$IPv6_Gateway_addr"
+		echo_t "[RDKB_SELFHEAL] : IPv6 GW global Address is:$IPv6_Gateway_addr_global"
 	fi	
 
 	ping4_success=0
