@@ -23,6 +23,7 @@
 
 source /etc/device.properties
 PODMAC=/tmp/podmac.txt
+source /lib/rdk/t2Shared_api.sh
 
 if [ $BOX_TYPE = "XB3" ]; then
     MAC=`rpcclient $ATOM_ARPING_IP "ifconfig eth0" | grep HWaddr | awk '{print $5}'`
@@ -61,18 +62,26 @@ if [ ! -z "$high_upload_mac" ];then
     if [ $BOX_TYPE = "XB3" ]; then
         rpcclient $ATOM_ARPING_IP "echo "High_UploadData_Usage_Client_Bytes:$high_upload_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
         rpcclient $ATOM_ARPING_IP "echo "High_UploadData_Usage_Client_MAC:$high_upload_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
+	t2ValNotify "HighUpldBytes_split" "$high_upload_bytes"
+	t2ValNotify "HighUpldMAC_split" "$high_upload_mac"
     else
         echo "High_UploadData_Usage_Client_Bytes:$high_upload_bytes" >> /rdklogs/logs/Harvesterlog.txt.0
 	echo "High_UploadData_Usage_Client_MAC:$high_upload_mac" >> /rdklogs/logs/Harvesterlog.txt.0
+	t2ValNotify "HighUpldBytes_split" "$high_upload_bytes"
+	t2ValNotify "HighUpldMAC_split" "$high_upload_mac"
     fi
 fi
 if [ ! -z "$high_download_mac" ];then
     if [ $BOX_TYPE = "XB3" ]; then
         rpcclient $ATOM_ARPING_IP "echo "High_DownloadData_Usage_Client_Bytes:$high_download_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
         rpcclient $ATOM_ARPING_IP "echo "High_DownloadData_Usage_Client_MAC:$high_download_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
+	t2ValNotify "HighDnldBytes_split" "$high_download_bytes"
+	t2ValNotify "HighDnldMAC_split" "$high_download_mac"
     else
         echo "High_DownloadData_Usage_Client_Bytes:$high_download_bytes" >> /rdklogs/logs/Harvesterlog.txt.0
         echo "High_DownloadData_Usage_Client_MAC:$high_download_mac" >> /rdklogs/logs/Harvesterlog.txt.0
+	t2ValNotify "HighDnldBytes_split" "$high_download_bytes"
+	t2ValNotify "HighDnldMAC_split" "$high_download_mac"
     fi
 fi
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist

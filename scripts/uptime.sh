@@ -69,3 +69,10 @@ echo "UPTIMEDAY:$days"
 echo "UPTIMEHR:$hours"
 echo "UPTIMEMIN:$minutes"
 
+if [ "$days" = "0" ]
+then
+	t2CountNotify "ZeroUptime"
+else
+	t2ValNotify "UPDays_split" "$days"
+	t2ValNotify "UPTIME_split" "$days"
+fi

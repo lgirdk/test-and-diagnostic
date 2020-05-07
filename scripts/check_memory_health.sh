@@ -19,6 +19,7 @@
 #######################################################################################
 
 source /etc/utopia/service.d/log_capture_path.sh
+source /lib/rdk/t2Shared_api.sh
 
 Min_Mem_Value=`syscfg get MinMemoryThreshold_Value`
 
@@ -37,6 +38,7 @@ then
 		echo_t "RDKB_MEM_HEALTH : Box is in diagnositic mode, so system not allow to clear the cache memory"				
 	else
 		echo_t "RDKB_MEM_HEALTH : System free memory reached minimum threshold , clearing the cache memory"
+		t2CountNotify "SYS_ERROR_Drop_cache"
 		sync
 		echo 1 > /proc/sys/vm/drop_caches	
 	fi
