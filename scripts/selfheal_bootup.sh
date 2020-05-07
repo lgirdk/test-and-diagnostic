@@ -449,6 +449,7 @@ fi
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
 		echo_t "Setting Last reboot reason"
 		dmcli eRT setv Device.DeviceInfo.X_RDKCENTRAL-COM_LastRebootReason string Psm_crash
+		t2CountNotify "SYS_ERROR_PSMCrash_reboot"
 		echo_t "SET succeeded"
 		touch $HAVECRASH	
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need reboot"
@@ -630,7 +631,6 @@ if [ "$WAN_TYPE" != "EPON" ]; then
     then
           echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
           t2CountNotify "SYS_SH_dnsmasq_restart"
-
 		  BR_MODE=0
 		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
 			  bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`

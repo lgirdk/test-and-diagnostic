@@ -122,7 +122,15 @@ DELAY=30
     if [ $? -eq 0 ]; then 
         t2CountNotify "SYS_ERROR_LoadAbove5"
     fi
-    
+    echo $LOAD_AVG_15 | grep -q "8\."
+    if [ $? -eq 0 ]; then
+        t2CountNotify "SYS_ERROR_LoadAbove8"
+    fi
+    echo $LOAD_AVG_15 | grep -q "9\."
+    if [ $? -eq 0 ]; then
+        t2CountNotify "SYS_ERROR_LoadAbove9"
+    fi
+
     #Record the start statistics
 
     STARTSTAT=$(getstat)
@@ -174,6 +182,7 @@ DELAY=30
 	echo_t "MPSTAT_SOFT:$MPSTAT_SOFT"
 	t2ValNotify "MPSTAT_SOFT_split" "$MPSTAT_SOFT"
 	echo_t "MPSTAT_IDLE:$MPSTAT_IDLE"
+	t2ValNotify "FreeCPU_split" "$MPSTAT_IDLE"
 
 	USER_CPU=`echo $MPSTAT_USR | cut -d'.' -f1`
 	count=`syscfg get process_memory_log_count`
