@@ -1498,98 +1498,60 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-case $SELFHEAL_TYPE in
-    "BASE")
-        # TODO: move acsd,CORE_TMP BASE code with TCCBR,SYSTEMD code!
-    ;;
-    "TCCBR")
-        #Checking if acsd is running and whether acsd core is generated or not
-	 # Check the status if 2.4GHz Wifi Radio
-        RADIO_DISBLD_2G=-1
-        Radio_1=`dmcli eRT getv Device.WiFi.Radio.1.Enable`
-        RadioExecution_1=`echo $Radio_1 | grep "Execution succeed"`
-
-        if [ "$RadioExecution_1" != "" ]
+if [[ "$MODEL_NUM" = "PX5001" || "$MODEL_NUM" = "PX5001B" || "$MODEL_NUM" = "CGA4131COM" ]]; then
+    #Checking if acsd is running and whether acsd core is generated or not
+    #Check the status if 2.4GHz Wifi Radio
+    RADIO_DISBLD_2G=-1
+    Radio_1=`dmcli eRT getv Device.WiFi.Radio.1.Enable`
+    RadioExecution_1=`echo $Radio_1 | grep "Execution succeed"`
+    if [ "$RadioExecution_1" != "" ]
+    then
+        isDisabled_1=`echo $Radio_1 | grep "false"`
+        if [ "$isDisabled_1" != "" ]
         then
-            isDisabled_1=`echo $Radio_1 | grep "false"`
-            if [ "$isDisabled_1" != "" ]
-            then
-                RADIO_DISBLD_2G=1
-            fi
+            RADIO_DISBLD_2G=1
         fi
-
-	RADIO_DISBLD_5G=-1
-        Radio_2=`dmcli eRT getv Device.WiFi.Radio.2.Enable`
-        RadioExecution_2=`echo $Radio_2 | grep "Execution succeed"`
-
-        if [ "$RadioExecution_2" != "" ]
+    fi
+    RADIO_DISBLD_5G=-1
+    Radio_2=`dmcli eRT getv Device.WiFi.Radio.2.Enable`
+    RadioExecution_2=`echo $Radio_2 | grep "Execution succeed"`
+    if [ "$RadioExecution_2" != "" ]
+    then
+        isDisabled_2=`echo $Radio_2 | grep "false"`
+        if [ "$isDisabled_2" != "" ]
         then
-            isDisabled_2=`echo $Radio_2 | grep "false"`
-            if [ "$isDisabled_2" != "" ]
-            then
-                RADIO_DISBLD_5G=1
-            fi
+            RADIO_DISBLD_5G=1
         fi
-
-        if [ "$RADIO_DISBLD_2G" -eq 1 ] && [ "$RADIO_DISBLD_5G" -eq 1 ]
-	then
-	    echo_t "[RDKB_SELFHEAL] : Radio's disabled, Skipping ACSD check"		    	
-	else   
-            ACSD_PID=`pidof acsd`
-            if [ "$ACSD_PID" = ""  ];then
-                echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
-            fi
-
-            ACSD_CORE=`ls /tmp | grep core.prog_acsd`
-            if [ "$ACSD_CORE" != "" ]; then
-                echo_t "[ACSD_CRASH/RESTART] : ACSD core has been generated inside /tmp :  $ACSD_CORE"
-                ACSD_CORE_COUNT=`ls /tmp | grep core.prog_acsd | wc -w`
-                echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp  are : $ACSD_CORE_COUNT"
-            fi
+    fi
+    if [ "$RADIO_DISBLD_2G" -eq 1 ] && [ "$RADIO_DISBLD_5G" -eq 1 ]
+    then
+        echo_t "[RDKB_SELFHEAL] : Radio's disabled, Skipping ACSD check"		    	
+    else   
+        ACSD_PID=`pidof acsd`
+        if [ "$ACSD_PID" = ""  ];then
+            echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
         fi
-
-
-        #Checking Wheteher any core is generated inside /tmp folder
-        CORE_TMP=`ls /tmp | grep core.`
-        if [ "$CORE_TMP" != "" ]; then
-            echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
-	    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
-	    then
-	 	t2CountNotify "SYS_ERROR _snmpSubagentcrash"
-	    fi
-            CORE_COUNT=`ls /tmp | grep core. | wc -w`
-            echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
+        ACSD_CORE=`ls /tmp | grep core.prog_acsd`
+        if [ "$ACSD_CORE" != "" ]; then
+            echo_t "[ACSD_CRASH/RESTART] : ACSD core has been generated inside /tmp :  $ACSD_CORE"
+            ACSD_CORE_COUNT=`ls /tmp | grep core.prog_acsd | wc -w`
+            echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp  are : $ACSD_CORE_COUNT"
         fi
-    ;;
-    "SYSTEMD")
-        #Checking if acsd is running and whether acsd core is generated or not
-        if [[ "$MODEL_NUM" = "PX5001" || "$MODEL_NUM" = "PX5001B" ]]; then
-            ACSD_PID=`pidof acsd`
-            if [ "$ACSD_PID" = ""  ];then
-                echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
-            fi
+    fi
+fi
 
-            ACSD_CORE=`ls /tmp | grep core.acsd`
-            if [ "$ACSD_CORE" != "" ]; then
-                echo_t "[ACSD_CRASH/RESTART] : ACSD core has been generated inside /tmp :  $ACSD_CORE"
-                ACSD_CORE_COUNT=`ls /tmp | grep core.acsd | wc -w`
-                echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp  are : $ACSD_CORE_COUNT"
-            fi
-        fi
+#Checking Wheteher any core is generated inside /tmp folder
+CORE_TMP=`ls /tmp | grep core.`
+if [ "$CORE_TMP" != "" ]; then
+    echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
+    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
+    then
+        t2CountNotify "SYS_ERROR _snmpSubagentcrash"
+    fi
+    CORE_COUNT=`ls /tmp | grep core. | wc -w`
+    echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
+fi
 
-        #Checking Wheteher any core is generated inside /tmp folder
-        CORE_TMP=`ls /tmp | grep core.`
-        if [ "$CORE_TMP" != "" ]; then
-            echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
-	    if [ "$CORE_TMP"="snmp_subagent.core.gz" ]
-	    then
-		t2CountNotify "SYS_ERROR _snmpSubagentcrash"
-	    fi
-            CORE_COUNT=`ls /tmp | grep core. | wc -w`
-            echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
-        fi
-    ;;
-esac
 
 # Checking syseventd PID
 SYSEVENT_PID=`pidof syseventd`
