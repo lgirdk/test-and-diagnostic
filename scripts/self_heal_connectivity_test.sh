@@ -191,7 +191,7 @@ runPingTest()
 		  # are same
 		  if [ "$routeEntry_global" = "$IPv6_Gateway_addr_global" ] && [ "$routeEntry_global" != "" ]
 		  then
-		    IPv6_Gateway_addr_global =`echo $routeEntry_global | cut -f1 -d ' '`
+		    IPv6_Gateway_addr_global=`echo $routeEntry_global | cut -f1 -d ' '`
 		  fi
 		  echo "IPv6 global route $IPv6_Gateway_addr_global"
               fi
