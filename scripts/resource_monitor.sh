@@ -167,7 +167,7 @@ do
 			Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
 			Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
 			echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
-			t2ValNotify "CPU load at 100, top process:" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+			t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 			rm -rf /tmp/Process_info.txt
 			touch /tmp/CPUUsageReachedMAXThreshold
 		fi
@@ -253,7 +253,7 @@ do
 				Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
 				Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
 				echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
-				t2ValNotify "CPU load at 100, top process:" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+				t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 				rm -rf /tmp/Process_info.txt
 				touch /tmp/CPU5MinsUsageReachedMAXThreshold
 			fi
