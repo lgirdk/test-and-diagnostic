@@ -46,7 +46,7 @@
 
 #define TRACERT_DEF_CNT     3
 #define TRACERT_DEF_TIMO    5
-#define TRACERT_DEF_SIZE    38
+#define TRACERT_DEF_SIZE    64
 #define TRACERT_DEF_MAXHOP  30
 
 static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *stat);
