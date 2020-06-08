@@ -1930,7 +1930,6 @@ esac
 case $SELFHEAL_TYPE in
     "BASE")
         SSID_DISABLED=0
-        BR_MODE=0
         ssidEnable=`dmcli eRT getv Device.WiFi.SSID.2.Enable`
         ssidExecution=`echo $ssidEnable | grep "Execution succeed"`
         if [ "$ssidExecution" != "" ]
@@ -1957,7 +1956,6 @@ case $SELFHEAL_TYPE in
     "TCCBR")
         if [ "$WiFi_Flag" == "false" ]; then
             SSID_DISABLED=0
-            BR_MODE=0
             ssidEnable=`dmcli eRT getv Device.WiFi.SSID.2.Enable`
             ssidExecution=`echo $ssidEnable | grep "Execution succeed"`
             if [ "$ssidExecution" != "" ]
@@ -1987,7 +1985,6 @@ case $SELFHEAL_TYPE in
         #Restart the WIFI if initialization is not done with in 15mins of poweron.
         if [ "$WiFi_Flag" == "false" ]; then
             SSID_DISABLED=0
-            BR_MODE=0
             if [ -f "/tmp/wifi_initialized" ]
             then
                 echo_t "[RDKB_SELFHEAL] : WiFi Initialization done"
@@ -2027,6 +2024,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+BR_MODE=0
 bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
 # RDKB-6895
 bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
