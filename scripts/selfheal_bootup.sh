@@ -774,3 +774,19 @@ else
 	echo_t "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
 fi
 
+#Temporary selfheal. Needs to be removed after ARRISXB6-11395 is fixed.
+if [ "$MODEL_NUM" = "TG3482G" ];then
+	Host_Count=0
+	Host_Count=`dmcli eRT getv Device.Hosts.HostNumberOfEntries | grep value | cut -f3 -d : | cut -f2 -d" "`
+	echo_t "Host_Count:$Host_Count"
+
+	if [ $Host_Count -gt 0 ];then
+		host_active_success=`dmcli eRT getv Device.Hosts.Host.1.Active | grep "Execution succeed"`
+		if [ "$host_active_success" == "" ];then
+			echo_t "RDKB_SELFHEAL_BOOTUP : Restart LMLite"
+			systemctl restart CcspLMLite.service
+		fi
+	fi
+
+fi
+
