@@ -740,54 +740,53 @@ case $SELFHEAL_TYPE in
             resetNeeded "" CcspHomeSecurity
         fi
         fi
+
+        isADVPID=0
+        case $SELFHEAL_TYPE in
+            "BASE")
+            # CcspAdvSecurity
+            ADV_PID=`pidof CcspAdvSecuritySsp`
+            if [ "$ADV_PID" = "" ] ; then
+                echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
+                resetNeeded advsec CcspAdvSecuritySsp
+                isADVPID=1
+            fi
+            ;;
+            "TCCBR")
+            ;;
+            "SYSTEMD")
+            ;;
+        esac
         advsec_bridge_mode=`syscfg get bridge_mode`
         DF_ENABLED=`syscfg get Advsecurity_DeviceFingerPrint`
         if [ "$advsec_bridge_mode" != "2" ]; then
-            if [ "$DF_ENABLED" = "1" ]; then
-                if [ -f $ADVSEC_PATH ]
-                then
-                    isADVPID=0
-                    case $SELFHEAL_TYPE in
-                        "BASE")
-                            # CcspAdvSecurity
-                            ADV_PID=`pidof CcspAdvSecuritySsp`
-                            if [ "$ADV_PID" = "" ] ; then
-                                echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
-                                resetNeeded advsec CcspAdvSecuritySsp
-                                isADVPID=1
+            if [ -f $ADVSEC_PATH ]
+            then
+                if [ $isADVPID -eq 0 ] && [ "$DF_ENABLED" = "1" ]; then
+                    if [ ! -f $ADVSEC_INITIALIZING ]
+                    then
+                        ADV_RABID_PID=`advsec_is_alive rabid`
+                        if [ "$ADV_RABID_PID" = "" ] ; then
+                            if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
+                                echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
                             fi
-                        ;;
-                        "TCCBR")
-                        ;;
-                        "SYSTEMD")
-                        ;;
-                    esac
-                    if [ $isADVPID -eq 0 ]; then
-                        if [ ! -f $ADVSEC_INITIALIZING ]
-                        then
-                            ADV_RABID_PID=`advsec_is_alive rabid`
-                            if [ "$ADV_RABID_PID" = "" ] ; then
-                                if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
-                               	    echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
-                                fi
-                                resetNeeded advsec_bin AdvSecurityRabid
-                            fi
+                            resetNeeded advsec_bin AdvSecurityRabid
                         fi
                     fi
-                else
-                    case $SELFHEAL_TYPE in
-                        "BASE")
-                            if [[ "$MODEL_NUM" = "DPC3941" ]]; then
-                                /usr/sbin/cujo_download.sh &
-                            fi
-                        ;;
-                        "TCCBR")
-                        ;;
-                        "SYSTEMD")
-                        ;;
-                    esac
-                fi  # [ -f $ADVSEC_PATH ]
-            fi  # [ "$DF_ENABLED" = "1" ]
+                fi
+            else
+                case $SELFHEAL_TYPE in
+                    "BASE")
+                        if [[ "$MODEL_NUM" = "DPC3941" ]]; then
+                            /usr/sbin/cujo_download.sh &
+                        fi
+                    ;;
+                    "TCCBR")
+                    ;;
+                    "SYSTEMD")
+                    ;;
+                esac
+            fi  # [ -f $ADVSEC_PATH ]
         fi  # [ "$advsec_bridge_mode" != "2" ]
     ;;
     "TCCBR")

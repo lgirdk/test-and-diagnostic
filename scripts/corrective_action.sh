@@ -61,7 +61,6 @@ RDKLOGGER_PATH="/rdklogger"
 
 case $SELFHEAL_TYPE in
     "BASE")
-        ADVSEC_LAUNCH_SCRIPT=/usr/ccsp/pam/launch_adv_security.sh
         VERSION_FILE="/fss/gw/version.txt"
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
@@ -202,6 +201,38 @@ getCMMac()
         ;;
     esac
     echo "$CMMac"
+}
+
+restart_adv_security()
+{
+    export RUNTIME_BIN_DIR="/usr/ccsp/advsec"
+    export RUNTIME_LIB_PATH="/usr/lib"
+    if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+        export RUNTIME_BIN_DIR="/tmp/cujo_dnld/usr/ccsp/advsec"
+        export RUNTIME_LIB_PATH="/tmp/cujo_dnld/usr/lib"
+    fi
+
+    if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+        export PATH=$PATH:$RUNTIME_BIN_DIR
+        export LD_LIBRARY_PATH=/lib:/usr/lib:$RUNTIME_LIB_PATH
+        if [ -e $RUNTIME_BIN_DIR ]; then
+            cd $RUNTIME_BIN_DIR
+            ./CcspAdvSecuritySsp -subsys eRT. &
+            cd -
+        else
+            /usr/sbin/cujo_download.sh &
+        fi
+    else
+        if [ "$BOX_TYPE" = "XB3" ]; then
+                cd $RUNTIME_BIN_DIR
+                ./CcspAdvSecuritySsp -subsys eRT. &
+                cd -
+        else
+                echo "Device_Finger_Printing_enabled:true"
+                touch $CCSP_ADVSEC_INITIALIZED_SYSD
+                systemctl start CcspAdvSecuritySsp.service
+        fi
+    fi
 }
 
 checkConditionsbeforeAction()
@@ -910,9 +941,7 @@ resetNeeded()
                 else
                     echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 fi
-                if [ -f $ADVSEC_LAUNCH_SCRIPT ]; then
-                    $ADVSEC_LAUNCH_SCRIPT -start &
-                fi
+                restart_adv_security
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$folderName" = "advsec_bin" ]
             then
