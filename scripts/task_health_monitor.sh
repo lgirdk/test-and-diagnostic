@@ -3044,7 +3044,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
             if [ $wan_dhcp_client_v6 -eq 0 ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                 if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
-                    /etc/dibbler/dibbler-init.sh
+                    /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
                 elif [ "$WAN_TYPE" = "EPON" ]; then
