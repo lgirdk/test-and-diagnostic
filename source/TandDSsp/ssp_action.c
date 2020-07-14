@@ -85,6 +85,7 @@
 #include "ccsp_trace.h"
 #include <time.h>
 #include "cosa_plugin_api.h"
+#include "dm_pack_create_func.h"
 
 extern ULONG                            g_ulAllocatedSizePeak;
 
@@ -99,7 +100,6 @@ extern  char                            g_Subsystem[32];
 static  ANSC_HANDLE                     hDiagPlugin; /*RDKB-7459, CID-33428, global for TandDSsp lib handle*/
 static  COMPONENT_COMMON_DM             CommonDm = {0};
 
-#define  COSA_PLUGIN_XML_FILE           "/usr/ccsp/tad/TestAndDiagnostic.XML"
 
 #if defined(_ANSC_WINDOWSNT)
 #define  COSA_DIAG_PLUGIN_LIBRARY_NAME             "bisga_diagnostic.dll"
@@ -467,11 +467,11 @@ ssp_engage_tad
     }
 
     returnStatus =
-        pDslhCpeController->RegisterCcspDataModel
+        pDslhCpeController->RegisterCcspDataModel2
             (
                 (ANSC_HANDLE)pDslhCpeController,
                 CrName, /*CCSP_DBUS_INTERFACE_CR,*/             /* CCSP CR ID */
-                COSA_PLUGIN_XML_FILE,               /* Data Model XML file. Can be empty if only base data model supported. */
+                DMPackCreateDataModelXML,           /* Comcast generated code to create XML. */
                 CCSP_COMPONENT_NAME_TAD,            /* Component Name    */
                 CCSP_COMPONENT_VERSION_TAD,         /* Component Version */
                 CCSP_COMPONENT_PATH_TAD,            /* Component Path    */
