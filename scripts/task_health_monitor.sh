@@ -2752,13 +2752,8 @@ fi
 #responsible for the same. The killed processes will get restarted
 #by the later stages of this script.
 erouter0_up_check=`ifconfig $WAN_INTERFACE | grep "UP"`
-erouter_mode_check=`syscfg get last_erouter_mode`
 erouter0_globalv6_test=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d:`
-IPV6_STATUS_CHECK_GIPV6=`sysevent get ipv6-status` #Check given for non IPv6 bootfiles RDKB-27963
-networkresponse_chk="/var/tmp/networkresponse.txt" #Check given for non IPv6 bootfiles RDKB-27963
-if [ -f "$networkresponse_chk" ]; then
-    response204_chk=`cat $networkresponse_chk | grep 204`
-    if [ "x$erouter0_globalv6_test" == "x" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "x$response204_chk" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+if [ "x$erouter0_globalv6_test" == "x" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ]; then
         case $SELFHEAL_TYPE in
         "SYSTEMD")
                                 if [ "x$erouter0_up_check" == "x" ]; then
@@ -2815,11 +2810,8 @@ if [ -f "$networkresponse_chk" ]; then
                         /usr/sbin/dibbler-client stop
                 ;;
         esac
-    else
-        if [ "$IPV6_STATUS_CHECK_GIPV6" != "" ]; then
+else
         echo_t "[RDKB_SELFHEAL] : Global IPv6 is present"
-        fi
-    fi
 fi
 #Logic ends here for RDKB-25714
     wan_dhcp_client_v4=1
