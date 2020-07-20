@@ -1808,13 +1808,31 @@ IPPing_SetParamUlongValue
 
     if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
     {
+        char buf[10];
+
         if((uValue<MIN) || (uValue>MAX))
             return FALSE;
         else
             cfg.cnt = uValue;
+
+        sprintf(buf, "%lu", cfg.cnt);
+        if(syscfg_set(NULL, "IPPingNumberOfRepetitions", buf) == 0)
+        {
+            syscfg_commit();
+        }
     }
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
+    {
+        char buf[10];
+
         cfg.timo = uValue / 1000;
+
+        sprintf(buf, "%lu", cfg.timo);
+        if(syscfg_set(NULL, "IPPingTimeout", buf) == 0)
+        {
+            syscfg_commit();
+        }
+    }
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
     	{
     		char buf[256];
@@ -2506,7 +2524,17 @@ TraceRoute_SetParamUlongValue
     else if( AnscEqualString(ParamName, "DSCP", TRUE))
         cfg.tos = uValue << 2;
     else if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
+    {
+        char buf[10];
+
         cfg.maxhop = uValue;
+
+        sprintf(buf, "%lu", cfg.maxhop);
+        if(syscfg_set(NULL, "TraceRouteMaxHopCount", buf) == 0)
+        {
+            syscfg_commit();
+        }
+    }
     else
         return FALSE;
 
