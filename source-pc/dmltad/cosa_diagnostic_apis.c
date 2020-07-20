@@ -676,6 +676,7 @@ CosaDmlInputValidation
     )
 {
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+    int i;
     	
 	/*
 	  * Validate input/params 
@@ -685,14 +686,28 @@ CosaDmlInputValidation
 	  */ 
     if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
         returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,";"))// check for possible command injection 
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"&"))
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"|"))
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"'"))
-        returnStatus = ANSC_STATUS_FAILURE;
+
+    /*
+       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
+       input validation based on following possible character lists:
+
+         IPv4 - numeric, dot(.)
+         IPv6 - alpha-numeric, colon(:)
+         FQDN - alpha-numeric, hyphen(-), dot(.)
+
+       Checking that 'host' contains only characters in the above lists is
+       better than the original approach of checking for the presence of
+       certain troublesome characters.
+    */
+    for (i = 0; i < lengthof_host; i++)
+    {
+        if (!isalnum(host[i]) &&
+            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
+        {
+            returnStatus = ANSC_STATUS_FAILURE;
+            break;
+        }
+    }
 
     if(ANSC_STATUS_SUCCESS == returnStatus)
 	sprintf(wrapped_host,"'%s'",host);
