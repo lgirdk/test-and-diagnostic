@@ -82,8 +82,6 @@ int commonSyseventGet(char* key, char* value, int valLen){
     return sysevent_get(commonSyseventFd, commonSyseventToken, key, value, valLen);
 }
 
-#define DIAG_RESULT_STR_LEN 16
-
 /* XXX: if there are more instances, we may use a dynamic list to 
  * handle these instances, or with dynamic load. */
 
@@ -636,20 +634,24 @@ diag_err_t diag_stop(diag_mode_t mode)
 
     if (mode == DIAG_MD_PING)
     {
-        char result[DIAG_RESULT_STR_LEN];
         FILE *fp;
 
         if ((fp = popen("cat /var/tmp/pinging.txt | grep from | wc -l", "r")) == NULL)
+        {
             err = DIAG_ERR_INTERNAL;
+        }
         else
         {
-            if (fgets(result, sizeof(result), fp) == NULL) {
+            char result[16];
+
+            if (fgets(result, sizeof(result), fp) == NULL)
+            {
                 err = DIAG_ERR_OTHER;
             }
             else
             {
                 diag->stat.u.ping.success = atoi(result);
-                fprintf(stderr, "%s: diag->stat.u.ping.success=%d \n", __FUNCTION__, diag->stat.u.ping.success);
+                fprintf(stderr, "%s: diag->stat.u.ping.success=%d\n", __FUNCTION__, diag->stat.u.ping.success);
             }
 
             pclose(fp);
