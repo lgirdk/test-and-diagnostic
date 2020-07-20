@@ -1798,6 +1798,11 @@ IPPing_SetParamUlongValue
                 return FALSE;
             return TRUE;
         }
+        else if (uValue == DSLH_DIAG_STATE_TYPE_Canceled + 1) {
+            if (diag_stop(DIAG_MD_PING) != 0)
+                return FALSE;
+            return TRUE;
+        }
         return FALSE;
     }
 
