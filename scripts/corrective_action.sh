@@ -435,6 +435,7 @@ resetRouter()
         echo_t "RDKB_REBOOT : Reset router due to PING connectivity test failure"
 
         dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Router
+	touch /tmp/.router_reboot
 
     fi
 

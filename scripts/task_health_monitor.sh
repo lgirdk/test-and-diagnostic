@@ -1628,10 +1628,12 @@ esac
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
+    
         if [ "$WAN_TYPE" != "EPON" ]; then
             check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
             check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
-            if [ "$check_param_get_succeed" != "" ]
+ if [ ! -f /tmp/.router_reboot ]; then           
+  if [ "$check_param_get_succeed" != "" ]
             then
                 check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
                 if [ "$check_device_in_router_mode" != "" ]
@@ -1676,7 +1678,9 @@ case $SELFHEAL_TYPE in
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
                 t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
             fi
-
+	 else
+            rm -rf /tmp/.router_reboot
+	 fi
 
             # Checking whether brlan1 and l2sd0.101 interface are created properly
             if [ "$thisIS_BCI" != "yes" ]; then
@@ -1720,7 +1724,8 @@ case $SELFHEAL_TYPE in
         # Checking whether brlan0 created properly , if not recreate it
         lanSelfheal=`sysevent get lan_selfheal`
         echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
-        if [ "$lanSelfheal" != "done" ]
+ if [ ! -f /tmp/.router_reboot ]; then       
+  if [ "$lanSelfheal" != "done" ]
         then
             check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
             check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
@@ -1770,14 +1775,19 @@ case $SELFHEAL_TYPE in
         else
             echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
             t2CountNotify "SYS_SH_brlan0_restarted"
+	    sysevent set lan_selfheal ""
         fi
+     else
+        rm -rf /tmp/.router_reboot
+     fi
     ;;
     "SYSTEMD")
       if [ "$BOX_TYPE" != "HUB4" ]; then
         # Checking whether brlan0 is created properly , if not recreate it
         lanSelfheal=`sysevent get lan_selfheal`
         echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
-        if [ "$lanSelfheal" != "done" ]
+if [ ! -f /tmp/.router_reboot ]; then       
+ if [ "$lanSelfheal" != "done" ]
         then
             # Check device is in router mode
             # Get from syscfg instead of dmcli for performance reasons
@@ -1821,9 +1831,12 @@ case $SELFHEAL_TYPE in
         else
             echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
             t2CountNotify "SYS_SH_brlan0_restarted"
+	    sysevent set lan_selfheal ""
         fi
-
-        # Checking whether brlan1 interface is created properly
+    else
+       rm -rf /tmp/.router_reboot
+    fi        
+# Checking whether brlan1 interface is created properly
 
         l3netRestart=`sysevent get l3net_selfheal`
         echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
