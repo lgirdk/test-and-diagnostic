@@ -68,7 +68,6 @@
 
 **************************************************************************/
 
-#include <ctype.h>
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 #include <syscfg/syscfg.h>
@@ -735,64 +734,6 @@ CosaDmlDiagGetARPTable
 {
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
-
-ANSC_STATUS
-CosaDmlInputValidation
-    (
-        char                       *host,
-	char                       *wrapped_host,
-	int                        lengthof_host,
-	int                        sizeof_wrapped_host
-    )
-{
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
-    int i;
-    	
-	/*
-	  * Validate input/params 
-	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
-	  * we are adding 2 extra charecters here. so we need to have extra bytes 
-	  * in copied(wrapped_inputparam) string
-	  */ 
-    if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
-        returnStatus = ANSC_STATUS_FAILURE;
-
-    /*
-       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
-       input validation based on following possible character lists:
-
-         IPv4 - numeric, dot(.)
-         IPv6 - alpha-numeric, colon(:)
-         FQDN - alpha-numeric, hyphen(-), dot(.)
-
-       Checking that 'host' contains only characters in the above lists is
-       better than the original approach of checking for the presence of
-       certain troublesome characters.
-    */
-    for (i = 0; i < lengthof_host; i++)
-    {
-        if (!isalnum(host[i]) &&
-            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
-        {
-            returnStatus = ANSC_STATUS_FAILURE;
-            break;
-        }
-    }
-
-    if(ANSC_STATUS_SUCCESS == returnStatus)
-    {
-        errno_t rc = -1;
-        rc = sprintf_s(wrapped_host, sizeof_wrapped_host ,"'%s'",host);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-    }
-
-    return returnStatus;
-
-}
-
 
 /* To initialize Rxstats interface list, fetch from syscfg, if we have
 entry copy to pRxTxStats*/
