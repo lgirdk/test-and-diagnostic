@@ -148,6 +148,48 @@ static char dev_type[20];
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
+
+static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
+{
+    int i;
+    size_t len;
+    errno_t rc;
+
+    len = strlen(host);
+
+    if ((len + 2) >= sizelimit)
+        return -1;
+
+    /*
+       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
+       input validation based on following possible character lists:
+
+         IPv4 - numeric, dot(.)
+         IPv6 - alpha-numeric, colon(:)
+         FQDN - alpha-numeric, hyphen(-), dot(.)
+
+       Checking that 'host' contains only characters in the above lists
+       is better than checking for certain troublesome characters.
+    */
+    for (i = 0; i < len; i++)
+    {
+        if (!isalnum(host[i]) &&
+            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
+        {
+            return -1;
+        }
+    }
+
+    rc = sprintf_s(wrapped_host, sizelimit, "'%s'", host);
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+
+    return 0;
+}
+
+
 /***********************************************************************
  IMPORTANT NOTE:
 
@@ -2008,18 +2050,16 @@ IPPing_SetParamStringValue
     }
     else if (strcmp(ParamName, "Host") == 0)
     {
-		ANSC_STATUS             ret;
-		char wrapped_host[64]={0};
-        ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
-		if(ANSC_STATUS_SUCCESS != ret)
-			return FALSE;
-		
+        char wrapped_host[256];
+
+        if (validate_hostname(pString, wrapped_host, sizeof(wrapped_host)) != 0)
+            return FALSE;
+
         rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
         if(rc < EOK)
         {
             ERR_CHK(rc);
         }
-
     }
     else
         return FALSE;
@@ -2696,11 +2736,10 @@ TraceRoute_SetParamStringValue
     }
     else if (strcmp(ParamName, "Host") == 0)
     {
-		ANSC_STATUS             ret;
-		char wrapped_host[64]={0};
-		ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
-		if(ANSC_STATUS_SUCCESS != ret)
-			return FALSE;
+        char wrapped_host[256];
+
+        if (validate_hostname(pString, wrapped_host, sizeof(wrapped_host)) != 0)
+            return FALSE;
 
         rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
         if(rc < EOK)
