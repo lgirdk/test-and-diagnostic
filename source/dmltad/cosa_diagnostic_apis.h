@@ -197,15 +197,6 @@ CosaDmlDiagGetARPTable
         PULONG                      pulCount
     );
 
-ANSC_STATUS
-CosaDmlInputValidation
-    (
-        char                       *host,
-	char                       *wrapped_host,
-	int                        lengthof_host,
-	int                        sizeof_wrapped_host  
-    );
-
 PCOSA_DML_DIAG_ARP_TABLE
 CosaDmlDiagGetARPTablePriv
 
