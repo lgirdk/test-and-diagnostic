@@ -95,6 +95,9 @@ static diag_obj_t *diag_tracert;
 diag_pingtest_stat_t diag_pingtest_stat;
 
 diag_err_t diag_init_blocksize(void);
+diag_err_t diag_init_count(void);
+diag_err_t diag_init_interval(void);
+diag_err_t diag_init_maxhop(void);
 
 #if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #if defined (NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -586,6 +589,11 @@ diag_err_t diag_init(void)
         goto errout;
     }
 	diag_init_blocksize();
+
+    diag_init_count();
+    diag_init_interval();
+    diag_init_maxhop();
+
     return DIAG_ERR_OK;
 
 errout:
@@ -789,6 +797,51 @@ diag_err_t diag_init_blocksize(void)
     }
         
         return DIAG_ERR_OK;
+}
+
+diag_err_t diag_init_count(void)
+{
+    char buf[12];
+    diag_cfg_t cfg;
+
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+    {
+        return DIAG_ERR_PARAM;
+    }
+    syscfg_get(NULL, "IPPingNumberOfRepetitions", buf, sizeof(buf));
+    cfg.cnt = atoi(buf);
+
+    return diag_setcfg(DIAG_MD_PING, &cfg);
+}
+
+diag_err_t diag_init_interval(void)
+{
+    char buf[12];
+    diag_cfg_t cfg;
+
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+    {
+        return DIAG_ERR_PARAM;
+    }
+    syscfg_get(NULL, "IPPingTimeout", buf, sizeof(buf));
+    cfg.timo = atoi(buf);
+
+    return diag_setcfg(DIAG_MD_PING, &cfg);
+}
+
+diag_err_t diag_init_maxhop(void)
+{
+    char buf[12];
+    diag_cfg_t cfg;
+
+    if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
+    {
+        return DIAG_ERR_PARAM;
+    }
+    syscfg_get(NULL, "TraceRouteMaxHopCount", buf, sizeof(buf));
+    cfg.maxhop = atoi(buf);
+
+    return diag_setcfg(DIAG_MD_TRACERT, &cfg);
 }
 
 diag_err_t diag_pingtest_init( void )
