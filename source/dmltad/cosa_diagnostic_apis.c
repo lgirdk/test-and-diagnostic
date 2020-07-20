@@ -735,49 +735,6 @@ CosaDmlDiagGetARPTable
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
 
-ANSC_STATUS
-CosaDmlInputValidation
-    (
-        char                       *host,
-	char                       *wrapped_host,
-	int                        lengthof_host,
-	int                        sizeof_wrapped_host
-    )
-{
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
-    	
-	/*
-	  * Validate input/params 
-	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
-	  * we are adding 2 extra charecters here. so we need to have extra bytes 
-	  * in copied(wrapped_inputparam) string
-	  */ 
-    if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,";"))// check for possible command injection 
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"&"))
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"|"))
-        returnStatus = ANSC_STATUS_FAILURE;
-    else if(strstr(host,"'"))
-        returnStatus = ANSC_STATUS_FAILURE;
-
-    if(ANSC_STATUS_SUCCESS == returnStatus)
-    {
-        errno_t rc = -1;
-        rc = sprintf_s(wrapped_host, sizeof_wrapped_host ,"'%s'",host);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-    }
-
-    return returnStatus;
-
-}
-
-
 /* To initialize Rxstats interface list, fetch from syscfg, if we have
 entry copy to pRxTxStats*/
 
