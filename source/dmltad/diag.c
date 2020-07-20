@@ -99,6 +99,9 @@ static diag_obj_t *diag_tracert;
 diag_pingtest_stat_t diag_pingtest_stat;
 
 static diag_err_t diag_init_blocksize (void);
+static diag_err_t diag_init_count (void);
+static diag_err_t diag_init_interval (void);
+static diag_err_t diag_init_maxhop (void);
 
 #if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 #if defined (NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
@@ -591,6 +594,9 @@ diag_err_t diag_init(void)
     }
 
     diag_init_blocksize();
+    diag_init_count();
+    diag_init_interval();
+    diag_init_maxhop();
 
     return DIAG_ERR_OK;
 
@@ -794,6 +800,78 @@ static diag_err_t diag_init_blocksize (void)
         cfg.size = atoi(buf);
 
         if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+    }
+
+    return DIAG_ERR_OK;
+}
+
+static diag_err_t diag_init_count (void)
+{
+    char buf[12];
+
+    syscfg_get(NULL, "IPPingNumberOfRepetitions", buf, sizeof(buf));
+
+    if (buf[0] != 0)
+    {
+        diag_cfg_t cfg;
+
+        if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+
+        cfg.cnt = atoi(buf);
+
+        if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+    }
+
+    return DIAG_ERR_OK;
+}
+
+static diag_err_t diag_init_interval (void)
+{
+    char buf[12];
+
+    syscfg_get(NULL, "IPPingTimeout", buf, sizeof(buf));
+
+    if (buf[0] != 0)
+    {
+        diag_cfg_t cfg;
+
+        if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+
+        cfg.timo = atoi(buf);
+
+        if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+    }
+
+    return DIAG_ERR_OK;
+}
+
+static diag_err_t diag_init_maxhop (void)
+{
+    char buf[12];
+
+    syscfg_get(NULL, "TraceRouteMaxHopCount", buf, sizeof(buf));
+
+    if (buf[0] != 0)
+    {
+        diag_cfg_t cfg;
+
+        if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK) {
+            return DIAG_ERR_PARAM;
+        }
+
+        cfg.maxhop = atoi(buf);
+
+        if (diag_setcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK) {
             return DIAG_ERR_PARAM;
         }
     }
