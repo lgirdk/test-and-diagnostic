@@ -1918,9 +1918,14 @@ IPPing_SetParamUlongValue
             return FALSE;
         else
             cfg.cnt = uValue;
+
+        syscfg_set_u_commit (NULL, "IPPingNumberOfRepetitions", cfg.cnt);
     }
     else if (strcmp(ParamName, "Timeout") == 0)
+    {
         cfg.timo = uValue;
+        syscfg_set_u_commit (NULL, "IPPingTimeout", cfg.timo);
+    }
     else if (strcmp(ParamName, "DataBlockSize") == 0)
     {
         cfg.size = uValue;
@@ -2634,7 +2639,10 @@ TraceRoute_SetParamUlongValue
     else if (strcmp(ParamName, "DSCP") == 0)
         cfg.tos = uValue << 2;
     else if (strcmp(ParamName, "MaxHopCount") == 0)
+    {
         cfg.maxhop = uValue;
+        syscfg_set_u_commit (NULL, "TraceRouteMaxHopCount", cfg.maxhop);
+    }
     else
         return FALSE;
 
