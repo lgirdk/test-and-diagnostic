@@ -228,6 +228,24 @@
                             <syntax>uint32</syntax>
                             <notify>off</notify>
                         </parameter>
+                        <parameter>
+                            <name>AverageResponseTimeDetailed</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <notify>off</notify>
+                        </parameter>
+                        <parameter>
+                            <name>MinimumResponseTimeDetailed</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <notify>off</notify>
+                        </parameter>
+                        <parameter>
+                            <name>MaximumResponseTimeDetailed</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <notify>off</notify>
+                        </parameter>
                     </parameters>
                 </object>
                 <object>
