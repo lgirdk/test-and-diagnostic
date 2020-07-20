@@ -1662,6 +1662,12 @@ IPPing_GetParamUlongValue
         *puLong = statis.u.ping.rtt_min;
     else if (strcmp(ParamName, "MaximumResponseTime") == 0)
         *puLong = statis.u.ping.rtt_max;
+    else if (strcmp(ParamName, "AverageResponseTimeDetailed") == 0)
+        *puLong = statis.u.ping.rtt_avg * 1000;
+    else if (strcmp(ParamName, "MinimumResponseTimeDetailed") == 0)
+        *puLong = statis.u.ping.rtt_min * 1000;
+    else if (strcmp(ParamName, "MaximumResponseTimeDetailed") == 0)
+        *puLong = statis.u.ping.rtt_max * 1000;
     else
         return FALSE;
 
