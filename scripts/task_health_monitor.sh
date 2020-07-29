@@ -718,10 +718,30 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ]; then
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+          echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
+else
+   if [ "$BOX_TYPE" != "HUB4" ]; then
 
-case $SELFHEAL_TYPE in
-    "BASE"|"SYSTEMD")
+      case $SELFHEAL_TYPE in
+          "BASE"|"SYSTEMD")
+
+                HOMESEC_PID=$(pidof CcspHomeSecurity)
+                if [ "$HOMESEC_PID" = "" ]; then
+                    case $SELFHEAL_TYPE in
+                        "BASE")
+                            echo_t "RDKB_PROCESS_CRASHED : HomeSecurity_process is not running, need restart"
+                            t2CountNotify "SYS_SH_HomeSecurity_restart"
+                        ;;
+                        "TCCBR")
+                        ;;
+                        "SYSTEMD")
+                            echo_t "RDKB_PROCESS_CRASHED : HomeSecurity process is not running, need restart"
+                            t2CountNotify "SYS_SH_HomeSecurity_restart"
+                        ;;
+                    esac
+                    resetNeeded "" CcspHomeSecurity
+                fi
 
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
           echo_t "Disabling CcpsHomeSecurity for BWG "
@@ -776,6 +796,7 @@ case $SELFHEAL_TYPE in
                             resetNeeded advsec_bin AdvSecurityRabid
                         fi
                     fi
+<<<<<<< HEAD
                 fi
             else
                 case $SELFHEAL_TYPE in
@@ -798,6 +819,29 @@ esac
 
 fi #Not HUb4
 
+=======
+                else
+                    case $SELFHEAL_TYPE in
+                        "BASE")
+                            if [ "$MODEL_NUM" = "DPC3941" ]; then
+                                /usr/sbin/cujo_download.sh &
+                            fi
+                        ;;
+                        "TCCBR")
+                        ;;
+                        "SYSTEMD")
+                        ;;
+                    esac
+                fi  # [ -f $ADVSEC_PATH ]
+             fi  # [ "$advsec_bridge_mode" != "2" ]
+          ;;
+          "TCCBR")
+          ;;
+      esac
+
+   fi #Not HUb4
+fi #BWG
+>>>>>>> 306f05ed... BWGRDK-1046:CcspAdvSecurity_process is not running, need restart
 case $SELFHEAL_TYPE in
     "BASE")
     ;;
