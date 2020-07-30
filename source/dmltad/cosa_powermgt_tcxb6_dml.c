@@ -76,7 +76,7 @@ BOOL PowerManagement_GetParamBoolValue
     if( AnscEqualString(ParamName, "PciEPowerManagement", TRUE))
     {
 #if defined(_COSA_BCM_ARM_) && defined(_XB6_PRODUCT_REQ_)
-       char buff[1024]="\0";
+       char buff[1024];
        FILE *fp = popen("/bin/cat /sys/module/pcie_aspm/parameters/policy", "r");
         if (fp == NULL) {
             CcspTraceError(("Failed to open file \n" ));
@@ -84,7 +84,7 @@ BOOL PowerManagement_GetParamBoolValue
             *bValue = 0;
             return TRUE;
         }
-        if(fgets(buff,1024,fp))
+        if(fgets(buff,sizeof(buff),fp))
         {
             CcspTraceInfo(("Values are  %s \n",buff));
             if(strstr(buff,"[powersave]")!=NULL)
