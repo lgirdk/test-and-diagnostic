@@ -791,58 +791,6 @@ case $SELFHEAL_TYPE in
     ;;
     "TCCBR")
 
-        if [ "$MULTI_CORE" = "yes" ]; then
-            if [ -f $PING_PATH/ping_peer ]; then
-                ## Check Peer ip is accessible
-                loop=1
-                while [ $loop -le 3 ]
-                  do
-                    PING_RES=$(ping_peer)
-                    CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-
-                    if [ "$CHECK_PING_RES" != "" ]; then
-                        if [ $CHECK_PING_RES -ne 100 ]; then
-                            ping_success=1
-                            echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-                            break
-                        else
-                            ping_failed=1
-                        fi
-                    else
-                        ping_failed=1
-                    fi
-
-                    if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
-                        echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                        echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                    else
-                        echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                        echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                        echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-                        echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-                        reason="Peer_down"
-                        rebootCount=1
-                        setRebootreason $reason $rebootCount
-                        rebootNeeded RM ""
-
-                    fi
-                    loop=$((loop+1))
-                    sleep 5
-                  done
-            else
-                echo_t "RDKB_SELFHEAL : ping_peer command not found"
-            fi
-
-            if [ -f $PING_PATH/arping_peer ]; then
-                $PING_PATH/arping_peer
-            else
-                echo_t "RDKB_SELFHEAL : arping_peer command not found"
-            fi
-        fi
-        ########################################
-
         atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
         if [ "x$atomOnlyReboot" = "x" ]; then
             crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
@@ -1606,6 +1554,15 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+# ARRIS XB6 => MODEL_NUM=TG3482G
+# Tech CBR  => MODEL_NUM=CGA4131COM
+# Tech xb6  => MODEL_NUM=CGM4140COM
+# Tech XB7  => MODEL_NUM=CGM4331COM
+# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+# Ref: RDKB-25546
+if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+then
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
@@ -1888,7 +1845,7 @@ case $SELFHEAL_TYPE in
         fi #Not HUB4
     ;;
 esac
-
+fi
 
 #!!! TODO: merge this $SELFHEAL_TYPE block !!!
 case $SELFHEAL_TYPE in
@@ -2296,7 +2253,15 @@ if [ "$lost_and_found_enable" = "true" ]; then
     echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
 fi
 
-
+# ARRIS XB6 => MODEL_NUM=TG3482G
+# Tech CBR  => MODEL_NUM=CGA4131COM
+# Tech xb6  => MODEL_NUM=CGM4140COM
+# Tech XB7  => MODEL_NUM=CGM4331COM
+# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+# Ref: RDKB-25546
+if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+then
 #Checking whether dnsmasq is running or not and if zombie for XF3
 if [ "$thisWAN_TYPE" = "EPON" ]; then
     DNS_PID=$(pidof dnsmasq)
@@ -2469,6 +2434,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
         esac
     fi   # [ "$DNS_PID" = "" ]
 fi  # [ "$thisWAN_TYPE" != "EPON" ]
+fi
 
 case $SELFHEAL_TYPE in
     "BASE")
@@ -2498,6 +2464,15 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+# ARRIS XB6 => MODEL_NUM=TG3482G
+# Tech CBR  => MODEL_NUM=CGA4131COM
+# Tech xb6  => MODEL_NUM=CGM4140COM
+# Tech XB7  => MODEL_NUM=CGM4331COM
+# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+# Ref: RDKB-25546
+if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
@@ -2613,6 +2588,7 @@ if [ "$DIBBLER_PID" = "" ]; then
         esac
     fi
 fi
+fi
 
 #Checking the zebra is running or not
 WAN_STATUS=$(sysevent get wan-status)
@@ -2661,6 +2637,15 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+# ARRIS XB6 => MODEL_NUM=TG3482G
+# Tech CBR  => MODEL_NUM=CGA4131COM
+# Tech xb6  => MODEL_NUM=CGM4140COM
+# Tech XB7  => MODEL_NUM=CGM4331COM
+# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+# Ref: RDKB-25546
+if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+then
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=$(sysevent get wan-status)
@@ -2954,6 +2939,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
     esac
 
 fi # [ "$WAN_STATUS" = "started" ]
+fi
 
 case $SELFHEAL_TYPE in
     "BASE")
@@ -3099,6 +3085,15 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+# ARRIS XB6 => MODEL_NUM=TG3482G
+# Tech CBR  => MODEL_NUM=CGA4131COM
+# Tech xb6  => MODEL_NUM=CGM4140COM
+# Tech XB7  => MODEL_NUM=CGM4331COM
+# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+# Ref: RDKB-25546
+if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+then
 case $SELFHEAL_TYPE in
     "BASE")
     ;;
@@ -3154,7 +3149,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
 esac
-
+fi
 
 if [ $rebootDeviceNeeded -eq 1 ]; then
 

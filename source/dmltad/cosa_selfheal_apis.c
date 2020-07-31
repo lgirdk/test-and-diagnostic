@@ -422,7 +422,7 @@ CosaDmlGetSelfHealCfg(
             system("/lib/rdk/xf3_wifi_self_heal.sh &");
 #endif
 	    system("/usr/ccsp/tad/resource_monitor.sh &");
-            
+            system("/usr/ccsp/tad/selfheal_aggressive.sh &");
 	}  
 
 	memset(buf,0,sizeof(buf));

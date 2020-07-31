@@ -806,3 +806,5 @@ if [ -f "$needSelfhealReboot" ] && [ $crash_count -eq 0 ]
 then
 	rm -rf $needSelfhealReboot
 fi
+
+touch /tmp/selfheal_bootup_completed

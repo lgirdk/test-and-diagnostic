@@ -181,6 +181,10 @@ BOOL SelfHeal_SetParamBoolValue
                 memset(cmd, 0, sizeof(cmd));
                 AnscCopyString(cmd, "/usr/ccsp/tad/resource_monitor.sh &");
                 system(cmd); 
+
+                memset(cmd, 0, sizeof(cmd));
+                AnscCopyString(cmd, "/usr/ccsp/tad/selfheal_aggressive.sh &");
+                system(cmd);
 	    }
             else
 	    {
@@ -212,6 +216,19 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }   
        
+                memset(cmd, 0, sizeof(cmd));
+                memset(buf, 0, sizeof(buf));
+                sprintf(cmd, "pidof selfheal_aggressive.sh");
+                copy_command_output(cmd, buf, sizeof(buf));
+                buf[strlen(buf)] = '\0';
+
+                if (!strcmp(buf, "")) {
+	            CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
+                } else {
+	            CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
+                    sprintf(cmd, "kill -9 %s", buf);
+                    system(cmd);
+                }
 	    }
 	    pMyObject->Enable = bValue;
 	}
@@ -1749,6 +1766,21 @@ ResourceMonitor_SetParamUlongValue
         }
   
         char buf[8];
+	ULONG aggressive_interval;
+        memset(buf, 0, sizeof(buf));
+
+	syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf));
+	if( buf == NULL )
+	{
+	    AnscTraceWarning(("syscfg_get returns NULL for AggressiveInterval !\n"));
+	    return FALSE;
+	}
+	aggressive_interval = atol(buf);
+	if (uValue <= aggressive_interval)
+	{
+	    CcspTraceWarning(("resource_monitor_interval should be greater than AggressiveInterval \n"));
+	    return FALSE;
+	}
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
         if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
