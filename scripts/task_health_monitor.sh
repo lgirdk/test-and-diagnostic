@@ -51,15 +51,15 @@ case $SELFHEAL_TYPE in
         fi
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
-            ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
+            ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/advsec.sh"
         else
-            ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+            ADVSEC_PATH="/usr/ccsp/advsec/advsec.sh"
         fi
     ;;
     "TCCBR")
     ;;
     "SYSTEMD")
-        ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+        ADVSEC_PATH="/usr/ccsp/advsec/advsec.sh"
     ;;
 esac
 

@@ -50,9 +50,9 @@ case $SELFHEAL_TYPE in
         CM_INTERFACE=wan0
 
         if [ "$MODEL_NUM" = "DPC3941" ]; then
-            ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/usr/libexec/advsec.sh"
+            ADVSEC_PATH="/tmp/cujo_dnld/usr/ccsp/advsec/advsec.sh"
         else
-            ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+            ADVSEC_PATH="/usr/ccsp/advsec/advsec.sh"
         fi
 
         if [ -f $ADVSEC_PATH ]; then
@@ -66,7 +66,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         VERSION_FILE="/version.txt"
-        ADVSEC_PATH="/usr/ccsp/advsec/usr/libexec/advsec.sh"
+        ADVSEC_PATH="/usr/ccsp/advsec/advsec.sh"
 
         if [ -f $ADVSEC_PATH ]; then
             source $ADVSEC_PATH
