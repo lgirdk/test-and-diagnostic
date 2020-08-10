@@ -224,6 +224,11 @@ DELAY=30
 	then
 		echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
 		t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
+
+        echo_t "================================================================================"
+        echo_t "RDKB_TMPFS_FILELIST: Systems TempFS file list $timestamp is"
+        ls -al /tmp/
+        echo_t "================================================================================"
 	fi
 
 	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
