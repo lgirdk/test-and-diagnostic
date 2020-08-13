@@ -75,4 +75,5 @@ if [ "x$WiFi_PID" != "x" ]; then
     fi
 else
     echo "`date +'%Y-%m-%d:%H:%M:%S:%6N'` [RDKB_PLATFORM_ERROR] WiFi Agent is not running skipping getSsidNames"
+    t2CountNotify "WIFI_INFO_skipSSID"
 fi
