@@ -249,7 +249,7 @@
                     <parameters>
                         <parameter>
                             <name>DiagnosticsState</name>
-                            <type>string: None(1),Requested(2),Complete(3),Error_CannotResolveHostName(4),Error_MaxHopCountExceeded(5)</type>
+                            <type>string: None(1),Requested(2),Complete(3),Error_CannotResolveHostName(4),Error_MaxHopCountExceeded(5),Canceled(6)</type>
                             <syntax>uint32/mapped</syntax>
                             <notify>off</notify>
                             <writable>true</writable>
