@@ -2485,8 +2485,19 @@ TraceRoute_SetParamUlongValue
     if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         if (uValue == DSLH_DIAG_STATE_TYPE_Requested + 1)
+        {
             if (diag_start(DIAG_MD_TRACERT) == DIAG_ERR_OK)
+            {
                 return TRUE;
+            }
+        }
+        else if (uValue == DSLH_DIAG_STATE_TYPE_TRAC_Canceled + 1)
+        {
+            if (diag_stop(DIAG_MD_TRACERT) == DIAG_ERR_OK)
+            {
+                return TRUE;
+            }
+        }
         return FALSE;
     }
 
