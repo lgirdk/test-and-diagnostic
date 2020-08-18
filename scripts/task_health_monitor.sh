@@ -718,15 +718,15 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ]; then
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+          echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
+else
+   if [ "$BOX_TYPE" != "HUB4" ]; then
 
-case $SELFHEAL_TYPE in
-    "BASE"|"SYSTEMD")
+   case $SELFHEAL_TYPE in
+        "BASE"|"SYSTEMD")
 
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-          echo_t "Disabling CcpsHomeSecurity for BWG "
-        else
-          HOMESEC_PID=`pidof CcspHomeSecurity`
+        HOMESEC_PID=`pidof CcspHomeSecurity`
         if [ "$HOMESEC_PID" = "" ]; then
             case $SELFHEAL_TYPE in
                 "BASE")
@@ -741,7 +741,6 @@ case $SELFHEAL_TYPE in
                 ;;
             esac
             resetNeeded "" CcspHomeSecurity
-        fi
         fi
 
         isADVPID=0
@@ -791,13 +790,13 @@ case $SELFHEAL_TYPE in
                 esac
             fi  # [ -f $ADVSEC_PATH ]
         fi  # [ "$advsec_bridge_mode" != "2" ]
-    ;;
-    "TCCBR")
-    ;;
-esac
+       ;;
+       "TCCBR")
+       ;;
+   esac
 
-fi #Not HUb4
-
+   fi #Not HUb4
+fi #BWG
 case $SELFHEAL_TYPE in
     "BASE")
     ;;
