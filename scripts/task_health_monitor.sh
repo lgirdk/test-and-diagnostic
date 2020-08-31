@@ -3406,3 +3406,16 @@ if [ "$T2_ENABLE" = "true" ]; then
         ${T2_0_BIN}
     fi
 fi
+
+# Checking D process running or not
+case $SELFHEAL_TYPE in
+      "BASE"|"SYSTEMD"|"TCCBR")
+      check_D_process=`ps -w | grep " DW " | grep -v grep | wc -l`
+      if [ $check_D_process -eq 0 ]; then
+           echo_t "[RDKB_SELFHEAL] : There is no D process running in this device"
+      else
+           echo_t "[RDKB_SELFHEAL] : D process is running in this device"
+      fi
+      ;;
+esac
+
