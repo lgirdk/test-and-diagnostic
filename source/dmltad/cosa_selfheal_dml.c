@@ -186,7 +186,7 @@ BOOL SelfHeal_SetParamBoolValue
 	    {
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof self_heal_connectivity_test.sh");
+                sprintf(cmd, "pidof -x self_heal_connectivity_test.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -200,7 +200,7 @@ BOOL SelfHeal_SetParamBoolValue
     
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof resource_monitor.sh");
+                sprintf(cmd, "pidof -x resource_monitor.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 

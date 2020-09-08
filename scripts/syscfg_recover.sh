@@ -70,13 +70,13 @@ if [ $? != 0 ]; then
 
 		SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 		if [ "$SELFHEAL_ENABLE" == "true" ]; then
-			SelfHealScript_PID=`pidof self_heal_connectivity_test.sh`
+			SelfHealScript_PID=`pidof -x self_heal_connectivity_test.sh`
 			if [ "$SelfHealScript_PID" == "" ]; then
 				echo_t "Restarting selfheal connectivity script"
 				$TAD_PATH/self_heal_connectivity_test.sh &
 			fi
 
-			SelfHealScript_PID=`pidof resource_monitor.sh`
+			SelfHealScript_PID=`pidof -x resource_monitor.sh`
 			if [ "$SelfHealScript_PID" == "" ]; then
 				echo_t "Restarting resource monitor script"
 				t2CountNotify "SYS_SH_ResourceMonitor_restart"

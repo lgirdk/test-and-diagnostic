@@ -844,12 +844,12 @@ resetNeeded()
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspTandDSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                SelfHealScript_PID=$(pidof self_heal_connectivity_test.sh)
+                SelfHealScript_PID=$(pidof -x self_heal_connectivity_test.sh)
                 if [ "$SelfHealScript_PID" != "" ]; then
                     kill -9 "$SelfHealScript_PID"
                 fi
 
-                SelfHealScript_PID=$(pidof resource_monitor.sh)
+                SelfHealScript_PID=$(pidof -x resource_monitor.sh)
                 if [ "$SelfHealScript_PID" != "" ]; then
                     kill -9 "$SelfHealScript_PID"
                 fi
