@@ -95,7 +95,7 @@ case $SELFHEAL_TYPE in
         SNMPMASTERCRASHED="/tmp/snmp_cm_crashed"
         WAN_INTERFACE=$(getWanInterfaceName)
 
-        if [ ! -f /usr/bin/GetConfigFile ]; then
+        if [ "$BOX_TYPE" = "XB3" ] && [ ! -f /usr/bin/GetConfigFile ]; then
             echo "Error: GetConfigFile Not Found"
             exit
         fi
@@ -1192,7 +1192,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
 elif [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for XD4 "
@@ -1943,6 +1943,9 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+if [ "$MODEL_NUM" = "" ]; then
+	echo_t "Disabling parodus"
+else
 # Checking for parodus connection stuck issue
 # Checking parodus PID
 PARODUS_PID=$(busybox pidof parodus)
@@ -2013,6 +2016,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
             ;;
         esac
     fi
+fi
 fi
 
 #Implement selfheal mechanism for aker to restart aker process in selfheal window  in XB3 devices
@@ -2342,8 +2346,9 @@ case $SELFHEAL_TYPE in
                 rm -rf /tmp/.router_reboot
             fi
 
+            #TODO: Need to revisit this after enabling CcspHomeSecurity
             # Checking whether brlan1 and l2sd0.101 interface are created properly
-            if [ "$thisIS_BCI" != "yes" ]; then
+            if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ]; then
                 check_if_brlan1_created=$(ifconfig | grep "brlan1")
                 check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                 check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
@@ -3400,28 +3405,33 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
             fi
         else
                 brlan0up=$(grep "brlan0" /var/dnsmasq.conf)
-                case $SELFHEAL_TYPE in
-                    "BASE")
-                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-                        lnf_ifname=$(syscfg get iot_ifname)
-                        if [ "$lnf_ifname" = "l2sd0.106" ]; then
-                            lnf_ifname=$(syscfg get iot_brname)
-                        fi
-                        if [ "$lnf_ifname" != "" ]; then
-                            echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
-                            infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
-                        else
-                            echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
-                            #Set some value so that dnsmasq won't restart
-                            infup="NA"
-                        fi
-                    ;;
-                    "TCCBR")
-                    ;;
-                    "SYSTEMD")
-                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-                    ;;
-                esac
+                brlan1up="NA"
+                infup="NA"
+ 
+                #TODO: Need to revisit this after enabling CcspHomeSecurity and LnF network
+
+#               case $SELFHEAL_TYPE in
+#                   "BASE")
+#                       brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+#                       lnf_ifname=$(syscfg get iot_ifname)
+#                       if [ "$lnf_ifname" = "l2sd0.106" ]; then
+#                           lnf_ifname=$(syscfg get iot_brname)
+#                       fi
+#                       if [ "$lnf_ifname" != "" ]; then
+#                           echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
+#                           infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
+#                       else
+#                           echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
+#                           #Set some value so that dnsmasq won't restart
+#                           infup="NA"
+#                       fi
+#                   ;;
+#                   "TCCBR")
+#                   ;;
+#                   "SYSTEMD")
+#                       brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+#                   ;;
+#               esac
 
         if [ -f /tmp/dnsmaq_noiface ]; then
             rm -rf /tmp/dnsmaq_noiface
@@ -3768,11 +3778,12 @@ case $SELFHEAL_TYPE in
     "BASE")
         #Checking the ntpd is running or not
         if [ "$WAN_TYPE" != "EPON" ]; then
-            NTPD_PID=$(busybox pidof ntpd)
-            if [ "$NTPD_PID" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
-                sysevent set ntpd-restart
-            fi
+	    #TODO: Revisit when NTP daemon is enabled
+#           NTPD_PID=$(busybox pidof ntpd)
+#           if [ "$NTPD_PID" = "" ]; then
+#               echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
+#               sysevent set ntpd-restart
+#           fi
 
 
             #Checking if rpcserver is running
@@ -3958,9 +3969,14 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
                 else
-                    dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
-                    check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
-                    check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
+                    if [ "$BOX_TYPE" = "MV1" ]; then
+                        check_wan_dhcp_client_v4=$(ps aux | grep udhcpc | grep erouter)
+                        check_wan_dhcp_client_v6=$(ps aux | grep dibbler-client | grep -v grep)
+                    else
+                        dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
+                        check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
+                        check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
+                    fi
                 fi
             fi
         ;;
@@ -4047,8 +4063,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                         fi
                     else
-                        DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
-                        V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+			if [ "$BOX_TYPE" = "MV1" ]; then
+                            sysevent set dhcp_client-restart
+                        else
+                            DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+                            V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+                        fi
                     fi
                 fi
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
@@ -4060,6 +4080,10 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             if [ $wan_dhcp_client_v6 -eq 0 ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                 if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+                    /lib/rdk/dibbler-init.sh
+                    sleep 2
+                    /usr/sbin/dibbler-client start
+                elif [ "$FIRMWARE_TYPE" = "OFW" ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
