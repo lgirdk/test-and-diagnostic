@@ -25,7 +25,6 @@ TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
 BR_MODE=0
-CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
 
 #upflowed INTCS-125.patch as part of RDKB-41505.
 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
@@ -80,6 +79,12 @@ MAPT_CONFIG=`sysevent get mapt_config_flag`
 
 PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
 
+if [ "$BOX_TYPE" = "MV1" ]; then
+    CONSOLE_LOG="/rdklogs/logs/ArmConsolelog.txt.0"
+else
+    CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
+fi
+
 SELFHEAL_TYPE="BASE"
 
 case $SELFHEAL_TYPE in
@@ -117,7 +122,7 @@ case $SELFHEAL_TYPE in
         SNMPMASTERCRASHED="/tmp/snmp_cm_crashed"
         WAN_INTERFACE=$(getWanInterfaceName)
 
-        if [ ! -f /usr/bin/GetConfigFile ]; then
+        if [ "$BOX_TYPE" = "XB3" ] && [ ! -f /usr/bin/GetConfigFile ]; then
             echo "Error: GetConfigFile Not Found"
             exit
         fi
@@ -415,7 +420,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 case $SELFHEAL_TYPE in
     "BASE")
         ###########################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             wifi_check=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
             wifi_timeout=$(echo "$wifi_check" | grep "$CCSP_ERR_TIMEOUT")
             wifi_not_exist=$(echo "$wifi_check" | grep "$CCSP_ERR_NOT_EXIST")
@@ -466,11 +471,11 @@ case $SELFHEAL_TYPE in
                 SNMPv3_PID=$(busybox pidof snmpd)
                 if [ "$SNMPv3_PID" = "" ] && [ "$ENABLE_SNMPv3" = "true" ]; then
                     # Restart disconnected master and agent
-                    v3AgentPid=$(ps ww | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
+                    v3AgentPid=$(ps -aux | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
                     if [ "$v3AgentPid" != "" ]; then
                         kill -9 "$v3AgentPid"
                     fi
-                    pidOfListener=$(ps ww | grep -i "inotify" | grep 'run_snmpv3_agent.sh' | awk '{print $1}')
+                    pidOfListener=$(ps -aux | grep -i "inotify" | grep 'run_snmpv3_agent.sh' | awk '{print $1}')
                     if [ "$pidOfListener" != "" ]; then
                         kill -9 "$pidOfListener"
                     fi
@@ -482,7 +487,7 @@ case $SELFHEAL_TYPE in
                     fi
                 else
                     ### SNMPv3 sub agent self-heal ####
-                    v3AgentPid=$(ps ww | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
+                    v3AgentPid=$(ps -aux | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
                     if [ "$v3AgentPid" = "" ] && [ "$ENABLE_SNMPv3" = "true" ]; then
                         # Restart failed sub agent
                         if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
@@ -649,7 +654,7 @@ case $SELFHEAL_TYPE in
                               echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                               echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 
-                              if [ "$BOX_TYPE" = "XB3" ]; then
+                              if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
                                  if [ -f /usr/bin/rpcclient2 ] ;then
                                  echo_t "Ping to peer failed check, whether ATOM is good through RPC"
                                     RPC_RES=`rpcclient2 pwd`
@@ -691,7 +696,7 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
         fi
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
             dmesg -n 8
             atomOnlyReboot=$(dmesg | grep -i "Atom only")
             dmesg -n 5
@@ -1062,7 +1067,7 @@ case $SELFHEAL_TYPE in
 
         # Checking XdnsSsp PID
         XDNS_PID=$(busybox pidof CcspXdnsSsp)
-        if [ "$XDNS_PID" = "" ]; then
+        if [ "$XDNS_PID" = "" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
 
@@ -1077,8 +1082,8 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking snmp v2 subagent PID
-        if [ -f "/etc/SNMP_PA_ENABLE" ]; then
-            SNMP_PID=$(ps -ww | grep "snmp_subagent" | grep -v "cm_snmp_ma_2" | grep -v "grep" | awk '{print $1}')
+        if [ -f "/etc/SNMP_PA_ENABLE" ] && [ "$BOX_TYPE" != "MV2PLUS" ] && [ "$BOX_TYPE" != "MV3" ]; then
+            SNMP_PID=$(ps -aux | grep "snmp_subagent" | grep -v "cm_snmp_ma_2" | grep -v "grep" | awk '{print $2}')
             if [ "$SNMP_PID" = "" ]; then
                 if [ -f /tmp/.snmp_agent_restarting ]; then
                     echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
@@ -1099,6 +1104,16 @@ case $SELFHEAL_TYPE in
 		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
 		 resetNeeded notify-comp notify_comp
 	 fi
+
+        # Not needed for MV1 as wifi runs on ATOM side in MV1
+        if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
+            # Checking CcspWifiSsp PID
+            WIFI_PID=$(busybox pidof CcspWifiSsp)
+            if [ "$WIFI_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : CcspWifiSsp process is not running, need restart"
+                resetNeeded wifi CcspWifiSsp
+            fi
+        fi
 
 	# BWGRDK-1384: Selfheal mechanism for ripd process
 	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
@@ -1211,10 +1226,8 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
-    echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
-elif [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
-    echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for XD4 "
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+    echo_t "[RDKB_SELFHEAL] : Disabling CcpsHomeSecurity and CcspAdvSecurity"
 else
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
 
@@ -1872,7 +1885,7 @@ case $SELFHEAL_TYPE in
         else
             # Checking lighttpd PID
             LIGHTTPD_PID=$(busybox pidof lighttpd)
-            WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
+            WEBGUI_PID=$(ps -aux | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
             if [ "$LIGHTTPD_PID" = "" ]; then
                 if [ "$WEBGUI_PID" != "" ]; then
                     if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
@@ -1944,6 +1957,9 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+if [ "$MODEL_NUM" = "" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+	echo_t "[RDKB_SELFHEAL] : Disabling parodus"
+else
 # Checking for parodus connection stuck issue
 # Checking parodus PID
 PARODUS_PID=$(busybox pidof parodus)
@@ -2015,6 +2031,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
         esac
     fi
 fi
+fi
 
 #Implement selfheal mechanism for aker to restart aker process in selfheal window  in XB3 devices
 case $SELFHEAL_TYPE in
@@ -2043,7 +2060,7 @@ case $SELFHEAL_TYPE in
         # TODO: move DROPBEAR BASE code with TCCBR,SYSTEMD code!
         #Check dropbear is alive to do rsync/scp to/fro ATOM
         if [ "$ARM_INTERFACE_IP" != "" ]; then
-            DROPBEAR_ENABLE=$(ps -w | grep "dropbear" | grep "$ARM_INTERFACE_IP")
+            DROPBEAR_ENABLE=$(ps -aux | grep "dropbear" | grep "$ARM_INTERFACE_IP")
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                 t2CountNotify "SYS_SH_Dropbear_restart"	
@@ -2073,7 +2090,7 @@ case $SELFHEAL_TYPE in
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
         # Checking lighttpd PID
         LIGHTTPD_PID=$(busybox pidof lighttpd)
-        WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
+        WEBGUI_PID=$(ps -aux | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
         if [ "$LIGHTTPD_PID" = "" ]; then
             if [ "$WEBGUI_PID" != "" ]; then
                 if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
@@ -2226,7 +2243,7 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             SNMP_MASTER_PID=$(busybox pidof snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
@@ -2276,13 +2293,13 @@ esac
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ] 
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ] && [ "$MODEL_NUM" != "brcm93390" ]
 then
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
-        if [ "$WAN_TYPE" != "EPON" ]; then
+        if [ "$WAN_TYPE" != "EPON" ] && [ "$BOX_TYPE" != "MV3" ]; then
             check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
             check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
             if [ ! -f /tmp/.router_reboot ]; then
@@ -2344,8 +2361,9 @@ case $SELFHEAL_TYPE in
                 rm -rf /tmp/.router_reboot
             fi
 
+            #TODO: Need to revisit this after enabling CcspHomeSecurity
             # Checking whether brlan1 and l2sd0.101 interface are created properly
-            if [ "$thisIS_BCI" != "yes" ]; then
+            if [ "$thisIS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                 check_if_brlan1_created=$(ifconfig | grep "brlan1")
                 check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                 check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
@@ -3273,7 +3291,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             firewall_rules=$(iptables-save)
             check_if_brlan1=$(echo "$firewall_rules" | grep "brlan1")
             if [ "$check_if_brlan1" = "" ]; then
@@ -3342,7 +3360,7 @@ fi
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
 	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
     then
-    checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+    checkIfDnsmasqIsZombie=$(busybox ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
         for zombiepid in $checkIfDnsmasqIsZombie
           do
@@ -3403,28 +3421,33 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
             fi
         else
                 brlan0up=$(grep "brlan0" /var/dnsmasq.conf)
-                case $SELFHEAL_TYPE in
-                    "BASE")
-                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-                        lnf_ifname=$(syscfg get iot_ifname)
-                        if [ "$lnf_ifname" = "l2sd0.106" ]; then
-                            lnf_ifname=$(syscfg get iot_brname)
-                        fi
-                        if [ "$lnf_ifname" != "" ]; then
-                            echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
-                            infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
-                        else
-                            echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
-                            #Set some value so that dnsmasq won't restart
-                            infup="NA"
-                        fi
-                    ;;
-                    "TCCBR")
-                    ;;
-                    "SYSTEMD")
-                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-                    ;;
-                esac
+                brlan1up="NA"
+                infup="NA"
+ 
+                #TODO: Need to revisit this after enabling CcspHomeSecurity and LnF network
+
+#               case $SELFHEAL_TYPE in
+#                   "BASE")
+#                       brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+#                       lnf_ifname=$(syscfg get iot_ifname)
+#                       if [ "$lnf_ifname" = "l2sd0.106" ]; then
+#                           lnf_ifname=$(syscfg get iot_brname)
+#                       fi
+#                       if [ "$lnf_ifname" != "" ]; then
+#                           echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
+#                           infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
+#                       else
+#                           echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
+#                           #Set some value so that dnsmasq won't restart
+#                           infup="NA"
+#                       fi
+#                   ;;
+#                   "TCCBR")
+#                   ;;
+#                   "SYSTEMD")
+#                       brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+#                   ;;
+#               esac
 
         if [ -f /tmp/dnsmaq_noiface ]; then
             rm -rf /tmp/dnsmaq_noiface
@@ -3440,7 +3463,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$MODEL_NUM" != "CGA4332COM" ]; then
+                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
                     IsAnyOneInfFailtoUp=1
                 fi
@@ -3489,7 +3512,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
 		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
 		then
-                checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+                checkIfDnsmasqIsZombie=$(ps -aux | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
                     for zombiepid in $checkIfDnsmasqIsZombie
                       do
@@ -3530,7 +3553,7 @@ case $SELFHEAL_TYPE in
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
-	    if [ "$BOX_TYPE" = "XB6" ] && ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ); then
+            if [ "$BOX_TYPE" = "XB6" -a "$SOC_TYPE" = "Broadcom" ] ; then
                 partner_id="RDKM"
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
@@ -3775,12 +3798,13 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
         #Checking the ntpd is running or not
-        if [ "$WAN_TYPE" != "EPON" ]; then
-            NTPD_PID=$(busybox pidof ntpd)
-            if [ "$NTPD_PID" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
-                sysevent set ntpd-restart
-            fi
+        if [ "$WAN_TYPE" != "EPON" ] && [ "$BOX_TYPE" = "MV1" ]; then
+	    #TODO: Revisit when NTP daemon is enabled
+#           NTPD_PID=$(busybox pidof ntpd)
+#           if [ "$NTPD_PID" = "" ]; then
+#               echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
+#               sysevent set ntpd-restart
+#           fi
 
 
             #Checking if rpcserver is running
@@ -3875,7 +3899,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 ifconfig $WAN_INTERFACE up
             fi
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-		    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
+            if [ "$SOC_TYPE" = "Broadcom" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                 dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
                 if [ -n "$dibbler_client_pid" ]; then
@@ -3909,17 +3933,17 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
         ;;
         "BASE")
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
+            task_to_be_killed=$(busybox ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
             if [ "$task_to_be_killed" = "" ]; then
-                task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
+                task_to_be_killed=$(busybox ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
             fi
             if [ "$erouter0_up_check" = "" ]; then
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
                 #Adding to kill ipv4 process to solve RDKB-27177
-                task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                task_to_kill=`busybox ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
                 if [ "x$task_to_kill" = "x" ]; then
-                    task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                    task_to_kill=`busybox ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
                 fi
                 if [ "x$task_to_kill" != "x" ]; then
                     kill $task_to_kill
@@ -3971,28 +3995,33 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             UDHCPC_Enable="true"
             dibbler_client_enable="true"
 
-	    if ( ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
-                check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
-                check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
+            if [ "$SOC_TYPE" = "Broadcom" ] || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
+                check_wan_dhcp_client_v4=$(ps -aux | grep "udhcpc" | grep "erouter")
+                check_wan_dhcp_client_v6=$(ps -aux | grep "dibbler-client" | grep -v "grep")
             else
                 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
-                    dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
+                    dhcp_cli_output=$(busybox ps w | grep "ti_" | grep "erouter0")
                     if [ "$MAPT_CONFIG" != "set" ]; then
                     if [ "$UDHCPC_Enable" = "true" ]; then
-                        check_wan_dhcp_client_v4=$(ps w | grep "sbin/udhcpc" | grep "erouter")
+                        check_wan_dhcp_client_v4=$(ps -aux | grep "sbin/udhcpc" | grep "erouter")
                     else
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
                     fi
                     fi
                     if [ "$dibbler_client_enable" = "true" ]; then
-                        check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
+                        check_wan_dhcp_client_v6=$(ps -aux | grep "dibbler-client" | grep -v "grep")
                     else
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
                 else
-                    dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
-                    check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
-                    check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
+                    if [ "$FIRMWARE_TYPE" = "OFW" ]; then
+                        check_wan_dhcp_client_v4=$(ps aux | grep udhcpc | grep erouter)
+                        check_wan_dhcp_client_v6=$(ps aux | grep dibbler-client | grep -v grep)
+                    else
+                        dhcp_cli_output=$(ps -aux | grep "ti_" | grep "erouter0")
+                        check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
+                        check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
+                    fi
                 fi
             fi
         ;;
@@ -4004,7 +4033,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE")
-            if [ "$BOX_TYPE" = "XB3" ]; then
+            if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
 
                 if [ "$check_wan_dhcp_client_v4" != "" ] && [ "$check_wan_dhcp_client_v6" != "" ]; then
                     if [ "$(cat /proc/net/dbrctl/mode)"  = "standbay" ]; then
@@ -4064,7 +4093,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     case $SELFHEAL_TYPE in
         "BASE")
             if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]; then
-		    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
+                if [ "$SOC_TYPE" = "Broadcom" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ]; then
                     echo "Calling epon_utility.sh to restart udhcpc "
@@ -4079,8 +4108,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                         fi
                     else
-                        DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
-                        V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+			if [ "$FIRMWARE_TYPE" = "OFW" ]; then
+                            sysevent set dhcp_client-restart
+                        else
+                            DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+                            V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+                        fi
                     fi
                 fi
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
@@ -4091,7 +4124,11 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
             if [ $wan_dhcp_client_v6 -eq 0 ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-		if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
+                if [ "$SOC_TYPE" = "Broadcom" ]; then
+                    /lib/rdk/dibbler-init.sh
+                    sleep 2
+                    /usr/sbin/dibbler-client start
+                elif [ "$FIRMWARE_TYPE" = "OFW" ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
@@ -4174,7 +4211,7 @@ case $SELFHEAL_TYPE in
               done
 
             # Fetch mesh tunnels from the brlan1 bridge if they exist
-            if [ "$thisIS_BCI" != "yes" ]; then
+            if [ "$thisIS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                 if [ "x$ovs_enable" = "xtrue" ];then
                     brctl1_ifaces=$(ovs-vsctl list-ifaces brlan1 | egrep "pgd")
                 else
@@ -4209,7 +4246,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV4C_STATUS != "false" ] && [ "$DHCPcMonitoring" != "false" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
-                if [ "$MANUFACTURE" = "Technicolor" ]; then
+                if [ "$SOC_TYPE" = "Broadcom" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ]; then
                     echo "Calling epon_utility.sh to restart udhcpc "
@@ -4280,7 +4317,7 @@ case $SELFHEAL_TYPE in
 
             if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-		if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
+                if [ "$SOC_TYPE" = "Broadcom" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
@@ -4451,7 +4488,7 @@ fi
 # Checking D process running or not
 case $SELFHEAL_TYPE in
       "BASE"|"SYSTEMD"|"TCCBR")
-      ps -w | { echo "D process list:"; awk '$4 == "D" { count++ ; print $5 } END { if (count > 0) print "[RDKB_SELFHEAL] : There are "count " processes in D state" ; else print "[RDKB_SELFHEAL] : There is no D process running in this device" }'; }
+      busybox ps -w | { echo "D process list:"; awk '$4 == "D" { count++ ; print $5 } END { if (count > 0) print "[RDKB_SELFHEAL] : There are "count " processes in D state" ; else print "[RDKB_SELFHEAL] : There is no D process running in this device" }'; }
      ;;
 esac
 

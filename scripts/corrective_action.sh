@@ -459,10 +459,15 @@ rebootNeeded()
         echo_t "RDKB_SELFHEAL : Today's max reboot count already reached, please wait for reboot till next 24 hour window"
     else
 
+        if [ "$FIRMWARE_TYPE" = "OFW" ]; then
+            # Avoiding the call of function checkConditionsbeforeAction, as binary XconfHttpDl is not avialble.
+            return_value=0
+        else
         # Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
         checkConditionsbeforeAction $1
 
         return_value=$?
+        fi
 
         if [ $return_value -eq 0 ]; then
             # Storing Information before corrective action
@@ -747,7 +752,7 @@ resetNeeded()
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 CcspHomeSecurity 8081&
 
-            elif [ "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspWifiSsp" ]; then
+            elif [ "$BOX_TYPE" = "MV2PLUS" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspWifiSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 t2CountNotify "SYS_SH_WIFIAGENT_restart"
                 cd /usr/ccsp/wifi/
@@ -816,10 +821,12 @@ resetNeeded()
                 cd -
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspCMAgentSsp" ]; then
-                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                cd /usr/ccsp/cm
-                $BINPATH/CcspCMAgentSsp -subsys $Subsys
-                cd -
+                if [ "$BOX_TYPE" != "MV3" ]; then
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/cm
+                    $BINPATH/CcspCMAgentSsp -subsys $Subsys
+                    cd -
+                fi
 
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspEPONAgentSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
@@ -828,10 +835,12 @@ resetNeeded()
                 cd -
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspMtaAgentSsp" ]; then
-                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                cd /usr/ccsp/mta
-                $BINPATH/CcspMtaAgentSsp -subsys $Subsys
-                cd -
+                if [ "$BOX_TYPE" != "MV3" ]; then
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/mta
+                    $BINPATH/CcspMtaAgentSsp -subsys $Subsys
+                    cd -
+                fi
 
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspMoCA" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
@@ -1020,7 +1029,7 @@ storeInformation()
       done
 
     # If the crashed process is MoCA, we cannot get MoCA parameters
-    if [ $isMOCA -eq 0 ]; then
+    if [ $isMOCA -eq 0 ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
         # Need to capture MoCA stats
 
         PacketsSent=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.PacketsSent)
@@ -1041,8 +1050,10 @@ storeInformation()
     else
         case $SELFHEAL_TYPE in
             "BASE")
-                echo_t "RDKB_SELFHEAL : MoCA stats are not available due to MoCA crash"
-                isMOCA=0
+                if [ "$FIRMWARE_TYPE" != "OFW" ]; then
+                    echo_t "RDKB_SELFHEAL : MoCA stats are not available due to MoCA crash"
+                    isMOCA=0
+                fi
             ;;
             "TCCBR")
                 #TODO: enable:        echo_t "RDKB_SELFHEAL : MoCA stats are not available due to MoCA crash"
@@ -1059,18 +1070,20 @@ logNetworkInfo()
 {
     case $SELFHEAL_TYPE in
         "BASE")
-            echo_t "RDKB_SELFHEAL : interface l2sd0 :"
-            ifconfig l2sd0;
-            echo_t "-------------------------------------------------------"
-            echo_t "RDKB_SELFHEAL : interface l2sd0.100 :"
-            ifconfig l2sd0.100;
-            echo_t "-------------------------------------------------------"
-            echo_t "RDKB_SELFHEAL : interface l2sd0.101 :"
-            ifconfig l2sd0.101;
-            echo_t "-------------------------------------------------------"
-            echo_t "RDKB_SELFHEAL : ip link :"
-            ip link | grep "l2sd0"
-            echo_t "-------------------------------------------------------"
+            if [ "$BOX_TYPE" = "MV1" ]; then
+                echo_t "RDKB_SELFHEAL : interface l2sd0 :"
+                ifconfig l2sd0;
+                echo_t "-------------------------------------------------------"
+                echo_t "RDKB_SELFHEAL : interface l2sd0.100 :"
+                ifconfig l2sd0.100;
+                echo_t "-------------------------------------------------------"
+                echo_t "RDKB_SELFHEAL : interface l2sd0.101 :"
+                ifconfig l2sd0.101;
+                echo_t "-------------------------------------------------------"
+                echo_t "RDKB_SELFHEAL : ip link :"
+                ip link | grep "l2sd0"
+                echo_t "-------------------------------------------------------"
+            fi
         ;;
         "TCCBR")
         ;;

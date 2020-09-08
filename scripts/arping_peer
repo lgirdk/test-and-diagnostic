@@ -34,13 +34,7 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 arping -I $SOURCE_ARPING_INTF $PEER_ARPING_IP -c 3 > /tmp/.arpingresult
 
-#upstreamed 0001-TCXB6-9313-ARPING_FROM_SOURCE-Failed-no-Reply.patch,0001-ARPING_FROM_SOURCE-Failed-no-Reply.patch as part of RDKB-41505.
-if [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Arris" ]
-then
-	arpingSuccess=`cat /tmp/.arpingresult | tail -n1 | grep "response"`
-else
-	arpingSuccess=`cat /tmp/.arpingresult | tail -n1 | grep "reply"`
-fi
+arpingSuccess=`cat /tmp/.arpingresult | tail -n1 | grep "response"`
 
 if [ "$arpingSuccess" != "" ]
 then
