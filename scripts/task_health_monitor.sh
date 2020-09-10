@@ -1031,37 +1031,54 @@ case $SELFHEAL_TYPE in
             #If they are not present below code shall re-create them
             #l2sd0.102 case , also adding a strict rule that they are up, since some
             #devices we observed l2sd0 not up
-            grePresent=$(ifconfig -a | grep "$grePrefix.102")
+
+            if [ "$MODEL_NUM" = "DPC3939B" ]; then
+		Xfinity_Open_24_VLANID="2312"
+		Xfinity_Open_5_VLANID="2315"
+		Xfinity_Secure_24_VLANID="2311"
+		Xfinity_Secure_5_VLANID="2314"
+	    elif [ "$MODEL_NUM" = "DPC3941B" ]; then
+		Xfinity_Open_24_VLANID="2322"
+		Xfinity_Open_5_VLANID="2325"
+		Xfinity_Secure_24_VLANID="2321"
+		Xfinity_Secure_5_VLANID="2324"
+	    else
+		Xfinity_Open_24_VLANID="102"
+		Xfinity_Open_5_VLANID="103"
+		Xfinity_Secure_24_VLANID="104"
+		Xfinity_Secure_5_VLANID="105"
+	    fi
+	    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
             if [ -n "$grePresent" ]; then
-                ifconfig | grep "l2sd0.102"
+                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                 if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled, but l2sd0.102 interface is not created try creating it"
+                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
 
                     Interface=$(psmcli get dmsb.l2net.3.Members.WiFi)
                     if [ "$Interface" = "" ]; then
-                        echo_t "PSM value(ath4) is missing for l2sd0.102"
+                        echo_t "PSM value(ath4) is missing for $l2sd0Prefix.$Xfinity_Open_24_VLANID"
                         psmcli set dmsb.l2net.3.Members.WiFi ath4
                     fi
 
                     sysevent set multinet_3-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                    ifconfig l2sd0.102 up
-                    ifconfig | grep "l2sd0.102"
+                    ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
+                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                     if [ $? -eq 1 ]; then
-                        echo_t "l2sd0.102 is not created at First Retry, try again after 2 sec"
+                        echo_t "$l2sd0Prefix.$Xfinity_Open_24_VLANID is not created at First Retry, try again after 2 sec"
                         sleep 2
                         sysevent set multinet_3-status stopped
                         $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                        ifconfig l2sd0.102 up
-                        ifconfig | grep "l2sd0.102"
+                        ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
+                        ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.102 is not created after Second Retry, no more retries !!!"
+                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID is not created after Second Retry, no more retries !!!"
                         fi
                     else
-                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.102 created at First Retry itself"
+                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "XfinityWifi is enabled and l2sd0.102 is present"
+                    echo_t "XfinityWifi is enabled and $l2sd0Prefix.$Xfinity_Open_24_VLANID is present"
                 fi
             else
                 if [ "$OPEN_24" = "true" ]; then
@@ -1073,37 +1090,37 @@ case $SELFHEAL_TYPE in
 
             #l2sd0.103 case
 
-            grePresent=$(ifconfig -a | grep "$grePrefix.103")
+            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
             if [ -n "$grePresent" ]; then
-                ifconfig | grep "l2sd0.103"
+                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                 if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled, but l2sd0.103 interface is not created try creatig it"
+                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
 
                     Interface=$(psmcli get dmsb.l2net.4.Members.WiFi)
                     if [ "$Interface" = "" ]; then
-                        echo_t "PSM value(ath5) is missing for l2sd0.103"
+                        echo_t "PSM value(ath5) is missing for $l2sd0Prefix.$Xfinity_Open_5_VLANID"
                         psmcli set dmsb.l2net.4.Members.WiFi ath5
                     fi
 
                     sysevent set multinet_4-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                    ifconfig l2sd0.103 up
-                    ifconfig | grep "l2sd0.103"
+                    ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
+                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                     if [ $? -eq 1 ]; then
-                        echo_t "l2sd0.103 is not created at First Retry, try again after 2 sec"
+                        echo_t "$l2sd0Prefix.$Xfinity_Open_5_VLANID is not created at First Retry, try again after 2 sec"
                         sleep 2
                         sysevent set multinet_4-status stopped
                         $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                        ifconfig l2sd0.103 up
-                        ifconfig | grep "l2sd0.103"
+                        ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
+                        ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.103 is not created after Second Retry, no more retries !!!"
+                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID is not created after Second Retry, no more retries !!!"
                         fi
                     else
-                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.103 created at First Retry itself"
+                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and l2sd0.103 is present"
+                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Open_5_VLANID is present"
                 fi
             else
                 if [ "$OPEN_5" = "true" ]; then
@@ -1133,32 +1150,32 @@ case $SELFHEAL_TYPE in
             #Check for Secured Xfinity hotspot briges and associate them properly if
             #not proper
             #l2sd0.103 case
-
+            
             #Secured Xfinity 2.4
-            grePresent=$(ifconfig -a | grep "$grePrefix.104")
+            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
             if [ -n "$grePresent" ]; then
-                ifconfig | grep "l2sd0.104"
+                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                 if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.104 interface is not created try creatig it"
+                    echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
                     sysevent set multinet_7-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                    ifconfig l2sd0.104 up
-                    ifconfig | grep "l2sd0.104"
+                    ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
+                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                     if [ $? -eq 1 ]; then
-                        echo_t "l2sd0.104 is not created at First Retry, try again after 2 sec"
+                        echo_t "$l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created at First Retry, try again after 2 sec"
                         sleep 2
                         sysevent set multinet_7-status stopped
                         $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                        ifconfig l2sd0.104 up
-                        ifconfig | grep "l2sd0.104"
+                        ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
+                        ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.104 is not created after Second Retry, no more retries !!!"
+                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created after Second Retry, no more retries !!!"
                         fi
                     else
-                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.104 created at First Retry itself"
+                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and l2sd0.104 is present"
+                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Secure_24_VLANID is present"
                 fi
             else
                 #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
@@ -1172,30 +1189,30 @@ case $SELFHEAL_TYPE in
             fi
 
             #Secured Xfinity 5
-            grePresent=$(ifconfig -a | grep "$grePrefix.105")
+            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
             if [ -n "$grePresent" ]; then
-                ifconfig | grep "l2sd0.105"
+                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                 if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but l2sd0.105 interface is not created try creatig it"
+                    echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
                     sysevent set multinet_8-status stopped
                     $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                    ifconfig l2sd0.105 up
-                    ifconfig | grep "l2sd0.105"
+                    ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
+                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                     if [ $? -eq 1 ]; then
-                        echo_t "l2sd0.105 is not created at First Retry, try again after 2 sec"
+                        echo_t "$l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created at First Retry, try again after 2 sec"
                         sleep 2
                         sysevent set multinet_8-status stopped
                         $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                        ifconfig l2sd0.105 up
-                        ifconfig | grep "l2sd0.105"
+                        ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
+                        ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.105 is not created after Second Retry, no more retries !!!"
+                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created after Second Retry, no more retries !!!"
                         fi
                     else
-                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.105 created at First Retry itself"
+                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and l2sd0.105 is present"
+                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Secure_5_VLANID is present"
                 fi
             else
                 if [ "$SECURED_5" = "true" ]; then
