@@ -152,7 +152,7 @@ runPingTest()
         IPv4_Gateway_addr=`dmcli eRT getv Device.DHCPv4.Client.1.IPRouters | grep "value:" | cut -d ":" -f 3 | tr -d ' '`
 
         IPv6_Gateway_addr=""
-        erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d:`
+        erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d:`
 
 	if [ "$erouterIP6" != "" ]
         then
@@ -179,11 +179,11 @@ runPingTest()
         #If GW IPv6 is missing in both route list and neighbour list checking for Link Local GW ipv6 in neighbour list and 
 	#Checking if route list returns Box_IPv6_addr as IPv6_Gateway_addr
 
-        Box_IPv6_addr=`ifconfig erouter0 | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d\/`
+        Box_IPv6_addr=`ifconfig erouter0 | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d\/`
 
         if [ "$IPv6_Gateway_addr" = "" ] || [ "$IPv6_Gateway_addr" = "$Box_IPv6_addr" ]
         then
-           erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | awk '{print $(NF-1)}' | cut -f1 -d:`
+           erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Link | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d:`
            routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
            IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
         fi
@@ -265,7 +265,7 @@ runPingTest()
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
                       dhcpStatus=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | awk '{print $5}'`
-                      wanIP=`ifconfig erouter0 | grep "inet addr" | cut -f2 -d: | cut -f1 -d" "`
+                      wanIP=`ifconfig erouter0 | grep "inet addr" | head -n1 |cut -f2 -d: | cut -f1 -d" "`
                       if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
                       then
                           echo_t "EROUTER_DHCP_STATUS:Rebinding"
