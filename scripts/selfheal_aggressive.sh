@@ -666,40 +666,43 @@ self_heal_dhcp_clients()
     #responsible for the same. The killed processes will get restarted
     #by the later stages of this script.
     erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
-    erouter_mode_check=$(syscfg get last_erouter_mode)
+    erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
     erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
     IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-    networkresponse_chk="/var/tmp/networkresponse.txt" #Check given for non IPv6 bootfiles RDKB-27963
-    if [ -f "$networkresponse_chk" ]; then
-        response204_chk=$(grep "204" $networkresponse_chk)
-        if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$IPV6_STATUS_CHECK_GIPV6" != "" ] && [ "$response204_chk" != "" ] && [ $erouter_mode_check -ne 1 ]; then
+        if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ]; then
             case $SELFHEAL_TYPE in
                 "SYSTEMD")
+                    udhcpc_enable=`syscfg get UDHCPEnable`
                     if [ "$erouter0_up_check" = "" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
+                        if ([ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]) || [ "$udhcpc_enable" = "true" ]; then
+                        #Adding to kill ipv4 process to solve RDKB-27177
+                        task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                        if [ "x$task_to_kill" = "x" ]; then
+                            task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                        fi
+                        if [ "x$task_to_kill" != "x" ]; then
+                            kill $task_to_kill
+                        fi
+                        #RDKB-27177 fix ends here
                     fi
+                    fi
+                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
-                        #Adding to kill ipv4 process, later restarted to solve RDKB-27177
-                        task_to_be_killed=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter" | cut -f1 -d" ")
-                        if [ "$task_to_be_killed" = "" ]; then
-                            task_to_be_killed=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter" | cut -f2 -d" ")
-                        fi
-                        if [ "$task_to_be_killed" != "" ]; then
-                            kill "$task_to_be_killed"
-                        fi
-                        #RDKB-27177 addition ends here
                         echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                         /usr/sbin/dibbler-client stop
                     elif [ "$BOX_TYPE" = "XB6" ]; then
                         echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
                         sh $DHCPV6_HANDLER disable
                     fi
+                    fi
                     ;;
                 "BASE")
-                    task_to_be_killed=$(echo "$PS_WW_VAL" | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
+                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+                    task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
                     if [ "$task_to_be_killed" = "" ]; then
-                        task_to_be_killed=$(echo "$PS_WW_VAL" | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
+                        task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
                     fi
                     if [ "$erouter0_up_check" = "" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
@@ -710,23 +713,26 @@ self_heal_dhcp_clients()
                         kill "$task_to_be_killed"
                         sleep 3
                     fi
+                    fi
                     ;;
                 "TCCBR")
-                    #Adding to kill ipv4 process, later restarted to solve RDKB-27177
-                    task_to_be_killed=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter" | cut -f1 -d" ")
-                    if [ "$task_to_be_killed" = "" ]; then
-                        task_to_be_killed=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter" | cut -f2 -d" ")
-                    fi
-                    if [ "$task_to_be_killed" != "" ]; then
-                        kill "$task_to_be_killed"
-                    fi
-                    #RDKB-27177 addition ends here
                     if [ "$erouter0_up_check" = "" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
+                        #Adding to kill ipv4 process, later restarted to solve RDKB-27177
+                        task_to_be_killed=$(ps w | grep "udhcpc" | grep "erouter" | cut -f1 -d" ")
+                        if [ "$task_to_be_killed" = "" ]; then
+                            task_to_be_killed=$(ps w | grep "udhcpc" | grep "erouter" | cut -f2 -d" ")
+                        fi
+                        if [ "$task_to_be_killed" != "" ]; then
+                            kill "$task_to_be_killed"
+                        fi
+                        #RDKB-27177 addition ends here
                     fi
+                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
                     echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                     /usr/sbin/dibbler-client stop
+                    fi
                     ;;
             esac
         else
@@ -734,7 +740,6 @@ self_heal_dhcp_clients()
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
             fi
         fi
-    fi
     #Logic ends here for RDKB-25714
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
         wan_dhcp_client_v4=1
@@ -745,32 +750,32 @@ self_heal_dhcp_clients()
                 dibbler_client_enable=$(syscfg get dibbler_client_enable)
 
                 if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
-                    check_wan_dhcp_client_v4=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter")
-                    check_wan_dhcp_client_v6=$(echo "$PS_WW_VAL" | grep "dibbler-client" | grep -v "grep")
+                    check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
+                    check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 else
                     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
-                        dhcp_cli_output=$(echo "$PS_WW_VAL" | grep "ti_" | grep "erouter0")
+                        dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
 
                         if [ "$UDHCPC_Enable" = "true" ]; then
-                            check_wan_dhcp_client_v4=$(echo "$PS_WW_VAL" | grep "sbin/udhcpc" | grep "erouter")
+                            check_wan_dhcp_client_v4=$(ps w | grep "sbin/udhcpc" | grep "erouter")
                         else
                             check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
                         fi
                         if [ "$dibbler_client_enable" = "true" ]; then
-                            check_wan_dhcp_client_v6=$(echo "$PS_WW_VAL" | grep "dibbler-client" | grep -v "grep")
+                            check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                         else
                             check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                         fi
                     else
-                        dhcp_cli_output=$(echo "$PS_WW_VAL" | grep "ti_" | grep "erouter0")
+                        dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
                 fi
                 ;;
             "TCCBR")
-                check_wan_dhcp_client_v4=$(echo "$PS_WW_VAL" | grep "udhcpc" | grep "erouter")
-                check_wan_dhcp_client_v6=$(echo "$PS_WW_VAL" | grep "dibbler-client" | grep -v "grep")
+                check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
+                check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 ;;
         esac
 
