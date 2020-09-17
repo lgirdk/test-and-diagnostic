@@ -2919,7 +2919,6 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
     esac
 
 fi # [ "$WAN_STATUS" = "started" ]
-fi
 
 case $SELFHEAL_TYPE in
     "BASE")
@@ -3065,6 +3064,7 @@ case $SELFHEAL_TYPE in
         fi #Not HUB4
     ;;
 esac
+fi
 
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM

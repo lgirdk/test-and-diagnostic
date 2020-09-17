@@ -520,11 +520,12 @@ self_heal_dibbler_server()
     fi
 }
 
-# Parametizing ps+grep "as" part of RDKB-28847
-PS_WW_VAL=$(ps -ww)
 self_heal_dhcp_clients()
 {
+    # Parametizing ps+grep "as" part of RDKB-28847
+    PS_WW_VAL=$(ps -ww)
     # Checking for WAN_INTERFACE
+    WAN_INTERFACE="erouter0"
     DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
@@ -846,6 +847,87 @@ self_heal_dhcp_clients()
         esac
 
     fi # [ "$WAN_STATUS" = "started" ]
+
+    case $SELFHEAL_TYPE in
+	"TCCBR")
+	;;
+	"SYSTEMD")
+            if [ "$BOX_TYPE" != "HUB4" ]; then
+		if [ $wan_dhcp_client_v4 -eq 0 ]; then
+                    if [ "$MANUFACTURE" = "Technicolor" ]; then
+			V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                    elif [ "$WAN_TYPE" = "EPON" ]; then
+			echo_t "Calling epon_utility.sh to restart udhcpc "
+			sh /usr/ccsp/epon_utility.sh
+                    else
+			if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                            if [ "$UDHCPC_Enable" = "true" ]; then
+				V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
+                            else
+				#For AXB6 b -4 option is added to avoid timeout.
+				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
+                            fi
+			else
+                            DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+                            V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
+			fi
+                    fi
+                    echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
+                    eval "$V4_EXEC_CMD"
+                    sleep 5
+                    wan_dhcp_client_v4=1
+		fi
+		#ARRISXB6-8319
+		#check if interface is down or default route is missing.
+		if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ]; then
+                    ip route show default | grep "default"
+                    if [ $? -ne 0 ] ; then
+			ifconfig $WAN_INTERFACE up
+			sleep 2
+			if [ "$UDHCPC_Enable" = "true" ]; then
+                            echo_t "restart udhcp"
+                            DHCPC_PID_FILE="/tmp/udhcpc.erouter0.pid"
+			else
+                            echo_t "restart ti_udhcp"
+                            DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+			fi
+			if [ -f $DHCPC_PID_FILE ]; then
+                            echo_t "SERVICE_DHCP : Killing $(cat $DHCPC_PID_FILE)"
+                            kill -9 "$(cat $DHCPC_PID_FILE)"
+                            rm -f $DHCPC_PID_FILE
+			fi
+			if [ "$UDHCPC_Enable" = "true" ]; then
+                            V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+			else
+                            #For AXB6 b -4 option is added to avoid timeout.
+                            V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
+			fi
+			echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
+			eval "$V4_EXEC_CMD"
+			sleep 5
+			wan_dhcp_client_v4=1
+                    fi
+		fi
+		if [ $wan_dhcp_client_v6 -eq 0 ]; then
+                    echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
+                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+			/etc/dibbler/dibbler-init.sh
+			sleep 2
+			/usr/sbin/dibbler-client start
+                    elif [ "$WAN_TYPE" = "EPON" ]; then
+			echo_t "Calling dibbler_starter.sh to restart dibbler-client "
+			sh /usr/ccsp/dibbler_starter.sh
+                    else
+			sh $DHCPV6_HANDLER disable
+			sleep 2
+			sh $DHCPV6_HANDLER enable
+                    fi
+                    wan_dhcp_client_v6=1
+		fi
+            fi #Not HUB4
+	    ;;
+    esac
 }
 
 # ARRIS XB6 => MODEL_NUM=TG3482G
