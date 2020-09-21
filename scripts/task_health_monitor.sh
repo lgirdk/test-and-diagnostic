@@ -193,13 +193,15 @@ case $SELFHEAL_TYPE in
             fi
 
 
-            GetConfigFile $PEER_COMM_ID
+            if [ ! -f $PEER_COMM_ID ]; then
+                GetConfigFile $PEER_COMM_ID
+            fi
             SSH_ATOM_TEST=$(ssh -I $IDLE_TIMEOUT -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
             echo_t "SSH_ATOM_TEST : $SSH_ATOM_TEST"
-            SSH_ERROR=$(echo "$SSH_ATOM_TEST" | grep "Remote closed the connection")
-            SSH_TIMEOUT=$(echo "$SSH_ATOM_TEST" | grep "Idle timeout")
-            rm -f $PEER_COMM_ID
+            SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
+            SSH_TIMEOUT=`echo $SSH_ATOM_TEST | grep "Idle timeout"`
             ATM_HANG_ERROR=0
+            # Do not remove $PEER_COMM_ID. reduces future decryptions
             if [ "$SSH_ERROR" != "" ] || [ "$SSH_TIMEOUT" != "" ]; then
                 echo_t "[RDKB_SELFHEAL] : ssh to atom failed"
                 ATM_HANG_ERROR=1
@@ -1362,16 +1364,19 @@ case $SELFHEAL_TYPE in
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                 t2CountNotify "SYS_SH_DhcpArp_restart"
-                DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1$$"
-                DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2$$"
+                DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1_tdt2"
+                DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2_tdt2"
                 if [ ! -d '/tmp/.dropbear' ]; then
                     mkdir -p /tmp/.dropbear
                 fi
-                getConfigFile $DROPBEAR_PARAMS_1
-                getConfigFile $DROPBEAR_PARAMS_2
+                if [ ! -f $DROPBEAR_PARAMS_1 ]; then
+                    getConfigFile $DROPBEAR_PARAMS_1
+                fi
+                if [ ! -f $DROPBEAR_PARAMS_2 ]; then
+                    getConfigFile $DROPBEAR_PARAMS_2
+                fi
                 dropbear -r $DROPBEAR_PARAMS_1 -r $DROPBEAR_PARAMS_2 -E -s -p $ARM_INTERFACE_IP:22 -P /var/run/dropbear_ipc.pid > /dev/null 2>&1
             fi
-            rm -rf /tmp/.dropbear
         fi
     ;;
     "TCCBR")
