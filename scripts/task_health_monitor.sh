@@ -2141,7 +2141,6 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
             SSID_DISABLED_2G=1
             echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             t2CountNotify "WIFI_INFO_2G_DISABLED"
-            t2CountNotify "SYS_INFO_2G_DISABLED"
         fi
     else
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
