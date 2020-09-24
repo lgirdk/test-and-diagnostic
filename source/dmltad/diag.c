@@ -56,6 +56,9 @@
 
 #include "ccsp_trace.h"
 
+extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
+extern  ANSC_HANDLE                         bus_handle;
+
 int commonSyseventFd = -1;
 token_t commonSyseventToken;
 
@@ -973,3 +976,72 @@ static bool is_IPv6(const char *host)
 
 #endif //NAT46_KERNEL_SUPPORT
 #endif //_HUB4_PRODUCT_REQ_
+
+BOOL isDSLiteEnabled()
+{
+    ANSC_STATUS             retval  = ANSC_STATUS_FAILURE;
+    parameterValStruct_t    param;
+    char                    name[] = "Device.DSLite.InterfaceSetting.1.Status";
+    char                    value[16] = {};
+    int                     valSize = 16;
+    int                     size = 16;
+
+    param.parameterName  = name;
+    param.parameterValue = value;
+
+    retval = g_GetParamValueByPathNameProc(bus_handle, &param, &valSize);
+
+    if ( retval == ANSC_STATUS_SUCCESS ) {
+        if ( 0== strcmp(value, "Enabled") ) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+int getIPbyInterfaceName(char *interface, char *ip)
+{
+    int fd;
+    struct ifreq ifr;
+    strcpy(ip, "0.0.0.0");
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        return -1;
+    }
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
+    if (ioctl(fd, SIOCGIFADDR, &ifr) >= 0) {
+        strcpy(ip, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
+    }
+    close(fd);
+    return 0;
+}
+
+BOOL isIPv4Host(const char *host)
+{
+    struct addrinfo hints, *res, *rp;
+    int errcode;
+    BOOL isIpv4 = FALSE;
+
+    memset (&hints, 0, sizeof (hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags |= AI_CANONNAME;
+
+    errcode = getaddrinfo (host, NULL, &hints, &res);
+    if (errcode != 0) {
+        return FALSE;
+    }
+
+    for (rp = res; rp != NULL; rp = rp->ai_next) {
+        if (rp->ai_family == AF_INET) {
+            isIpv4 = TRUE;
+            break;
+        }
+    }
+
+    if (res != NULL) {
+        freeaddrinfo(res);
+    }
+
+    return isIpv4;
+}
