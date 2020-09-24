@@ -213,25 +213,30 @@ runPingTest()
 
 	if [ "$IPv6_Gateway_addr" != "" ]
 	then
-		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv6_Gateway_addr`
-		output_ipv6=`echo $?` 
-		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
+		for IPv6_Gateway_addr in $IPv6_Gateway_addr
+		do
+			PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME $IPv6_Gateway_addr`
+			output_ipv6=`echo $?` 
+			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 
-		if [ "$CHECK_PACKET_RECEIVED" != "" ]
-		then
-			if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
+			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
-				ping6_success=1
-				PING_LATENCY="PING_LATENCY_GWIPv6:"
-				PING_LATENCY_VAL=`echo $PING_OUTPUT | awk 'BEGIN {FS="ms"} { for(i=1;i<=NF;i++) print $i}' | grep "time=" | cut -d"=" -f4`
-				PING_LATENCY_VAL=${PING_LATENCY_VAL%?};
-				echo $PING_LATENCY$PING_LATENCY_VAL|sed 's/ /,/g'
+				if [ "$CHECK_PACKET_RECEIVED" -ne 100 ] 
+				then
+					ping6_success=1
+                                        ping6_failed=0
+					PING_LATENCY="PING_LATENCY_GWIPv6:"
+					PING_LATENCY_VAL=`echo $PING_OUTPUT | awk 'BEGIN {FS="ms"} { for(i=1;i<=NF;i++) print $i}' | grep "time=" | cut -d"=" -f4`
+					PING_LATENCY_VAL=${PING_LATENCY_VAL%?};
+					echo $PING_LATENCY$PING_LATENCY_VAL|sed 's/ /,/g'
+					break
+				else
+					ping6_failed=1
+				fi
 			else
 				ping6_failed=1
 			fi
-		else
-			ping6_failed=1
-		fi
+		done
 	fi
 
 	if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
