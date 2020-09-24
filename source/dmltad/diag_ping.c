@@ -133,18 +133,39 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         left -= rc;
     }
 #endif
-    if (strlen(cfg->ifname))
+    if (isDSLiteEnabled() && isIPv4Host(cfg->host))
     {
-        rc = sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
-        if (rc < EOK)
+        char ifip[16];
+
+        if (getIPbyInterfaceName("brlan0", ifip, sizeof(ifip)) >= 0)
         {
-            ERR_CHK(rc);
-        }
-        else
-        {
-            left -= rc;
+            rc = snprintf(cmd + strlen(cmd), left, "-I %s ", ifip);
+            if (rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            else
+            {
+                left -= rc;
+            }
         }
     }
+    else
+    {
+        if (strlen(cfg->ifname))
+        {
+            rc = sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+            if (rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            else
+            {
+                left -= rc;
+            }
+        }
+    }
+
     if (cnt)
     {
         rc = sprintf_s(cmd + strlen(cmd), left, "-c %u ", cnt);
