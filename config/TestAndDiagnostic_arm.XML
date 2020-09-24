@@ -169,6 +169,12 @@
                             <writable>true</writable>
                         </parameter>
                         <parameter>
+                            <name>Interval</name>
+                            <type>unsignedInt[1:]</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
                             <name>Host</name>
                             <type>string(256)</type>
                             <syntax>string</syntax>
@@ -195,6 +201,12 @@
                         <parameter>
                             <name>DSCP</name>
                             <type>unsignedInt[0:63]</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>PingDNSQueryIPType</name>
+                            <type>unsignedInt</type>
                             <syntax>uint32</syntax>
                             <writable>true</writable>
                         </parameter>
@@ -305,6 +317,12 @@
                         <parameter>
                             <name>DSCP</name>
                             <type>unsignedInt[0:63]</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                        <parameter>
+                            <name>TraceDNSQueryIPType</name>
+                            <type>unsignedInt</type>
                             <syntax>uint32</syntax>
                             <writable>true</writable>
                         </parameter>

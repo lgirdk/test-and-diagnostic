@@ -1546,6 +1546,10 @@ IPPing_GetParamUlongValue
         *puLong = cfg.size;
     else if( AnscEqualString(ParamName, "DSCP", TRUE))
         *puLong = cfg.tos >> 2;
+    else if( AnscEqualString(ParamName, "Interval", TRUE))
+        *puLong = cfg.interval * 1000;
+    else if( AnscEqualString(ParamName, "PingDNSQueryIPType", TRUE))
+         *puLong = cfg.pingdnsquerytype;
     else if( AnscEqualString(ParamName, "SuccessCount", TRUE))
         *puLong = statis.u.ping.success;
     else if( AnscEqualString(ParamName, "FailureCount", TRUE))
@@ -1841,6 +1845,10 @@ IPPing_SetParamUlongValue
 	}
    else if( AnscEqualString(ParamName, "DSCP", TRUE))
        cfg.tos = uValue;
+   else if( AnscEqualString(ParamName, "Interval", TRUE))
+       cfg.interval = uValue / 1000;
+   else if( AnscEqualString(ParamName, "PingDNSQueryIPType", TRUE))
+       cfg.pingdnsquerytype = uValue;
     else 
         return FALSE;
 
@@ -2260,6 +2268,8 @@ TraceRoute_GetParamUlongValue
         *puLong = cfg.size;
     else if( AnscEqualString(ParamName, "DSCP", TRUE))
         *puLong = cfg.tos >> 2;
+    else if( AnscEqualString(ParamName, "TraceDNSQueryIPType", TRUE))
+        *puLong = cfg.tracednsquerytype;
     if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
         *puLong = cfg.maxhop;
     if( AnscEqualString(ParamName, "ResponseTime", TRUE))
@@ -2518,6 +2528,8 @@ TraceRoute_SetParamUlongValue
         cfg.size = uValue;
     else if( AnscEqualString(ParamName, "DSCP", TRUE))
         cfg.tos = uValue << 2;
+    else if( AnscEqualString(ParamName, "TraceDNSQueryIPType", TRUE))
+        cfg.tracednsquerytype = uValue;
     else if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
     {
         char buf[10];
