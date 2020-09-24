@@ -904,6 +904,12 @@
                       <syntax>bool</syntax>
                       <writable>true</writable>
                 </parameter>
+                <parameter>
+                      <name>X_RDK_CPUProcAnalyzer_Enable</name>
+                      <type>boolean</type>
+                      <syntax>bool</syntax>
+                      <writable>true</writable>
+                </parameter>
                <parameter>
                       <name>X_RDKCENTRAL-COM_MaxRebootCount</name>
                       <type>unsignedInt</type>

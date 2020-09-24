@@ -87,6 +87,12 @@ BOOL SelfHeal_GetParamBoolValue
         return TRUE;
     }
 
+    if( AnscEqualString(ParamName, "X_RDK_CPUProcAnalyzer_Enable", TRUE))
+    {
+        *bValue = FALSE;
+        return TRUE;
+    }
+
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
     {
         *bValue = pMyObject->DNSPingTest_Enable;
@@ -232,6 +238,31 @@ BOOL SelfHeal_SetParamBoolValue
 	    }
 	    pMyObject->Enable = bValue;
 	}
+        return TRUE;
+    }
+
+    if( AnscEqualString(ParamName, "X_RDK_CPUProcAnalyzer_Enable", TRUE))
+    {
+        if (bValue) 
+        {
+            char cmd[128] = "\0";
+
+            memset (cmd, 0, sizeof(cmd));
+            memset (buf, 0, sizeof(buf));
+            sprintf (cmd, "pidof cpuprocanalyzer");
+            copy_command_output(cmd, buf, sizeof(buf));
+            buf[strlen(buf)] = '\0';
+            CcspTraceWarning(("Value of cmd: %s and Value of buf: %s and Check for strcmp: %d \n", cmd, buf, strcmp(buf, "")));
+            if (strcmp(buf, "")) 
+            {
+                CcspTraceWarning(("%s: CPUProcAnalyzer is already running!\n", __FUNCTION__));
+            } 
+            else 
+            {
+                CcspTraceWarning(("%s: Triggering RunCPUProcAnalyzer script\n", __FUNCTION__));
+                system("/lib/rdk/RunCPUProcAnalyzer.sh start &");
+            }
+        }
         return TRUE;
     }
 

@@ -81,7 +81,7 @@ void copy_command_output(char * cmd, char * out, int len)
     FILE * fp;
     char   buf[256];
     char * p;
-
+    memset (buf, 0, sizeof(buf));
     fp = popen(cmd, "r");
 
     if (fp)
