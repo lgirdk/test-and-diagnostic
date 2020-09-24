@@ -212,18 +212,39 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         left -= rc;
     }
 
-    if (strlen(cfg->ifname))
+    if (isDSLiteEnabled() && isIPv4Host(cfg->host))
     {
-        rc = sprintf_s(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
-        if (rc < EOK)
+        char ifip[16] = {};
+
+        if (getIPbyInterfaceName("brlan0", ifip) >= 0)
         {
-            ERR_CHK(rc);
-        }
-        else
-        {
-            left -= rc;
+            rc = snprintf(cmd + strlen(cmd), left, "-s %s ", ifip);
+            if (rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            else
+            {
+                left -= rc;
+            }
         }
     }
+    else
+    {
+        if (strlen(cfg->ifname))
+        {
+            rc = sprintf_s(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
+            if (rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            else
+            {
+                left -= rc;
+            }
+        }
+    }
+
     if (cfg->cnt)
     {
         rc = sprintf_s(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
