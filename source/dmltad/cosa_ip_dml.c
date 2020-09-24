@@ -1575,6 +1575,10 @@ IPPing_GetParamUlongValue
         *puLong = cfg.size;
     else if (strcmp(ParamName, "DSCP") == 0)
         *puLong = cfg.tos >> 2;
+    else if (strcmp(ParamName, "Interval") == 0)
+        *puLong = cfg.interval * 1000;
+    else if (strcmp(ParamName, "PingDNSQueryIPType") == 0)
+         *puLong = cfg.pingdnsquerytype;
     else if (strcmp(ParamName, "SuccessCount") == 0)
         *puLong = statis.u.ping.success;
     else if (strcmp(ParamName, "FailureCount") == 0)
@@ -1853,6 +1857,10 @@ IPPing_SetParamUlongValue
     }
     else if (strcmp(ParamName, "DSCP") == 0)
         cfg.tos = uValue << 2;
+    else if (strcmp(ParamName, "Interval") == 0)
+        cfg.interval = uValue / 1000;
+    else if (strcmp(ParamName, "PingDNSQueryIPType") == 0)
+        cfg.pingdnsquerytype = uValue;
     else
         return FALSE;
 
@@ -2304,6 +2312,8 @@ TraceRoute_GetParamUlongValue
         *puLong = cfg.size;
     else if (strcmp(ParamName, "DSCP") == 0)
         *puLong = cfg.tos >> 2;
+    else if (strcmp(ParamName, "TraceDNSQueryIPType") == 0)
+        *puLong = cfg.tracednsquerytype;
     else if (strcmp(ParamName, "MaxHopCount") == 0)
         *puLong = cfg.maxhop;
     else if (strcmp(ParamName, "ResponseTime") == 0)
@@ -2568,6 +2578,8 @@ TraceRoute_SetParamUlongValue
         cfg.size = uValue;
     else if (strcmp(ParamName, "DSCP") == 0)
         cfg.tos = uValue << 2;
+    else if (strcmp(ParamName, "TraceDNSQueryIPType") == 0)
+        cfg.tracednsquerytype = uValue;
     else if (strcmp(ParamName, "MaxHopCount") == 0)
     {
         cfg.maxhop = uValue;
