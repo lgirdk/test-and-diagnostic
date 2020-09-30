@@ -1924,6 +1924,7 @@ case $SELFHEAL_TYPE in
                 if [ "$isEnabled" != "" ]; then
                     SSID_DISABLED=1
                     echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+		    t2CountNotify "WIFI_INFO_5G_DISABLED"
                 fi
             else
                 destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
@@ -1952,6 +1953,7 @@ case $SELFHEAL_TYPE in
                     if [ "$isEnabled" != "" ]; then
                         SSID_DISABLED=1
                         echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+			t2CountNotify "WIFI_INFO_5G_DISABLED"
                     fi
                 else
                     destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
