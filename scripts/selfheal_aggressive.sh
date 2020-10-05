@@ -124,106 +124,6 @@ self_heal_dnsmasq_restart()
     fi
 }
 
-self_heal_dnsmasq_running()
-{
-    BR_MODE=0
-    if [ "$WAN_TYPE" != "EPON" ]; then
-        DNSMASQ_CONF_FILE="/var/dnsmasq.conf"
-    else
-        DNSMASQ_CONF_FILE="/var/dnsmasq_generated.conf"
-    fi
-    BR_MODE=`syscfg get bridge_mode`
-    DNS_PID=`pidof dnsmasq`
-    if [ "$DNS_PID" == "" ];then
-        InterfaceInConf=""
-        InterfaceInConf=`grep "interface=" "$DNSMASQ_CONF_FILE"`
-        if [ "x$InterfaceInConf" = "x" ] && [ "0" != "$BR_MODE" ] ; then
-            if [ ! -f /tmp/dnsmaq_noiface ]; then
-                echo_t "[RDKB_AGG_SELFHEAL] : Unit in bridge mode,interface info not available in "$DNSMASQ_CONF_FILE""
-                touch /tmp/dnsmaq_noiface
-            fi
-        else
-            echo_t "[RDKB_AGG_SELFHEAL] : dnsmasq is not running"
-            t2CountNotify "SYS_SH_dnsmasq_restart"
-        fi
-    else
-        if [ -f /tmp/dnsmaq_noiface ]; then
-            rm -rf /tmp/dnsmaq_noiface
-        fi
-    fi
-
-    if [ "$DNS_PID" != "" ]; then
-       brlan0up=`grep brlan0 "$DNSMASQ_CONF_FILE"`
-       case $SELFHEAL_TYPE in
-           "BASE")
-               brlan1up=`grep brlan1 "$DNSMASQ_CONF_FILE"`
-               lnf_ifname=`syscfg get iot_ifname`
-               if [ $lnf_ifname == "l2sd0.106" ]; then
-                   lnf_ifname=`syscfg get iot_brname`
-               fi
-               if [ "$lnf_ifname" != "" ]
-               then
-                   echo_t "[RDKB_AGG_SELFHEAL] : LnF interface is: $lnf_ifname"
-                   infup=`grep $lnf_ifname "$DNSMASQ_CONF_FILE"`
-               else
-                   echo_t "[RDKB_AGG_SELFHEAL] : LnF interface not available in DB"
-                   #Set some value so that dnsmasq won't restart
-                   infup="NA"
-               fi
-               ;;
-           "TCCBR")
-               ;;
-           "SYSTEMD")
-               brlan1up=`grep brlan1 "$DNSMASQ_CONF_FILE"`
-               ;;
-       esac
-       IsAnyOneInfFailtoUp=0
-       if [ $BR_MODE -eq 0 ]
-       then
-           if [ "$brlan0up" == "" ]
-           then
-               echo_t "[RDKB_AGG_SELFHEAL] : brlan0 info is not availble in "$DNSMASQ_CONF_FILE""
-               IsAnyOneInfFailtoUp=1
-           fi
-       fi
-       case $SELFHEAL_TYPE in
-           "BASE"|"SYSTEMD")
-               if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ]
-               then
-                   echo_t "[RDKB_AGG_SELFHEAL] : brlan1 info is not availble in "$DNSMASQ_CONF_FILE""
-                   IsAnyOneInfFailtoUp=1
-               fi
-               ;;
-           "TCCBR")
-               ;;
-       esac
-       case $SELFHEAL_TYPE in
-           "BASE")
-               if [ "$infup" == "" ]
-               then
-                   echo_t "[RDKB_AGG_SELFHEAL] : $lnf_ifname info is not availble in "$DNSMASQ_CONF_FILE""
-                   IsAnyOneInfFailtoUp=1
-               fi
-               ;;
-           "TCCBR")
-               ;;
-           "SYSTEMD")
-               ;;
-       esac
-       if [ ! -f /tmp/dnsmasq_restarted_via_selfheal ]
-       then
-           if [ $IsAnyOneInfFailtoUp -eq 1 ]
-           then
-               touch /tmp/dnsmasq_restarted_via_selfheal
-               echo_t "[RDKB_AGG_SELFHEAL] : dnsmasq.conf is."
-               echo "`cat "$DNSMASQ_CONF_FILE"`"
-               echo_t "[RDKB_AGG_SELFHEAL] : Setting an event to restart dnsmasq"
-               self_heal_dnsmasq_restart
-           fi
-       fi
-    fi
-}
-
 self_heal_dnsmasq_zombie()
 {
     checkIfDnsmasqIsZombie=`ps | grep dnsmasq | grep "Z" | awk '{ print $1 }'`
@@ -971,7 +871,6 @@ do
 
     START_TIME_SEC=`cut -d'.' -f1 /proc/uptime`
     self_heal_peer_ping
-    self_heal_dnsmasq_running
     self_heal_dnsmasq_zombie
     self_heal_interfaces
     self_heal_dibbler_server
