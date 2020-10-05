@@ -2253,15 +2253,6 @@ if [ "$lost_and_found_enable" = "true" ]; then
     echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
 fi
 
-# ARRIS XB6 => MODEL_NUM=TG3482G
-# Tech CBR  => MODEL_NUM=CGA4131COM
-# Tech xb6  => MODEL_NUM=CGM4140COM
-# Tech XB7  => MODEL_NUM=CGM4331COM
-# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
-# Ref: RDKB-25546
-if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
-then
 #Checking whether dnsmasq is running or not and if zombie for XF3
 if [ "$thisWAN_TYPE" = "EPON" ]; then
     DNS_PID=$(pidof dnsmasq)
@@ -2283,6 +2274,15 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
             rm -rf /tmp/dnsmaq_noiface
         fi
     fi
+    # ARRIS XB6 => MODEL_NUM=TG3482G
+    # Tech CBR  => MODEL_NUM=CGA4131COM
+    # Tech xb6  => MODEL_NUM=CGM4140COM
+    # Tech XB7  => MODEL_NUM=CGM4331COM
+    # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+    # Ref: RDKB-25546
+    if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+    then
     checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
         for zombiepid in $checkIfDnsmasqIsZombie
@@ -2320,7 +2320,7 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
             fi
           done
     fi
-
+    fi
 fi
 
 #Checking whether dnsmasq is running or not
@@ -2415,6 +2415,15 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD"|"TCCBR")
+		# ARRIS XB6 => MODEL_NUM=TG3482G
+		# Tech CBR  => MODEL_NUM=CGA4131COM
+		# Tech xb6  => MODEL_NUM=CGM4140COM
+		# Tech XB7  => MODEL_NUM=CGM4331COM
+		# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+		# Ref: RDKB-25546
+		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+		then
                 checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
                     for zombiepid in $checkIfDnsmasqIsZombie
@@ -2430,11 +2439,11 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                         fi
                       done
                 fi
+		fi
             ;;
         esac
     fi   # [ "$DNS_PID" = "" ]
 fi  # [ "$thisWAN_TYPE" != "EPON" ]
-fi
 
 case $SELFHEAL_TYPE in
     "BASE")
