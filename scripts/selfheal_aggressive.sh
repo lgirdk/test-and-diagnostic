@@ -607,6 +607,15 @@ self_heal_dhcp_clients()
                     if [ "$erouter0_up_check" = "" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
+                        #Adding to kill ipv4 process to solve RDKB-27177
+                        task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                        if [ "x$task_to_kill" = "x" ]; then
+                            task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                        fi
+                        if [ "x$task_to_kill" != "x" ]; then
+                            kill $task_to_kill
+                        fi
+                        #RDKB-27177 fix ends here
                     fi
                     if [ "$task_to_be_killed" != "" ]; then
                         echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
