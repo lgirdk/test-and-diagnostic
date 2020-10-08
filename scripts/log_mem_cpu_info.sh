@@ -69,6 +69,8 @@ logTmpFs()
       ls -al /tmp/
       echo_t "================================================================================"
    fi
+
+   t2ValNotify "TMPFS_USE_PERCENTAGE_split" "$TMPFS_CUR_USAGE"
 }
 
 get_high_mem_processes() {
@@ -274,6 +276,20 @@ get_high_mem_processes() {
 	fi
 
 	count=$((count + 1))
+
+	RDKLOGS_USAGE=`df /rdklogs | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
+	t2ValNotify "RDKLOGS_USE_PERCENTAGE_split" "$RDKLOGS_USAGE"
+
+	NVRAM_USAGE=`df /nvram | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
+	t2ValNotify "NVRAM_USE_PERCENTAGE_split" "$NVRAM_USAGE"
+
+	swap=`free | awk 'FNR == 4 {print $3}'`
+	cache=`cat /proc/meminfo | awk 'FNR == 4 {print $2}'`
+	buff=`cat /proc/meminfo | awk 'FNR == 3 {print $2}'`
+
+	t2ValNotify "SWAP_MEMORY_split" "$swap"
+	t2ValNotify "CACHE_MEMORY_split" "$cache"
+	t2ValNotify "BUFFER_MEMORY_split" "$buff"
 
 	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
 	if [ "$nvram_ro_fs" != "" ]; then
