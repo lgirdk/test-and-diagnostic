@@ -1819,8 +1819,6 @@ IPPing_SetParamUlongValue
     )
 {
     diag_cfg_t                      cfg;
-    #define MIN 1
-    #define MAX 4
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
@@ -1840,11 +1838,7 @@ IPPing_SetParamUlongValue
 
     if (strcmp(ParamName, "NumberOfRepetitions") == 0)
     {
-        if((uValue<MIN) || (uValue>MAX))
-            return FALSE;
-        else
-            cfg.cnt = uValue;
-
+        cfg.cnt = uValue;
         syscfg_set_u_commit (NULL, "IPPingNumberOfRepetitions", cfg.cnt);
     }
     else if (strcmp(ParamName, "Timeout") == 0)
