@@ -1787,8 +1787,6 @@ IPPing_SetParamUlongValue
     )
 {
     diag_cfg_t                      cfg;
-    #define MIN 1
-    #define MAX 4
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
@@ -1810,10 +1808,7 @@ IPPing_SetParamUlongValue
     {
         char buf[10];
 
-        if((uValue<MIN) || (uValue>MAX))
-            return FALSE;
-        else
-            cfg.cnt = uValue;
+        cfg.cnt = uValue;
 
         sprintf(buf, "%lu", cfg.cnt);
         if(syscfg_set(NULL, "IPPingNumberOfRepetitions", buf) == 0)
