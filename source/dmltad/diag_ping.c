@@ -208,8 +208,8 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         getIPbyInterfaceName("brlan0", ifip);
         left -= snprintf(cmd + strlen(cmd), left, "-I %s ", ifip);
     } else {
-        if (strlen(cfg->Interface))
-            left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->Interface);
+        if (strlen(cfg->ifname))
+            left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
     }
 
     if (cnt)

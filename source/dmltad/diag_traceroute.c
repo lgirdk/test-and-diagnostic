@@ -260,8 +260,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         getIPbyInterfaceName("brlan0", ifip);
         left -= snprintf(cmd + strlen(cmd), left, "-s %s ", ifip);
     } else {
-        if (strlen(cfg->Interface))
-            left -= snprintf(cmd + strlen(cmd), left, "-i %s ", cfg->Interface);
+        if (strlen(cfg->ifname))
+            left -= snprintf(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
     }
 
     if (cfg->cnt)
