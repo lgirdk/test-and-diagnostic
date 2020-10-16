@@ -989,11 +989,13 @@ case $SELFHEAL_TYPE in
 		Xfinity_Open_5_VLANID="2315"
 		Xfinity_Secure_24_VLANID="2311"
 		Xfinity_Secure_5_VLANID="2314"
+		Xfinity_Public_5_VLANID="2316"
 	    elif [ "$MODEL_NUM" = "DPC3941B" ]; then
 		Xfinity_Open_24_VLANID="2322"
 		Xfinity_Open_5_VLANID="2325"
 		Xfinity_Secure_24_VLANID="2321"
 		Xfinity_Secure_5_VLANID="2324"
+		Xfinity_Public_5_VLANID="2326"
 	    else
 		Xfinity_Open_24_VLANID="102"
 		Xfinity_Open_5_VLANID="103"
@@ -1002,7 +1004,8 @@ case $SELFHEAL_TYPE in
 	    fi
         if [ "$OPEN_24" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
-            if [ "$grePresent" = "" ]; then
+            brctlPresent=$(brctl show | grep "brlan2")
+            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
@@ -1041,7 +1044,8 @@ case $SELFHEAL_TYPE in
             #l2sd0.103 case
             if [ "$OPEN_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
-            if [ "$grePresent" = "" ]; then
+            brctlPresent=$(brctl show | grep "brlan3")
+            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
@@ -1100,7 +1104,8 @@ case $SELFHEAL_TYPE in
             #Secured Xfinity 2.4
             if [ "$SECURED_24" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
-            if [ "$grePresent" = "" ]; then
+            brctlPresent=$(brctl show | grep "brlan4")
+            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
@@ -1135,7 +1140,8 @@ case $SELFHEAL_TYPE in
             #Secured Xfinity 5
             if [ "$SECURED_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
-            if [ "$grePresent" = "" ]; then
+            brctlPresent=$(brctl show | grep "brlan5")
+            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
@@ -1163,12 +1169,94 @@ case $SELFHEAL_TYPE in
                 fi
             fi
             fi
+
+            #New Public hotspot
+            PUBLIC_5=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            if [ "$PUBLIC_5" = "true" ]; then
+            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Public_5_VLANID")
+            brctlPresent=$(brctl show | grep "brpub")
+            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
+                if [ $? -eq 1 ]; then
+                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
+
+                    Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
+                    if [ "$Interface" = "" ]; then
+                        echo_t "PSM value(ath15) is missing for $l2sd0Prefix.$Xfinity_Public_5_VLANID"
+                        psmcli set dmsb.l2net.11.Members.WiFi ath15
+                    fi
+
+                    sysevent set multinet_11-status stopped
+                    $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                    ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
+                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
+                    if [ $? -eq 1 ]; then
+                        echo_t "$l2sd0Prefix.$Xfinity_Public_5_VLANID is not created at First Retry, try again after 2 sec"
+                        sleep 2
+                        sysevent set multinet_11-status stopped
+                        $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                        ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
+                        ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
+                        if [ $? -eq 1 ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID is not created after Second Retry, no more retries !!!"
+                        fi
+                    else
+                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID created at First Retry itself"
+                    fi
+                else
+                    echo_t "[RDKB_PLATFORM_ERROR] :Public XfinityWifi:  SSID 5GHz is enabled but gre tunnels not present, restoring it"
+                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                    rcount=1
+                fi
+              fi
+              fi
+
+
             if [ $rcount -eq 1 ] ; then
                 sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover
             fi
         fi  # [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
     ;;
     "TCCBR")
+          if [ "$HOTSPOT_ENABLE" = "true" ]; then                                                                                      
+                XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
+                XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
+                XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                
+                open2=`wlctl -i wl0.2 bss`
+                open5=`wlctl -i wl1.2 bss`
+                open16=`wlctl -i wl1.7 bss`
+                
+                if [ "$XOPEN_24" = "true" ]; then
+                      if [ "$open2" = "down" ]; then
+                           wlctl -i wl0.2 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR  SSID:5 2.4GHz restoring"
+                           xcount=1
+                      fi
+                fi
+                
+                if [ "$XOPEN_5" = "true" ]; then
+                      if [ "$open5" = "down" ]; then
+                           wlctl -i wl1.2 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:6 5GHz restoring"
+                           xcount=1
+                      fi
+                fi
+                
+                if [ "$XOPEN_16" = "true" ]; then
+                      if [ "$open16" = "down" ]; then
+                           wlctl -i wl1.7 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:16 5GHz restoring"
+                           xcount=1
+                      fi
+                fi
+                
+                if [ $xcount -eq 1 ] ; then
+                      echo_t "apply settings"
+                      dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                      dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+                fi
+         fi                                                                                  
     ;;
     "SYSTEMD")
     ;;
