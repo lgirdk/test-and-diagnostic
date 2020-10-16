@@ -531,13 +531,19 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 					then
 						echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv4_4-status is not set or lan is not started, setting lan-start event"
 						sysevent set lan-start
+						sleep 60
+					else
+						sysevent set multinet-down 1
 						sleep 5
+						sysevent set multinet-up 1
+						sleep 30
 					fi
+			   else
+				sysevent set multinet-down 1
+				sleep 5
+				sysevent set multinet-up 1
+				sleep 30
 			   fi
-			   sysevent set multinet-down 1
-			   sleep 5
-			   sysevent set multinet-up 1
-			   sleep 30
 		   fi
 
 
@@ -589,13 +595,19 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				then
 					echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
 					sysevent set ipv4-up $lan_l3net
+					sleep 60
+				else
+					sysevent set multinet-down 2
 					sleep 5
+					sysevent set multinet-up 2
+					sleep 10
 				fi
+			else
+				sysevent set multinet-down 2
+				sleep 5
+				sysevent set multinet-up 2
+				sleep 10
 			fi
-			sysevent set multinet-down 2
-			sleep 5
-			sysevent set multinet-up 2
-			sleep 10
 		fi
 	fi
 fi
