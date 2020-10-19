@@ -379,6 +379,9 @@ fi
         echo_t "`date`"
         echo_t "`top -mbn1 | sort -k4 -r`"
         echo_t "`cat /proc/meminfo`"
+	cachedMem=`awk '/^Cached:/ {print $2,$3}' /proc/meminfo`
+        echo_t "CachedMemory: $cachedMem"
+	t2ValNotify "cachedMem_split" "$cachedMem"
         COUNT=0
     fi
 
