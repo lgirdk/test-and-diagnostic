@@ -136,7 +136,35 @@ hwHealthTest_SetParamBoolValue
     {
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Execute tests : %d \n", __FUNCTION__, bValue));
-        if (bValue && fopen("/tmp/.hwst_run", "r"))
+        FILE* fp = fopen("/tmp/.hwst_run", "r");
+        char* clientVer = (char*) malloc(8*sizeof(char));
+        char version[8] = {'\0'};
+        if(NULL != fp)
+        {
+            if(NULL != clientVer)
+            {
+                fscanf(fp, "%s", clientVer);
+                strcpy(version,clientVer);
+                free(clientVer);
+                clientVer = NULL;
+            }
+        }
+
+        if(NULL != clientVer)
+        {
+            free(clientVer);
+        }
+
+        if(fp != NULL )
+        {
+            fclose(fp);
+            if(strcmp(version, "0001") && bValue)
+            {
+                AnscTraceFlow(("Multiple connections not allowed"));
+                return FALSE;
+            }
+        }
+        if (bValue && !strcmp(version, "0001"))
         {
             AnscTraceFlow(("Hwselftest is already running, hence returning success\n"));
             return TRUE;
@@ -153,7 +181,7 @@ hwHealthTest_SetParamBoolValue
                     AnscTraceFlow(("%s Deleted results file\n", __FUNCTION__));
             }
             memset(cmd, 0, sizeof(cmd));
-            AnscCopyString(cmd, "/usr/bin/hwselftest_run.sh &");
+            AnscCopyString(cmd, "/usr/bin/hwselftest_run.sh 0001 &");
             AnscTraceFlow(("Executing Hwselftest..\n"));
             system(cmd);
         }
