@@ -392,12 +392,6 @@ self_heal_interfaces()
         rebootNeeded RM "" $reason $rebootCount
     fi
 
-    erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
-    if [ "$erouter0_up_check" = "" ]; then
-        echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
-        ifconfig $WAN_INTERFACE up
-    fi
-
 }
 
 self_heal_dibbler_server()
