@@ -1766,6 +1766,8 @@ ResourceMonitor_SetParamUlongValue
         }
   
         char buf[8];
+#if defined(_ARRIS_XB6_PRODUCT_REQ_) || defined(_CBR_PRODUCT_REQ_) || \
+(defined(_XB6_PRODUCT_REQ_) && defined(_COSA_BCM_ARM_))
 	ULONG aggressive_interval;
         memset(buf, 0, sizeof(buf));
 
@@ -1781,6 +1783,7 @@ ResourceMonitor_SetParamUlongValue
 	    CcspTraceWarning(("resource_monitor_interval should be greater than AggressiveInterval \n"));
 	    return FALSE;
 	}
+#endif
         memset(buf, 0, sizeof(buf));
         snprintf(buf,sizeof(buf),"%d",uValue);
         if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
