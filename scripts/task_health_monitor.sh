@@ -2707,7 +2707,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
             fi
-            if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
             if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
                 echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                 /usr/sbin/dibbler-client stop
@@ -2718,7 +2718,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
             fi
         ;;
         "BASE")
-            if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
             task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
             if [ "$task_to_be_killed" = "" ]; then
                 task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
@@ -2748,7 +2748,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
             fi
-            if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
             echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
             /usr/sbin/dibbler-client stop
             fi
