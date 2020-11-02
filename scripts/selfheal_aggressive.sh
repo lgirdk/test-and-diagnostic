@@ -571,7 +571,7 @@ self_heal_dhcp_clients()
                     if [ "$erouter0_up_check" = "" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
-                        if ([ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]) || [ "$udhcpc_enable" = "true" ]; then
+                        if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] ) || [ "$udhcpc_enable" = "true" ]; then
                         #Adding to kill ipv4 process to solve RDKB-27177
                         task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
                         if [ "x$task_to_kill" = "x" ]; then
@@ -583,7 +583,7 @@ self_heal_dhcp_clients()
                         #RDKB-27177 fix ends here
                     fi
                     fi
-                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+                    if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                         /usr/sbin/dibbler-client stop
@@ -594,7 +594,7 @@ self_heal_dhcp_clients()
                     fi
                     ;;
                 "BASE")
-                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+                    if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
                     task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
                     if [ "$task_to_be_killed" = "" ]; then
                         task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
@@ -633,16 +633,14 @@ self_heal_dhcp_clients()
                         fi
                         #RDKB-27177 addition ends here
                     fi
-                    if [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] && [ "$erouter_mode_check" -ne 1 ]; then
+                    if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
                     echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                     /usr/sbin/dibbler-client stop
                     fi
                     ;;
             esac
         else
-            if [ "$IPV6_STATUS_CHECK_GIPV6" != "" ]; then
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
-            fi
         fi
     #Logic ends here for RDKB-25714
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
