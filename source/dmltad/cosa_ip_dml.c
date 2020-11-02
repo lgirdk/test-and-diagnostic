@@ -1865,9 +1865,19 @@ IPPing_SetParamStringValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
-    if (AnscValidStringCheck(pString) != TRUE)
+    // "Host" and "Interface" can be empty strings. i.e data type string(256)
+    if( AnscEqualString(ParamName, "Host", TRUE) || AnscEqualString(ParamName, "Interface", TRUE) )
+    {
+      if (!pString)
+      {
+        fprintf(stderr, "\n %s: %d ParamName:%s value is NULL  \n", __FUNCTION__,__LINE__,ParamName);
         return FALSE;
+      }
+    }
+    else if (AnscValidStringCheck(pString) != TRUE) /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
+    {
+      return FALSE;
+    }
 
     if (strcmp(ParamName, "Interface") == 0)
     {
@@ -1887,7 +1897,15 @@ IPPing_SetParamStringValue
             parameterValStruct_t    ParamVal;
             int                     size = sizeof(cfg.ifname);
 
-            _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            if(strlen(cfg.Interface))
+            {
+               _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            }
+            else /*If an empty string is specified, use "Device.IP.Interface.1" as the interface */
+            {
+               _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", "Device.IP.Interface.1");
+            }
+
 
             ParamVal.parameterName  = IfNameParamName;
             ParamVal.parameterValue = cfg.ifname;
@@ -1909,7 +1927,7 @@ IPPing_SetParamStringValue
     else if (strcmp(ParamName, "Host") == 0)
     {
 		ANSC_STATUS             ret;
-		char wrapped_host[64]={0};
+		char wrapped_host[256]={0}; //Host size is string(256)
         ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
