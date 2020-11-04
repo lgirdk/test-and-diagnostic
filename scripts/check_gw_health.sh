@@ -72,8 +72,9 @@ CheckandSetCMIPStatus()
 	cm_prov=`dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '{print $5}'`
 
 	echo_t "cm_prov=$cm_prov"
-
-	if [ "x$cm_prov" == "xIPv4" ] || [ "x$cm_prov" == "xIPV4" ];then
+        
+# checking also if cm prove type is APM(Alternate provision mode) in docsis 3.1 version of AXB6 and CMXB7
+	if [ "x$cm_prov" == "xIPv4" ] || [ "x$cm_prov" == "xIPV4" ] || [ "x$cm_prov" == "xAPM" ];then
 
 		cm_ipv4=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPAddress | grep value | awk '{print $5}'`
 		echo_t "cm_ipv4=$cm_ipv4"
@@ -87,7 +88,7 @@ CheckandSetCMIPStatus()
         	cm_ipv4_bit=0
 	fi
 
-	if [ "x$cm_prov" == "xIPv6" ] || [ "x$cm_prov" == "xIPV6" ];then
+	if [ "x$cm_prov" == "xIPv6" ] || [ "x$cm_prov" == "xIPV6" ] || [ "x$cm_prov" == "xAPM" ];then
 
 		cm_ipv6=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPv6Address | grep value | awk '{print $5}'`
 		echo_t "cm_ipv6=$cm_ipv6"
@@ -298,7 +299,7 @@ case "$1" in
 
 	LastrebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
 	echo_t "LastrebootReason = $LastrebootReason"
-	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ]; then
+	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ] || [ "PROVISIONING_Image_Upgrade" == "$LastrebootReason" ]; then
 		echo_t "Wan Link Heal for bootup-check invoked"
 		CheckandRebootBasedOnCurrentHealth
 	fi
