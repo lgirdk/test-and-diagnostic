@@ -173,10 +173,18 @@ self_heal_interfaces()
                                     if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
                                         echo_t "[RDKB_AGG_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
                                         sysevent set lan-start
-                                        sleep 5
-                                    fi
-                                fi
+                                    sleep 60
+				else
+				    if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
+					/etc/utopia/registration.d/02_multinet restart
+				    fi
 
+				    sysevent set multinet-down 1
+				    sleep 5
+				    sysevent set multinet-up 1
+				    sleep 30
+                                fi
+                            else
                                 if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
                                     /etc/utopia/registration.d/02_multinet restart
                                 fi
@@ -185,6 +193,7 @@ self_heal_interfaces()
                                 sleep 5
                                 sysevent set multinet-up 1
                                 sleep 30
+			    fi
                             fi
 
                         fi
@@ -215,10 +224,17 @@ self_heal_interfaces()
                             if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
                                 echo_t "[RDKB_AGG_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
                                 sysevent set ipv4-up $lan_l3net
-                                sleep 5
-                            fi
+                            sleep 60
+			else
+			    if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
+				/etc/utopia/registration.d/02_multinet restart
+			    fi
+			    sysevent set multinet-down 2
+			    sleep 5
+			    sysevent set multinet-up 2
+			    sleep 10
                         fi
-
+                    else
                         if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
                             /etc/utopia/registration.d/02_multinet restart
                         fi
@@ -230,6 +246,7 @@ self_heal_interfaces()
                     fi
                 fi
             fi
+        fi
             ;;
         "TCCBR")
             # Checking whether brlan0 created properly , if not recreate it
@@ -258,9 +275,18 @@ self_heal_interfaces()
                                     if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
                                         echo_t "[RDKB_AGG_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
                                         sysevent set lan-start
-                                        sleep 5
-                                    fi
+                                    sleep 30
+				else
+				    if [ "$check_if_brlan0_created" = "" ]; then
+					/etc/utopia/registration.d/02_multinet restart
+				    fi
+
+				    sysevent set multinet-down 1
+				    sleep 5
+				    sysevent set multinet-up 1
+				    sleep 30
                                 fi
+                            else
 
                                 if [ "$check_if_brlan0_created" = "" ]; then
                                     /etc/utopia/registration.d/02_multinet restart
@@ -270,6 +296,7 @@ self_heal_interfaces()
                                 sleep 5
                                 sysevent set multinet-up 1
                                 sleep 30
+			    fi
                                 sysevent set lan_selfheal "done"
                             fi
 
@@ -313,9 +340,18 @@ self_heal_interfaces()
                                     if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
                                         echo_t "[RDKB_AGG_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
                                         sysevent set lan-start
-                                        sleep 5
-                                    fi
+                                    sleep 30
+				else
+				    if [ "$check_if_brlan0_created" = "" ]; then
+					/etc/utopia/registration.d/02_multinet restart
+				    fi
+
+				    sysevent set multinet-down 1
+				    sleep 5
+				    sysevent set multinet-up 1
+				    sleep 30
                                 fi
+                            else
 
                                 if [ "$check_if_brlan0_created" = "" ]; then
                                     /etc/utopia/registration.d/02_multinet restart
@@ -325,6 +361,7 @@ self_heal_interfaces()
                                 sleep 5
                                 sysevent set multinet-up 1
                                 sleep 30
+			    fi
                                 sysevent set lan_selfheal "done"
                             fi
 
@@ -359,9 +396,18 @@ self_heal_interfaces()
                             if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
                                 echo_t "[RDKB_AGG_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
                                 sysevent set ipv4-up $lan_l3net
-                                sleep 5
-                            fi
+                            sleep 30
+			else
+			    if [ "$check_if_brlan1_created" = "" ]; then
+				/etc/utopia/registration.d/02_multinet restart
+			    fi
+
+			    sysevent set multinet-down 2
+			    sleep 5
+			    sysevent set multinet-up 2
+			    sleep 10
                         fi
+                    else
 
                         if [ "$check_if_brlan1_created" = "" ]; then
                             /etc/utopia/registration.d/02_multinet restart
@@ -371,6 +417,7 @@ self_heal_interfaces()
                         sleep 5
                         sysevent set multinet-up 2
                         sleep 10
+		    fi
                         sysevent set l3net_selfheal "done"
                     fi
                 else
