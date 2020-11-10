@@ -30,6 +30,8 @@ DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 
+ovs_enable=`syscfg get mesh_ovs_enable`
+
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
@@ -2156,7 +2158,13 @@ case $SELFHEAL_TYPE in
                       done
                     if [ "$brFound" = "false" ]; then
                         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
-                        brctl addif brlan0 $ifn;
+                            if [ "x$ovs_enable" = "xtrue" ];then
+                                echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan0  :"
+                                /usr/bin/bridgeUtils add-port brlan0 $ifn;
+                            else
+                                brctl addif brlan0 $ifn;
+                            fi 
+
                     fi
                   done
 
@@ -2177,7 +2185,12 @@ case $SELFHEAL_TYPE in
                           done
                         if [ "$brFound" = "false" ]; then
                             echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
-                            brctl addif brlan1 $ifn;
+                            if [ "x$ovs_enable" = "xtrue" ];then
+                                echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan1  :"
+                                /usr/bin/bridgeUtils add-port brlan1 $ifn;
+                            else
+                                brctl addif brlan1 $ifn;
+                            fi 
                         fi
                       done
                 fi

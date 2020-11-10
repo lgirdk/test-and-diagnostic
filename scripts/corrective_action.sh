@@ -1064,7 +1064,15 @@ logNetworkInfo()
         ;;
     esac
     echo_t "RDKB_SELFHEAL : brctl o/p :"
+    ovs_enable=`syscfg get mesh_ovs_enable`
+
+    if [ "x$ovs_enable" = "xtrue" ];then
+            echo_t "RDKB_SELFHEAL : OVS bridge o/p :"
+            ovs-vsctl show  
+            
+    fi 
     brctl show
+
     echo_t "-------------------------------------------------------"
     echo_t "RDKB_SELFHEAL : ip route list o/p :"
     ip route list

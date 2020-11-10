@@ -50,6 +50,7 @@ source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
 T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
+ovs_enable=`syscfg get mesh_ovs_enable`
 
 t2CountNotify() {
     if [ -f $T2_MSG_CLIENT ]; then
@@ -522,7 +523,13 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
 		   then
 			   echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 and l2sd0.100 o/p "
-			    ifconfig brlan0;ifconfig l2sd0.100; brctl show
+			   ifconfig brlan0;ifconfig l2sd0.100;
+
+                   	   if [ "x$ovs_enable" = "xtrue" ];then
+                        	ovs-vsctl list-ifaces brlan0
+                   	   else
+                        	brctl show
+                           fi
 			   echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
 
 			   ipv4_status=`sysevent get ipv4_4-status`
@@ -586,7 +593,12 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
         	then
 			echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
-			ifconfig brlan1;ifconfig l2sd0.101; brctl show
+			ifconfig brlan1;ifconfig l2sd0.101;
+            		if [ "x$ovs_enable" = "xtrue" ];then
+                		ovs-vsctl list-ifaces brlan1
+            		else
+                		brctl show
+            		fi
 	       		echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
 			
 			ipv5_status=`sysevent get ipv4_5-status`
