@@ -996,8 +996,9 @@ case $SELFHEAL_TYPE in
 		Xfinity_Secure_24_VLANID="104"
 		Xfinity_Secure_5_VLANID="105"
 	    fi
-	    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
-            if [ -n "$grePresent" ]; then
+        if [ "$OPEN_24" = "true" ]; then
+            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
+            if [ "$grePresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
@@ -1026,20 +1027,17 @@ case $SELFHEAL_TYPE in
                         echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "XfinityWifi is enabled and $l2sd0Prefix.$Xfinity_Open_24_VLANID is present"
-                fi
-            else
-                if [ "$OPEN_24" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=1
                 fi
             fi
+            fi
 
             #l2sd0.103 case
-
+            if [ "$OPEN_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
-            if [ -n "$grePresent" ]; then
+            if [ "$grePresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
@@ -1068,16 +1066,12 @@ case $SELFHEAL_TYPE in
                         echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Open_5_VLANID is present"
-                fi
-            else
-                if [ "$OPEN_5" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=1
                 fi
             fi
-
+            fi
             #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
             #if found not attached , then add the device to bridges
             for index in 2 3 4 5
@@ -1100,8 +1094,9 @@ case $SELFHEAL_TYPE in
             #l2sd0.103 case
             
             #Secured Xfinity 2.4
+            if [ "$SECURED_24" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
-            if [ -n "$grePresent" ]; then
+            if [ "$grePresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
@@ -1123,22 +1118,20 @@ case $SELFHEAL_TYPE in
                         echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Secure_24_VLANID is present"
-                fi
-            else
                 #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
                 #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
                 #connect
-                if [ "$SECURED_24" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=1
                 fi
             fi
+            fi
 
             #Secured Xfinity 5
+            if [ "$SECURED_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
-            if [ -n "$grePresent" ]; then
+            if [ "$grePresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
@@ -1160,14 +1153,11 @@ case $SELFHEAL_TYPE in
                         echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID created at First Retry itself"
                     fi
                 else
-                    echo_t "Xfinitywifi is enabled and $l2sd0Prefix.$Xfinity_Secure_5_VLANID is present"
-                fi
-            else
-                if [ "$SECURED_5" = "true" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=1
                 fi
+            fi
             fi
             if [ $rcount -eq 1 ] ; then
                 sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover
