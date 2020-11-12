@@ -210,6 +210,8 @@ CosaBackEndManagerInitialize
     /*pMyObject->hNat           = (ANSC_HANDLE)CosaNatCreate();*/
     pMyObject->hDiag          = (ANSC_HANDLE)CosaDiagCreate();
     pMyObject->hSelfHeal          = (ANSC_HANDLE)CosaSelfHealCreate();
+    pMyObject->hTelemetry     = (ANSC_HANDLE)CosatelemetryCreate();
+
     if (CosaWanCnctvtyChk_Init() != ANSC_STATUS_SUCCESS)
     {
         CcspTraceError(("Wan connectivity check initialization failed\n"));
@@ -289,6 +291,10 @@ CosaBackEndManagerRemove
     if ( pMyObject->hDiag )
     {
         CosaDiagRemove((ANSC_HANDLE)pMyObject->hDiag);
+    }
+    if ( pMyObject->hTelemetry )
+    {
+        CosatelemetryRemove((ANSC_HANDLE)pMyObject->hTelemetry);
     }
 /*
     if ( pMyObject->hDeviceInfo )
