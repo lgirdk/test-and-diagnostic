@@ -148,6 +148,7 @@ extern  char                              g_Subsystem[32];
     ANSC_HANDLE                  hSelfHeal;                                               \
     ANSC_HANDLE                  hDNS;                                                      \
     ANSC_HANDLE                  hWanCnctvty_Chk;                                            \
+    ANSC_HANDLE                  hTelemetry;                                                \
     PCOSA_PLUGIN_INFO            hCosaPluginInfo;
 
 typedef  struct
