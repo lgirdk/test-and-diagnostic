@@ -40,6 +40,8 @@ libdmltad_la_SOURCES = cosa_apis_util.c plugin_main.c cosa_apis_util_priv.c cosa
                        cosa_diagnostic_apis.c diag.c diag_ping.c diag_traceroute.c cosa_selfheal_apis.c cosa_selfheal_dml.c \
                        cosa_logbackup_dml.c cosa_logbackup_apis.c cosa_powermgt_tcxb6_dml.c cosa_thermal_dml.c cosa_hwst_dml.c
 
+libdmltad_la_SOURCES += cosa_telemetry_dml.c cosa_telemetry_internal.c
+
 libdmltad_la_DEPENDENCIES=$(EXTRA_DEPENDENCIES)
 libdmltad_la_LIBADD=$(libdmltad_la_DEPENDENCIES)
 libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg
