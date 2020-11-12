@@ -232,6 +232,9 @@ CosaBackEndManagerInitialize
     pMyObject->hInterfaceStack = (ANSC_HANDLE)CosaIFStackCreate();
     pMyObject->hPPP           = (ANSC_HANDLE)CosaPPPCreate();
     */
+    //Telemetry Changes
+    pMyObject->hTelemetry     = (ANSC_HANDLE)CosatelemetryCreate();
+    AnscTraceWarning(("  CosatelemetryCreate done!\n"));
 
     return returnStatus;
 }
@@ -285,6 +288,11 @@ CosaBackEndManagerRemove
     if ( pMyObject->hDiag )
     {
         CosaDiagRemove((ANSC_HANDLE)pMyObject->hDiag);
+    }
+    // Telemetry Code
+    if ( pMyObject->hTelemetry )
+    {
+        CosatelemetryRemove((ANSC_HANDLE)pMyObject->hTelemetry);
     }
 /*
     if ( pMyObject->hDeviceInfo )
