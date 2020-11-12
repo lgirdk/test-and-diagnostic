@@ -34,6 +34,8 @@ libdmltad_la_SOURCES = cosa_apis_util.c plugin_main.c cosa_apis_util_priv.c cosa
                        cosa_wanconnectivity_apis.c cosa_wanconnectivity_utils.c cosa_wanconnectivity_operations.c \
                        cosa_wanconnectivity_rbus_handler_apis.c cosa_wanconnectivity_rbus_apis.c
 
+libdmltad_la_SOURCES += cosa_telemetry_dml.c cosa_telemetry_internal.c
+
 libdmltad_la_DEPENDENCIES = $(EXTRA_DEPENDENCIES)
 libdmltad_la_LIBADD = $(libdmltad_la_DEPENDENCIES)
 libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg -lsysevent -lsecure_wrapper -lrbus -lresolv -lev -lpcap
