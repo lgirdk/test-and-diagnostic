@@ -209,6 +209,8 @@ CosaBackEndManagerInitialize
     /*pMyObject->hNat           = (ANSC_HANDLE)CosaNatCreate();*/
     pMyObject->hDiag          = (ANSC_HANDLE)CosaDiagCreate();
     pMyObject->hSelfHeal          = (ANSC_HANDLE)CosaSelfHealCreate();
+    pMyObject->hTelemetry     = (ANSC_HANDLE)CosatelemetryCreate();
+
 /*
     pMyObject->hProcStatus    = (ANSC_HANDLE)CosaProcStatusCreate();
    pMyObject->hDeviceInfo    = (ANSC_HANDLE)CosaDeviceInfoCreate();
@@ -284,6 +286,10 @@ CosaBackEndManagerRemove
     if ( pMyObject->hDiag )
     {
         CosaDiagRemove((ANSC_HANDLE)pMyObject->hDiag);
+    }
+    if ( pMyObject->hTelemetry )
+    {
+        CosatelemetryRemove((ANSC_HANDLE)pMyObject->hTelemetry);
     }
 /*
     if ( pMyObject->hDeviceInfo )
