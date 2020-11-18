@@ -363,6 +363,9 @@ fi
 			    RES_COUNT=`syscfg get todays_reset_count`
 	  	        echo_t "RDKB_SELFHEAL : Resetted todays_reset_count during maintenance Window"
 	  	        echo_t "RDKB_SELFHEAL : Current Reset Count is $RES_COUNT"	  	        
+
+			sysevent set firewall_selfheal_count 0
+			echo_t "RDKB_SELFHEAL : Resetted firewall_selfheal_count during maintenance Window"
 		    fi
 	    else
 		    IsAlreadyCountReseted=0
