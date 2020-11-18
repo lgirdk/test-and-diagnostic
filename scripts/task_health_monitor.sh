@@ -2260,6 +2260,26 @@ if [ $BR_MODE -eq 0 ]; then
     fi
 fi
 
+if [ -s /tmp/.ipv4table_error ] || [ -s /tmp/.ipv6table_error ];then
+	firewall_selfheal_count=$(sysevent get firewall_selfheal_count)
+	if [ "$firewall_selfheal_count" = "" ];then
+		firewall_selfheal_count=0
+	fi
+	if [ $firewall_selfheal_count -lt 3 ];then
+		echo_t "[RDKB_SELFHEAL] : iptables error , restarting firewall"
+		echo ">>>> /tmp/.ipv4table_error <<<<"
+		cat /tmp/.ipv4table_error
+		echo ">>>> /tmp/.ipv6table_error <<<<"
+		cat /tmp/.ipv6table_error
+		sysevent set firewall-restart
+		firewall_selfheal_count=$((firewall_selfheal_count + 1))
+		sysevent set firewall_selfheal_count $firewall_selfheal_count
+		echo_t "[RDKB_SELFHEAL] : firewall_selfheal_count is $firewall_selfheal_count"
+	else
+		echo_t "[RDKB_SELFHEAL] : max firewall_selfheal_count reached, not restarting firewall"
+	fi
+fi
+
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
         if [ "$BOX_TYPE" != "HUB4" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
