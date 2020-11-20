@@ -21,7 +21,7 @@
 #include "cosa_telemetry_internal.h"
 #include "plugin_main_apis.h"
 
-static BOOL start_dcm_service = FALSE;
+static BOOL start_telemetry_service = FALSE;
 
 /***********************************************************************
  APIs for Object:
@@ -35,13 +35,73 @@ static BOOL start_dcm_service = FALSE;
 BOOL
 Telemetry_GetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL* bValue)
 {
-    return TRUE;
+    CcspTraceDebug(("%s: Entered\n", __FUNCTION__));
+    PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
+    if (AnscEqualString(ParamName, "Enable", TRUE))
+    {
+        CcspTraceDebug(("%s: Existing value for Telemetry.Enable is: %d\n", __FUNCTION__, pMyObject->Enable));
+        *bValue =  pMyObject->Enable;
+        return TRUE;
+    }
+    else
+    {
+        CcspTraceError(("%s: Unknown parameter %s\n", __FUNCTION__, ParamName));
+    }
+    return FALSE;
 }
 
 BOOL
 Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL bValue)
 {
-    return TRUE;
+    CcspTraceDebug(("%s: Entered\n", __FUNCTION__));
+    PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
+    if (AnscEqualString(ParamName, "Enable", TRUE))
+    {
+        CcspTraceDebug(("%s Telemetry Enable Set Value is %d: and the existing value is %d\n", __FUNCTION__, bValue, pMyObject->Enable));
+        if (pMyObject->Enable == bValue)
+        {
+            return TRUE;
+        }
+
+        /* Telemetry agent receives the events only if T2Enable is enabled */
+        if (bValue == TRUE)
+        {
+            if (syscfg_set(NULL, "T2Enable", "true") != 0)
+            {
+                CcspTraceError(("syscfg_set failed for Telemetry2 Enable\n"));
+                return FALSE;
+            }
+        }
+
+        if (syscfg_set_commit(NULL, "telemetry_enable", bValue ? "true" : "false") != 0)
+        {
+            CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        else
+        {
+            if (bValue == TRUE)
+            {
+                start_telemetry_service = TRUE;
+            }
+            else
+            {
+                CcspTraceInfo(("%s: Stop Telemetry Service, removing the cronjob (autodownload_dcmconfig.sh) from the cron table\n", __FUNCTION__));
+                system("crontab -l | grep -v 'autodownload_dcmconfig.sh' | crontab -");
+                system("killall -9 telemetry2_0");
+            }
+        }
+        pMyObject->Enable = bValue;
+        CcspTraceDebug(("%s: Telemetry Enable Set Value is %d: and the value after set is %d\n", __FUNCTION__, bValue, pMyObject->Enable));
+
+        return TRUE;
+    }
+    else
+    {
+        CcspTraceError(("%s Unknown parameter %s\n", __FUNCTION__, ParamName));
+    }
+
+    return FALSE;
 }
 
 ANSC_STATUS
@@ -106,6 +166,15 @@ Telemetry_Commit
     ANSC_HANDLE                 hInsContext
 )
 {
+    CcspTraceDebug(("%s: Entered\n", __FUNCTION__));
+    PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
+    if ((pMyObject->Enable == TRUE) && (start_telemetry_service == TRUE))
+    {
+        CcspTraceInfo(("%s: Telemetry is enabled, downloading DCMConfigFile\n", __FUNCTION__));
+        CcspTraceInfo(("%s: Starting  Telemetry service\n", __FUNCTION__));
+        system("/usr/bin/telemetry2_0 &");
+    }
+    start_telemetry_service = FALSE;
     return TRUE;
 }
 
