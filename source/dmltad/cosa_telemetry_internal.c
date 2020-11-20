@@ -231,9 +231,13 @@ Return:         Returns the ANSC_STATUS_SUCCESS.
 ANSC_STATUS
 CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
 {
+    char buf[8];
     PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)hThisObject;
 
     CcspTraceDebug(("%s Entered\n", __FUNCTION__));
+
+    syscfg_get(NULL, "telemetry_enable", buf, sizeof(buf));
+    pMyObject->Enable = (strcmp(buf, "true") == 0) ? TRUE : FALSE;
 
     syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
 
