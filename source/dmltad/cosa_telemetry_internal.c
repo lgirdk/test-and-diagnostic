@@ -239,6 +239,8 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
     syscfg_get(NULL, "telemetry_enable", buf, sizeof(buf));
     pMyObject->Enable = (strcmp(buf, "true") == 0) ? TRUE : FALSE;
 
+    pMyObject->DCMConfigForceDownload = FALSE;
+
     syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
 
     return ANSC_STATUS_SUCCESS;
