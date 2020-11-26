@@ -21,7 +21,16 @@
 #include "cosa_telemetry_internal.h"
 #include "plugin_main_apis.h"
 
+typedef enum {
+    TELE_ST_NONE,
+    TELE_ST_START,
+    TELE_ST_STOP,
+    TELE_ST_RELOAD,
+}
+telemetry_state_t;
+
 static BOOL start_telemetry_service = FALSE;
+static telemetry_state_t tele_state = TELE_ST_NONE;
 
 /***********************************************************************
  APIs for Object: RDKCENTRAL_telemetry.
@@ -35,6 +44,12 @@ BOOL Telemetry_GetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL*
     {
         CcspTraceDebug(("%s: Existing value for Telemetry.Enable is: %d\n", __FUNCTION__, pMyObject->Enable));
         *bValue =  pMyObject->Enable;
+        return TRUE;
+    }
+    else if (strcmp(ParamName, "DCMConfigForceDownload") == 0)
+    {
+        CcspTraceDebug(("%s: Existing value for Telemetry.DCMConfigForceDownload is: %d\n", __FUNCTION__, pMyObject->DCMConfigForceDownload));
+        *bValue = pMyObject->DCMConfigForceDownload;
         return TRUE;
     }
     else
@@ -75,18 +90,28 @@ BOOL Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL 
         {
             if (bValue == TRUE)
             {
-                start_telemetry_service = TRUE;
+                tele_state = TELE_ST_START;
             }
             else
             {
-                CcspTraceInfo(("%s: Stop Telemetry Service, removing the cronjob (autodownload_dcmconfig.sh) from the cron table\n", __FUNCTION__));
-                system("crontab -l | grep -v 'autodownload_dcmconfig.sh' | crontab -");
-                system("killall -9 telemetry2_0");
+                tele_state = TELE_ST_STOP;
             }
         }
         pMyObject->Enable = bValue;
         CcspTraceDebug(("%s: Telemetry Enable Set Value is %d: and the value after set is %d\n", __FUNCTION__, bValue, pMyObject->Enable));
 
+        return TRUE;
+    }
+    else if (strcmp(ParamName, "DCMConfigForceDownload") == 0)
+    {
+        if (pMyObject->Enable == TRUE)  // Reload the service only if the Telemetry feature is enabled
+        {
+            if (bValue == TRUE)
+            {
+               tele_state = TELE_ST_RELOAD;
+            }
+        }
+        pMyObject->DCMConfigForceDownload = FALSE;
         return TRUE;
     }
     else
@@ -149,13 +174,31 @@ BOOL Telemetry_Commit ( ANSC_HANDLE hInsContext )
 {
     CcspTraceDebug(("%s: Entered\n", __FUNCTION__));
     PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
-    if ((pMyObject->Enable == TRUE) && (start_telemetry_service == TRUE))
-    {
-        CcspTraceInfo(("%s: Telemetry is enabled, downloading DCMConfigFile\n", __FUNCTION__));
-        CcspTraceInfo(("%s: Starting  Telemetry service\n", __FUNCTION__));
-        system("/usr/bin/telemetry2_0 &");
-    }
-    start_telemetry_service = FALSE;
+    switch(tele_state)
+        {
+	    case TELE_ST_START:
+            {
+                CcspTraceInfo(("%s: Telemetry is enabled, downloading DCMConfigFile\n", __FUNCTION__));
+                CcspTraceInfo(("%s: Starting  Telemetry service\n", __FUNCTION__));
+                system("/usr/bin/telemetry2_0 &");
+                break;
+            }
+	    case TELE_ST_STOP:
+            {
+                CcspTraceInfo(("%s: Telemetry is disabled \n", __FUNCTION__));
+                CcspTraceInfo(("%s: Stop Telemetry Service, removing the cronjob (autodownload_dcmconfig.sh) from the cron table\n", __FUNCTION__));
+                system("crontab -l | grep -v 'autodownload_dcmconfig.sh' | crontab -");
+                system("killall -9 telemetry2_0");
+                break;
+            }
+	    case TELE_ST_RELOAD :
+            {
+                CcspTraceInfo(("%s: Reloading Telemetry service with new configuration file \n", __FUNCTION__));
+                system("killall -12 telemetry2_0");
+                break;
+            }
+       }
+    tele_state = TELE_ST_NONE;
     return TRUE;
 }
 
