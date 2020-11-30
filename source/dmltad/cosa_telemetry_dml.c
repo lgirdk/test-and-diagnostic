@@ -137,6 +137,7 @@ Telemetry_GetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pV
 
     if (strcmp(ParamName, "DCMConfigFileURL") == 0)
     {
+        syscfg_get(NULL, "T2ConfigURL", pMyObject->DCMConfigFileURL, sizeof(pMyObject->DCMConfigFileURL));
         AnscCopyString(pValue, pMyObject->DCMConfigFileURL);
         CcspTraceDebug(("%s: Copied the DCMConfigFileURL string into the parameter\n", __FUNCTION__));
         return ANSC_STATUS_SUCCESS;
@@ -161,12 +162,21 @@ Telemetry_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pS
 
     if (strcmp(ParamName, "DCMConfigFileURL") == 0)
     {
-        if (syscfg_set_commit(NULL, "DCMConfigFileURL", pString) != 0)
+        if (AnscEqualString(pMyObject->DCMConfigFileURL, pString, TRUE))
+        {
+            CcspTraceDebug(("%s DCMConfigFileURL is already set with same value  %s\n", __FUNCTION__, pString));
+            return TRUE;
+        }
+        if (syscfg_set_commit(NULL, "T2ConfigURL", pString) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
         }
         AnscCopyString(pMyObject->DCMConfigFileURL, pString);
+        if (pMyObject->Enable == TRUE)  // Reload the service only if the Telemetry feature is enabled
+        {
+            tele_state = TELE_ST_RELOAD;
+        }
         CcspTraceDebug(("%s Set value %s: Exit\n", __FUNCTION__, pString));
         return TRUE;
     }
