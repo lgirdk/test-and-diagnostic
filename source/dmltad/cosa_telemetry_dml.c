@@ -143,16 +143,14 @@ Telemetry_GetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pV
     PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
     if (AnscEqualString(ParamName, "DCMConfigFileURL", TRUE))
     {
+        syscfg_get(NULL, "T2ConfigURL", pMyObject->DCMConfigFileURL, sizeof(pMyObject->DCMConfigFileURL));
         AnscCopyString(pValue, pMyObject->DCMConfigFileURL);
         CcspTraceDebug(("%s: Copied the DCMConfigFileURL string into the parameter\n", __FUNCTION__));
         return TRUE;
     }
     else if(AnscEqualString(ParamName, "UploadRepositoryURL", TRUE))
     {
-        char uploadURL[256];
-        memset(uploadURL, 0, sizeof(uploadURL));
-        syscfg_get(NULL, "UploadRepositoryURL", uploadURL, sizeof(uploadURL));
-        AnscCopyString(pMyObject->UploadRepositoryURL, uploadURL);
+        syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
         AnscCopyString(pValue, pMyObject->UploadRepositoryURL);
         CcspTraceDebug(("%s: Copied the UploadRepositoryURL string into the parameter\n", __FUNCTION__));
         return TRUE;
@@ -172,7 +170,12 @@ Telemetry_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pS
     PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)g_pCosaBEManager->hTelemetry;
     if (AnscEqualString(ParamName, "DCMConfigFileURL", TRUE))
     {
-        if (syscfg_set(NULL, "DCMConfigFileURL", pString) != 0)
+        if (AnscEqualString(pMyObject->DCMConfigFileURL, pString, TRUE))
+        {
+            CcspTraceDebug(("%s DCMConfigFileURL is already set with same value  %s\n", __FUNCTION__, pString));
+            return TRUE;
+        }
+        if (syscfg_set(NULL, "T2ConfigURL", pString) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
@@ -186,6 +189,10 @@ Telemetry_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pS
             }
         }
         AnscCopyString(pMyObject->DCMConfigFileURL, pString);
+        if (pMyObject->Enable == TRUE)  // Reload the service only if the Telemetry feature is enabled
+        {
+            tele_state = TELE_ST_RELOAD;
+        }
         CcspTraceDebug(("%s Set value %s: Exit\n", __FUNCTION__, pString));
         return TRUE;
     }
