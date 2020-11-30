@@ -236,5 +236,7 @@ ANSC_STATUS CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
 
     syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
 
+    syscfg_get(NULL, "T2ConfigURL", pMyObject->DCMConfigFileURL, sizeof(pMyObject->DCMConfigFileURL));
+
     return ANSC_STATUS_SUCCESS;
 }
