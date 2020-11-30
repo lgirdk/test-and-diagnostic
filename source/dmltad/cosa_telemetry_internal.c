@@ -273,7 +273,8 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
     AnscCopyString(pMyObject->UploadRepositoryURL, uploadURL);
 
     memset(configURL, 0, sizeof(configURL));
-    syscfg_get(NULL, "DCMConfigFileURL", configURL, sizeof(configURL));
+    syscfg_get(NULL, "T2ConfigURL", configURL, sizeof(configURL));
+    AnscCopyString(pMyObject->DCMConfigFileURL, configURL);
 
     return ANSC_STATUS_SUCCESS;
 }
