@@ -126,11 +126,9 @@ BbhmDiagnsStart
     PANSC_XSOCKET_OBJECT            pXsocket     = (PANSC_XSOCKET_OBJECT        )pXsink->GetXsocket((ANSC_HANDLE)pXsink);
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pQuery       = NULL;
     PCHAR                           pSendBuffer  = pMyObject->hSendBuffer;
-    ULONG                           i            = 0;
     PDNS_HEADER                     pDnsHeader   = NULL;
     char*                           pDnsQdSection= NULL;
     ULONG                           StartTime    = 0;
-    char*                           pHostName    = NULL;
     char*                           pDnsQdEntry  = NULL;
     char*                           query_name   = NULL;
     ULONG                           EntrySize    = 0;
@@ -356,8 +354,6 @@ BbhmDiagnsStop
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )pMyObject->hXsinkObject;
     PANSC_XSOCKET_OBJECT            pXsocket     = NULL;
     PDSLH_NSLOOKUP_INFO             pDslhDiagInfo= (PDSLH_NSLOOKUP_INFO           )pMyObject->hDslhDiagInfo;
-    PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
-    PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoEntry   = NULL;
     ULONG                           MaxRetrieve  = 0;
 
     if ( pMyObject->bActive )
@@ -471,8 +467,6 @@ BbhmDiagnsExpire1
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY    )&pMyObject->Property;
-    PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT  )pMyObject->hStateTimer;
-    PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT)pMyObject->hXsinkObject;
     PDNS_HEADER                     pDnsHeader   = (PDNS_HEADER                 )pMyObject->hSendBuffer;
     ULONG                           StartTime    = 0;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pQuery       = NULL;
@@ -605,11 +599,9 @@ BbhmDiagnsAddEchoEntry
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
-    PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoEntry   = NULL;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery      = NULL;
-    ULONG                           k            = 0;
-
+    
     pEchoEntry = (PBBHM_NS_LOOKUP_ECHO_ENTRY)AnscAllocateMemory(sizeof(BBHM_NS_LOOKUP_ECHO_ENTRY));
 
     if ( !pEchoEntry )
@@ -682,11 +674,9 @@ BbhmDiagnsPopEchoEntry
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
-    PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoEntry   = NULL;
-    ULONG                           i            = 0;
-
+    
     AnscAcquireLock(&pMyObject->EchoTableLock);
     pSLinkEntry = AnscSListPopEntry(&pMyObject->EchoTable);
 
@@ -743,7 +733,6 @@ BbhmDiagnsOpen
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
-    PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT    )pMyObject->hStateTimer;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink        = NULL;
     PANSC_XSOCKET_OBJECT            pXsocket      = NULL;
 
@@ -829,7 +818,6 @@ BbhmDiagnsAddPquery
         ANSC_HANDLE                 hPquery
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject       = (PBBHM_DIAG_NS_LOOKUP_OBJECT  )hThisObject;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery         = (PBBHM_NS_LOOKUP_QUERY_ENTRY  )hPquery;
 
@@ -876,7 +864,6 @@ BbhmDiagnsGetPqueryById
         USHORT                      id
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject       = (PBBHM_DIAG_NS_LOOKUP_OBJECT  )hThisObject;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery         = NULL;
     PSINGLE_LINK_ENTRY              pSLinkEntry     = NULL;
@@ -939,12 +926,9 @@ BbhmDiagnsDelPquery
         ANSC_HANDLE                 hPquery
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject       = (PBBHM_DIAG_NS_LOOKUP_OBJECT  )hThisObject;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery         = (PBBHM_NS_LOOKUP_QUERY_ENTRY)hPquery;
-    PSINGLE_LINK_ENTRY              pSLinkEntry     = NULL;
-
-
+    
     AnscAcquireLock    (&pMyObject->PqueryTableLock);
     AnscSListPopEntryByLink(&pMyObject->PqueryTable, &pPquery->Linkage);
     AnscReleaseLock    (&pMyObject->PqueryTableLock);
@@ -984,7 +968,6 @@ BbhmDiagnsDelAllPqueries
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject       = (PBBHM_DIAG_NS_LOOKUP_OBJECT  )hThisObject;
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery         = NULL;
     PSINGLE_LINK_ENTRY              pSLinkEntry     = NULL;
@@ -1067,11 +1050,8 @@ BbhmDiagnsSetStopTime
     USHORT                          usDnsRrType             = (USHORT)DNS_RR_TYPE_A;
     USHORT                          usDnsRrClass            = (USHORT)DNS_RR_CLASS_IN;
     char*                           pAnEntry                = NULL;
-    ULONG                           RdLen;
-    ULONG                           j                       = 0;
-    ULONG                           k                       = 0;
+    //ULONG                           RdLen;
     char                            addr[INET6_ADDRSTRLEN]  = {0};
-    INT                             tmp;
     char*                           p                       = NULL;
 
     CcspTraceInfo(("!!! In BbhmDiagnsSetStopTime !!!\n"));
@@ -1110,7 +1090,7 @@ BbhmDiagnsSetStopTime
                 for ( i = 0; i < AnCount; i++ )
                 {
                     AnscDnsArSectionGetEntry (pDnsHeader, pAnSection, i, pAnEntry);
-                    AnscDnsRrEntryGetRdLength(pDnsHeader, pAnEntry, RdLen);
+                    //AnscDnsRrEntryGetRdLength(pDnsHeader, pAnEntry, RdLen);
                     AnscDnsRrEntryGetType    (pDnsHeader, pAnEntry, usDnsRrType);
                     AnscDnsRrEntryGetClass   (pDnsHeader, pAnEntry, usDnsRrClass);
 
@@ -1153,6 +1133,10 @@ BbhmDiagnsSetStopTime
                     }
                 }
 /*
+                ULONG                           k                       = 0;
+                INT                             tmp;
+                ULONG                           j                       = 0;
+    
                 for(i = 0, j = 0; i < AnCount; i++)
                 {
                     AnscDnsArSectionGetEntry (pDnsHeader, pAnSection, i, pAnEntry);
@@ -1269,8 +1253,6 @@ BbhmDiagnsClose
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
-    PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
-    PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT    )pMyObject->hStateTimer;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )pMyObject->hXsinkObject;
     PDSLH_NSLOOKUP_INFO             pDiagInfo    = (PDSLH_NSLOOKUP_INFO           )pMyObject->hDslhDiagInfo;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
@@ -1380,10 +1362,6 @@ BbhmDiagnsCalculateResult
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
-    PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
-    PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT    )pMyObject->hStateTimer;
-    PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )pMyObject->hXsinkObject;
-    PANSC_XSOCKET_OBJECT            pXsocket     = NULL;
     PDSLH_NSLOOKUP_INFO             pDslhDiagInfo= (PDSLH_NSLOOKUP_INFO           )pMyObject->hDslhDiagInfo;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoEntry   = NULL;

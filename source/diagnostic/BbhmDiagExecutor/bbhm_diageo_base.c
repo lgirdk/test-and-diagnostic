@@ -119,7 +119,6 @@ BbhmDiageoCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = NULL;
 
@@ -187,7 +186,6 @@ BbhmDiageoRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus        = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject           = (PBBHM_DIAG_EXEC_OBJECT       )hThisObject;
 
     pMyObject->Cancel((ANSC_HANDLE)pMyObject);
@@ -236,7 +234,6 @@ BbhmDiageoEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus        = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject           = (PBBHM_DIAG_EXEC_OBJECT       )hThisObject;
 
     AnscCoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -278,7 +275,6 @@ BbhmDiageoInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
 
     /*

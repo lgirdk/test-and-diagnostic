@@ -20,7 +20,6 @@
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_powermgt_tcxb6_dml.h"
-/***********************************************************************
 
 /***********************************************************************
 
@@ -73,7 +72,6 @@ BOOL PowerManagement_GetParamBoolValue
         BOOL*                        bValue
     )
 {
-
     CcspTraceInfo(("%s:%d \n",__FUNCTION__,__LINE__));
     if( AnscEqualString(ParamName, "PciEPowerManagement", TRUE))
     {
@@ -151,7 +149,6 @@ BOOL PowerManagement_SetParamBoolValue
         BOOL                        bValue
     )
 {
-
     CcspTraceInfo(("In %s:%d  \n",__FUNCTION__,__LINE__));
     if( AnscEqualString(ParamName, "PciEPowerManagement", TRUE))
     {
@@ -170,7 +167,7 @@ BOOL PowerManagement_SetParamBoolValue
 }
 
 
-/**********************************************************************^M
+/************************************************************************
 
     caller:     owner of this object
 

@@ -55,14 +55,10 @@ BOOL                            g_bActive               = FALSE;
 
 int  cmd_dispatch(int  command)
 {
-    ULONG                           ulInsNumber = 0;
-    parameterValStruct_t val[3] = {0};
     char*                           pParamNames[]      = {"Device.IP.Diagnostics.IPPing."};
     parameterValStruct_t**          ppReturnVal        = NULL;
-    parameterInfoStruct_t**         ppReturnValNames   = NULL;
-    parameterAttributeStruct_t**    ppReturnvalAttr    = NULL;
-    ULONG                           ulReturnValCount   = 0;
-    ULONG                           i                  = 0;
+    int                             ulReturnValCount   = 0;
+    int                             i                  = 0;
 
     switch ( command )
     {
@@ -217,7 +213,6 @@ static void _print_stack_backtrace(void)
 
 #if defined(_ANSC_LINUX)
 static void daemonize(void) {
-	int fd;
 	switch (fork()) {
 	case 0:
 		break;
@@ -241,6 +236,7 @@ static void daemonize(void) {
 
 #ifndef  _DEBUG
 
+	int fd;
 	fd = open("/dev/null", O_RDONLY);
 	if (fd != 0) {
 		dup2(fd, 0);
@@ -294,7 +290,6 @@ void sig_handler(int sig)
 
 int main(int argc, char* argv[])
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
     int                             cmdChar            = 0;
     BOOL                            bRunAsDaemon       = TRUE;
     int                             idx                = 0;

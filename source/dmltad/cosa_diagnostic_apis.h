@@ -197,5 +197,12 @@ CosaDmlInputValidation
 	int                        sizeof_wrapped_host  
     );
 
+PCOSA_DML_DIAG_ARP_TABLE
+CosaDmlDiagGetARPTablePriv
+
+    (
+        ANSC_HANDLE                 hContext,
+        PULONG                      pulCount
+    );
 #endif
 

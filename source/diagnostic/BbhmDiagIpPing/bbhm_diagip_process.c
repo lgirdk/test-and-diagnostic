@@ -306,10 +306,7 @@ BbhmDiagipAccept
         ANSC_HANDLE                 hNewSocket
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-
+    
     return  ANSC_STATUS_UNAPPLICABLE;
 }
 
@@ -359,12 +356,12 @@ BbhmDiagipRecv
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT          )pSink->GetXsocket((ANSC_HANDLE)pSink);
     PIPV4_HEADER                    pIpv4Header  = (PIPV4_HEADER                  )NULL;
     /*PIPV6_HEADER                    pIpv6Header  = (PIPV6_HEADER                  )NULL;*/
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = (PICMPV4_ECHO_MESSAGE          )NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = (PICMPV4_ECHO_MESSAGE          )NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = (PICMPV6_ECHO_MESSAGE          )NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pMEchoEntry  = NULL;
     ULONG                           StopTime     = 0;
 
@@ -378,27 +375,27 @@ BbhmDiagipRecv
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
         pIpv4Header = (PIPV4_HEADER)buffer;
-        pIcmpHeader = (PICMPV4_ECHO_MESSAGE)AnscIpv4GetPayload(pIpv4Header);
+        pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)AnscIpv4GetPayload(pIpv4Header);
 
         if ( ! AnscEqualString(pSocket->PeerName, pProperty->pDstAddrName, TRUE)/*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
-            || (AnscIcmpv4EchoGetId(pIcmpHeader) !=  tempId) )
+            || (AnscIcmpv4EchoGetId(pIcmpHeaderIpv4) !=  tempId) )
         {
             return  ANSC_STATUS_FAILURE;
         }
 
-        if ( (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_DESTINATION_UNREACHABLE)
-            || (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_TIME_EXCEEDED)
-            || (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_PARAMETER_PROBLEM)
-            || (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_SOURCE_QUENCH)
-            || (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_REDIRECT))
+        if ( (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_DESTINATION_UNREACHABLE)
+            || (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_TIME_EXCEEDED)
+            || (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_PARAMETER_PROBLEM)
+            || (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_SOURCE_QUENCH)
+            || (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_REDIRECT))
         {
             pProperty->NumIcmpError ++;
-            pProperty->IcmpError = AnscIcmpv4EchoGetType(pIcmpHeader);
+            pProperty->IcmpError = AnscIcmpv4EchoGetType(pIcmpHeaderIpv4);
 
             pMEchoEntry = (PBBHM_IP_PING_ECHO_ENTRY)AnscAllocateMemory(sizeof(BBHM_IP_PING_ECHO_ENTRY));
             if ( pMEchoEntry )
             {
-                pMEchoEntry->ICMPType = AnscIcmpv4EchoGetType(pIcmpHeader);
+                pMEchoEntry->ICMPType = AnscIcmpv4EchoGetType(pIcmpHeaderIpv4);
                 AnscAcquireLock(&pMyObject->MiddleResultLock);
                 AnscSListPushEntryAtBack(&pMyObject->MiddleResult, &pMEchoEntry->Linkage);
                 AnscReleaseLock(&pMyObject->MiddleResultLock);
@@ -411,7 +408,7 @@ BbhmDiagipRecv
             pMyObject->SetStopTime
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeaderIpv4),
                     AnscIpv4GetTotalLength(pIpv4Header) - sizeof(IPV4_HEADER) - sizeof(ICMPV4_HEADER),
                     AnscIpv4GetTtl(pIpv4Header),
                     StopTime
@@ -419,26 +416,26 @@ BbhmDiagipRecv
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader = (PICMPV6_ECHO_MESSAGE)buffer;
+        pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)buffer;
 
         if ( ! AnscEqualString(pSocket->PeerName, pProperty->pDstAddrName, TRUE)/*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
-            || (AnscIcmpv6EchoGetId(pIcmpHeader) !=  tempId) )
+            || (AnscIcmpv6EchoGetId(pIcmpHeaderIpv6) !=  tempId) )
         {
             return  ANSC_STATUS_FAILURE;
         }
 
-        if ( (AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_DESTINATION_UNREACHABLE)
-            || (AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_TIME_EXCEEDED)
-            || (AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_PARAMETER_PROBLEM)
-            || (AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_PACKET_TOO_BIG))
+        if ( (AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_DESTINATION_UNREACHABLE)
+            || (AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_TIME_EXCEEDED)
+            || (AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_PARAMETER_PROBLEM)
+            || (AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_PACKET_TOO_BIG))
         {
             pProperty->NumIcmpError ++;
-            pProperty->IcmpError = AnscIcmpv6EchoGetType(pIcmpHeader);
+            pProperty->IcmpError = AnscIcmpv6EchoGetType(pIcmpHeaderIpv6);
 
             pMEchoEntry = (PBBHM_IP_PING_ECHO_ENTRY)AnscAllocateMemory(sizeof(BBHM_IP_PING_ECHO_ENTRY));
             if ( pMEchoEntry )
             {
-                pMEchoEntry->ICMPType = AnscIcmpv6EchoGetType(pIcmpHeader);
+                pMEchoEntry->ICMPType = AnscIcmpv6EchoGetType(pIcmpHeaderIpv6);
                 AnscAcquireLock(&pMyObject->MiddleResultLock);
                 AnscSListPushEntryAtBack(&pMyObject->MiddleResult, &pMEchoEntry->Linkage);
                 AnscReleaseLock(&pMyObject->MiddleResultLock);
@@ -451,7 +448,7 @@ BbhmDiagipRecv
             pMyObject->SetStopTime
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeaderIpv6),
                     ulSize,
                     0,           /* Hop Limit */
                     StopTime
@@ -517,9 +514,6 @@ BbhmDiagipSend
     )
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY   )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT )pMyObject->hStateTimer;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT     )pSink->GetXsocket((ANSC_HANDLE)pSink);
     xskt_addrinfo*                  pAddrInfo    = (xskt_addrinfo*           )pSocket->pOriPeerAddrInfo;

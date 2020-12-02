@@ -120,7 +120,6 @@ BbhmDiagitCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = NULL;
 
@@ -260,7 +259,6 @@ BbhmDiagitEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                           returnStatus        = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT       pMyObject           = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)hThisObject;
     PDSLH_TRACEROUTE_INFO                 pDslhDiagInfo       = NULL;
     PANSC_OBJECT_CONTAINER_OBJECT         pContainer          = (PANSC_OBJECT_CONTAINER_OBJECT  )pMyObject->hContainerContext;

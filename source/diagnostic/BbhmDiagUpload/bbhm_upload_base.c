@@ -120,7 +120,6 @@ BbhmUploadCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = NULL;
 
@@ -190,7 +189,6 @@ BbhmUploadRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
 
     pMyObject->Cancel((ANSC_HANDLE)pMyObject);
@@ -232,7 +230,6 @@ BbhmUploadEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
 
     AnscCoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -275,7 +272,6 @@ BbhmUploadInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                    returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UPLOAD_DIAG_OBJECT       pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
 
     /*

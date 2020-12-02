@@ -119,7 +119,6 @@ BbhmDiagnsTdoCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject    = NULL;
 
@@ -187,7 +186,6 @@ BbhmDiagnsTdoRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject    = (PBBHM_NS_LOOKUP_TDO_OBJECT)hThisObject;
 
     AnscTdoRemove((ANSC_HANDLE)pMyObject);
@@ -226,7 +224,6 @@ BbhmDiagnsTdoEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject    = (PBBHM_NS_LOOKUP_TDO_OBJECT)hThisObject;
 
     AnscTdoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -268,7 +265,6 @@ BbhmDiagnsTdoInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject    = (PBBHM_NS_LOOKUP_TDO_OBJECT)hThisObject;
 
     /*

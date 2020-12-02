@@ -146,7 +146,6 @@ BbhmDiagitCopyDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)hThisObject;
 
     DslhCloneTracerouteInfo(((PDSLH_TRACEROUTE_INFO)pMyObject->hDslhDiagInfo), ((PDSLH_TRACEROUTE_INFO)hDslhDiagInfo));
@@ -185,7 +184,6 @@ BbhmDiagitReset
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus  = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject     = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)hThisObject;
     PDSLH_TRACEROUTE_INFO           pDslhDiagInfo = (PDSLH_TRACEROUTE_INFO          )pMyObject->hDslhDiagInfo;
 
@@ -316,7 +314,6 @@ BbhmDiagitGetSrcIpType
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -398,7 +395,6 @@ BbhmDiagitGetDstIpType
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -479,7 +475,6 @@ BbhmDiagitGetSrcIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -561,7 +556,6 @@ BbhmDiagitGetDstIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -650,7 +644,6 @@ BbhmDiagitGetNumPkts
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -732,7 +725,6 @@ BbhmDiagitGetPktSize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -814,7 +806,6 @@ BbhmDiagitGetTimeBetween
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -896,7 +887,6 @@ BbhmDiagitGetTimeOut
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -978,7 +968,6 @@ BbhmDiagitGetControl
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1073,7 +1062,6 @@ BbhmDiagitGetStatus
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1155,7 +1143,6 @@ BbhmDiagitGetPktsSent
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1237,7 +1224,6 @@ BbhmDiagitGetPktsRecv
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1319,7 +1305,6 @@ BbhmDiagitGetAvgRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1401,7 +1386,6 @@ BbhmDiagitGetMaxRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1483,7 +1467,6 @@ BbhmDiagitGetMinRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1565,7 +1548,6 @@ BbhmDiagitGetNumIcmpError
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1647,7 +1629,6 @@ BbhmDiagitGetIcmpError
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1729,7 +1710,6 @@ BbhmDiagitGetTtl
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -1810,10 +1790,8 @@ BbhmDiagitGetDiagInfo
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-
+    
     return  pMyObject->hDslhDiagInfo;
 }
 
@@ -1853,8 +1831,7 @@ BbhmDiagitSetDiagInfo
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-
+    
     pMyObject->hDslhDiagInfo    = hDslhDiagInfo;
 
     return  returnStatus;
@@ -1890,9 +1867,7 @@ BbhmDiagitGetStateUpdated
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj = (PDSLH_TRACEROUTE_INFO          )pMyObject->hDslhDiagInfo;
 
     return  pDslhTracertObj->bRouteUpdated;
@@ -1934,7 +1909,6 @@ BbhmDiagitSetStateUpdated
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject       = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty       = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj = (PDSLH_TRACEROUTE_INFO             )pMyObject->hDslhDiagInfo;
 
     pDslhTracertObj->bRouteUpdated    = StateUpdated;
@@ -1972,7 +1946,6 @@ BbhmDiagitGetDstIpVal
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -2010,7 +1983,6 @@ BbhmDiagitGetDstAddrName
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
@@ -2096,8 +2068,7 @@ BbhmDiagitResetProperty
     PBBHM_TRACERT_PROPERTY          pProperty       = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj = (PDSLH_TRACEROUTE_INFO             )pMyObject->hDslhDiagInfo;
     ULONG                           address         = (ULONG                             )0;
-    UCHAR                           dstAddr[4]      = { 0 };
-
+    
     pProperty->SrcIpType    = BBHM_TRACERT_DEF_INET_ADDRESS_TYPE;
     pProperty->SrcIp.Value  = AnscUlongFromHToN(BBHM_TRACERT_DEF_SRC_IP);
     pProperty->DstIpType    = BBHM_TRACERT_DEF_INET_ADDRESS_TYPE;
@@ -2231,7 +2202,6 @@ BbhmDiagitSetDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)hThisObject;
     PDSLH_TRACEROUTE_INFO           pDiagInfo    = (PDSLH_TRACEROUTE_INFO          )pMyObject->hDslhDiagInfo;
     PDSLH_TRACEROUTE_INFO           pNewDiagInfo = (PDSLH_TRACEROUTE_INFO          )hDslhDiagInfo;

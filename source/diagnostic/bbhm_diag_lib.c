@@ -314,7 +314,6 @@ COSA_Diag_GetConfigs
         ANSC_HANDLE                 hContext
     )
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
 
     switch (ulDiagType)
     {
@@ -781,6 +780,7 @@ COSA_Diag_SetDiagState
     
                 break;
         }
+    return returnStatus;
 }
 
 ANSC_STATUS ANSC_EXPORT_API
@@ -790,7 +790,6 @@ COSA_Diag_CancelDiagnostic
         ANSC_HANDLE                 hContext
     )
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
 
     switch (ulDiagType) 
     {

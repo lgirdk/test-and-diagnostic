@@ -93,7 +93,6 @@ CosaDmlDiGetManufacturerOUIPriv
         ULONG*                      pulSize
     )
 {
-
     *pulSize = 0;
 
     return ANSC_STATUS_SUCCESS;

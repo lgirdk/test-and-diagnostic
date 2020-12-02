@@ -237,9 +237,10 @@ BOOL Fan_SetParamBoolValue
         BOOL                        bValue
     )
 {
+#ifdef FAN_THERMAL_CTR
+
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
 
-#ifdef FAN_THERMAL_CTR
     if( AnscEqualString(ParamName, "MaxOverride", TRUE))
     {
         platform_hal_setFanMaxOverride( bValue, pFanInfo->fanIndex );
@@ -326,7 +327,7 @@ Fan_GetParamUlongValue
 
 
 
-/**********************************************************************^M
+/************************************************************************
 
     caller:     owner of this object
 

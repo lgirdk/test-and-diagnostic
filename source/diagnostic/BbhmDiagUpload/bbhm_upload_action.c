@@ -111,6 +111,8 @@
     0 if success and -1 on error.
 
 **********************************************************************/
+
+#if 0
 static int
 GetAddressByDmlPath(const char *path, char *address, ULONG size)
 {
@@ -143,7 +145,7 @@ GetAddressByDmlPath(const char *path, char *address, ULONG size)
 #endif
     return 0;
 }
-
+#endif
 
 /**********************************************************************
 
@@ -290,6 +292,8 @@ IsIPv6Address(const char *string)
     return:     status of operation.
 
 **********************************************************************/
+
+#if 0
 static char http_put_request1[]=
 "PUT %s HTTP/1.1\r\n"
 "Host: %s\r\n"
@@ -297,6 +301,14 @@ static char http_put_request1[]=
 "Connection: keep-alive\r\n"
 "Content-Type: multipart/form-data; boundary=ZzAaBbCc1234567890\r\n"
 "Content-Length: %d\r\n\r\n";
+
+static char http_put_body_begin[]=
+"--ZzAaBbCc1234567890\r\n"
+"Content-Disposition: form-data; name=\"filename\"; filename=\"f1.txt\"\r\nContent-Type: application/octet-stream\r\n\r\n";
+
+static char http_put_body_end[]=
+"\r\n--ZzAaBbCc1234567890--\r\n";
+#endif
 
 static char http_put_request2[]=
 "PUT %s HTTP/1.1\r\n"
@@ -308,13 +320,6 @@ static char http_put_request2[]=
 "Connection: keep-alive\r\n"
 "Content-Type: multipart/form-data; boundary=ZzAaBbCc1234567890\r\n"
 "Content-Length: %d\r\n\r\n";
-
-static char http_put_body_begin[]=
-"--ZzAaBbCc1234567890\r\n"
-"Content-Disposition: form-data; name=\"filename\"; filename=\"f1.txt\"\r\nContent-Type: application/octet-stream\r\n\r\n";
-
-static char http_put_body_end[]=
-"\r\n--ZzAaBbCc1234567890--\r\n";
 
 static char http_sample_upload_text[] = "Test Upload files. blah blah blah...\r\n";
 
@@ -775,7 +780,6 @@ BbhmUploadGetResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
 
     return  &pMyObject->UploadDiagStats;
@@ -812,9 +816,6 @@ BbhmUploadRetrieveResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
 }
 
@@ -933,7 +934,6 @@ BbhmUploadSetDiagState
         ULONG                       ulDiagState
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UPLOAD_DIAG_OBJECT        pMyObject    = (PBBHM_UPLOAD_DIAG_OBJECT)hThisObject;
     PDSLH_TR143_UPLOAD_DIAG_STATS   pStats       = (PDSLH_TR143_UPLOAD_DIAG_STATS)&pMyObject->UploadDiagStats;
 

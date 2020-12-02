@@ -116,8 +116,5 @@ BbhmCreateDiagnosticExecutor
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pBbhmDiagExec   = NULL;
-
     return  BbhmDiageoCreate(hContainerContext, hOwnerContext, hAnscReserved);
 }

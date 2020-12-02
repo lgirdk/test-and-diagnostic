@@ -116,8 +116,5 @@ BbhmCreateDiagnosticIpPing
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_PING_OBJECT       pBbhmDiagExec   = NULL;
-
     return  BbhmDiagipCreate(hContainerContext, hOwnerContext, hAnscReserved);
 }

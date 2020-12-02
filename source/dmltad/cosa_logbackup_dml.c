@@ -20,11 +20,10 @@
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_logbackup_dml.h"
+#include <syscfg/syscfg.h>
 
 BOOL g_logbackup_enable = TRUE;
 ULONG g_logbackup_interval = 30;
-
-/***********************************************************************
 
 /***********************************************************************
 
@@ -78,7 +77,6 @@ BOOL LogBackup_GetParamBoolValue
         BOOL*                        bValue
     )
 {
-
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
     {
         *bValue = g_logbackup_enable;
@@ -131,7 +129,6 @@ BOOL LogBackup_SetParamBoolValue
         BOOL                        bValue
     )
 {
-
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
     {
 
@@ -205,7 +202,6 @@ LogBackup_GetParamUlongValue
         ULONG*                      puLong
     )
 {
-
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Interval", TRUE))
     {
         *puLong = g_logbackup_interval;
@@ -253,7 +249,6 @@ LogBackup_SetParamUlongValue
         ULONG                       uValue
     )
 {
-
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Interval", TRUE))
     {
         if( g_logbackup_interval == uValue )
@@ -263,7 +258,7 @@ LogBackup_SetParamUlongValue
         
         char buf[128];
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
         {
 		CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -386,7 +381,7 @@ LogBackup_Rollback
 }
 
 
-//*****************************************
+void
 get_logbackupcfg()
 {
 

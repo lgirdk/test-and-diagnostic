@@ -116,7 +116,8 @@ CosaUtilGetIfAddr
         char*       netdev
     )
 {
-    ANSC_IPV4_ADDRESS       ip4_addr = {0};
+    ANSC_IPV4_ADDRESS       ip4_addr;
+    memset(&ip4_addr, 0, sizeof(ANSC_IPV4_ADDRESS));
 
 #ifdef _ANSC_LINUX
 
@@ -154,7 +155,6 @@ CosaSListPushEntryByInsNum
         PCOSA_CONTEXT_LINK_OBJECT   pCosaContext
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
     PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
     ULONG                           ulIndex           = 0;
@@ -193,7 +193,6 @@ CosaSListGetEntryByInsNum
         ULONG                       InstanceNumber
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PCOSA_CONTEXT_LINK_OBJECT       pCosaContextEntry = (PCOSA_CONTEXT_LINK_OBJECT)NULL;
     PSINGLE_LINK_ENTRY              pSLinkEntry       = (PSINGLE_LINK_ENTRY       )NULL;
     ULONG                           ulIndex           = 0;
@@ -230,14 +229,13 @@ CosaUtilGetLowerLayers
 {
 
     ULONG                           ulNumOfEntries              = 0;
-    ULONG                           ulChildNumOfEntries         = 0;
     ULONG                           i                           = 0;
     ULONG                           j                           = 0;
     ULONG                           ulEntryNameLen              = 256;
-    UCHAR                           ucEntryParamName[256]       = {0};
-    UCHAR                           ucEntryNameValue[256]       = {0};
-    UCHAR                           ucEntryFullPath[256]        = {0};
-    UCHAR                           ucLowerEntryPath[256]       = {0};
+    char                            ucEntryParamName[256]       = {0};
+    char                            ucEntryNameValue[256]       = {0};
+    char                            ucEntryFullPath[256]        = {0};
+    char                            ucLowerEntryPath[256]       = {0};
     UCHAR                           ucLowerEntryName[256]       = {0};
     ULONG                           ulEntryInstanceNum          = 0;
     ULONG                           ulEntryPortNum              = 0;
@@ -273,7 +271,7 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d", "Device.Ethernet.Interface.", ulEntryInstanceNum);
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Ethernet.Interface.", ulEntryInstanceNum);
 
                         _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
                
@@ -296,7 +294,7 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d", "Device.IP.Interface.", ulEntryInstanceNum);
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.IP.Interface.", ulEntryInstanceNum);
 
                         _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
 
@@ -329,7 +327,7 @@ CosaUtilGetLowerLayers
                     
                     if (ulEntryInstanceNum)
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d", "Device.WiFi.Radio.", ulEntryInstanceNum);
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.WiFi.Radio.", ulEntryInstanceNum);
                         
                         _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
                         
@@ -368,7 +366,7 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d", "Device.Ethernet.Link.", ulEntryInstanceNum);
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Ethernet.Link.", ulEntryInstanceNum);
 
                         _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
                
@@ -399,15 +397,15 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d", "Device.Bridging.Bridge.", ulEntryInstanceNum);
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Bridging.Bridge.", ulEntryInstanceNum);
                         _ansc_sprintf(ucLowerEntryPath, "%s%s", ucEntryFullPath, ".PortNumberOfEntries"); 
                         
                         ulEntryPortNum = CosaGetParamValueUlong(ucLowerEntryPath);  
                         AnscTraceFlow(("----------CosaUtilGetLowerLayers, Param:%s,port num:%d\n",ucLowerEntryPath, ulEntryPortNum));
 
                         for ( j = 1; j<= ulEntryPortNum; j++) {
-                            _ansc_sprintf(ucLowerEntryName, "%s%s%d", ucEntryFullPath, ".Port.", j);
-                            _ansc_sprintf(ucEntryParamName, "%s%s%d%s", ucEntryFullPath, ".Port.", j, ".Name");
+                            _ansc_sprintf(ucLowerEntryName, "%s%s%lu", ucEntryFullPath, ".Port.", j);
+                            _ansc_sprintf(ucEntryParamName, "%s%s%lu%s", ucEntryFullPath, ".Port.", j, ".Name");
                             AnscTraceFlow(("----------CosaUtilGetLowerLayers, Param:%s,Param2:%s\n", ucLowerEntryName, ucEntryParamName));
                         
                             if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
@@ -446,7 +444,7 @@ CosaUtilGetLowerLayers
         ((
             "CosaUtilGetLowerLayers: %s matched LowerLayer(%s) with keyword %s in the table %s\n",
             pMatchedLowerLayer ? "Found a":"Not find any",
-            pMatchedLowerLayer ? pMatchedLowerLayer : "",
+            pMatchedLowerLayer ? (char*)pMatchedLowerLayer : "",
             pKeyword,
             pTableName
         ));
@@ -483,17 +481,15 @@ CosaUtilGetFullPathNameByKeyword
 {
 
     ULONG                           ulNumOfEntries              = 0;
-    ULONG                           ulChildNumOfEntries         = 0;
     ULONG                           i                           = 0;
     ULONG                           ulEntryNameLen              = 256;
-    UCHAR                           ucEntryParamName[256]       = {0};
-    UCHAR                           ucEntryNameValue[256]       = {0};
+    char                            ucEntryParamName[256]       = {0};
+    char                            ucEntryNameValue[256]       = {0};
     UCHAR                           ucTmp[128]                  = {0};
-    UCHAR                           ucTmp2[128]                 = {0};
-    UCHAR                           ucEntryFullPath[256]        = {0};
+    char                            ucTmp2[128]                 = {0};
+    char                            ucEntryFullPath[256]        = {0};
     PUCHAR                          pMatchedLowerLayer          = NULL;
-    ULONG                           ulEntryInstanceNum          = 0;
-    ULONG                           ucLength                    = 0;    
+    ULONG                           ulEntryInstanceNum          = 0;   
     PANSC_TOKEN_CHAIN               pTableListTokenChain        = (PANSC_TOKEN_CHAIN)NULL;
     PANSC_STRING_TOKEN              pTableStringToken           = (PANSC_STRING_TOKEN)NULL;
     PUCHAR                          pString                     = NULL;
@@ -550,7 +546,7 @@ CosaUtilGetFullPathNameByKeyword
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%d%s", pTableStringToken->Name, ulEntryInstanceNum, ".");
+                        _ansc_sprintf(ucEntryFullPath, "%s%lu%s", pTableStringToken->Name, ulEntryInstanceNum, ".");
 
                         _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, pParameterName);
                
@@ -583,7 +579,7 @@ CosaUtilGetFullPathNameByKeyword
         ((
             "CosaUtilGetFullPathNameByKeyword: %s matched parameters(%s) with keyword %s in the table %s(%s)\n",
             pMatchedLowerLayer ? "Found a":"Not find any",
-            pMatchedLowerLayer ? pMatchedLowerLayer : "",
+            pMatchedLowerLayer ? (char*)pMatchedLowerLayer : "",
             pKeyword,
             pTableName,
             pParameterName

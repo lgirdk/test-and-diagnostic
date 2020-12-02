@@ -106,7 +106,7 @@ static void convert_rtts(char *rtts, size_t size
         } else {
             return; // bad format
 #else
-	if(rtts=="")
+	if(strcmp(rtts, "") == 0)
 	{
 		*sum = *sum+timeout;
 		*counter = *counter+1;
@@ -237,7 +237,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             strncpy(line_cpy,line,strlen(line));
             char* savePtr;
             char* token = strtok_r(line_cpy, "(",&savePtr);
-            while (token = strtok_r(savePtr, "(",&savePtr)) {
+            while ((token = (strtok_r(savePtr, "(",&savePtr)))) {
                 sscanf(token, "%[^)]",query_ip);
                 if (!strncmp(query_ip,dest_ip,strlen(query_ip))) {
                   dest_reached=1;
@@ -274,7 +274,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 	    {
 	        strncpy(rtts,hops[nhop-1].rtts,256);
 		sp = rtts;
-		while(rtt = strtok_r(sp,",",&sp))
+		while((rtt = (strtok_r(sp,",",&sp))))
 		{
 		   rtt_sum += atoi(rtt);
 		   rtt_count++;
@@ -294,7 +294,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
     fprintf(stderr, "> done: %d\n", err);
     {
-        int i;
+        unsigned int i;
         tracert_hop_t *hop;
 
         fprintf(stderr, "nhop: %u resp %u\n", stat->u.tracert.nhop, stat->u.tracert.resptime);

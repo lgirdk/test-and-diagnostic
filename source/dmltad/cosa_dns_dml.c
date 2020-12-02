@@ -71,6 +71,8 @@
 #include "cosa_dns_dml.h"
 #include "plugin_main_apis.h"
 #include "bbhm_diagns_interface.h"
+#include "ccsp_psm_helper.h"
+
 /*#include "cosa_dns_internal.h"*/
 
 /***********************************************************************
@@ -107,6 +109,14 @@
 
 ***********************************************************************/
 
+ANSC_STATUS
+COSAGetParamValueByPathName
+    (
+        void*                       bus_handle,
+        parameterValStruct_t        *val,
+        ULONG                       *parameterValueLength
+    );
+    
 int isValidIPv4Address(char *ipAddress)
 {
     struct sockaddr_in sa;
@@ -954,7 +964,7 @@ NSLookupDiagnostics_Validate
 
 			if ( ANSC_STATUS_SUCCESS == COSAGetParamValueByPathName(  g_MessageBusHandle, 
 																	   &varStruct,
-																	   &ulEntryNameLen ) 
+																	   (ULONG *)&ulEntryNameLen ) 
 				)
 			{
 				AnscCopyString( pNSLookupDiagInfo->DNSServer, varStruct.parameterValue );

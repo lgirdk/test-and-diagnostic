@@ -107,7 +107,6 @@ BbhmDiagnsTdoInvoke
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject       = (PBBHM_NS_LOOKUP_TDO_OBJECT )hThisObject;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pNSLookup       = (PBBHM_DIAG_NS_LOOKUP_OBJECT)pMyObject->hOwnerContext;
     
@@ -164,10 +163,8 @@ BbhmDiagnsTdoGetStopTime
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject       = (PBBHM_NS_LOOKUP_TDO_OBJECT )hThisObject;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pNSLookup       = (PBBHM_DIAG_NS_LOOKUP_OBJECT)pMyObject->hOwnerContext;
-
+    
     return  pMyObject->StopTime;
 
 }
@@ -210,8 +207,7 @@ BbhmDiagnsTdoSetStopTime
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject       = (PBBHM_NS_LOOKUP_TDO_OBJECT )hThisObject;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pNSLookup       = (PBBHM_DIAG_NS_LOOKUP_OBJECT)pMyObject->hOwnerContext;
-
+    
     pMyObject->StopTime = ulStopTime;
 
     return  returnStatus;
@@ -247,10 +243,8 @@ BbhmDiagnsTdoGetCounter
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject       = (PBBHM_NS_LOOKUP_TDO_OBJECT )hThisObject;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pNSLookup       = (PBBHM_DIAG_NS_LOOKUP_OBJECT)pMyObject->hOwnerContext;
-
+    
     return  pMyObject->Counter;
 
 }
@@ -293,8 +287,7 @@ BbhmDiagnsTdoSetCounter
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pMyObject       = (PBBHM_NS_LOOKUP_TDO_OBJECT )hThisObject;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pNSLookup       = (PBBHM_DIAG_NS_LOOKUP_OBJECT)pMyObject->hOwnerContext;
-
+    
     pMyObject->Counter  = ulCounter;
 
     return  returnStatus;

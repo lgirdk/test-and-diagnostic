@@ -105,7 +105,6 @@ BbhmDiagnsXsinkCreate
         ANSC_HANDLE                 hOwnerContext
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = NULL;
 
     pXsink = (PBBHM_NS_LOOKUP_XSINK_OBJECT)AnscAllocateMemory(sizeof(BBHM_NS_LOOKUP_XSINK_OBJECT));
@@ -172,10 +171,8 @@ BbhmDiagnsXsinkRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT)hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT        )pXsink->hXsocketObject;
-
+    
     pXsink->Reset((ANSC_HANDLE)pXsink);
 
     AnscFreeMemory((ANSC_HANDLE)pXsink);

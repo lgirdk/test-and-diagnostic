@@ -108,16 +108,14 @@ BbhmDiagnsStartDiag
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus        = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject           = (PBBHM_DIAG_NS_LOOKUP_OBJECT)hThisObject;
     PDSLH_NSLOOKUP_INFO             pDiagInfo           = (PDSLH_NSLOOKUP_INFO)pMyObject->hDslhDiagInfo;
-    PBBHM_NS_LOOKUP_PROPERTY        pProperty           = (PBBHM_NS_LOOKUP_PROPERTY   )&pMyObject->Property;
-
+    
     if ( pDiagInfo->bForced != FALSE )
     {
         if ( !(pMyObject->CheckCanStart((ANSC_HANDLE)pMyObject)))
         {
-            returnStatus = pMyObject->SetControl((ANSC_HANDLE)pMyObject, BBHM_NS_LOOKUP_CONTROL_STOP);
+            pMyObject->SetControl((ANSC_HANDLE)pMyObject, BBHM_NS_LOOKUP_CONTROL_STOP);
         }
         pMyObject->ResetProperty    ((ANSC_HANDLE)pMyObject);
 
@@ -303,8 +301,6 @@ BbhmDiagnsRecv
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY    )&pMyObject->Property;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT  )pMyObject->hStateTimer;
-    PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT)hXsinkObject;
-    PANSC_XSOCKET_OBJECT            pXsocket     = (PANSC_XSOCKET_OBJECT        )pXsink->GetXsocket((ANSC_HANDLE)pXsink);
     PDSLH_NSLOOKUP_INFO             pDiagInfo    = (PDSLH_NSLOOKUP_INFO         )pMyObject->hDslhDiagInfo;
     PDNS_HEADER                     pDnsHeader   = (PDNS_HEADER)buffer;
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoEntry   = NULL;
@@ -460,9 +456,6 @@ BbhmDiagnsSend
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT )hThisObject;
-    PDSLH_NSLOOKUP_INFO             pDiagInfo    = (PDSLH_NSLOOKUP_INFO         )pMyObject->hDslhDiagInfo;
-    PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY    )&pMyObject->Property;
-    PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer  = (PBBHM_NS_LOOKUP_TDO_OBJECT  )pMyObject->hStateTimer;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink       = (PBBHM_NS_LOOKUP_XSINK_OBJECT)pMyObject->hXsinkObject;
     PANSC_XSOCKET_OBJECT            pXsocket     = (PANSC_XSOCKET_OBJECT        )pXsink->GetXsocket((ANSC_HANDLE)pXsink);
     xskt_addrinfo*                  pAddrInfo    = (xskt_addrinfo*              )pXsocket->pOriPeerAddrInfo;

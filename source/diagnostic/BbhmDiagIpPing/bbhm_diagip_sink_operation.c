@@ -74,9 +74,7 @@
 
 **********************************************************************/
 
-
 #include "bbhm_diagip_global.h"
-
 
 /**********************************************************************
 
@@ -112,6 +110,12 @@
 
 **********************************************************************/
 
+ANSC_STATUS
+BbhmDiagitSinkRemove
+    (
+        ANSC_HANDLE                 hThisObject
+    );
+
 PVOID
 BbhmDiagipSinkGetRecvBuffer
     (
@@ -120,9 +124,7 @@ BbhmDiagipSinkGetRecvBuffer
         PULONG                      pulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT  )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT       )pSink->hXsocketObject;
     ULONG                           ulRestSize        = pSink->MaxMessageSize;
 
     *phRecvHandle = (ANSC_HANDLE)NULL;
@@ -168,10 +170,7 @@ BbhmDiagipSinkAccept
         ANSC_HANDLE                 hNewSocket
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT     )hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pBbhmDiagip       = (PBBHM_DIAG_IP_PING_OBJECT     )pSink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pNewSocket        = (PANSC_XSOCKET_OBJECT          )hNewSocket;
     PBBHM_IP_PING_SINK_OBJECT       pNewSink          = (PBBHM_IP_PING_SINK_OBJECT     )BbhmDiagipSinkCreate(pSink->hOwnerContext);
 
     /*RDKB-7450, CID-33258; free unused memeory allocated*/
@@ -230,13 +229,10 @@ BbhmDiagipSinkRecv
         ULONG                       ulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT     )hThisObject;
     PBBHM_DIAG_IP_PING_OBJECT       pBbhmDiagip       = (PBBHM_DIAG_IP_PING_OBJECT)pSink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT          )pSink->hXsocketObject;
-
-    returnStatus =
-        pBbhmDiagip->Recv
+    
+    pBbhmDiagip->Recv
             (
                 (ANSC_HANDLE)pBbhmDiagip,
                 (ANSC_HANDLE)pSink,
@@ -285,10 +281,8 @@ BbhmDiagipSinkClose
         BOOL                        bByPeer
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT     )pSink->hXsocketObject;
-
+    
     pSink->Reset((ANSC_HANDLE)pSink);
 
     return  ANSC_STATUS_SUCCESS;
@@ -326,10 +320,8 @@ BbhmDiagipSinkAbort
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT     )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT          )pSink->hXsocketObject;
-
+    
     pSink->Reset((ANSC_HANDLE)pSink);
 
     return  ANSC_STATUS_SUCCESS;

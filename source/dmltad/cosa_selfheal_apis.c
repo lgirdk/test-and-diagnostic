@@ -70,6 +70,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_selfheal_apis.h"
 #include "cosa_logbackup_dml.h"
+#include <syscfg/syscfg.h>
 
 static char *Ipv4_Server ="Ipv4_PingServer_%d";
 static char *Ipv6_Server ="Ipv6_PingServer_%d";
@@ -244,10 +245,9 @@ CosaDmlGetSelfHealMonitorCfg(
         ANSC_HANDLE                 hThisObject
     )
 {
-    PCOSA_DATAMODEL_SELFHEAL      pMyObject            = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
-    PCOSA_DML_RESOUCE_MONITOR     pRescTest            = (PCOSA_DML_CONNECTIVITY_TEST)NULL;
+    PCOSA_DML_RESOUCE_MONITOR     pRescTest            = (PCOSA_DML_RESOUCE_MONITOR)NULL;
 
-    pRescTest = (PCOSA_DATAMODEL_SELFHEAL)AnscAllocateMemory(sizeof(COSA_DATAMODEL_SELFHEAL));
+    pRescTest = (PCOSA_DML_RESOUCE_MONITOR)AnscAllocateMemory(sizeof(PCOSA_DML_RESOUCE_MONITOR));
     if(!pRescTest) {
         printf("\n %s Resource monitor allocation failed\n",__FUNCTION__);
         return NULL;
@@ -285,7 +285,7 @@ void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
           CcspTraceError(("%s, Time interval is not in range\n",__FUNCTION__));
      }
 	/*For Featching /proc/buddyinfo data after interval	*/
-	sprintf(command, "sh /usr/ccsp/tad/cpumemfrag_cron.sh %d &",uinterval);
+	sprintf(command, "sh /usr/ccsp/tad/cpumemfrag_cron.sh %lu &",uinterval);
 	
 	system(command);
 
@@ -494,6 +494,7 @@ CosaDmlGetSelfHealCfg(
 	syscfg_get( NULL, "Ipv4PingServer_Count", buf, sizeof(buf));
 	pConnTest->IPv4EntryCount = atoi(buf);
 	entryCountIPv4 = AnscSListQueryDepth(&pMyObject->IPV4PingServerList);
+        UNREFERENCED_PARAMETER(entryCountIPv4);
 	pConnTest->IPv4EntryCount = SyncServerlistInDb(PingServerType_IPv4, pConnTest->IPv4EntryCount);
 	if ( pConnTest->IPv4EntryCount != 0 )
 	{
@@ -519,6 +520,7 @@ CosaDmlGetSelfHealCfg(
 	syscfg_get( NULL, "Ipv6PingServer_Count", buf, sizeof(buf));
 	pConnTest->IPv6EntryCount = atoi(buf);
 	entryCountIPv6 = AnscSListQueryDepth(&pMyObject->IPV6PingServerList);
+        UNREFERENCED_PARAMETER(entryCountIPv6);
 	pConnTest->IPv6EntryCount = SyncServerlistInDb(PingServerType_IPv6,pConnTest->IPv6EntryCount);
 	if ( pConnTest->IPv6EntryCount != 0 )
 	{
@@ -571,7 +573,6 @@ CosaSelfHealCreate
         VOID
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)NULL;
 
     /*
@@ -627,7 +628,6 @@ CosaSelfHealInitialize
 {
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_SELFHEAL            pMyObject            = (PCOSA_DATAMODEL_SELFHEAL )hThisObject;
-	PCOSA_DML_CONNECTIVITY_TEST    pConnTest            = (PCOSA_DML_CONNECTIVITY_TEST)NULL;
     char buf[8] = {0};
 	
     /* Initiation all functions */

@@ -114,7 +114,6 @@ BbhmDiageoSetDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
     PDSLH_DIAG_INFO_BASE            pDiagInfo    = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
     PDSLH_DIAG_INFO_BASE            pNewDiagInfo = (PDSLH_DIAG_INFO_BASE  )hDslhDiagInfo;
@@ -221,10 +220,8 @@ BbhmDiageoGetResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-    PDSLH_DIAG_INFO_BASE            pDiagInfo    = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
-
+    
     return  pMyObject->hDslhDiagInfo;
 }
 
@@ -260,10 +257,8 @@ BbhmDiageoGetResultTimeStamp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-    PDSLH_DIAG_INFO_BASE            pDiagInfo    = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
-
+    
     return  pMyObject->ResultTimestamp;
 }
 
@@ -301,9 +296,7 @@ BbhmDiageoCopyDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-
+    
     return  ANSC_STATUS_SUCCESS;
 }
 
@@ -341,7 +334,6 @@ BbhmDiageoSetDiagState
         ULONG                       ulDiagState
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
     PDSLH_DIAG_INFO_BASE            pDiagInfo    = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
 
@@ -382,8 +374,6 @@ BbhmDiageoReset
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-
+    
     return  ANSC_STATUS_SUCCESS;
 }

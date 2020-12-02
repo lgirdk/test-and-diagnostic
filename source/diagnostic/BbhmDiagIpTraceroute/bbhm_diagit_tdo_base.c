@@ -119,7 +119,6 @@ BbhmDiagitTdoCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject    = NULL;
 
@@ -187,7 +186,6 @@ BbhmDiagitTdoRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject    = (PBBHM_TRACERT_TDO_OBJECT)hThisObject;
 
     AnscTdoRemove((ANSC_HANDLE)pMyObject);
@@ -226,7 +224,6 @@ BbhmDiagitTdoEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject    = (PBBHM_TRACERT_TDO_OBJECT)hThisObject;
 
     AnscTdoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -268,7 +265,6 @@ BbhmDiagitTdoInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject    = (PBBHM_TRACERT_TDO_OBJECT)hThisObject;
 
     /*

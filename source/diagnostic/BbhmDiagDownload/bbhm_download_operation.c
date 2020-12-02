@@ -307,6 +307,7 @@ BbhmDownloadCloseEnv
     }
 
     pMyObject->hIrepFoDownload = (ANSC_HANDLE)NULL;
+
 #endif
 
     return  returnStatus;

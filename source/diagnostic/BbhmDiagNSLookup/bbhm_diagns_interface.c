@@ -116,9 +116,6 @@ BbhmCreateDiagnosticNSLookup
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pBbhmDiagExec   = NULL;
-
     return  BbhmDiagnsCreate(hContainerContext, hOwnerContext, hAnscReserved);
 }
 

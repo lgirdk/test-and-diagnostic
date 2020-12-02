@@ -120,14 +120,13 @@ BbhmDiagipStart
     PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT)pMyObject->hStateTimer;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)pMyObject->hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT     )pSink->GetXsocket((ANSC_HANDLE)pSink);
-    ULONG                           numPkts      = pProperty->NumPkts;
     ULONG                           pktSize      = pProperty->PktSize;
     PCHAR                           pSendBuffer  = pMyObject->hSendBuffer;
     ULONG                           i            = 0;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = NULL;
     ULONG                           StartTime    = 0;
-    UCHAR                           SrcIp[4]     = {0, 0, 0, 0};
-
+    
     if ( !pMyObject->bActive )
     {
         pProperty->Status = BBHM_IP_PING_STATUS_ABORT;
@@ -238,29 +237,29 @@ BbhmDiagipStart
 
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        pIcmpHeader = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv4EchoSetType        (pIcmpHeader, ICMP_TYPE_ECHO_REQUEST   );
-        AnscIcmpv4EchoSetCode        (pIcmpHeader, 0                        );
-        AnscIcmpv4EchoSetId          (pIcmpHeader, tempId                   );
-        AnscIcmpv4EchoSetSeqNumber   (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
+        AnscIcmpv4EchoSetType        (pIcmpHeaderIpv4, ICMP_TYPE_ECHO_REQUEST   );
+        AnscIcmpv4EchoSetCode        (pIcmpHeaderIpv4, 0                        );
+        AnscIcmpv4EchoSetId          (pIcmpHeaderIpv4, tempId                   );
+        AnscIcmpv4EchoSetSeqNumber   (pIcmpHeaderIpv4, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
 
         for ( i = 0; i < pktSize; i++ )
         {
             ((PUCHAR)pMyObject->hSendBuffer)[i + sizeof(ICMPV4_HEADER)] = (UCHAR)i;
         }
 
-        AnscIcmpv4EchoSetChecksum   (pIcmpHeader, 0                                 );
-        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeader), pktSize + sizeof(ICMPV4_HEADER));
+        AnscIcmpv4EchoSetChecksum   (pIcmpHeaderIpv4, 0                                 );
+        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeaderIpv4), pktSize + sizeof(ICMPV4_HEADER));
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv6EchoSetType        (pIcmpHeader, ICMP6_TYPE_ECHO_REQUEST  );
-        AnscIcmpv6EchoSetCode        (pIcmpHeader, 0                        );
-        AnscIcmpv6EchoSetId          (pIcmpHeader, tempId                   );
-        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
+        AnscIcmpv6EchoSetType        (pIcmpHeaderIpv6, ICMP6_TYPE_ECHO_REQUEST  );
+        AnscIcmpv6EchoSetCode        (pIcmpHeaderIpv6, 0                        );
+        AnscIcmpv6EchoSetId          (pIcmpHeaderIpv6, tempId                   );
+        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeaderIpv6, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
 
         for ( i = 0; i < pktSize; i++ )
         {
@@ -287,7 +286,7 @@ BbhmDiagipStart
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeaderIpv4),
                     StartTime
                 );
 
@@ -306,7 +305,7 @@ BbhmDiagipStart
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeaderIpv6),
                     StartTime
                 );
 
@@ -360,11 +359,9 @@ BbhmDiagipOpen
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT       )hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY          )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT        )pMyObject->hStateTimer;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = NULL;
     PANSC_XSOCKET_OBJECT            pSocket      = NULL;
-    ULONG                           i            = 0;
-
+    
     if ( pMyObject->bActive )
     {
         return  ANSC_STATUS_SUCCESS;
@@ -616,10 +613,9 @@ BbhmDiagipExpire1
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT       )hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY          )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT        )pMyObject->hStateTimer;
-    PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT       )pMyObject->hSinkObject;
     ULONG                           pktSize      = pProperty->PktSize;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = NULL;
     /*USHORT                          oldSeqNumber = AnscIcmpv4EchoGetSeqNumber(pIcmpHeader);*/
     ULONG                           StartTime    = 0;
     /*
@@ -628,12 +624,12 @@ BbhmDiagipExpire1
 */
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        pIcmpHeader  = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv4  = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv4EchoSetSeqNumber  (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
+        AnscIcmpv4EchoSetSeqNumber  (pIcmpHeaderIpv4, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
 
-        AnscIcmpv4EchoSetChecksum   (pIcmpHeader, 0                                                     );
-        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeader), pktSize + sizeof(ICMPV4_HEADER)     );
+        AnscIcmpv4EchoSetChecksum   (pIcmpHeaderIpv4, 0                                                     );
+        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeaderIpv4), pktSize + sizeof(ICMPV4_HEADER)     );
 
         StartTime = AnscGetTickInMilliSeconds();
 
@@ -641,7 +637,7 @@ BbhmDiagipExpire1
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv4EchoGetSeqNumber(pIcmpHeaderIpv4),
                     StartTime
                 );
 
@@ -656,11 +652,11 @@ BbhmDiagipExpire1
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader  = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv6  = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv6EchoSetSeqNumber  (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
+        AnscIcmpv6EchoSetSeqNumber  (pIcmpHeaderIpv6, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject));
 
-        AnscIcmpv6EchoSetChecksum   (pIcmpHeader, 0                                                     );
+        AnscIcmpv6EchoSetChecksum   (pIcmpHeaderIpv6, 0                                                     );
 
         StartTime = AnscGetTickInMilliSeconds();
 
@@ -668,7 +664,7 @@ BbhmDiagipExpire1
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeader),
+                    AnscIcmpv6EchoGetSeqNumber(pIcmpHeaderIpv6),
                     StartTime
                 );
 
@@ -724,10 +720,7 @@ BbhmDiagipExpire2
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT     )hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
-    PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )pMyObject->hSinkObject;
-
+    
     pMyObject->SetStatus((ANSC_HANDLE)pMyObject, BBHM_IP_PING_STATUS_TIMEOUT);
     pMyObject->Stop((ANSC_HANDLE)pMyObject);
 
@@ -767,8 +760,6 @@ BbhmDiagipClose
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT     )hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pEchoEntry   = NULL;
@@ -848,8 +839,6 @@ BbhmDiagipSetStopTime
     ANSC_STATUS                     returnStatus = ANSC_STATUS_FAILURE;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
-    PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pEchoEntry   = NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pMEchoEntry  = NULL;
@@ -933,10 +922,6 @@ BbhmDiagipAddEchoEntry
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT     )hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
-    PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )pMyObject->hSinkObject;
-    PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pEchoEntry   = NULL;
     ULONG                           ulHashIndex  = SeqNumber % MAX_ECHO_TABLE_SIZE;
 
@@ -989,12 +974,8 @@ BbhmDiagipCalculateResult
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
-    PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
-    PBBHM_IP_PING_TDO_OBJECT        pStateTimer  = (PBBHM_IP_PING_TDO_OBJECT      )pMyObject->hStateTimer;
-    PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT     )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_IP_PING_ECHO_ENTRY        pEchoEntry   = NULL;
-    PBBHM_IP_PING_ECHO_ENTRY        pMEchoEntry  = NULL;
     ULONG                           i            = 0;
 
     AnscAcquireLock(&pMyObject->EchoTableLock);
@@ -1047,8 +1028,6 @@ BbhmDiagipSetEnv
     )
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_PING_OBJECT       pMyObject       = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pBbhmDiagIpPing = (PBBHM_DIAG_IP_PING_OBJECT     )pMyObject->hOwnerContext;
-
+    
     return returnStatus;
 }

@@ -107,7 +107,6 @@ BbhmDiagipTdoInvoke
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject       = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
     PBBHM_DIAG_IP_PING_OBJECT       pPing           = (PBBHM_DIAG_IP_PING_OBJECT)pMyObject->hOwnerContext;
     
@@ -164,10 +163,8 @@ BbhmDiagipTdoGetStopTime
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject       = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pPing           = (PBBHM_DIAG_IP_PING_OBJECT)pMyObject->hOwnerContext;
-
+    
     return  pMyObject->StopTime;
 
 }
@@ -209,8 +206,7 @@ BbhmDiagipTdoSetStopTime
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject       = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pPing           = (PBBHM_DIAG_IP_PING_OBJECT)pMyObject->hOwnerContext;
-
+    
     pMyObject->StopTime    = ulStopTime;
 
     return  returnStatus;
@@ -246,10 +242,8 @@ BbhmDiagipTdoGetCounter
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject       = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pPing           = (PBBHM_DIAG_IP_PING_OBJECT)pMyObject->hOwnerContext;
-
+    
     return  pMyObject->Counter;
 }
 
@@ -290,8 +284,7 @@ BbhmDiagipTdoSetCounter
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject       = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
-    PBBHM_DIAG_IP_PING_OBJECT       pPing           = (PBBHM_DIAG_IP_PING_OBJECT)pMyObject->hOwnerContext;
-
+    
     pMyObject->Counter    = ulCounter;
 
     return  returnStatus;

@@ -47,7 +47,9 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <syscfg/syscfg.h>
 #include "diag_inter.h"
+#include "ccsp_base_api.h"
 
 /* XXX: if there are more instances, we may use a dynamic list to 
  * handle these instances, or with dynamic load. */
@@ -225,7 +227,7 @@ static bool is_ipv6_same(const struct in6_addr *addr1,
 	
 	for(i=0;i<4;i++)
 	{	
-		if(!(addr1->s6_addr32[i]==addr2->s6_addr32[i]));
+		if(!(addr1->s6_addr32[i]==addr2->s6_addr32[i]))
 		{
 			return 0;
 		}
@@ -490,8 +492,9 @@ diag_err_t diag_init(void)
 	if ((diag_ping = diag_ping_load()) == NULL)
         goto errout;
 
-    if ((diag_tracert = diag_tracert_load()) == NULL)
+    if ((diag_tracert = diag_tracert_load()) == NULL) {
         goto errout;
+    }
 	diag_init_blocksize();
     return DIAG_ERR_OK;
 
@@ -565,7 +568,6 @@ diag_err_t diag_stop(diag_mode_t mode)
 diag_err_t diag_setcfg(diag_mode_t mode, const diag_cfg_t *cfg)
 {
     diag_obj_t *diag = get_diag_by_mode(mode);
-    diag_err_t err;
 
     if (!diag)
         return DIAG_ERR_PARAM;
@@ -655,16 +657,18 @@ diag_err_t diag_init_blocksize(void)
 {
   diag_cfg_t                      cfg;
 	char buf[10];
-    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+    if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
         return DIAG_ERR_PARAM;
+    }
         
 	syscfg_init();
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
 	cfg.size = atoi(buf);
 
-    if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+    if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
         return DIAG_ERR_PARAM;
+    }
         
         return DIAG_ERR_OK;
 }

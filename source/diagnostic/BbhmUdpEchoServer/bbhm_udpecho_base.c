@@ -120,7 +120,6 @@ BbhmUdpechoCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = NULL;
 
@@ -190,7 +189,6 @@ BbhmUdpechoRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS           returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT pMyObject = (PBBHM_UDP_ECHOSRV_OBJECT)hThisObject;
 
     pMyObject->Cancel((ANSC_HANDLE)pMyObject);
@@ -232,7 +230,6 @@ BbhmUdpechoEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
 
     AnscCoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -275,7 +272,6 @@ BbhmUdpechoInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT)hThisObject;
 
     /*

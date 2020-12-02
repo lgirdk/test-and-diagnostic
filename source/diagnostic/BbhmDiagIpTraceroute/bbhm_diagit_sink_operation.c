@@ -120,9 +120,7 @@ BbhmDiagitSinkGetRecvBuffer
         PULONG                      pulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT     )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT          )pSink->hXsocketObject;
     ULONG                           ulRestSize        = pSink->MaxMessageSize;
 
     *phRecvHandle = (ANSC_HANDLE)NULL;
@@ -168,10 +166,7 @@ BbhmDiagitSinkAccept
         ANSC_HANDLE                 hNewSocket
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT        )hThisObject;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pBbhmDiagit       = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT  )pSink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pNewSocket        = (PANSC_XSOCKET_OBJECT             )hNewSocket;
     PBBHM_TRACERT_SINK_OBJECT       pNewSink          = (PBBHM_TRACERT_SINK_OBJECT        )BbhmDiagitSinkCreate(pSink->hOwnerContext);
 
     /*RDKB-7452, CID-32932, free unused memory*/
@@ -230,13 +225,10 @@ BbhmDiagitSinkRecv
         ULONG                       ulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT      )hThisObject;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pBbhmDiagit       = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)pSink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT           )pSink->hXsocketObject;
-
-    returnStatus =
-        pBbhmDiagit->Recv
+    
+    pBbhmDiagit->Recv
             (
                 (ANSC_HANDLE)pBbhmDiagit,
                 (ANSC_HANDLE)pSink,
@@ -286,10 +278,8 @@ BbhmDiagitSinkClose
         BOOL                        bByPeer
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT     )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT          )pSink->hXsocketObject;
-
+    
     pSink->Reset((ANSC_HANDLE)pSink);
 
     return  ANSC_STATUS_SUCCESS;
@@ -327,10 +317,8 @@ BbhmDiagitSinkAbort
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT     )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT          )pSink->hXsocketObject;
-
+    
     pSink->Reset((ANSC_HANDLE)pSink);
 
     return  ANSC_STATUS_SUCCESS;

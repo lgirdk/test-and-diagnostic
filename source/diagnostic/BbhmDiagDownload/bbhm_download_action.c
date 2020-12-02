@@ -111,13 +111,14 @@
     0 if success and -1 on error.
 
 **********************************************************************/
+
+#if 0
 static int
 GetAddressByDmlPath(const char *path, char *address, ULONG size)
 {
-	char *addrBuf;
-
 	return -1;
 #if 0
+	char *addrBuf;
 	if (!path || _ansc_strlen(path) == 0 || !address)
 		return -1;
 
@@ -143,6 +144,7 @@ GetAddressByDmlPath(const char *path, char *address, ULONG size)
 #endif
     return 0;
 }
+#endif
 
 /**********************************************************************
 
@@ -290,6 +292,7 @@ IsIPv6Address(const char *string)
     return:     status of operation.
 
 **********************************************************************/
+#if 0
 static char http_get_request1[]=
 "GET %s HTTP/1.1\r\n"
 "Host: %s\r\n"
@@ -299,6 +302,7 @@ static char http_get_request1[]=
 "Accept-Charset: x-gbk,utf-8;q=0.7,*;q=0.7\r\n"
 "Keep-Alive: 115\r\n"
 "Connection: keep-alive\r\n\r\n";
+#endif
 
 static char http_get_request2[]=
 "GET %s HTTP/1.1\r\n"
@@ -755,7 +759,6 @@ BbhmDownloadGetResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
 
     return  &pMyObject->DownloadDiagStats;
@@ -791,11 +794,7 @@ BbhmDownloadRetrieveResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
-
 }
 
 
@@ -924,7 +923,6 @@ BbhmDownloadSetDiagState
         ULONG                       ulDiagState
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
     PDSLH_TR143_DOWNLOAD_DIAG_STATS pStats       = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)&pMyObject->DownloadDiagStats;
 

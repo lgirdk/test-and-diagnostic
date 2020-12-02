@@ -122,10 +122,10 @@ COSA_DML_CPU_MEM_FRAG,  *PCOSA_DML_CPU_MEM_FRAG;
     /* duplication of the base object class content */                                      \
     COSA_BASE_CONTENT                                                                       \
     BOOL                       Enable;                                    \
-    BOOL                        DNSPingTest_Enable;                                    \    
-    CHAR                        DNSPingTest_URL[ 512 ];                                    \    
-    BOOL                       DiagnosticMode;                                    \    
-    ULONG                       DiagModeLogUploadFrequency;                                    \    
+    BOOL                        DNSPingTest_Enable;                                    \
+    CHAR                        DNSPingTest_URL[ 512 ];                                    \
+    BOOL                       DiagnosticMode;                                    \
+    ULONG                       DiagModeLogUploadFrequency;                                    \
     ULONG                       MaxRebootCnt;                                    \
     ULONG                       MaxResetCnt;                                    \
     ULONG                       PreviousVisitTime;                                    \
@@ -190,3 +190,4 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun );
 
 void CpuMemFragCronSchedule(ULONG uinterval, BOOL bConnectnow);
 void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma );
+void copy_command_output(char * cmd, char * out, int len);

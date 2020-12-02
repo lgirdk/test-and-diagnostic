@@ -98,7 +98,6 @@ extern  ANSC_HANDLE                     bus_handle;
 extern  char                            g_Subsystem[32];
 
 static  ANSC_HANDLE                     hDiagPlugin; /*RDKB-7459, CID-33428, global for TandDSsp lib handle*/
-static  COMPONENT_COMMON_DM             CommonDm = {0};
 
 
 #if defined(_ANSC_WINDOWSNT)
@@ -123,6 +122,11 @@ COSA_DIAG_PLUGIN_INFO                               g_CosaDiagPluginInfo;
 
 COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc   = NULL;
 
+ANSC_HANDLE
+COSAAcquireFunction
+    (
+        char*                       pApiName
+    );
 
 ANSC_STATUS
 ssp_create_tad

@@ -149,7 +149,6 @@ BbhmDiagipCopyDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
 
     _ansc_memcpy(pMyObject->hDslhDiagInfo, hDslhDiagInfo, sizeof(DSLH_PING_INFO));
@@ -188,7 +187,6 @@ BbhmDiagipReset
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
 
     if ( pMyObject->hDslhDiagInfo )
@@ -319,7 +317,6 @@ BbhmDiagipGetSrcIpType
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -401,7 +398,6 @@ BbhmDiagipGetDstIpType
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -482,7 +478,6 @@ BbhmDiagipGetSrcIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -565,7 +560,6 @@ BbhmDiagipGetDstIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -656,7 +650,6 @@ BbhmDiagipGetNumPkts
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -738,7 +731,6 @@ BbhmDiagipGetPktSize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -820,7 +812,6 @@ BbhmDiagipGetTimeBetween
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -902,7 +893,6 @@ BbhmDiagipGetTimeOut
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -984,7 +974,6 @@ BbhmDiagipGetControl
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1079,7 +1068,6 @@ BbhmDiagipGetStatus
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1161,7 +1149,6 @@ BbhmDiagipGetPktsSent
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1243,7 +1230,6 @@ BbhmDiagipGetPktsRecv
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty     = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1325,7 +1311,6 @@ BbhmDiagipGetAvgRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1407,7 +1392,6 @@ BbhmDiagipGetMaxRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1489,7 +1473,6 @@ BbhmDiagipGetMinRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1571,7 +1554,6 @@ BbhmDiagipGetNumIcmpError
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1653,7 +1635,6 @@ BbhmDiagipGetIcmpError
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1734,7 +1715,6 @@ BbhmDiagipGetNumCalculate
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -1815,7 +1795,6 @@ BbhmDiagipGetSumRTT
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
     PBBHM_IP_PING_PROPERTY          pProperty    = (PBBHM_IP_PING_PROPERTY        )&pMyObject->Property;
 
@@ -2079,7 +2058,7 @@ BbhmDiagipGetResult
             pMyObject->SetMinRTT((ANSC_HANDLE)pMyObject, MinRTT);
             pMyObject->SetAvgRTT((ANSC_HANDLE)pMyObject, AvgRTT);
             pMyObject->SetSumRTT((ANSC_HANDLE)pMyObject, SumRTT);
-            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%d ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
             break;
         case ICMP_TYPE_DESTINATION_UNREACHABLE:
             _ansc_strcpy(pResult, "Destination Unreachable!");
@@ -2196,7 +2175,7 @@ BbhmDiagipGetMiddleResult
             pMyObject->SetMinRTT((ANSC_HANDLE)pMyObject, MinRTT);
             pMyObject->SetAvgRTT((ANSC_HANDLE)pMyObject, AvgRTT);
             pMyObject->SetSumRTT((ANSC_HANDLE)pMyObject, SumRTT);
-            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%d ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
             break;
         case ICMP_TYPE_DESTINATION_UNREACHABLE:
             _ansc_strcpy(pResult, "Destination Unreachable!");
@@ -2257,7 +2236,6 @@ BbhmDiagipSetDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT     )hThisObject;
     PDSLH_PING_INFO                 pDiagInfo    = (PDSLH_PING_INFO               )pMyObject->hDslhDiagInfo;
     PDSLH_PING_INFO                 pNewDiagInfo = (PDSLH_PING_INFO               )hDslhDiagInfo;

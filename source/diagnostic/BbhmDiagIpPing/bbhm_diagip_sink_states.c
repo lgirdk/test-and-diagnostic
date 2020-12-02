@@ -108,7 +108,6 @@ BbhmDiagipSinkGetXsocket
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
 
     return  pSink->hXsocketObject;
@@ -150,7 +149,6 @@ BbhmDiagipSinkSetXsocket
         ANSC_HANDLE                 hSocket
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
 
     pSink->hXsocketObject = hSocket;
@@ -194,7 +192,6 @@ BbhmDiagipSinkAttach
         ANSC_HANDLE                 hSocket
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
 
     pSink->hXsocketObject = hSocket;
@@ -233,7 +230,6 @@ BbhmDiagipSinkDetach
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink        = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT     )pSink->hXsocketObject;
 
@@ -279,10 +275,8 @@ BbhmDiagipSinkReset
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_SINK_OBJECT       pSink             = (PBBHM_IP_PING_SINK_OBJECT)hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT     )pSink->hXsocketObject;
-
+    
     pSink->MaxMessageSize = PING_SINK_MAX_MESSAGE_SIZE;
     pSink->CurMessageSize = 0;
     pSink->Offset         = 0;

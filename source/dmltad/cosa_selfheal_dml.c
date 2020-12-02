@@ -21,12 +21,11 @@
 #include "cosa_selfheal_apis.h"
 #include "cosa_selfheal_dml.h"
 #include "plugin_main_apis.h"
+#include <syscfg/syscfg.h>
 
 #define DEFAULT_MONITOR_INTERVAL    15 /* in minute */ 
 #define DEFAULT_CPU_THRESHOLD       100 /* in percentage */
 #define DEFAULT_MEMORY_THRESHOLD    100 /* in percentage */
-
-/***********************************************************************
 
 /***********************************************************************
 
@@ -460,7 +459,7 @@ SelfHeal_SetParamUlongValue
 	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold", TRUE))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%d",uValue);
+		snprintf(buf,sizeof(buf),"%lu",uValue);
 
 		if (syscfg_set(NULL, "Free_Mem_Threshold", buf) != 0)
 		{
@@ -480,7 +479,7 @@ SelfHeal_SetParamUlongValue
 	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold", TRUE))
 	{
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%d",uValue);
+		snprintf(buf,sizeof(buf),"%lu",uValue);
 
 		if (syscfg_set(NULL, "Mem_Frag_Threshold", buf) != 0)
 		{
@@ -502,7 +501,7 @@ SelfHeal_SetParamUlongValue
 		if((uValue >= 1) && (uValue <= 120))
 		{
 			memset(buf, 0, sizeof(buf));
-			snprintf(buf,sizeof(buf),"%d",uValue);
+			snprintf(buf,sizeof(buf),"%lu",uValue);
 
 			if (syscfg_set(NULL, "CpuMemFrag_Interval", buf) != 0)
 			{
@@ -534,7 +533,7 @@ SelfHeal_SetParamUlongValue
 	}
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "max_reboot_count", buf) != 0)
         {
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -557,7 +556,7 @@ SelfHeal_SetParamUlongValue
         }
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "max_reset_count", buf) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -580,7 +579,7 @@ SelfHeal_SetParamUlongValue
         }
 
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "diagMode_LogUploadFrequency", buf) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -607,7 +606,7 @@ SelfHeal_SetParamUlongValue
         }
 
 	memset(buf, 0, sizeof(buf));
-        sprintf(buf, "%d", uValue);
+        sprintf(buf, "%lu", uValue);
 
         if (syscfg_set(NULL, "log_backup_threshold", buf) != 0)
         {
@@ -898,7 +897,6 @@ ConnectivityTest_GetParamUlongValue
         ULONG*                      pUlong
     )
 {
-
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingInterval", TRUE))
     {
@@ -984,7 +982,6 @@ ConnectivityTest_SetParamUlongValue
     )
 
 {
-
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingInterval", TRUE))
     {
@@ -1000,7 +997,7 @@ ConnectivityTest_SetParamUlongValue
 		}
         /* save update to backup */
 		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
+		snprintf(value, sizeof(value), "%lu", uValue);
 		if (syscfg_set(NULL, "ConnTest_PingInterval", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingInterval\n",__FUNCTION__));
@@ -1023,7 +1020,7 @@ ConnectivityTest_SetParamUlongValue
         }
          
 		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
+		snprintf(value, sizeof(value), "%lu", uValue);
 		if (syscfg_set(NULL, "ConnTest_NumPingsPerServer", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
@@ -1047,7 +1044,7 @@ ConnectivityTest_SetParamUlongValue
         }
    
 		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
+		snprintf(value, sizeof(value), "%lu", uValue);
 		if (syscfg_set(NULL, "ConnTest_MinNumPingServer", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
@@ -1070,7 +1067,7 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
 		char value[10];
-        snprintf(value, sizeof(value), "%u", uValue);
+        snprintf(value, sizeof(value), "%lu", uValue);
 		if (syscfg_set(NULL, "ConnTest_PingRespWaitTime", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
@@ -1182,7 +1179,6 @@ IPv4PingServerTable_GetEntryCount
     )
 
 {
-
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     return AnscSListQueryDepth( &pMyObject->IPV4PingServerList );
 
@@ -1196,7 +1192,6 @@ IPv4PingServerTable_GetEntry
         ULONG*                      pInsNumber
     )
 {
-
     PCOSA_DATAMODEL_SELFHEAL                   pMyObject         = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT    pCxtLink          = NULL;
@@ -1215,7 +1210,6 @@ IPv4PingServerTable_IsUpdated
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_SELFHEAL             SELFHEAL    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     BOOL                            bIsUpdated   = TRUE;
     return bIsUpdated;
 }
@@ -1226,13 +1220,7 @@ IPv4PingServerTable_Synchronize
         ANSC_HANDLE                 hInsContext
     )
 {
-
-    ANSC_STATUS                           returnStatus      = ANSC_STATUS_FAILURE;
-    PCOSA_DATAMODEL_SELFHEAL             SELFHEAL    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT    pCxtLink          = NULL;
-    PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
-    PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
-    ULONG                                 entryCount        = 0;
+    return ANSC_STATUS_SUCCESS;
 }
 
 ANSC_HANDLE
@@ -1242,17 +1230,12 @@ IPv4PingServerTable_AddEntry
         ULONG*                      pInsNumber
     )
 {
-	PCOSA_DATAMODEL_SELFHEAL             pSelfHeal              = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+    PCOSA_DATAMODEL_SELFHEAL             pSelfHeal              = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4 = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink  = NULL;
-    PSINGLE_LINK_ENTRY                   pSListEntry       = NULL;
-    ANSC_STATUS                          returnStatus      = ANSC_STATUS_SUCCESS;
-    CHAR                                 tmpBuff[64]       = {0};
-	CHAR 								 buf[8];
-    BOOL                                      bridgeMode;
-	PCOSA_DATAMODEL_SELFHEAL                   pMyObject         = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-	int Qdepth = 0;
-
+    CHAR 								 buf[8];
+    int Qdepth = 0;
+	
     pServerIpv4 = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv4_SERVER_TABLE));
     if ( !pServerIpv4 )
     {
@@ -1267,7 +1250,7 @@ IPv4PingServerTable_AddEntry
     }
 	
 	Qdepth = AnscSListQueryDepth( &pSelfHeal->IPV4PingServerList );
-
+        UNREFERENCED_PARAMETER(Qdepth);
 	pSelfHealCxtLink->InstanceNumber =  pSelfHeal->ulIPv4NextInstanceNumber;
 	pServerIpv4->InstanceNumber = pSelfHeal->ulIPv4NextInstanceNumber;
 	    pSelfHeal->ulIPv4NextInstanceNumber++;
@@ -1278,8 +1261,8 @@ IPv4PingServerTable_AddEntry
 	pSelfHealCxtLink->hContext = (ANSC_HANDLE)pServerIpv4;
 
 	pSelfHeal->pConnTest->IPv4EntryCount++;
-	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
-	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv4EntryCount);
+	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
+	snprintf(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv4EntryCount);
 	if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
@@ -1343,7 +1326,6 @@ IPv4PingServerTable_GetParamStringValue
 {
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4  = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)pSelfHealCxtLink->hContext;
-    PUCHAR                                    pString       = NULL;
 
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI", TRUE))
@@ -1444,7 +1426,6 @@ IPv6PingServerTable_GetEntryCount
     )
 
 {
-
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     return AnscSListQueryDepth( &pMyObject->IPV6PingServerList );
 
@@ -1458,7 +1439,6 @@ IPv6PingServerTable_GetEntry
         ULONG*                      pInsNumber
     )
 {
-
     PCOSA_DATAMODEL_SELFHEAL                   pMyObject         = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT    pCxtLink          = NULL;
@@ -1477,7 +1457,6 @@ IPv6PingServerTable_IsUpdated
         ANSC_HANDLE                 hInsContext
     )
 {
-    PCOSA_DATAMODEL_SELFHEAL             SELFHEAL    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     BOOL                            bIsUpdated   = TRUE;
     /*
         We can use one rough granularity interval to get whole table in case
@@ -1492,14 +1471,7 @@ IPv6PingServerTable_Synchronize
         ANSC_HANDLE                 hInsContext
     )
 {
-
-    ANSC_STATUS                           returnStatus      = ANSC_STATUS_FAILURE;
-    PCOSA_DATAMODEL_SELFHEAL             SELFHEAL    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT    pCxtLink          = NULL;
-    PSINGLE_LINK_ENTRY                    pSListEntry       = NULL;
-    PSINGLE_LINK_ENTRY                    pSListEntry2      = NULL;
-    ULONG                                 entryCount        = 0;
-	
+    return ANSC_STATUS_SUCCESS;
 }
 
 ANSC_HANDLE
@@ -1509,16 +1481,11 @@ IPv6PingServerTable_AddEntry
         ULONG*                      pInsNumber
     )
 {
-	PCOSA_DATAMODEL_SELFHEAL             pSelfHeal              = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+    PCOSA_DATAMODEL_SELFHEAL             pSelfHeal              = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6 = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink  = NULL;
-    PSINGLE_LINK_ENTRY                   pSListEntry       = NULL;
-    ANSC_STATUS                          returnStatus      = ANSC_STATUS_SUCCESS;
-    CHAR                                 tmpBuff[66]       = {0};
-    BOOL                                      bridgeMode;
-	PCOSA_DATAMODEL_SELFHEAL                   pMyObject         = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-	int Qdepth = 0;
-	
+    int Qdepth = 0;
+    
 	pServerIpv6 = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv6_SERVER_TABLE));
     if ( !pServerIpv6 )
     {
@@ -1534,18 +1501,20 @@ IPv6PingServerTable_AddEntry
 
     /* now we have this link content */
 	Qdepth = AnscSListQueryDepth( &pSelfHeal->IPV6PingServerList );
+        UNREFERENCED_PARAMETER(Qdepth);
 	pSelfHealCxtLink->InstanceNumber =  pSelfHeal->ulIPv6NextInstanceNumber;
 	pServerIpv6->InstanceNumber = pSelfHeal->ulIPv6NextInstanceNumber;
 	    pSelfHeal->ulIPv6NextInstanceNumber++;
-    if (pSelfHeal->ulIPv6NextInstanceNumber == 0)
+    if (pSelfHeal->ulIPv6NextInstanceNumber == 0) {
         pSelfHeal->ulIPv6NextInstanceNumber = 1;
+    }
 
 	pSelfHealCxtLink->hContext = (ANSC_HANDLE)pServerIpv6;
 	
 	char buf[8];
 	pSelfHeal->pConnTest->IPv6EntryCount++;
-	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
-	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv6EntryCount);
+	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
+	snprintf(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv6EntryCount);
 	if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
@@ -1606,7 +1575,6 @@ IPv6PingServerTable_GetParamStringValue
 {
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6  = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)pSelfHealCxtLink->hContext;
-    PUCHAR                                    pString       = NULL;
 	
     /* check the parameter name and return the corresponding value */
     if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI", TRUE))
@@ -1654,7 +1622,7 @@ IPv6PingServerTable_Validate
         ULONG*                      puLength
     )
 {
-
+    return TRUE;
 }
 
 ULONG
@@ -1663,7 +1631,7 @@ IPv6PingServerTable_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 ULONG
@@ -1672,7 +1640,7 @@ IPv6PingServerTable_Rollback
         ANSC_HANDLE                 hInsContext
     )
 {
-
+    return ANSC_STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -1816,7 +1784,7 @@ ResourceMonitor_SetParamUlongValue
 	}
 #endif
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -1840,7 +1808,7 @@ ResourceMonitor_SetParamUlongValue
 
         char buf[8];
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "avg_cpu_threshold", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -1864,7 +1832,7 @@ ResourceMonitor_SetParamUlongValue
 
         char buf[8];
         memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
+        snprintf(buf,sizeof(buf),"%lu",uValue);
         if (syscfg_set(NULL, "avg_memory_threshold", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -2047,7 +2015,6 @@ CpuMemFrag_GetParamStringValue
 				ULONG*											pUlSize
 		)
 {
-
 	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)hInsContext;
 
 	/*Get data of Host/Peer from syscfg 	*/

@@ -120,9 +120,7 @@ BbhmDiagnsXsinkGetRecvBuffer
         PULONG                      pulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT)hThisObject;
-    PANSC_XSOCKET_OBJECT            pXsocketObject    = (PANSC_XSOCKET_OBJECT        )pXsink->hXsocketObject;
     ULONG                           ulRestSize        = pXsink->MaxMessageSize;
 
     *phRecvHandle = (ANSC_HANDLE)NULL;
@@ -168,10 +166,7 @@ BbhmDiagnsXsinkAccept
         ANSC_HANDLE                 hNewXsocket
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )hThisObject;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pBbhmDiagns       = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )pXsink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pNewXsocket       = (PANSC_XSOCKET_OBJECT          )hNewXsocket;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pNewXsink         = (PBBHM_NS_LOOKUP_XSINK_OBJECT  )BbhmDiagnsXsinkCreate(pXsink->hOwnerContext);
 
     /*RDKB-7454, CID-33040, free unused resources*/
@@ -230,13 +225,10 @@ BbhmDiagnsXsinkRecv
         ULONG                       ulSize
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT    )hThisObject;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pBbhmDiagns       = (PBBHM_DIAG_NS_LOOKUP_OBJECT     )pXsink->hOwnerContext;
-    PANSC_XSOCKET_OBJECT            pXsocketObject    = (PANSC_XSOCKET_OBJECT            )pXsink->hXsocketObject;
-
-    returnStatus =
-        pBbhmDiagns->Recv
+    
+    pBbhmDiagns->Recv
             (
                 (ANSC_HANDLE)pBbhmDiagns,
                 (ANSC_HANDLE)pXsink,
@@ -285,10 +277,8 @@ BbhmDiagnsXsinkClose
         BOOL                        bByPeer
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT)hThisObject;
-    PANSC_XSOCKET_OBJECT            pXsocketObject    = (PANSC_XSOCKET_OBJECT        )pXsink->hXsocketObject;
-
+    
     pXsink->Reset((ANSC_HANDLE)pXsink);
 
     return  ANSC_STATUS_SUCCESS;
@@ -326,10 +316,8 @@ BbhmDiagnsXsinkAbort
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_NS_LOOKUP_XSINK_OBJECT    pXsink            = (PBBHM_NS_LOOKUP_XSINK_OBJECT    )hThisObject;
-    PANSC_XSOCKET_OBJECT            pXsocketObject    = (PANSC_XSOCKET_OBJECT            )pXsink->hXsocketObject;
-
+    
     pXsink->Reset((ANSC_HANDLE)pXsink);
 
     return  ANSC_STATUS_SUCCESS;

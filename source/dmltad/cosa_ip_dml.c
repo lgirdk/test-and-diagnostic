@@ -72,8 +72,8 @@
 #include "cosa_ip_dml.h"
 #include "diag.h"
 #include "ansc_string_util.h"
+#include <syscfg/syscfg.h>
 
-static ULONG last_tick;
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 4096
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
@@ -390,7 +390,6 @@ ARPTable_GetEntryCount
     )
 {
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PCOSA_DML_DIAG_ARP_TABLE        pArpTable           = (PCOSA_DML_DIAG_ARP_TABLE)pMyObject->pArpTable;
     ULONG                           entryCount          = pMyObject->ArpEntryCount;
 
     return entryCount;
@@ -436,8 +435,7 @@ ARPTable_GetEntry
 {
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PCOSA_DML_DIAG_ARP_TABLE        pArpTable           = (PCOSA_DML_DIAG_ARP_TABLE)pMyObject->pArpTable;
-    ULONG                           entryCount          = pMyObject->ArpEntryCount;
-
+    
     *pInsNumber  = nIndex + 1;
 
     return (ANSC_HANDLE)&pArpTable[nIndex]; /* return the handle */
@@ -473,8 +471,6 @@ ARPTable_IsUpdated
     )
 {
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
-    PCOSA_DML_DIAG_ARP_TABLE        pArpTable           = (PCOSA_DML_DIAG_ARP_TABLE)pMyObject->pArpTable;
-    ULONG                           entryCount          = pMyObject->ArpEntryCount;
     BOOL                            bIsUpdated   = TRUE;
 
     /*
@@ -795,18 +791,17 @@ ARPTable_GetParamStringValue
 void COSAIP_pingtest_ProcessThread_Start( void )
 {
 	pthread_t pingtestthread;
-	pthread_create( &pingtestthread, NULL, &COSAIP_pingtest_ProcessThread, NULL );
+	pthread_create( &pingtestthread, NULL, COSAIP_pingtest_ProcessThread, NULL );
 }
 
-int COSAIP_pingtest_ProcessThread( void *arg )
+void *COSAIP_pingtest_ProcessThread( void *arg )
 {
 	diag_pingtest_device_details_t *pingtest_devdet = diag_pingtest_getdevicedetails( );
 	diag_state_t	state;
-	diag_err_t		err, err_return;
+	diag_err_t		err_return;
 	diag_cfg_t		cfg;
 	diag_stat_t 	statis;
-	char 			pingtestresult[ 64 ] = { 0 },
-					tmp_hostname[ 257 ]  = { 0 },
+	char 			tmp_hostname[ 257 ]  = { 0 },
 					*ptmp_hostname = NULL;
 
 	//Detach the thread from loop
@@ -816,7 +811,7 @@ int COSAIP_pingtest_ProcessThread( void *arg )
 	{
 		AnscTraceFlow(( "<%s> Failed to execute PING Test\n", __FUNCTION__ ));
 		g_is_pingtest_running = FALSE;
-		return DIAG_ERR_OTHER;
+		return NULL;
 	}
 
 	//ping test process thread
@@ -841,12 +836,14 @@ int COSAIP_pingtest_ProcessThread( void *arg )
 	{
 		AnscTraceFlow(( "<%s> Failed to execute PING Test\n", __FUNCTION__ ));
 		g_is_pingtest_running = 0;
-		return DIAG_ERR_OTHER;
+		return NULL;
 	}
 
 //For future requirement if need
 #if 0
 	/* Get the ping test status */
+    char pingtestresult[ 64 ] = { 0 };
+    diag_err_t		err;
 	switch( state )
 	{
 		case DIAG_ST_NONE:
@@ -930,7 +927,7 @@ int COSAIP_pingtest_ProcessThread( void *arg )
 
 	g_is_pingtest_running = 0;
 	
-	return DIAG_ERR_OK;
+	return NULL;
 }
 
 void COSA_IP_diag_FillDeviceDetails( void )
@@ -971,7 +968,7 @@ void COSA_IP_diag_FillDeviceDetails( void )
 int	COSA_IP_diag_Startpingtest( void )
 {
 	CCSP_MESSAGE_BUS_INFO *bus_info = (CCSP_MESSAGE_BUS_INFO *)bus_handle;
-	parameterValStruct_t   param_val[ 1 ]    = { "Device.IP.Diagnostics.IPPing.DiagnosticsState", "Requested", ccsp_string };
+	parameterValStruct_t   param_val[ 1 ]    = {{ "Device.IP.Diagnostics.IPPing.DiagnosticsState", "Requested", ccsp_string }};
 	char				   component[ 256 ]  = "eRT.com.cisco.spvtg.ccsp.tdm";
 	char				   bus[256]		     = "/com/cisco/spvtg/ccsp/tdm";
 	char*				   faultParam 	     = NULL;
@@ -982,7 +979,7 @@ int	COSA_IP_diag_Startpingtest( void )
 										  bus,
 										  0,
 										  0,
-										  &param_val,
+										  param_val,
 										  1,
 										  TRUE,
 										  &faultParam
@@ -1015,7 +1012,7 @@ void COSA_IP_diag_getGetParamValue( char *ParamName, char *ParamValue, int size 
 		
 		AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, ParamName));
 		
-		retval = g_GetParamValueByPathNameProc( bus_handle, &ParamStruct, &size);
+		retval = g_GetParamValueByPathNameProc( bus_handle, &ParamStruct, (ULONG *)&size);
 		
 		if ( retval != ANSC_STATUS_SUCCESS )
 		{
@@ -1901,7 +1898,7 @@ IPPing_SetParamStringValue
 
             AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, IfNameParamName));
 
-            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, &size);
+            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, (ULONG *)&size);
 
             if ( retval != ANSC_STATUS_SUCCESS )
             {
@@ -2570,7 +2567,7 @@ TraceRoute_SetParamStringValue
 
             AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, IfNameParamName));
 
-            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, &size);
+            retval = g_GetParamValueByPathNameProc(bus_handle, &ParamVal, (ULONG *)&size);
 
             if ( retval != ANSC_STATUS_SUCCESS )
             {
@@ -3758,7 +3755,6 @@ DownloadDiagnostics_SetParamUlongValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
-    PDSLH_TR143_DOWNLOAD_DIAG_STATS pDownloadDiagStats = NULL;
 
 	/* according to TR-181, set writable params other than DiagnosticsState,
 	 * must set DiagnosticsState to "NONE". */
@@ -3940,7 +3936,6 @@ DownloadDiagnostics_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
 	char*							pAddrName			= NULL;
@@ -3962,7 +3957,7 @@ DownloadDiagnostics_Commit
 	if (pAddrName)
 		AnscFreeMemory(pAddrName);
 
-    returnStatus = CosaDmlDiagScheduleDiagnostic
+    CosaDmlDiagScheduleDiagnostic
                     (
                         DSLH_DIAGNOSTIC_TYPE_Download,
                         (ANSC_HANDLE)pDownloadInfo
@@ -4680,7 +4675,6 @@ UploadDiagnostics_SetParamUlongValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject        = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
-    PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
 
 	/* according to TR-181, set writable params other than DiagnosticsState,
 	 * must set DiagnosticsState to "NONE". */
@@ -4766,7 +4760,6 @@ UploadDiagnostics_SetParamStringValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject        = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
-    PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
 
 	/* according to TR-181, set writable params other than DiagnosticsState,
 	 * must set DiagnosticsState to "NONE". */
@@ -4874,7 +4867,6 @@ UploadDiagnostics_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject    = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo  = pMyObject->hDiagUploadInfo;
 	char*							pAddrName			= NULL;
@@ -4897,7 +4889,7 @@ UploadDiagnostics_Commit
 		AnscFreeMemory(pAddrName);
 
 
-    returnStatus = CosaDmlDiagScheduleDiagnostic
+    CosaDmlDiagScheduleDiagnostic
                     (
                         DSLH_DIAGNOSTIC_TYPE_Upload,
                         (ANSC_HANDLE)pUploadInfo
@@ -5028,7 +5020,6 @@ UDPEchoConfig_GetParamBoolValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
-    PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
 
     /* check the parameter name and return the corresponding value */
     if ( AnscEqualString(ParamName, "Enable", TRUE))
@@ -5488,7 +5479,6 @@ UDPEchoConfig_SetParamBoolValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
-    PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
 
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Enable", TRUE))
@@ -5591,8 +5581,7 @@ UDPEchoConfig_SetParamUlongValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
-    PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
-
+    
     /* check the parameter name and set the corresponding value */
 
     if ( AnscEqualString(ParamName, "UDPPort", TRUE))
@@ -5783,12 +5772,10 @@ UDPEchoConfig_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    ANSC_STATUS                     returnStatus  = ANSC_STATUS_FAILURE;
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
-    PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
 
-    returnStatus = CosaDmlDiagScheduleDiagnostic
+    CosaDmlDiagScheduleDiagnostic
                 (
                     DSLH_DIAGNOSTIC_TYPE_UdpEcho,
                     (ANSC_HANDLE)pUdpEchoInfo
@@ -6062,7 +6049,6 @@ SpeedTest_Commit
         ANSC_HANDLE                 hInsContext
     )
 {
-    ANSC_STATUS     returnStatus  = ANSC_STATUS_FAILURE;
     BOOL            speedtest_setting = FALSE;
 
     char buf[128] = {0};
@@ -6323,7 +6309,6 @@ SpeedTest_SetParamStringValue
         char*                       pString
     )
 {
-
     int len = strlen(pString);
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Argument", TRUE))
@@ -6450,7 +6435,6 @@ SpeedTest_SetParamUlongValue
         ULONG                       ulong
     )
 {
-
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "ClientType", TRUE))
     {
@@ -6504,7 +6488,6 @@ SpeedTestServer_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
-
 	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
 
@@ -6540,7 +6523,6 @@ SpeedTestServer_SetParamStringValue
         char*                       pString
     )
 {
-
 	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
 

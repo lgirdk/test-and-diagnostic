@@ -114,5 +114,11 @@ CosaUtilGetStaticRouteTable
         UINT                        *count,
         StaticRoute                 **out_route
     );
-
+    
+ANSC_STATUS
+CosaUtilGetStaticRouteTablePriv
+    (
+        UINT                        *count,
+        StaticRoute                 **out_sroute
+    );
 #endif

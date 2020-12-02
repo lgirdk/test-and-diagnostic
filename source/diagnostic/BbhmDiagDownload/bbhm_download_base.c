@@ -120,7 +120,6 @@ BbhmDownloadCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = NULL;
 
@@ -190,7 +189,6 @@ BbhmDownloadRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
 
     pMyObject->Cancel((ANSC_HANDLE)pMyObject);
@@ -232,7 +230,6 @@ BbhmDownloadEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
 
     AnscCoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -275,7 +272,6 @@ BbhmDownloadInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                    returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DOWNLOAD_DIAG_OBJECT     pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
 
     /*

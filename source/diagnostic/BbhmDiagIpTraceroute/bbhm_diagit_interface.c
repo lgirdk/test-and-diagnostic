@@ -116,8 +116,5 @@ BbhmCreateDiagnosticIpTraceroute
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pBbhmDiagExec   = NULL;
-
     return  BbhmDiagitCreate(hContainerContext, hOwnerContext, hAnscReserved);
 }

@@ -210,7 +210,7 @@ ARPTable_GetParamStringValue
 ***********************************************************************/
 void COSAIP_pingtest_ProcessThread_Start( void );
 
-int COSAIP_pingtest_ProcessThread( void *arg );
+void *COSAIP_pingtest_ProcessThread( void *arg );
 
 int COSA_IP_diag_Startpingtest( void );
 

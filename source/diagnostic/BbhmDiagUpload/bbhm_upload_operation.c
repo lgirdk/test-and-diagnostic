@@ -253,6 +253,7 @@ BbhmUploadSetupEnv
             hSysRoot
             );
     }
+
 #endif
 
     return  returnStatus;
@@ -304,6 +305,7 @@ BbhmUploadCloseEnv
     }
 
     pMyObject->hIrepFoUpload = (ANSC_HANDLE)NULL;
+
 #endif
 
     return  returnStatus;

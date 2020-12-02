@@ -120,7 +120,6 @@ BbhmDiagipCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = NULL;
 

@@ -121,10 +121,8 @@ BbhmDiagnsReset
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT)hThisObject;
-
     /*
+    PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT)hThisObject;
     if ( pMyObject->hDslhDiagInfo )
     {
         DslhFreeNSLookupInfo(((PDSLH_NSLOOKUP_INFO)pMyObject->hDslhDiagInfo));
@@ -310,7 +308,6 @@ BbhmDiagnsGetDstIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -399,11 +396,10 @@ BbhmDiagnsCopyDiagParams
         ANSC_HANDLE                 hThisObject,
         ANSC_HANDLE                 hDslhDiagInfo
     )
-{
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
+{ 
+    /*
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT)hThisObject;
 
-    /*
     _ansc_memcpy(pMyObject->hDslhDiagInfo, hDslhDiagInfo, sizeof(DSLH_NSLOOKUP_INFO));
     */
 
@@ -440,7 +436,6 @@ BbhmDiagnsGetNumPkts
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -523,7 +518,6 @@ BbhmDiagnsGetTimeOut
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -606,7 +600,6 @@ BbhmDiagnsGetSrcIp
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -689,7 +682,6 @@ BbhmDiagnsGetPktsSent
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -826,7 +818,6 @@ BbhmDiagnsGetStatus
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
@@ -870,7 +861,6 @@ BbhmDiagnsSetDiagParams
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PDSLH_NSLOOKUP_INFO             pDiagInfo    = (PDSLH_NSLOOKUP_INFO           )pMyObject->hDslhDiagInfo;
     PDSLH_NSLOOKUP_INFO             pNewDiagInfo = (PDSLH_NSLOOKUP_INFO           )hDslhDiagInfo;
@@ -953,4 +943,3 @@ BbhmDiagnsSetDiagParams
 
     return  ANSC_STATUS_SUCCESS;
 }
-

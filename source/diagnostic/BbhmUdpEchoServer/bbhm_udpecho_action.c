@@ -120,12 +120,9 @@ bbhmUdpechoStartUdpEchoTask
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject          			= (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo       			= (PDSLH_TR143_UDP_ECHO_CONFIG)&pMyObject->UDPEchoConfig;
     XSKT_SOCKET                     aSocket            			= XSKT_SOCKET_INVALID_SOCKET;
-    char                            pInterface[DSLH_TR143_MAX_STRING_LENGTH]         = {0};
-    ULONG                           uLocalIP           			= 0;
     char                            pMsg[ECHO_MAX_MESSAGE + 8]  = { 0 };
     ULONG                           uMsgSize             		= ECHO_MAX_MESSAGE;
     int                             s_result             		= 0;
-    int                             s_error              		= 0;
     BOOL                            bFirst               		= TRUE;
     /*xskt_socket_addr_in             local_addr;*/
     xskt_addrinfo*                  pxskt_local_addrinfo 		= NULL;
@@ -444,10 +441,8 @@ BbhmUdpechoStartDiag
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
-    PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo = (PDSLH_TR143_UDP_ECHO_CONFIG)&pMyObject->UDPEchoConfig;
-
+    
     if ( !pMyObject->bActive )
     {
         return  ANSC_STATUS_FAILURE;
@@ -501,8 +496,7 @@ BbhmUdpechoStopDiag
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
-    PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo = (PDSLH_TR143_UDP_ECHO_CONFIG)&pMyObject->UDPEchoConfig;
-
+    
     if ( !pMyObject->bActive )
     {
         return ANSC_STATUS_FAILURE;
@@ -549,7 +543,6 @@ BbhmUdpechoGetResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT)hThisObject;
 
     return  &pMyObject->UDPEchoStats;
@@ -586,9 +579,6 @@ BbhmUdpechoRetrieveResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT)hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
 }
 
@@ -684,7 +674,6 @@ BbhmUdpechoSetConfig
         ANSC_HANDLE                 hDslhDiagInfo
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo = (PDSLH_TR143_UDP_ECHO_CONFIG)&pMyObject->UDPEchoConfig;
     PDSLH_TR143_UDP_ECHO_CONFIG     pHandle      = (PDSLH_TR143_UDP_ECHO_CONFIG)hDslhDiagInfo;

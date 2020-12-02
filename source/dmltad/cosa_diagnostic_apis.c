@@ -69,6 +69,8 @@
 **************************************************************************/
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
+#include <syscfg/syscfg.h>
+#include <ccsp_psm_helper.h>
 
 static char * SpeedTestServerCapability= "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Server.Capability";
 
@@ -103,7 +105,6 @@ CosaDiagCreate
         VOID
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_DIAG            pMyObject    = (PCOSA_DATAMODEL_DIAG)NULL;
 
     /*
@@ -167,7 +168,6 @@ CosaDiagInitialize
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo        = (PDSLH_TR143_DOWNLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo          = (PDSLH_TR143_UPLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo         = (PDSLH_TR143_UDP_ECHO_CONFIG)NULL;
-    PCOSA_DML_DIAG_ARP_TABLE        pArpTable            = (PCOSA_DML_DIAG_ARP_TABLE)NULL;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 		pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)NULL;
 
     pDiagPingInfo = AnscAllocateMemory(sizeof(DSLH_PING_INFO));
@@ -452,7 +452,7 @@ CosaDiagRemove
 struct AsyncDiagInfo
 {
     ULONG        type;
-    ANSC_HANDLE  hDiagInfo
+    ANSC_HANDLE  hDiagInfo;
 };
 
 static void * _AsyncScheduleDiagnostic(ANSC_HANDLE hCtx)
@@ -747,7 +747,7 @@ CosaDmlInputValidation
     if(ANSC_STATUS_SUCCESS == returnStatus)
 	sprintf(wrapped_host,"'%s'",host);
 
-	return returnStatus;
+    return returnStatus;
 
 }
 

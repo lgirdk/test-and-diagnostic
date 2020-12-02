@@ -108,7 +108,6 @@ BbhmDiagitTdoInvoke
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject       = (PBBHM_TRACERT_TDO_OBJECT          )hThisObject;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pTracertObj     = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )pMyObject->hOwnerContext;
     PBBHM_TRACERT_PROPERTY          pProperty       = (PBBHM_TRACERT_PROPERTY            )&pTracertObj->Property;
@@ -172,10 +171,8 @@ BbhmDiagitTdoGetStopTime
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject       = (PBBHM_TRACERT_TDO_OBJECT          )hThisObject;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pTracert        = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )pMyObject->hOwnerContext;
-
+    
     return  pMyObject->StopTime;
 }
 
@@ -216,8 +213,7 @@ BbhmDiagitTdoSetStopTime
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject       = (PBBHM_TRACERT_TDO_OBJECT          )hThisObject;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pTracert        = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )pMyObject->hOwnerContext;
-
+    
     pMyObject->StopTime    = ulStopTime;
 
     return  returnStatus;
@@ -253,10 +249,8 @@ BbhmDiagitTdoGetCounter
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject       = (PBBHM_TRACERT_TDO_OBJECT          )hThisObject;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pTracert        = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )pMyObject->hOwnerContext;
-
+    
     return  pMyObject->Counter;
 
 }
@@ -298,8 +292,7 @@ BbhmDiagitTdoSetCounter
 {
     ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_TDO_OBJECT        pMyObject       = (PBBHM_TRACERT_TDO_OBJECT          )hThisObject;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pTracert        = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )pMyObject->hOwnerContext;
-
+    
     pMyObject->Counter    = ulCounter;
 
     return  returnStatus;

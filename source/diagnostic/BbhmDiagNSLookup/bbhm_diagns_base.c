@@ -120,7 +120,6 @@ BbhmDiagnsCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = NULL;
 
@@ -252,7 +251,6 @@ BbhmDiagnsEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus        = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject           = (PBBHM_DIAG_NS_LOOKUP_OBJECT  )hThisObject;
     PDSLH_NSLOOKUP_INFO             pDslhDiagInfo       = (PDSLH_NSLOOKUP_INFO          )NULL;
     PBBHM_NS_LOOKUP_TDO_OBJECT      pStateTimer         = (PBBHM_NS_LOOKUP_TDO_OBJECT   )pMyObject->hStateTimer;

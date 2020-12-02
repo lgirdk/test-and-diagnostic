@@ -22,8 +22,6 @@
 
 /***********************************************************************
 
-/***********************************************************************
-
  APIs for Object:
 
     LogBackup.
@@ -88,8 +86,10 @@ LogBackup_Rollback
         ANSC_HANDLE                 hInsContext
     );
 
+void
 get_logbackupcfg();
 
-
+void 
+SyncAndUploadLogs();
 
 #endif

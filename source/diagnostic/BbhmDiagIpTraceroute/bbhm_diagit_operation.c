@@ -121,16 +121,14 @@ BbhmDiagitStart
     PANSC_XSOCKET_OBJECT            pSocket          = (PANSC_XSOCKET_OBJECT              )pSink->GetXsocket((ANSC_HANDLE)pSink);
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO             )pMyObject->hDslhDiagInfo;
 
-    ULONG                           numPkts          = pProperty->NumPkts;
     ULONG                           pktSize          = pProperty->PktSize;
     PCHAR                           pSendBuffer      = pMyObject->hSendBuffer;
     ULONG                           i                = 0;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader      = NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = NULL;
     ULONG                           StartTime        = 0;
-    UCHAR                           SrcIp[4]         = {0, 0, 0, 0};
     ULONG                           ttl              = (ULONG)pMyObject->GetTtl((ANSC_HANDLE)pMyObject);
-    int                             iReturn          = 0;
-
+    
     if ( !pMyObject->bActive )
     {
         pProperty->Status = BBHM_TRACERT_STATUS_ABORT;
@@ -253,32 +251,31 @@ BbhmDiagitStart
 
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        pIcmpHeader = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv4EchoSetType         (pIcmpHeader, ICMP_TYPE_ECHO_REQUEST);
-        AnscIcmpv4EchoSetCode         (pIcmpHeader, 0                     );
-        AnscIcmpv4EchoSetId           (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
-        AnscIcmpv4EchoSetSeqNumber    (pIcmpHeader, 0                     );
+        AnscIcmpv4EchoSetType         (pIcmpHeaderIpv4, ICMP_TYPE_ECHO_REQUEST);
+        AnscIcmpv4EchoSetCode         (pIcmpHeaderIpv4, 0                     );
+        AnscIcmpv4EchoSetId           (pIcmpHeaderIpv4, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
+        AnscIcmpv4EchoSetSeqNumber    (pIcmpHeaderIpv4, 0                     );
 
         for ( i = 0; i < pktSize; i++ )
         {
             ((PUCHAR)pMyObject->hSendBuffer)[i + sizeof(ICMPV4_HEADER)] = (UCHAR)i;
         }
 
-        AnscIcmpv4EchoSetChecksum    (pIcmpHeader, 0                        );
-        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeader), pktSize + sizeof(IPV4_HEADER) + sizeof(ICMPV4_ECHO_MESSAGE));
+        AnscIcmpv4EchoSetChecksum    (pIcmpHeaderIpv4, 0                        );
+        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeaderIpv4), pktSize + sizeof(IPV4_HEADER) + sizeof(ICMPV4_ECHO_MESSAGE));
 
         returnStatus =
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv4EchoGetId(pIcmpHeader),
+                    AnscIcmpv4EchoGetId(pIcmpHeaderIpv4),
                     StartTime,
                     ttl
                 );
 
-        iReturn =
-            _xskt_setsocketopt
+        _xskt_setsocketopt
                 (
                     pSocket->Xsocket,
                     IPPROTO_IP,
@@ -289,31 +286,30 @@ BbhmDiagitStart
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        AnscIcmpv6EchoSetType        (pIcmpHeader, ICMP6_TYPE_ECHO_REQUEST  );
-        AnscIcmpv6EchoSetCode        (pIcmpHeader, 0                        );
-        AnscIcmpv6EchoSetId          (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
-        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeader, 0                        );
+        AnscIcmpv6EchoSetType        (pIcmpHeaderIpv6, ICMP6_TYPE_ECHO_REQUEST  );
+        AnscIcmpv6EchoSetCode        (pIcmpHeaderIpv6, 0                        );
+        AnscIcmpv6EchoSetId          (pIcmpHeaderIpv6, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
+        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeaderIpv6, 0                        );
 
         for ( i = 0; i < pktSize; i++ )
         {
             ((PUCHAR)pMyObject->hSendBuffer)[i + sizeof(ICMPV6_HEADER)] = (UCHAR)i;
         }
 
-        AnscIcmpv6EchoSetChecksum    (pIcmpHeader, 0                        );
+        AnscIcmpv6EchoSetChecksum    (pIcmpHeaderIpv6, 0                        );
 
         returnStatus =
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv6EchoGetId(pIcmpHeader),
+                    AnscIcmpv6EchoGetId(pIcmpHeaderIpv6),
                     StartTime,
                     ttl
                 );
 
-        iReturn =
-            _xskt_setsocketopt
+        _xskt_setsocketopt
                 (
                     pSocket->Xsocket,
                     IPPROTO_IPV6,
@@ -405,18 +401,14 @@ BbhmDiagitSendEcho
     PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT              )pSink->GetXsocket((ANSC_HANDLE)pSink);
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO         )pMyObject->hDslhDiagInfo;
-    ULONG                           numPkts      = pProperty->NumPkts;
     ULONG                           pktSize      = pProperty->PktSize;
     PCHAR                           pSendBuffer  = pMyObject->hSendBuffer;
     ULONG                           i            = 0;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = NULL;
-    PIPV4_HEADER                    pIpv4Header  = NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = NULL;
     ULONG                           StartTime    = 0;
-    UCHAR                           SrcIp[4]     = { 0, 0, 0, 0 };
-    USHORT                          SrcPort      = 0;
     ULONG                           ttl          = 0;
-    int                             iReturn      = 0;
-
+    
     if ( !pMyObject->bActive )
     {
         pProperty->Status = BBHM_TRACERT_STATUS_ABORT;
@@ -447,40 +439,40 @@ BbhmDiagitSendEcho
 
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        pIcmpHeader = (PICMPV4_ECHO_MESSAGE)((PUCHAR)pMyObject->hSendBuffer);
+        pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)((PUCHAR)pMyObject->hSendBuffer);
 
-        _ansc_memset((PUCHAR)pIcmpHeader, 0, sizeof(ICMPV4_ECHO_MESSAGE) + BBHM_TRACERT_MAX_PACKET_SIZE);
+        _ansc_memset((PUCHAR)pIcmpHeaderIpv4, 0, sizeof(ICMPV4_ECHO_MESSAGE) + BBHM_TRACERT_MAX_PACKET_SIZE);
 
-        AnscIcmpv4EchoSetType        (pIcmpHeader, ICMP_TYPE_ECHO_REQUEST);
-        AnscIcmpv4EchoSetCode        (pIcmpHeader, 0                     );
-        AnscIcmpv4EchoSetId          (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
-        AnscIcmpv4EchoSetSeqNumber   (pIcmpHeader, 0                     );
+        AnscIcmpv4EchoSetType        (pIcmpHeaderIpv4, ICMP_TYPE_ECHO_REQUEST);
+        AnscIcmpv4EchoSetCode        (pIcmpHeaderIpv4, 0                     );
+        AnscIcmpv4EchoSetId          (pIcmpHeaderIpv4, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
+        AnscIcmpv4EchoSetSeqNumber   (pIcmpHeaderIpv4, 0                     );
 
         for ( i = 0; i < pktSize; i++ )
         {
             ((PUCHAR)pMyObject->hSendBuffer)[i + sizeof(ICMPV4_HEADER)] = (UCHAR)i;
         }
 
-        AnscIcmpv4EchoSetChecksum    (pIcmpHeader, 0                        );
-        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeader), pktSize + sizeof(IPV4_HEADER) + sizeof(ICMPV4_ECHO_MESSAGE));
+        AnscIcmpv4EchoSetChecksum    (pIcmpHeaderIpv4, 0                        );
+        AnscIcmpv4CalculateChecksum (((PICMPV4_HEADER)pIcmpHeaderIpv4), pktSize + sizeof(IPV4_HEADER) + sizeof(ICMPV4_ECHO_MESSAGE));
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
+        pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)pMyObject->hSendBuffer;
 
-        _ansc_memset((PUCHAR)pIcmpHeader, 0, sizeof(ICMPV6_ECHO_MESSAGE) + BBHM_TRACERT_MAX_PACKET_SIZE);
+        _ansc_memset((PUCHAR)pIcmpHeaderIpv6, 0, sizeof(ICMPV6_ECHO_MESSAGE) + BBHM_TRACERT_MAX_PACKET_SIZE);
 
-        AnscIcmpv6EchoSetType        (pIcmpHeader, ICMP6_TYPE_ECHO_REQUEST);
-        AnscIcmpv6EchoSetCode        (pIcmpHeader, 0                      );
-        AnscIcmpv6EchoSetId          (pIcmpHeader, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
-        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeader, 0                      );
+        AnscIcmpv6EchoSetType        (pIcmpHeaderIpv6, ICMP6_TYPE_ECHO_REQUEST);
+        AnscIcmpv6EchoSetCode        (pIcmpHeaderIpv6, 0                      );
+        AnscIcmpv6EchoSetId          (pIcmpHeaderIpv6, (USHORT)pMyObject->GetPktsSent((ANSC_HANDLE)pMyObject) );
+        AnscIcmpv6EchoSetSeqNumber   (pIcmpHeaderIpv6, 0                      );
 
         for ( i = 0; i < pktSize; i++ )
         {
             ((PUCHAR)pMyObject->hSendBuffer)[i + sizeof(ICMPV6_HEADER)] = (UCHAR)i;
         }
 
-        AnscIcmpv6EchoSetChecksum    (pIcmpHeader, 0                      );
+        AnscIcmpv6EchoSetChecksum    (pIcmpHeaderIpv6, 0                      );
     }
 
     pStateTimer->Stop       ((ANSC_HANDLE)pStateTimer);
@@ -502,8 +494,7 @@ BbhmDiagitSendEcho
 
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        iReturn =
-            _xskt_setsocketopt
+        _xskt_setsocketopt
                 (
                     pSocket->Xsocket,
                     IPPROTO_IP,
@@ -516,7 +507,7 @@ BbhmDiagitSendEcho
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv4EchoGetId(pIcmpHeader),
+                    AnscIcmpv4EchoGetId(pIcmpHeaderIpv4),
                     StartTime,
                     ttl
                 );
@@ -532,8 +523,7 @@ BbhmDiagitSendEcho
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        iReturn =
-            _xskt_setsocketopt
+        _xskt_setsocketopt
                 (
                     pSocket->Xsocket,
                     IPPROTO_IPV6,
@@ -546,7 +536,7 @@ BbhmDiagitSendEcho
             pMyObject->AddEchoEntry
                 (
                     (ANSC_HANDLE)pMyObject,
-                    AnscIcmpv6EchoGetId(pIcmpHeader),
+                    AnscIcmpv6EchoGetId(pIcmpHeaderIpv6),
                     StartTime,
                     ttl
                 );
@@ -605,12 +595,9 @@ BbhmDiagitOpen
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT  )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY           )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT         )pMyObject->hStateTimer;
     PBBHM_TRACERT_SINK_OBJECT       pSink        = NULL;
     PANSC_XSOCKET_OBJECT            pSocket      = NULL;
-    ULONG                           i            = 0;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = NULL;
-
+    
     if ( pMyObject->bActive )
     {
         return  ANSC_STATUS_SUCCESS;
@@ -697,9 +684,7 @@ BbhmDiagitStop
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT        )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY                 )&pMyObject->Property;
     PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT               )pMyObject->hStateTimer;
-    ULONG                           Notify       = 0;
     PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT              )pMyObject->hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = NULL;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO              )pMyObject->hDslhDiagInfo;
@@ -777,9 +762,6 @@ BbhmDiagitResolveHost
         ANSC_HANDLE                 hHostName
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT  pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT         )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY                 )&pMyObject->Property;
     PUCHAR                          pHostName    = (PUCHAR                            )hHostName;
     ULONG                           IpAddr;
     ansc_hostent*                   pHostent;
@@ -828,9 +810,6 @@ BbhmDiagitResolveHostName
         ULONG                       IpAddr
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT        )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY                 )&pMyObject->Property;
     ansc_hostent                    *pHostent;
 
     pHostent = _ansc_gethostbyaddr((PUCHAR)&IpAddr, 4, AF_INET);
@@ -875,14 +854,7 @@ BbhmDiagitExpire1
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT  pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY           )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT         )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT        )pMyObject->hSinkObject;
-    ULONG                           pktSize      = pProperty->PktSize;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = (PICMPV4_ECHO_MESSAGE        )pMyObject->hSendBuffer;
-    USHORT                          oldSeqNumber = AnscIcmpv4EchoGetSeqNumber    (pIcmpHeader);
-    ULONG                           StartTime    = 0;
-
+    
     returnStatus = pMyObject->SendEcho ( (ANSC_HANDLE)pMyObject );
 
     return  returnStatus;
@@ -921,9 +893,6 @@ BbhmDiagitExpire2
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT    )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY           )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT         )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT        )pMyObject->hSinkObject;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO        )pMyObject->hDslhDiagInfo;
 
     pDslhTracertObj->RouteHopsNumberOfEntries = pMyObject->GetTtl((ANSC_HANDLE)pMyObject);
@@ -967,8 +936,6 @@ BbhmDiagitClose
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT          )pMyObject->hStateTimer;
     PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_TRACERT_ECHO_ENTRY        pEchoEntry   = NULL;
@@ -1046,8 +1013,6 @@ BbhmDiagitSetStopTime
     ANSC_STATUS                     returnStatus = ANSC_STATUS_FAILURE;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT          )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_TRACERT_ECHO_ENTRY        pEchoEntry   = NULL;
     ULONG                           ulHashIndex  = SeqNumber % MAX_ECHO_TABLE_SIZE;
@@ -1116,10 +1081,6 @@ BbhmDiagitAddEchoEntry
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT          )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
-    PSINGLE_LINK_ENTRY              pSLinkEntry  = NULL;
     PBBHM_TRACERT_ECHO_ENTRY        pEchoEntry   = NULL;
     ULONG                           ulHashIndex  = SeqNumber % MAX_ECHO_TABLE_SIZE;
 
@@ -1180,8 +1141,6 @@ BbhmDiagitCalculateResult
     ANSC_STATUS                     returnStatus     = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject        = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
     PBBHM_TRACERT_PROPERTY          pProperty        = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer      = (PBBHM_TRACERT_TDO_OBJECT          )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink            = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry      = NULL;
     PBBHM_TRACERT_ECHO_ENTRY        pEchoEntry       = NULL;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO             )pMyObject->hDslhDiagInfo;
@@ -1232,7 +1191,7 @@ BbhmDiagitCalculateResult
             {
                 duration    = pEchoEntry->StopTime-pEchoEntry->StartTime;
                 duration    = duration > 0 ? duration : 1;
-                _ansc_snprintf(Temp, 8, "%d", duration);
+                _ansc_snprintf(Temp, 8, "%lu", duration);
 
                 pDslhTracertObj->ResponseTime = duration;
             }
@@ -1324,9 +1283,6 @@ BbhmDiagitUpdateEntry
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT          )pMyObject->hStateTimer;
-    PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )pMyObject->hSinkObject;
     PSINGLE_LINK_ENTRY              pSLinkEntry      = NULL;
     PBBHM_TRACERT_ECHO_ENTRY        pEchoEntry       = NULL;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO    )pMyObject->hDslhDiagInfo;

@@ -119,7 +119,6 @@ BbhmDiagipTdoCreate
         ANSC_HANDLE                 hAnscReserved
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PANSC_COMPONENT_OBJECT          pBaseObject  = NULL;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject    = NULL;
 
@@ -187,7 +186,6 @@ BbhmDiagipTdoRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject    = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
 
     AnscTdoRemove((ANSC_HANDLE)pMyObject);
@@ -226,7 +224,6 @@ BbhmDiagipTdoEnrollObjects
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject    = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
 
     AnscTdoEnrollObjects((ANSC_HANDLE)pMyObject);
@@ -268,7 +265,6 @@ BbhmDiagipTdoInitialize
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_IP_PING_TDO_OBJECT        pMyObject    = (PBBHM_IP_PING_TDO_OBJECT)hThisObject;
 
     /*

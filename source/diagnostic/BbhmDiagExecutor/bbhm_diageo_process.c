@@ -109,9 +109,7 @@ BbhmDiageoCheckCanStart
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject       = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-    PDSLH_DIAG_INFO_BASE            pDiagInfo       = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
     BOOLEAN                         bCanStart       = FALSE;
 
     AnscAcquireLock(&pMyObject->AccessLock);
@@ -163,7 +161,6 @@ BbhmDiageoStartDiag
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus    = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject       = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
     PDSLH_DIAG_INFO_BASE            pDiagInfo       = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
 
@@ -176,8 +173,7 @@ BbhmDiageoStartDiag
 
     AnscReleaseLock(&pMyObject->AccessLock);
 
-    returnStatus =
-        AnscSpawnTask2
+    AnscSpawnTask2
             (
                 pMyObject->ResultQueryTask,
                 (ANSC_HANDLE)pMyObject,
@@ -219,9 +215,6 @@ BbhmDiageoStopDiag
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
 }
 
@@ -256,9 +249,6 @@ BbhmDiageoRetrieveResult
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
 }
 

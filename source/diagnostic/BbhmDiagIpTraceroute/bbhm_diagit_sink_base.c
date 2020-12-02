@@ -105,7 +105,6 @@ BbhmDiagitSinkCreate
         ANSC_HANDLE                 hOwnerContext
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink        = NULL;
 
     pSink = (PBBHM_TRACERT_SINK_OBJECT)AnscAllocateMemory(sizeof(BBHM_TRACERT_SINK_OBJECT));
@@ -172,10 +171,8 @@ BbhmDiagitSinkRemove
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus      = ANSC_STATUS_SUCCESS;
     PBBHM_TRACERT_SINK_OBJECT       pSink             = (PBBHM_TRACERT_SINK_OBJECT     )hThisObject;
-    PANSC_XSOCKET_OBJECT            pSocketObject     = (PANSC_XSOCKET_OBJECT           )pSink->hXsocketObject;
-
+    
     pSink->Reset((ANSC_HANDLE)pSink);
 
     AnscFreeMemory((ANSC_HANDLE)pSink);

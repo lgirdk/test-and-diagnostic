@@ -122,7 +122,6 @@ COSA_Init
     COSAGetHandleProc               pGetRegistryRootFolder      = (COSAGetHandleProc                 )NULL;
     COSAGetInstanceNumberByIndexProc
                                     pGetInsNumberByIndexProc    = (COSAGetInstanceNumberByIndexProc  )NULL;
-    COSAGetHandleProc               pGetMessageBusHandleProc    = (COSAGetHandleProc                 )NULL;
     COSAGetInterfaceByNameProc      pGetInterfaceByNameProc     = (COSAGetInterfaceByNameProc        )NULL;
 
     if ( uMaxVersionSupported < THIS_PLUGIN_VERSION )
@@ -366,7 +365,7 @@ COSA_Init
     }
 
     /* Get Message Bus Handle */
-    g_GetMessageBusHandle = (PFN_CCSPCCDM_APPLY_CHANGES)pPlugInfo->AcquireFunction("COSAGetMessageBusHandle");
+    g_GetMessageBusHandle = (COSAGetHandleProc)pPlugInfo->AcquireFunction("COSAGetMessageBusHandle");
     if ( g_GetMessageBusHandle == NULL )
     {
         goto EXIT;
@@ -384,7 +383,7 @@ COSA_Init
     {
         char*  tmpSubsystemPrefix;
 
-        if ( tmpSubsystemPrefix = g_GetSubsystemPrefix(g_pDslhDmlAgent) )
+        if (( tmpSubsystemPrefix = (g_GetSubsystemPrefix(g_pDslhDmlAgent)) ))
         {
             AnscCopyString(g_SubSysPrefix_Irep, tmpSubsystemPrefix);
         }

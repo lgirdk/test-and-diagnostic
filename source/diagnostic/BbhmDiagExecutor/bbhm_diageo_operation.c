@@ -105,9 +105,6 @@ BbhmDiageoEngage
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_EXEC_OBJECT          pMyObject          = (PBBHM_DIAG_EXEC_OBJECT     )hThisObject;
-
     return  ANSC_STATUS_SUCCESS;
 }
 
@@ -142,7 +139,6 @@ BbhmDiageoCancel
         ANSC_HANDLE                 hThisObject
     )
 {
-    ANSC_STATUS                     returnStatus       = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_EXEC_OBJECT          pMyObject          = (PBBHM_DIAG_EXEC_OBJECT     )hThisObject;
 /*    PSLAP_POA_INTERFACE             pSlapPoaIf         = (PSLAP_POA_INTERFACE        )pBbhmSrvController->GetSlapPoaIf((ANSC_HANDLE)pBbhmSrvController);
     PSLAP_GOA_INTERFACE             pSlapGoaIf         = (PSLAP_GOA_INTERFACE        )pBbhmSrvController->GetSlapGoaIf((ANSC_HANDLE)pBbhmSrvController);*/

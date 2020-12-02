@@ -270,10 +270,7 @@ BbhmDiagitAccept
         ANSC_HANDLE                    hNewSocket
     )
 {
-    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
-
+    
     return  ANSC_STATUS_UNAPPLICABLE;
 
 }
@@ -330,12 +327,13 @@ BbhmDiagitRecv
     PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT         )hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT              )pSink->GetXsocket((ANSC_HANDLE)pSink);
     PIPV4_HEADER                    pIpv4Header  = (PIPV4_HEADER                      )NULL;
-    PICMPV4_ECHO_MESSAGE            pIcmpHeader  = (PICMPV4_ECHO_MESSAGE              )NULL;
-    PICMPV4_ECHO_MESSAGE            pOriIcmpHeader  = (PICMPV4_ECHO_MESSAGE              )NULL;
-    PICMPV4_TIME_EXCEEDED_MESSAGE   pIcmpTeHeader = (PICMPV4_TIME_EXCEEDED_MESSAGE    )NULL;
-    PICMPV6_TIME_EXCEEDED_MESSAGE   pIcmp6TeHeader = (PICMPV6_TIME_EXCEEDED_MESSAGE    )NULL;
+    PICMPV4_ECHO_MESSAGE            pIcmpHeaderIpv4  = (PICMPV4_ECHO_MESSAGE              )NULL;
+    PICMPV6_ECHO_MESSAGE            pIcmpHeaderIpv6  = (PICMPV6_ECHO_MESSAGE              )NULL;
+    PICMPV4_ECHO_MESSAGE            pOriIcmpHeaderIpv4  = (PICMPV4_ECHO_MESSAGE              )NULL;
+    PICMPV6_ECHO_MESSAGE            pOriIcmpHeaderIpv6  = (PICMPV6_ECHO_MESSAGE              )NULL;
+    PICMPV4_TIME_EXCEEDED_MESSAGE   pIcmpTeHeaderIpv4 = (PICMPV4_TIME_EXCEEDED_MESSAGE    )NULL;
+    PICMPV6_TIME_EXCEEDED_MESSAGE   pIcmpTeHeaderIpv6 = (PICMPV6_TIME_EXCEEDED_MESSAGE    )NULL;
     PDSLH_TRACEROUTE_INFO           pDslhTracertObj  = (PDSLH_TRACEROUTE_INFO         )pMyObject->hDslhDiagInfo;
-    PDSLH_ROUTEHOPS_INFO            pDslhHopObj      = (PDSLH_ROUTEHOPS_INFO          )NULL;
     PIPV4_HEADER                    pOriIpv4Header  = (PIPV4_HEADER                      )NULL;
     PIPV6_HEADER                    pOriIpv6Header  = (PIPV6_HEADER                      )NULL;
     ULONG                           SeqId        = 0;
@@ -346,17 +344,17 @@ BbhmDiagitRecv
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
         pIpv4Header = (PIPV4_HEADER)buffer;
-        pIcmpHeader = (PICMPV4_ECHO_MESSAGE)AnscIpv4GetPayload(pIpv4Header);
+        pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)AnscIpv4GetPayload(pIpv4Header);
 
-        /*SeqId = AnscIcmpv4EchoGetId(pIcmpHeader);
+        /*SeqId = AnscIcmpv4EchoGetId(pIcmpHeaderIpv4);
 
         CcspTraceInfo(("SeqId in DiagitRecv: %d\n", SeqId));*/
 /*
-        if ( (AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_DESTINATION_UNREACHABLE &&
-             AnscIcmpv4EchoGetCode(pIcmpHeader) == ICMP_DUCODE_PORT_UNREACHABLE) ||
-             AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_ECHO_REQUEST ) */
-        if ( AnscIcmpv4GetType(pIcmpHeader) != ICMP_TYPE_TIME_EXCEEDED &&
-             AnscIcmpv4GetType(pIcmpHeader) != ICMP_TYPE_ECHO_REPLY )
+        if ( (AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_DESTINATION_UNREACHABLE &&
+             AnscIcmpv4EchoGetCode(pIcmpHeaderIpv4) == ICMP_DUCODE_PORT_UNREACHABLE) ||
+             AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_ECHO_REQUEST ) */
+        if ( AnscIcmpv4GetType(pIcmpHeaderIpv4) != ICMP_TYPE_TIME_EXCEEDED &&
+             AnscIcmpv4GetType(pIcmpHeaderIpv4) != ICMP_TYPE_ECHO_REPLY )
         {
             /* This is usually caused by DNS lookup failure, can be ignored */
             CcspTraceInfo(("None traceroute releated icmp received, discard...\n"));
@@ -366,13 +364,13 @@ BbhmDiagitRecv
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        pIcmpHeader = (PICMPV6_ECHO_MESSAGE)buffer;
+        pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)buffer;
 /*
-        if ( (AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_DESTINATION_UNREACHABLE &&
-             AnscIcmpv6EchoGetCode(pIcmpHeader) == ICMP6_DUCODE_PORT_UNREACHABLE) ||
-             AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP6_TYPE_ECHO_REQUEST )*/
-        if ( AnscIcmpv6GetType(pIcmpHeader) != ICMP6_TYPE_TIME_EXCEEDED &&
-             AnscIcmpv6GetType(pIcmpHeader) != ICMP6_TYPE_ECHO_REPLY )
+        if ( (AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_DESTINATION_UNREACHABLE &&
+             AnscIcmpv6EchoGetCode(pIcmpHeaderIpv6) == ICMP6_DUCODE_PORT_UNREACHABLE) ||
+             AnscIcmpv4EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_ECHO_REQUEST )*/
+        if ( AnscIcmpv6GetType(pIcmpHeaderIpv6) != ICMP6_TYPE_TIME_EXCEEDED &&
+             AnscIcmpv6GetType(pIcmpHeaderIpv6) != ICMP6_TYPE_ECHO_REPLY )
         {
             /* This is usually caused by DNS lookup failure, can be ignored */
             CcspTraceInfo(("None traceroute releated icmp received, discard...\n"));
@@ -399,19 +397,19 @@ BbhmDiagitRecv
 
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
-        if ( AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_TIME_EXCEEDED )
+        if ( AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_TIME_EXCEEDED )
         {
-            pIcmpTeHeader = (PICMPV4_TIME_EXCEEDED_MESSAGE)pIcmpHeader;
+            pIcmpTeHeaderIpv4 = (PICMPV4_TIME_EXCEEDED_MESSAGE)pIcmpHeaderIpv4;
 
-            pOriIpv4Header = AnscIcmpv4TeGetOrgIp(pIcmpTeHeader);
+            pOriIpv4Header = (PIPV4_HEADER)AnscIcmpv4TeGetOrgIp(pIcmpTeHeaderIpv4);
 
-            pOriIcmpHeader = (PICMPV4_ECHO_MESSAGE)((PUCHAR)pOriIpv4Header + AnscIpv4GetHeaderSize(pOriIpv4Header));
+            pOriIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)((PUCHAR)pOriIpv4Header + AnscIpv4GetHeaderSize(pOriIpv4Header));
 
-            SeqId = AnscIcmpv4EchoGetId(pOriIcmpHeader);
+            SeqId = AnscIcmpv4EchoGetId(pOriIcmpHeaderIpv4);
         }
-        else if ( AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_ECHO_REPLY )
+        else if ( AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_ECHO_REPLY )
         {
-            SeqId = AnscIcmpv4EchoGetId(pIcmpHeader);
+            SeqId = AnscIcmpv4EchoGetId(pIcmpHeaderIpv4);
         }
 
         pMyObject->UpdateEntry
@@ -420,13 +418,13 @@ BbhmDiagitRecv
                 SeqId/*pProperty->PktsRecv*/,
                 pSocket->pPeerAddrInfo,
                 StopTime,
-                AnscIcmpv4EchoGetType(pIcmpHeader)
+                AnscIcmpv4EchoGetType(pIcmpHeaderIpv4)
             );
 
         /* AnscTrace("Client Recv : %d Packet, IP %s\n", pProperty->PktsRecv, inet_ntoa(*(ansc_in_addr *)(&pSocket->PeerAddress.Value))); */
 
-        if ( AnscIcmpv4EchoGetType(pIcmpHeader) != ICMP_TYPE_ECHO_REPLY &&
-             AnscIcmpv4EchoGetType(pIcmpHeader) != ICMP_TYPE_TIME_EXCEEDED )
+        if ( AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) != ICMP_TYPE_ECHO_REPLY &&
+             AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) != ICMP_TYPE_TIME_EXCEEDED )
         {
             pMyObject->SetIcmpError
                 (
@@ -434,11 +432,11 @@ BbhmDiagitRecv
                 );
         }
 
-        if ( AnscIcmpv4EchoGetType(pIcmpHeader) == ICMP_TYPE_ECHO_REPLY )
+        if ( AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) == ICMP_TYPE_ECHO_REPLY )
         {
             pProperty->LastHopReached = TRUE;
         }
-        else if ( AnscIcmpv4EchoGetType(pIcmpHeader) != ICMP_TYPE_TIME_EXCEEDED )
+        else if ( AnscIcmpv4EchoGetType(pIcmpHeaderIpv4) != ICMP_TYPE_TIME_EXCEEDED )
         {
             if ( pMyObject->GetIcmpError((ANSC_HANDLE)pMyObject) == pProperty->NumPkts )
             {
@@ -448,23 +446,23 @@ BbhmDiagitRecv
     }
     else if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET6 )
     {
-        CcspTraceInfo(("!!!!!! Recv ICMP6 type: %d !!!!!!\n", AnscIcmpv6EchoGetType(pIcmpHeader)));
+        CcspTraceInfo(("!!!!!! Recv ICMP6 type: %d !!!!!!\n", AnscIcmpv6EchoGetType(pIcmpHeaderIpv6)));
 
-        if ( AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_TIME_EXCEEDED )
+        if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_TIME_EXCEEDED )
         {
-            pIcmpTeHeader = (PICMPV6_TIME_EXCEEDED_MESSAGE)pIcmpHeader;
+            pIcmpTeHeaderIpv6 = (PICMPV6_TIME_EXCEEDED_MESSAGE)pIcmpHeaderIpv6;
 
-            pOriIpv6Header = AnscIcmpv6TeGetOrgIp(pIcmpTeHeader);
+            pOriIpv6Header = (PIPV6_HEADER)AnscIcmpv6TeGetOrgIp(pIcmpTeHeaderIpv6);
 
-            pOriIcmpHeader = (PICMPV6_ECHO_MESSAGE)((ULONG)pOriIpv6Header + IP6_HEADER_LENGTH);
+            pOriIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)((ULONG)pOriIpv6Header + IP6_HEADER_LENGTH);
 
-            SeqId = AnscIcmpv6EchoGetId(pOriIcmpHeader);
+            SeqId = AnscIcmpv6EchoGetId(pOriIcmpHeaderIpv6);
 
             CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_TIME_EXCEEDED SeqId = %d !!!!!!\n", SeqId));
         }
-        else if ( AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_ECHO_REPLY )
+        else if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_ECHO_REPLY )
         {
-            SeqId = AnscIcmpv6EchoGetId(pIcmpHeader);
+            SeqId = AnscIcmpv6EchoGetId(pIcmpHeaderIpv6);
 
             CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_ECHO_REPLY SeqId = %d !!!!!!\n", SeqId));
         }
@@ -475,13 +473,13 @@ BbhmDiagitRecv
                 SeqId/*pProperty->PktsRecv*/,
                 pSocket->pPeerAddrInfo,
                 StopTime,
-                AnscIcmpv6EchoGetType(pIcmpHeader)
+                AnscIcmpv6EchoGetType(pIcmpHeaderIpv6)
             );
 
         /* AnscTrace("Client Recv : %d Packet, IP %s\n", pProperty->PktsRecv, inet_ntoa(*(ansc_in_addr *)(&pSocket->PeerAddress.Value))); */
 
-        if ( AnscIcmpv6EchoGetType(pIcmpHeader) != ICMP6_TYPE_ECHO_REPLY &&
-             AnscIcmpv6EchoGetType(pIcmpHeader) != ICMP6_TYPE_TIME_EXCEEDED )
+        if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) != ICMP6_TYPE_ECHO_REPLY &&
+             AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) != ICMP6_TYPE_TIME_EXCEEDED )
         {
             pMyObject->SetIcmpError
                 (
@@ -489,11 +487,11 @@ BbhmDiagitRecv
                 );
         }
 
-        if ( AnscIcmpv6EchoGetType(pIcmpHeader) == ICMP6_TYPE_ECHO_REPLY )
+        if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_ECHO_REPLY )
         {
             pProperty->LastHopReached = TRUE;
         }
-        else if ( AnscIcmpv6EchoGetType(pIcmpHeader) != ICMP6_TYPE_TIME_EXCEEDED )
+        else if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) != ICMP6_TYPE_TIME_EXCEEDED )
         {
             if ( pMyObject->GetIcmpError((ANSC_HANDLE)pMyObject) == pProperty->NumPkts )
             {
@@ -585,9 +583,6 @@ BbhmDiagitSend
     )
 {
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
-    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT )hThisObject;
-    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY          )&pMyObject->Property;
-    PBBHM_TRACERT_TDO_OBJECT        pStateTimer  = (PBBHM_TRACERT_TDO_OBJECT        )pMyObject->hStateTimer;
     PBBHM_TRACERT_SINK_OBJECT       pSink        = (PBBHM_TRACERT_SINK_OBJECT       )hSinkObject;
     PANSC_XSOCKET_OBJECT            pSocket      = (PANSC_XSOCKET_OBJECT            )pSink->GetXsocket((ANSC_HANDLE)pSink);
     xskt_addrinfo*                  pAddrInfo    = (xskt_addrinfo*                  )pSocket->pOriPeerAddrInfo;
