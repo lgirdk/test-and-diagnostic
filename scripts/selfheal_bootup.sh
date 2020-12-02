@@ -814,6 +814,15 @@ if [ "$MODEL_NUM" = "TG3482G" ];then
 
 fi
 
+BBHM_CUR_PREV="/nvram/bbhm_cur_cfg.xml.prev"
+BBHM_BAK_PREV="/nvram/bbhm_bak_cfg.xml.prev"
+
+if [ -f $BBHM_CUR_PREV ] || [ -f $BBHM_BAK_PREV ]
+then
+	rm -rf $BBHM_CUR_PREV $BBHM_BAK_PREV
+	echo_t "RDKB_SELFHEAL_BOOTUP : files removed $BBHM_CUR_PREV $BBHM_BAK_PREV"
+fi
+
 if [ -f "$needSelfhealReboot" ] && [ $crash_count -eq 0 ]
 then
 	rm -rf $needSelfhealReboot
