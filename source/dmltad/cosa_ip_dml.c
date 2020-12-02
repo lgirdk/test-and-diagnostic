@@ -2679,18 +2679,17 @@ TraceRoute_SetParamStringValue
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return FALSE;
    
-    /* fail if pString is NULL, an empty string or contains <space> or any of <>&|'" */
-    if (AnscValidStringCheck(pString) != TRUE)
-        return FALSE;
-
-    /* check the parameter name and set the corresponding value */
     if (strcmp(ParamName, "Interface") == 0)
     {
-        /*
-         *  Revert to TR-181 definition -- object reference
-         *
-        snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", pString);
-         */
+        if (pString[0] == 0)
+        {
+            /* empty string is OK */
+        }
+        else if (AnscValidStringCheck(pString) != TRUE) /* fail if pString contains <space> or any of <>&|'" */
+        {
+            return FALSE;
+        }
+
         rc = sprintf_s(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
         if(rc < EOK)
         {
@@ -2706,13 +2705,22 @@ TraceRoute_SetParamStringValue
             parameterValStruct_t    ParamVal;
             int                     size = sizeof(cfg.ifname);
 
-            rc = sprintf_s(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
-            if(rc < EOK)
+            if (cfg.Interface[0] == 0)
             {
-                ERR_CHK(rc);
+                /* If an empty string is specified, use "Device.IP.Interface.1" as the interface */
+                ParamVal.parameterName = "Device.IP.Interface.1.Name";
+            }
+            else
+            {
+                rc = sprintf_s(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+                if (rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+
+                ParamVal.parameterName = IfNameParamName;
             }
 
-            ParamVal.parameterName  = IfNameParamName;
             ParamVal.parameterValue = cfg.ifname;
 
             AnscTraceFlow(("%s - retrieve param %s\n", __FUNCTION__, IfNameParamName));
@@ -2731,11 +2739,19 @@ TraceRoute_SetParamStringValue
     }
     else if (strcmp(ParamName, "Host") == 0)
     {
-		ANSC_STATUS             ret;
-		char wrapped_host[256 + 1] = { 0 };
-		ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
-		if(ANSC_STATUS_SUCCESS != ret)
-			return FALSE;
+        char wrapped_host[256 + 1] = { 0 };
+
+        if (pString[0] == 0)
+        {
+            /* empty string is OK */
+        }
+        else if (AnscValidStringCheck(pString) != TRUE) /* fail if pString contains <space> or any of <>&|'" */
+        {
+            return FALSE;
+        }
+
+        if (CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host )) != ANSC_STATUS_SUCCESS)
+            return FALSE;
 
         rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
         if(rc < EOK)
