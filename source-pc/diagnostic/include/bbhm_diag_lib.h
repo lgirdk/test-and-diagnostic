@@ -90,8 +90,8 @@ extern "C"{
 
 #include "cosa_plugin_api.h"
 
-COSAGetParamValueStringProc        g_GetParamValueString;
-COSANotifyDiagCompleteProc         g_NotifyDiagComplete;
+extern COSAGetParamValueStringProc        g_GetParamValueString;
+extern COSANotifyDiagCompleteProc         g_NotifyDiagComplete;
 
 typedef ANSC_STATUS
 (* CosaDiagExportFuncProc)
