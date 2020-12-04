@@ -93,8 +93,6 @@
 //#include "cosa_apis_deviceinfo.h"
 #include "cosa_apis_vendorlogfile.h"
 
-PCOSA_BACKEND_MANAGER_OBJECT g_pCosaBEManager;
-void *                       g_pDslhDmlAgent; 
 extern ANSC_HANDLE     g_MessageBusHandle_Irep;
 extern char            g_SubSysPrefix_Irep[32];
 
