@@ -720,16 +720,19 @@ ANSC_STATUS
 CosaDmlInputValidation
     (
         char                       *host,
-	char                       *wrapped_host,
-	int                        lengthof_host,
-	int                        sizeof_wrapped_host
+        size_t                      sizelimit
     )
 {
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     int i;
+    size_t len;
 
-    if( sizeof_wrapped_host <= lengthof_host )
-        returnStatus = ANSC_STATUS_FAILURE;
+    len = strlen(host);
+
+    if (len == 0)
+        return ANSC_STATUS_SUCCESS;
+
+    if (len >= sizelimit)
+        return ANSC_STATUS_FAILURE;
 
     /*
        'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
@@ -743,21 +746,14 @@ CosaDmlInputValidation
        better than the original approach of checking for the presence of
        certain troublesome characters.
     */
-    for (i = 0; i < lengthof_host; i++)
+    for (i = 0; i < len; i++)
     {
         if (!isalnum(host[i]) &&
             (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
         {
-            returnStatus = ANSC_STATUS_FAILURE;
-            break;
+            return ANSC_STATUS_FAILURE;
         }
     }
 
-    if(ANSC_STATUS_SUCCESS == returnStatus)
-	sprintf(wrapped_host,"%s",host);
-
-    return returnStatus;
-
+    return ANSC_STATUS_SUCCESS;
 }
-
-
