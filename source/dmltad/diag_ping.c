@@ -195,11 +195,11 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 
     if( cfg->pingdnsquerytype == 2)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping6 %s ", cfg->host);
+        left -= snprintf(cmd + strlen(cmd), left, "ping6 '%s' ", cfg->host);
     }
     else
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+        left -= snprintf(cmd + strlen(cmd), left, "ping '%s' ", cfg->host);
     }
 
     if (isDSLiteEnabled() && cfg->pingdnsquerytype != 2 && isIPv4Host(cfg->host)) { 
