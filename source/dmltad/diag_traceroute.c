@@ -198,16 +198,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 #if !defined(_PLATFORM_RASPBERRYPI_)
     timeout=cfg->timo;
     timeout=timeout*1000;
-    rc = sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    else
-    {
-        left -= rc;
-    }
-#else
+#endif
+
     rc = sprintf_s(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
     if (rc < EOK)
     {
@@ -217,13 +209,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     {
         left -= rc;
     }
-#endif
-
-    char host[256] = {};
-
-    strncpy(host, cfg->host + 1, strlen(cfg->host) - 2);
-
-    if (isDSLiteEnabled() && isIPv4Host(host))
+ 
+    if (isDSLiteEnabled() && isIPv4Host(cfg->host)) 
     {
         char ifip[16] = {};
 
