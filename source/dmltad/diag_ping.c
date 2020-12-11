@@ -117,16 +117,14 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         ERR_CHK(rc);
     }
 #else
-    left -= sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "ping '%s' ", cfg->host);
     if(left < EOK)
     {
         ERR_CHK(rc);
     }
 #endif
 
-    char host[256] = {};
-    strncpy(host, cfg->host+1, strlen(cfg->host)-2);
-    if (isDSLiteEnabled() && isIPv4Host(host)) 
+    if (isDSLiteEnabled() && isIPv4Host(cfg->host)) 
     { 
         char ifip[16] = {};
         if (getIPbyInterfaceName("brlan0", ifip) >= 0)
@@ -186,7 +184,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 #endif
 
 #if defined(_PLATFORM_TURRIS_)
-    left -= sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "'%s' ", cfg->host);
     if(left < EOK)
     {
         ERR_CHK(rc);
