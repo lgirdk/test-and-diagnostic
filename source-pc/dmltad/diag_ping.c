@@ -109,7 +109,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     else
         cnt = cfg->cnt;
 
-    left -= snprintf(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    left -= snprintf(cmd + strlen(cmd), left, "ping '%s' ", cfg->host);
     if (strlen(cfg->ifname))
         left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
     if (cnt)
