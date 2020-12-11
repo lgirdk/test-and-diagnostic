@@ -279,19 +279,16 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     timeout=timeout*1000;
 #endif
  
-    char host[100] = {};
-    strncpy(host, cfg->host+1, strlen(cfg->host)-2);
-
     if( cfg->tracednsquerytype == 2)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "traceroute6 %s ", host);
+        left -= snprintf(cmd + strlen(cmd), left, "traceroute6 %s ", cfg->host);
     }
     else
     {
-        left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", host);
+        left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
     }
 
-    if (isDSLiteEnabled() &&  cfg->tracednsquerytype != 2 && isIPv4Host(host)) {
+    if (isDSLiteEnabled() &&  cfg->tracednsquerytype != 2 && isIPv4Host(cfg->host)) {
        char ifip[16] = {};
         getIPbyInterfaceName("brlan0", ifip);
         left -= snprintf(cmd + strlen(cmd), left, "-s %s ", ifip);
