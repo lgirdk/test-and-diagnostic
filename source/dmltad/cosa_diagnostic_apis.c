@@ -727,14 +727,8 @@ CosaDmlInputValidation
 {
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     int i;
-    	
-	/*
-	  * Validate input/params 
-	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
-	  * we are adding 2 extra charecters here. so we need to have extra bytes 
-	  * in copied(wrapped_inputparam) string
-	  */ 
-    if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
+
+    if( sizeof_wrapped_host <= lengthof_host )
         returnStatus = ANSC_STATUS_FAILURE;
 
     /*
@@ -760,7 +754,7 @@ CosaDmlInputValidation
     }
 
     if(ANSC_STATUS_SUCCESS == returnStatus)
-	sprintf(wrapped_host,"'%s'",host);
+	sprintf(wrapped_host,"%s",host);
 
     return returnStatus;
 
