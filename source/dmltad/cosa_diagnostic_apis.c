@@ -721,22 +721,19 @@ ANSC_STATUS
 CosaDmlInputValidation
     (
         char                       *host,
-	char                       *wrapped_host,
-	int                        lengthof_host,
-	int                        sizeof_wrapped_host
+        size_t                      sizelimit
     )
 {
-    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     int i;
-    	
-	/*
-	  * Validate input/params 
-	  * sizeof_wrapped_inputparam should always greater than ( lengthof_inputparam  + 2 ) because
-	  * we are adding 2 extra charecters here. so we need to have extra bytes 
-	  * in copied(wrapped_inputparam) string
-	  */ 
-    if( sizeof_wrapped_host <= ( lengthof_host  + 2 ) )
-        returnStatus = ANSC_STATUS_FAILURE;
+    size_t len;
+
+    len = strlen(host);
+
+    if (len == 0)
+        return ANSC_STATUS_SUCCESS;
+
+    if (len >= sizelimit)
+        return ANSC_STATUS_FAILURE;
 
     /*
        'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
@@ -750,28 +747,14 @@ CosaDmlInputValidation
        better than the original approach of checking for the presence of
        certain troublesome characters.
     */
-    for (i = 0; i < lengthof_host; i++)
+    for (i = 0; i < len; i++)
     {
         if (!isalnum(host[i]) &&
             (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
         {
-            returnStatus = ANSC_STATUS_FAILURE;
-            break;
+            return ANSC_STATUS_FAILURE;
         }
     }
 
-    if(ANSC_STATUS_SUCCESS == returnStatus)
-    {
-        errno_t rc = -1;
-        rc = sprintf_s(wrapped_host, sizeof_wrapped_host ,"'%s'",host);
-        if(rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-    }
-
-    return returnStatus;
-
+    return ANSC_STATUS_SUCCESS;
 }
-
-

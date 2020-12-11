@@ -193,19 +193,16 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     else
         cnt = cfg->cnt;
 
-    char host[100] = {};
-    strncpy(host, cfg->host+1, strlen(cfg->host)-2);
-
     if( cfg->pingdnsquerytype == 2)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping6 %s ", host);
+        left -= snprintf(cmd + strlen(cmd), left, "ping6 '%s' ", cfg->host);
     }
     else
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping %s ", host);
+        left -= snprintf(cmd + strlen(cmd), left, "ping '%s' ", cfg->host);
     }
 
-    if (isDSLiteEnabled() && cfg->pingdnsquerytype != 2 && isIPv4Host(host)) { 
+    if (isDSLiteEnabled() && cfg->pingdnsquerytype != 2 && isIPv4Host(cfg->host)) { 
         char ifip[16] = {};
         getIPbyInterfaceName("brlan0", ifip);
         left -= snprintf(cmd + strlen(cmd), left, "-I %s ", ifip);
@@ -254,7 +251,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 #endif
 
 #if defined(_PLATFORM_TURRIS_)
-    left -= sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "'%s' ", cfg->host);
     if(left < EOK)
     {
         ERR_CHK(rc);
