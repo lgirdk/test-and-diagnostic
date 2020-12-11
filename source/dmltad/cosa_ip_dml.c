@@ -1962,13 +1962,13 @@ IPPing_SetParamStringValue
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
     {
-		ANSC_STATUS             ret;
-		char wrapped_host[256]={0}; //Host size is string(256)
-        ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
-		if(ANSC_STATUS_SUCCESS != ret)
-			return FALSE;
-		
-        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        ANSC_STATUS ret;
+
+        ret = CosaDmlInputValidation(pString, sizeof(cfg.host));
+        if (ret != ANSC_STATUS_SUCCESS)
+            return FALSE;
+
+        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
     }
     else
         return FALSE;
@@ -2673,13 +2673,13 @@ TraceRoute_SetParamStringValue
     }
     else if( AnscEqualString(ParamName, "Host", TRUE))
     {
-		ANSC_STATUS             ret;
-		char wrapped_host[256]={0};//Host size is string(256)
-		ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
-		if(ANSC_STATUS_SUCCESS != ret)
-			return FALSE;
+        ANSC_STATUS ret;
 
-        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        ret = CosaDmlInputValidation(pString, sizeof(cfg.host));
+        if (ret != ANSC_STATUS_SUCCESS)
+            return FALSE;
+
+        snprintf(cfg.host, sizeof(cfg.host), "%s", pString);
     }
     else
         return FALSE;

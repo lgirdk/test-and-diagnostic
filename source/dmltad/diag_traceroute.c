@@ -245,11 +245,11 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
  
     if( cfg->tracednsquerytype == 2)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "traceroute6 %s ", cfg->host);
+        left -= snprintf(cmd + strlen(cmd), left, "traceroute6 '%s' ", cfg->host);
     }
     else
     {
-        left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+        left -= snprintf(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
     }
 
     if (isDSLiteEnabled() &&  cfg->tracednsquerytype != 2 && isIPv4Host(cfg->host)) {
