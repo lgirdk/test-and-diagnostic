@@ -480,6 +480,24 @@ self_heal_dibbler_server()
                             elif [ ! -s  "/etc/dibbler/server.conf" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+				#TCCBR-5359 work around to get server.conf by restart dibbler-client once.
+				if [ "$BOX_TYPE" = "TCCBR" ]; then
+                                	if [ -f /tmp/dibbler-client_restarted ];then
+						file_created=`echo $((($(date +%s) - $(date +%s -r "/tmp/dibbler-client_restarted")) / 86400))`
+						#restarting dibbler-client once in a day
+						if [ $file_created -ge 1 ];then
+							rm -rf /tmp/dibbler-client_restarted
+						fi
+                                        fi
+					if [ ! -f /tmp/dibbler-client_restarted ] ;then
+				        	echo "Restarting Dibbler Client to recover server.conf"
+						dibbler-client stop
+	                                    	sleep 1
+	                                    	dibbler-client start
+	                                    	sleep 5
+						touch /tmp/dibbler-client_restarted
+					fi
+				fi
                             else
                                 dibbler-server stop
                                 sleep 2
