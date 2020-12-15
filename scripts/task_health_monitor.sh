@@ -1480,7 +1480,35 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-HOTSPOT_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+if [ "$(psmcli get dmsb.hotspot.enable)" = "1" ]; then
+    HOTSPOT_ENABLE="true"
+else
+    HOTSPOT_ENABLE="false"
+fi
+
+if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
+    count=0
+    for i in 5 6; do
+        APENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ "$APENABLE" = "true" ]; then
+            # Accounting is enabled always hence, double the expected relay process count
+            count=$((count+2))
+        fi
+    done
+
+    RELAYPID=$(busybox pidof radius_relay)
+    relay_count=0
+    for j in $RELAYPID; do
+        relay_count=$((relay_count+1))
+    done
+
+    echo "radius process: actual count=$relay_count expected count=$count"
+
+    if [ "$count" -gt "$relay_count" ] ; then
+        echo_t "RDKB_SELFHEAL : radius relay not running for all the instance, needs a restart"
+        sysevent set radiusrelay-restart
+    fi
+fi
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ] && [ ! -f /tmp/.hotspot_blob_inprogress ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
@@ -1529,6 +1557,185 @@ case $SELFHEAL_TYPE in
             rcount=0
             OPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
             OPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+
+            # ----------------------------------------------------------------
+            if [ "$BOX_TYPE" = "MV1" ]; then
+            # ----------------------------------------------------------------
+
+                l2net_24_VLANID=`psmcli get dmsb.l2net.3.Port.2.Pvid`
+                l2net_5_VLANID=`psmcli get dmsb.l2net.3.Port.3.Pvid`
+                GRE_VLANID=`psmcli get dmsb.l2net.3.Port.4.Pvid`
+
+                Interface=`psmcli get dmsb.l2net.3.Members.WiFi`
+                if [ "$Interface" = "" ]; then
+                    echo_t "PSM value(wifi if) is missing for $l2sd0Prefix.$l2net_24_VLANID and $l2sd0Prefix.$l2net_24_VLANID"
+                    psmcli set dmsb.l2net.3.Members.WiFi "cei02 wdev0ap2"
+                fi
+                if [ "0" = "$GRE_VLANID" ]; then
+                    GREIF="$grePrefix"
+                else
+                    GREIF="$grePrefix.$GRE_VLANID"
+                fi
+
+                if [ "$OPEN_24" = "true" ] || [ "$OPEN_5" = "true" ]; then
+
+                    grePresent=$(ifconfig -a | grep "$GREIF")
+                    if [ "$grePresent" = "" ]; then
+                        #l2sd0.102 case
+                        ifconfig | grep "$l2sd0Prefix\.$l2net_24_VLANID"
+                        if [ $? -eq 1 ]; then
+                            echo_t "ComunityWifi is enabled, but $l2sd0Prefix.$l2net_24_VLANID interface is not created try creating it"
+
+                            sysevent set multinet_3-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                            ifconfig $l2sd0Prefix.$l2net_24_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$l2net_24_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$l2net_24_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_3-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                                ifconfig $l2sd0Prefix.$l2net_24_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$l2net_24_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$l2net_24_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$l2net_24_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :CommunityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
+                        fi
+
+                        #l2sd0.103 case
+                        ifconfig | grep "$l2sd0Prefix\.$l2net_5_VLANID"
+                        if [ $? -eq 1 ]; then
+                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$l2net_5_VLANID interface is not created try creatig it"
+
+                            sysevent set multinet_4-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                            ifconfig $l2sd0Prefix.$l2net_5_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$l2net_5_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$l2net_5_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_4-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                                ifconfig $l2sd0Prefix.$l2net_5_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$l2net_5_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$l2net_5_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$l2net_5_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :CommunityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
+                        fi
+                    fi
+                fi # [ "$OPEN_24" = "true" ] || [ "$OPEN_5" = "true" ]
+
+                #We need to make sure Community hotspot Vlan IDs are attached to the bridges
+                #if found not attached , then add the device to bridges
+
+                grePresent=$(ifconfig -a | grep "$GREIF")
+                if [ -n "$grePresent" ]; then
+                    vlanAdded=$(brctl show brlan2 | grep "$GREIF")
+                    if [ "$vlanAdded" = "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $GREIF"
+                        brctl addif brlan2 $GREIF
+                    fi
+                fi
+
+                l2netPresent=$(ifconfig -a | grep "$l2sd0Prefix\.$l2net_24_VLANID")
+                if [ -n "$l2netPresent" ]; then
+                    vlanAdded=$(brctl show brlan2 | grep "$l2sd0Prefix\.$l2net_24_VLANID")
+                    if [ "$vlanAdded" = "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.$l2net_24_VLANID"
+                        brctl addif brlan2 $l2sd0Prefix.$l2net_24_VLANID
+                    fi
+                fi
+                l2netPresent=$(ifconfig -a | grep "$l2sd0Prefix\.$l2net_5_VLANID")
+                if [ -n "$l2netPresent" ]; then
+                    vlanAdded=$(brctl show brlan2 | grep "$l2sd0Prefix\.$l2net_5_VLANID")
+                    if [ "$vlanAdded" = "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.$l2net_5_VLANID"
+                        brctl addif brlan2 $l2sd0Prefix.$l2net_5_VLANID
+                    fi
+                fi
+
+            # ----------------------------------------------------------------
+            elif [ "$BOX_TYPE" = "MV2PLUS" ]; then 
+            # ----------------------------------------------------------------
+          
+                GRE_VLANID=`psmcli get dmsb.hotspot.tunnel.1.interface.1.VLANID`
+
+                if [ "0" = "$GRE_VLANID" ]; then
+                    GREIF="$grePrefix"
+                else
+                    GREIF="$grePrefix.$GRE_VLANID"
+                fi
+
+                if [ "$OPEN_24" = "true" ] || [ "$OPEN_5" = "true" ]; then
+                    #We need to make sure Community hotspot Vlan IDs are attached to the bridges
+                    #if found not attached , then add the device to bridges
+
+                    grePresent=$(ifconfig -a | grep "$GREIF")
+                    grePresentWithoutVlan=$(ifconfig -a | grep "$grePrefix")
+
+                    if [ -n "$grePresent" ]; then
+                        tunnelAdded=$(brctl show brlan2 | grep "$GREIF")
+                        if [ "$tunnelAdded" = "" ]; then
+                            tunnelAddedWithoutVlan=$(brctl show brlan2 | grep "$grePrefix")
+                            if [ -n "$tunnelAddedWithoutVlan" ] && [ -n "$GRE_VLANID" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : GRE tunnel is created without vlan"
+                                sysevent set update-vlanID 1
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $GREIF"
+                                brctl addif brlan2 $GREIF
+                            fi
+                        fi
+                    elif [ -n "$grePresentWithoutVlan" ] && [ -n "$GRE_VLANID" ]; then
+                          echo_t "[RDKB_PLATFORM_ERROR] : GRE Tunnel is present without VLAN"
+                          sysevent set update-vlanID 1
+                    else
+                          HOTSPOT_PROCESS_ID=$(busybox pidof CcspHotspot)
+                          primary=$(sysevent get hotspotfd-primary)
+                          if [ -n "$HOTSPOT_PROCESS_ID" ] && [ -n "$primary" ] ; then
+                              echo_t " [RDKB_PLATFORM_ERROR] : Hotspot process is up but tunnel got destroyed " 
+                              sysevent set gre-forceRestart 1
+                          fi 
+                    fi		       
+                fi
+                if [ "$OPEN_24" = "true" ]; then
+                    wifiInterface24=$(dmcli eRT getv Device.WiFi.SSID.5.Name | grep string, | awk '{print $5}')
+                    if [ -n "$wifiInterface24" ]; then
+                        wl02Present=$(brctl show brlan2 | grep "$wifiInterface24")
+                        if [ "$wl02Present" = "" ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : WiFi interface not added to hotspot bridge $wifiInterface24 "
+                            brctl addif brlan2 $wifiInterface24
+                        fi
+                    fi
+                fi
+                if [ "$OPEN_5" = "true" ]; then
+                    wifiInterface5=$(dmcli eRT getv Device.WiFi.SSID.6.Name | grep string, | awk '{print $5}')
+                    if [ -n "$wifiInterface5" ]; then
+                        wl12Present=$(brctl show brlan2 | grep "$wifiInterface5")
+                        if [ "$wl12Present" = "" ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : WiFi interface is not added to hotspot bridge $wifiInterface5"
+                            brctl addif brlan2 $wifiInterface5
+                        fi
+                    fi
+                fi
+                
+            # ----------------------------------------------------------------
+            else
+            # ----------------------------------------------------------------
+
             #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
             #If they are not present below code shall re-create them
             #l2sd0.102 case , also adding a strict rule that they are up, since some
@@ -1793,6 +2000,9 @@ case $SELFHEAL_TYPE in
               fi
               fi
 
+            # ----------------------------------------------------------------
+            fi
+            # ----------------------------------------------------------------
 
             if [ $rcount -eq 1 ] ; then
                 sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover
