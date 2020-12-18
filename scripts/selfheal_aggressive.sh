@@ -1000,9 +1000,9 @@ self_heal_dhcp_clients()
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
 # Tech XB7  => MODEL_NUM=CGM4331COM
-
+# Tech CBR2  => MODEL_NUM=CGA4332COM
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
     exit
 fi
