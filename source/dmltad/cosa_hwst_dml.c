@@ -17,6 +17,7 @@
  * limitations under the License.
 */
 
+#include <sys/statvfs.h>
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_hwst_dml.h"
@@ -24,8 +25,19 @@
 
 #define HWSELFTEST_RESULTS_SIZE 2048
 #define HWSELFTEST_RESULTS_FILE "/tmp/hwselftest.results"
+#define BKP_HWSELFTEST_RESULTS_FILE "/nvram/hwselftest.results"
+
+#define HWSELFTEST_START_MIN_SPACE (200*1024) //200KB
 
 BOOL hwst_runTest = FALSE;
+
+/*
+ * This char pointer will save the result of executeTest in case of
+ * failures. This is then used when Results parameter is fetched and there
+ * are no hwselftest.results file in tmp and nvram directory.
+ * Note: The message should start with "Error:"
+ */
+char *hwExecInfo = NULL;
 
 /***********************************************************************
 
@@ -138,6 +150,16 @@ hwHealthTest_SetParamBoolValue
         AnscTraceFlow(("%s Execute tests : %d \n", __FUNCTION__, bValue));
         FILE* fp = fopen("/tmp/.hwst_run", "r");
         char* clientVer = (char*) malloc(8*sizeof(char));
+        /*
+         * Clear up the hwExecInfo. This might happen if the trigger came through
+         * WebPA and then it did not ask for the results before triggering the
+         * test again.
+         */
+        if(NULL != hwExecInfo)
+        {
+            free(hwExecInfo);
+            hwExecInfo = NULL;
+        }
         char version[8] = {'\0'};
         if(NULL != fp)
         {
@@ -169,16 +191,49 @@ hwHealthTest_SetParamBoolValue
             AnscTraceFlow(("Hwselftest is already running, hence returning success\n"));
             return TRUE;
         }
+        //Check if there is enough space to atleast start HHT.
+        unsigned long long result = 0;
+        struct statvfs sfs;
+        if(statvfs("/tmp", &sfs) != -1)
+        {
+            result = (unsigned long long)sfs.f_bsize * sfs.f_bavail;
+            AnscTraceWarning(("%lu space left in tmp\n", result));
+        }
 
         char cmd[128] = {0};
         hwst_runTest = bValue;
         if(hwst_runTest)
         {
             AnscTraceFlow(("%s Execute tests value is set to true\n", __FUNCTION__));
-            if(fopen(HWSELFTEST_RESULTS_FILE, "r"))
+            fp = fopen(HWSELFTEST_RESULTS_FILE, "r");
+            if(NULL != fp)
             {
+                fclose(fp);
                 if (remove(HWSELFTEST_RESULTS_FILE) == 0)
                     AnscTraceFlow(("%s Deleted results file\n", __FUNCTION__));
+            }
+            else
+            {
+                //Make sure that the backup file is deleted. This is checked in
+                //HHT code as well, but adding it here.
+                fp = fopen(BKP_HWSELFTEST_RESULTS_FILE,"r");
+                if(NULL != fp)
+                {
+                    fclose(fp);
+                    if (remove(BKP_HWSELFTEST_RESULTS_FILE) == 0)
+                        AnscTraceFlow(("%s Deleted results file from backup location.\n", __FUNCTION__));
+                }
+                //else: No results file generated. 1st run or maybe last one failed
+            }
+            //Check for min space after the results file is deleted, so that when someone does
+            //a get on Results, the error message can be sent back.
+            if (result < HWSELFTEST_START_MIN_SPACE)
+            {
+                AnscTraceWarning(("Not enough space in DRAM to initiate the Hwselftest. Exit\n"));
+                char info[100] = "Error: Not enough space to initiate Hardware Health Test.";
+                hwExecInfo = malloc(sizeof(char)*100);
+                AnscCopyString(hwExecInfo,info);
+                return TRUE;
             }
             memset(cmd, 0, sizeof(cmd));
             AnscCopyString(cmd, "/usr/bin/hwselftest_run.sh 0001 &");
@@ -245,8 +300,21 @@ hwHealthTest_GetParamStringValue
         FILE *p = fopen(HWSELFTEST_RESULTS_FILE, "r");
         if (p == NULL)
         {
-            AnscTraceWarning(("%s, hwselftest.results not present.\n", __FUNCTION__));
-            return 1;
+            AnscTraceWarning(("%s, hwselftest.results not present in tmp. Check nvram\n", __FUNCTION__));
+            p = fopen(BKP_HWSELFTEST_RESULTS_FILE,"r");
+            if(p == NULL)
+            {
+                AnscTraceWarning(("%s, hwselftest.results not present in nvram\n", __FUNCTION__));
+                //If both primary and backup files are not present, maybe the test did not run. Check if the struc hw
+                if(NULL != hwExecInfo)
+                {
+                    AnscCopyString(pValue, hwExecInfo);
+                    hwst_runTest = FALSE;
+                }
+                else
+                    AnscTraceWarning(("hwExecInfo NOT set.\n"));
+                return 0;
+            }
         }
 
         char hwst_result_string[HWSELFTEST_RESULTS_SIZE] = {'\0'};
