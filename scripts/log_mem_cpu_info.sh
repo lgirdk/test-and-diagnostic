@@ -54,7 +54,7 @@ logTmpFs()
       
       if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
       then
-        echo_t "TMPFS_USAGE exceeded threshold limit, TMPFS_USAGE:$TMPFS_CUR_USAGE"
+        t2ValNotify "TMPFS_USAGE exceeded threshold limit, TMPFS_USAGE:" "$TMPFS_CUR_USAGE"
         t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
       fi
       echo_t "================================================================================"
@@ -63,7 +63,7 @@ logTmpFs()
       echo_t "================================================================================"
    fi
 
-   echo_t "TMPFS_USE_PERCENTAGE:$TMPFS_CUR_USAGE"
+   t2ValNotify "TMPFS_USE_PERCENTAGE:" "$TMPFS_CUR_USAGE"
 }
 
 get_high_mem_processes() {
@@ -271,18 +271,18 @@ get_high_mem_processes() {
 	count=$((count + 1))
 
 	RDKLOGS_USAGE=`df /rdklogs | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
-	echo_t "RDKLOGS_USE_PERCENTAGE:$RDKLOGS_USAGE"
+	t2ValNotify "RDKLOGS_USE_PERCENTAGE:" "$RDKLOGS_USAGE"
 
 	NVRAM_USAGE=`df /nvram | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
-	echo_t "NVRAM_USE_PERCENTAGE:$NVRAM_USAGE"
+	t2ValNotify "NVRAM_USE_PERCENTAGE:" "$NVRAM_USAGE"
 
 	swap=`free | awk 'FNR == 4 {print $3}'`
 	cache=`cat /proc/meminfo | awk 'FNR == 4 {print $2}'`
 	buff=`cat /proc/meminfo | awk 'FNR == 3 {print $2}'`
 
-	echo_t "SWAP_MEMORY:$swap"
-	echo_t "CACHE_MEMORY:$cache"
-	echo_t "BUFFER_MEMORY:$buff"
+	t2ValNotify "SWAP_MEMORY:" "$swap"
+	t2ValNotify "CACHE_MEMORY:" "$cache"
+	t2ValNotify "BUFFER_MEMORY:" "$buff"
 
 	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
 	if [ "$nvram_ro_fs" != "" ]; then
