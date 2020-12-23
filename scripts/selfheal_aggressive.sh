@@ -160,7 +160,7 @@ self_heal_peer_ping ()
 
 self_heal_dnsmasq_restart()
 {
-    kill -9 `pidof dnsmasq`
+    kill -9 $(busybox pidof dnsmasq)
     if [ "$BOX_TYPE" != "XF3" ]; then
         sysevent set dhcp_server-restart
     else
@@ -502,7 +502,7 @@ self_heal_dibbler_server()
 {
     #Checking dibbler server is running or not RDKB_10683
     BR_MODE=`syscfg get bridge_mode`
-    DIBBLER_PID=$(pidof dibbler-server)
+    DIBBLER_PID=$(busybox pidof dibbler-server)
     if [ "$DIBBLER_PID" = "" ]; then
 #        IPV6_STATUS=$(sysevent get ipv6-status)
 	routerMode="`syscfg get last_erouter_mode`"

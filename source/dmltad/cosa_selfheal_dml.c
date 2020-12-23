@@ -195,7 +195,7 @@ BOOL SelfHeal_SetParamBoolValue
 	    {
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof self_heal_connectivity_test.sh");
+                sprintf(cmd, "busybox pidof self_heal_connectivity_test.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -209,7 +209,7 @@ BOOL SelfHeal_SetParamBoolValue
     
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof resource_monitor.sh");
+                sprintf(cmd, "busybox pidof resource_monitor.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -223,7 +223,7 @@ BOOL SelfHeal_SetParamBoolValue
        
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "pidof selfheal_aggressive.sh");
+                sprintf(cmd, "busybox pidof selfheal_aggressive.sh");
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -248,7 +248,7 @@ BOOL SelfHeal_SetParamBoolValue
 
             memset (cmd, 0, sizeof(cmd));
             memset (buf, 0, sizeof(buf));
-            sprintf (cmd, "pidof cpuprocanalyzer");
+            sprintf (cmd, "busybox pidof cpuprocanalyzer");
             copy_command_output(cmd, buf, sizeof(buf));
             buf[strlen(buf)] = '\0';
             CcspTraceWarning(("Value of cmd: %s and Value of buf: %s and Check for strcmp: %d \n", cmd, buf, strcmp(buf, "")));
