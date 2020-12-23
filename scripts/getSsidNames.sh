@@ -28,10 +28,10 @@ ssid5value=""
 got_24=0
 got_5=0
 if [ "x$BOX_TYPE" = "xXB3" ]; then
-GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "pidof CcspWifiSsp"`
+GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
 WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 else
-WiFi_PID=`pidof CcspWifiSsp`
+WiFi_PID=$(busybox pidof CcspWifiSsp)
 fi
 if [ "x$WiFi_PID" != "x" ]; then
     # check for wifi params only if wifi agent is up and running
