@@ -290,7 +290,7 @@ case $SELFHEAL_TYPE in
 
             ### SNMPv3 master agent self-heal ####
             if [ -f "/etc/SNMP_PA_ENABLE" ]; then
-                SNMPv3_PID=$(pidof snmpd)
+                SNMPv3_PID=$(busybox pidof snmpd)
                 if [ "$SNMPv3_PID" = "" ] && [ "$ENABLE_SNMPv3" = "true" ]; then
                     # Restart disconnected master and agent
                     v3AgentPid=$(ps ww | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
@@ -325,7 +325,7 @@ case $SELFHEAL_TYPE in
         if [ "$MULTI_CORE" = "yes" ]; then
             if [ "$CORE_TYPE" = "arm" ]; then
                 # Checking logbackup PID
-                LOGBACKUP_PID=$(pidof logbackup)
+                LOGBACKUP_PID=$(busybox pidof logbackup)
                 if [ "$LOGBACKUP_PID" = "" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : logbackup process is not running, need restart"
                     /usr/bin/logbackup &
@@ -572,7 +572,7 @@ case $SELFHEAL_TYPE in
                 echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
             fi
         elif [ "$WAN_TYPE" = "EPON" ]; then
-            CR_PID=$(pidof CcspCrSsp)
+            CR_PID=$(busybox pidof CcspCrSsp)
             if [ "$CR_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
                 vendor=$(getVendorName)
@@ -629,7 +629,7 @@ esac
 
 
 # Checking PSM's PID
-PSM_PID=$(pidof PsmSsp)
+PSM_PID=$(busybox pidof PsmSsp)
 if [ "$PSM_PID" = "" ]; then
     case $SELFHEAL_TYPE in
         "BASE"|"TCCBR")
@@ -665,7 +665,7 @@ else
             t2CountNotify "SYS_SH_PSMHung"
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
-                    kill -9 "$(pidof PsmSsp)"
+                    kill -9 "$(busybox pidof PsmSsp)"
                     resetNeeded psm PsmSsp
                 ;;
                 "SYSTEMD")
@@ -678,7 +678,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE")
-        PAM_PID=$(pidof CcspPandMSsp)
+        PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -691,7 +691,7 @@ case $SELFHEAL_TYPE in
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
             echo_t "BWG doesn't support voice"
         else
-            MTA_PID=$(pidof CcspMtaAgentSsp)
+            MTA_PID=$(busybox pidof CcspMtaAgentSsp)
             if [ "$MTA_PID" = "" ]; then
                 #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
@@ -702,7 +702,7 @@ case $SELFHEAL_TYPE in
 
         # Checking CM's PID
         if [ "$WAN_TYPE" != "EPON" ]; then
-            CM_PID=$(pidof CcspCMAgentSsp)
+            CM_PID=$(busybox pidof CcspCMAgentSsp)
             if [ "$CM_PID" = "" ]; then
                 #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
@@ -710,7 +710,7 @@ case $SELFHEAL_TYPE in
             fi
         else
             #Checking EPONAgent is running.
-            EPON_AGENT_PID=$(pidof CcspEPONAgentSsp)
+            EPON_AGENT_PID=$(busybox pidof CcspEPONAgentSsp)
             if [ "$EPON_AGENT_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : EPON_process is not running, need restart"
                 resetNeeded epon CcspEPONAgentSsp
@@ -718,7 +718,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking WEBController's PID
-        #   WEBC_PID=$(pidof CcspWecbController)
+        #   WEBC_PID=$(busybox pidof CcspWecbController)
         #   if [ "$WEBC_PID" = "" ]; then
         #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
         #       echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
@@ -726,7 +726,7 @@ case $SELFHEAL_TYPE in
         #   fi
 
         # Checking RebootManager's PID
-        #   Rm_PID=$(pidof CcspRmSsp)
+        #   Rm_PID=$(busybox pidof CcspRmSsp)
         #   if [ "$Rm_PID" = "" ]; then
         #   echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
         #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
@@ -738,7 +738,7 @@ case $SELFHEAL_TYPE in
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
             echo_t "BWG doesn't support TR069Pa "
         else
-            TR69_PID=$(pidof CcspTr069PaSsp)
+            TR69_PID=$(busybox pidof CcspTr069PaSsp)
             enable_TR69_Binary=$(syscfg get EnableTR69Binary)
             if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
                 if [ "$TR69_PID" = "" ]; then
@@ -750,14 +750,14 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking Test adn Daignostic's PID
-        TandD_PID=$(pidof CcspTandDSsp)
+        TandD_PID=$(busybox pidof CcspTandDSsp)
         if [ "$TandD_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
             resetNeeded tad CcspTandDSsp
         fi
 
         # Checking Lan Manager PID
-        LM_PID=$(pidof CcspLMLite)
+        LM_PID=$(busybox pidof CcspLMLite)
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
@@ -768,13 +768,13 @@ case $SELFHEAL_TYPE in
             cr_lmlite_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
             if [ "$cr_timeout" != "" ] || [ "$cr_lmlite_notexist" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : LMlite process is not responding. Restarting it"
-                kill -9 "$(pidof CcspLMLite)"
+                kill -9 "$(busybox pidof CcspLMLite)"
                 resetNeeded lm CcspLMLite
             fi
         fi
 
         # Checking XdnsSsp PID
-        XDNS_PID=$(pidof CcspXdnsSsp)
+        XDNS_PID=$(busybox pidof CcspXdnsSsp)
         if [ "$XDNS_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
@@ -782,7 +782,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspEthAgent PID
-        ETHAGENT_PID=$(pidof CcspEthAgent)
+        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
@@ -807,7 +807,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspMoCA PID
-        MOCA_PID=$(pidof CcspMoCA)
+        MOCA_PID=$(busybox pidof CcspMoCA)
         if [ "$MOCA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
@@ -815,7 +815,7 @@ case $SELFHEAL_TYPE in
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
             # Checking mocadlfw PID
-            MOCADLFW_PID=$(pidof mocadlfw)
+            MOCADLFW_PID=$(busybox pidof mocadlfw)
             if [ "$MOCADLFW_PID" = "" ]; then
                 echo_t "OEM_PROCESS_MOCADLFW_CRASHED : mocadlfw process is not running, need restart"
                 /usr/sbin/mocadlfw &
@@ -836,7 +836,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         case $BOX_TYPE in
             "HUB4")
-                Harvester_PID=$(pidof harvester)
+                Harvester_PID=$(busybox pidof harvester)
                 if [ "$Harvester_PID" != "" ]; then
                     Harvester_CPU=$(top -bn1 | grep "harvester" | grep -v "grep" | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//' | awk '{$1=$1};1')
                     if [ "$Harvester_CPU" != "" ] && [ $Harvester_CPU -ge 30 ]; then
@@ -856,7 +856,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         WiFi_Flag=false
-        WiFi_PID=$(pidof CcspWifiSsp)
+        WiFi_PID=$(busybox pidof CcspWifiSsp)
         if [ "$WiFi_PID" != "" ]; then
             radioenable=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
             radioenable_timeout=$(echo "$radioenable" | grep "$CCSP_ERR_TIMEOUT")
@@ -893,7 +893,7 @@ else
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
 
-                HOMESEC_PID=$(pidof CcspHomeSecurity)
+                HOMESEC_PID=$(busybox pidof CcspHomeSecurity)
                 if [ "$HOMESEC_PID" = "" ]; then
                     case $SELFHEAL_TYPE in
                         "BASE")
@@ -914,7 +914,7 @@ else
                 case $SELFHEAL_TYPE in
                     "BASE")
                         # CcspAdvSecurity
-                        ADV_PID=$(pidof CcspAdvSecuritySsp)
+                        ADV_PID=$(busybox pidof CcspAdvSecuritySsp)
                         if [ "$ADV_PID" = "" ] ; then
                             echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
                             resetNeeded advsec CcspAdvSecuritySsp
@@ -1001,7 +1001,7 @@ case $SELFHEAL_TYPE in
         ###########################################
 
 
-        PAM_PID=$(pidof CcspPandMSsp)
+        PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -1011,7 +1011,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking MTA's PID
-        MTA_PID=$(pidof CcspMtaAgentSsp)
+        MTA_PID=$(busybox pidof CcspMtaAgentSsp)
         if [ "$MTA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
             resetNeeded mta CcspMtaAgentSsp
@@ -1020,7 +1020,7 @@ case $SELFHEAL_TYPE in
 
         WiFi_Flag=false
         # Checking Wifi's PID
-        WIFI_PID=$(pidof CcspWifiSsp)
+        WIFI_PID=$(busybox pidof CcspWifiSsp)
         if [ "$WIFI_PID" = "" ]; then
             # Remove the wifi initialized flag
             rm -rf /tmp/wifi_initialized
@@ -1058,14 +1058,14 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CM's PID
-        CM_PID=$(pidof CcspCMAgentSsp)
+        CM_PID=$(busybox pidof CcspCMAgentSsp)
         if [ "$CM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
             resetNeeded cm CcspCMAgentSsp
         fi
 
         # Checking WEBController's PID
-        #   WEBC_PID=$(pidof CcspWecbController)
+        #   WEBC_PID=$(busybox pidof CcspWecbController)
         #   if [ "$WEBC_PID" = "" ]; then
         #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
         #       echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
@@ -1073,7 +1073,7 @@ case $SELFHEAL_TYPE in
         #   fi
 
         # Checking RebootManager's PID
-        #   Rm_PID=$(pidof CcspRmSsp)
+        #   Rm_PID=$(busybox pidof CcspRmSsp)
         #   if [ "$Rm_PID" = "" ]; then
         #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
         #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
@@ -1082,14 +1082,14 @@ case $SELFHEAL_TYPE in
         #   fi
 
         # Checking Test adn Daignostic's PID
-        TandD_PID=$(pidof CcspTandDSsp)
+        TandD_PID=$(busybox pidof CcspTandDSsp)
         if [ "$TandD_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
             resetNeeded tad CcspTandDSsp
         fi
 
         # Checking Lan Manager PID
-        LM_PID=$(pidof CcspLMLite)
+        LM_PID=$(busybox pidof CcspLMLite)
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
@@ -1098,7 +1098,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking XdnsSsp PID
-        XDNS_PID=$(pidof CcspXdnsSsp)
+        XDNS_PID=$(busybox pidof CcspXdnsSsp)
         if [ "$XDNS_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
@@ -1106,7 +1106,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspEthAgent PID
-        ETHAGENT_PID=$(pidof CcspEthAgent)
+        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
@@ -1115,7 +1115,7 @@ case $SELFHEAL_TYPE in
 
         # Checking snmp subagent PID
         if [ -f "/etc/SNMP_PA_ENABLE" ]; then
-            SNMP_PID=$(pidof snmp_subagent)
+            SNMP_PID=$(busybox pidof snmp_subagent)
             if [ "$SNMP_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
                 t2CountNotify "SYS_SH_SNMP_NotRunning"
@@ -1130,14 +1130,14 @@ esac
 HOTSPOT_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
-    DHCP_ARP_PID=$(pidof hotspot_arpd)
+    DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
     if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ] && [ ! -f /tmp/tunnel_destroy_flag ] ; then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
         t2CountNotify "SYS_SH_DhcpArpProcess_restart"
         resetNeeded "" hotspot_arpd
     fi
 
-    HOTSPOT_PID=$(pidof CcspHotspot)
+    HOTSPOT_PID=$(busybox pidof CcspHotspot)
     if [ "$HOTSPOT_PID" = "" ]; then
         if [ ! -f /tmp/tunnel_destroy_flag ] ; then
 
@@ -1488,7 +1488,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         if [ "$BOX_TYPE" != "HUB4" ]; then
             #Checking dropbear PID
-            DROPBEAR_PID=$(pidof dropbear)
+            DROPBEAR_PID=$(busybox pidof dropbear)
             if [ "$DROPBEAR_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
                 t2CountNotify "SYS_SH_Dropbear_restart"
@@ -1511,7 +1511,7 @@ case $SELFHEAL_TYPE in
     ;;
     "TCCBR"|"SYSTEMD")
         # Checking lighttpd PID
-        LIGHTTPD_PID=$(pidof lighttpd)
+        LIGHTTPD_PID=$(busybox pidof lighttpd)
         WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk {'print $1'})
         if [ "$LIGHTTPD_PID" = "" ]; then
             if [ "$WEBGUI_PID" != "" ]; then
@@ -1583,10 +1583,10 @@ esac
 
 # Checking for parodus connection stuck issue
 # Checking parodus PID
-PARODUS_PID=$(pidof parodus)
+PARODUS_PID=$(busybox pidof parodus)
 case $SELFHEAL_TYPE in
     "BASE")
-        PARODUSSTART_PID=$(pidof parodusStart)
+        PARODUSSTART_PID=$(busybox pidof parodusStart)
         if [ "$PARODUS_PID" = "" ] && [ "$PARODUSSTART_PID" = "" ]; then
             _start_parodus_
             thisPARODUS_PID=""    # avoid executing 'already-running' code below
@@ -1630,7 +1630,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
     if [ "$kill_parodus_msg" != "" ]; then
         case $SELFHEAL_TYPE in
             "BASE")
-                ppid=$(pidof parodus)
+                ppid=$(busybox pidof parodus)
                 if [ "$ppid" != "" ]; then
                     echo_t "$kill_parodus_msg Killing parodus process."
                     t2CountNotify "SYS_SH_Parodus_Killed"
@@ -1641,7 +1641,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
                 _start_parodus_
             ;;
             "TCCBR"|"SYSTEMD")
-                ppid=$(pidof parodus)
+                ppid=$(busybox pidof parodus)
                 if [ "$ppid" != "" ]; then
                     echo "[$(getDateTime)] $kill_parodus_msg Killing parodus process."
                     t2CountNotify "SYS_SH_Parodus_Killed"
@@ -1687,7 +1687,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
         # Checking lighttpd PID
-        LIGHTTPD_PID=$(pidof lighttpd)
+        LIGHTTPD_PID=$(busybox pidof lighttpd)
         WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk {'print $1'})
         if [ "$LIGHTTPD_PID" = "" ]; then
             if [ "$WEBGUI_PID" != "" ]; then
@@ -1755,7 +1755,7 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
     if [ $RADIO_DISBLD_2G -eq 1 ] && [ $RADIO_DISBLD_5G -eq 1 ]; then
         echo_t "[RDKB_SELFHEAL] : Radio's disabled, Skipping ACSD check"
     else
-        ACSD_PID=$(pidof acsd)
+        ACSD_PID=$(busybox pidof acsd)
         if [ "$ACSD_PID" = ""  ]; then
             echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
         fi
@@ -1781,7 +1781,7 @@ fi
 
 
 # Checking syseventd PID
-SYSEVENT_PID=$(pidof syseventd)
+SYSEVENT_PID=$(busybox pidof syseventd)
 if [ "$SYSEVENT_PID" = "" ]; then
     #Needs to avoid false alarm
     rebootCounter=$(syscfg get X_RDKCENTRAL-COM_LastRebootCounter)
@@ -1809,7 +1809,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
         if [ "$BOX_TYPE" = "XB3" ]; then
-            SNMP_MASTER_PID=$(pidof snmp_agent_cm)
+            SNMP_MASTER_PID=$(busybox pidof snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
                 touch $SNMPMASTERCRASHED
@@ -2332,7 +2332,7 @@ else
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_SH_PAM_Restart"
-                    PANDM_PID=$(pidof CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
@@ -2356,7 +2356,7 @@ else
                 if [ "$cr_timeout" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_SH_PAM_Restart"
-                    PANDM_PID=$(pidof CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     rm -rf /tmp/pam_initialized
                     systemctl restart CcspPandMSsp.service
                 fi
@@ -2389,7 +2389,7 @@ case $SELFHEAL_TYPE in
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_SH_PAM_Restart"
-                    PANDM_PID=$(pidof CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
@@ -2628,7 +2628,7 @@ fi
 
 #Checking whether dnsmasq is running or not and if zombie for XF3
 if [ "$thisWAN_TYPE" = "EPON" ]; then
-    DNS_PID=$(pidof dnsmasq)
+    DNS_PID=$(busybox pidof dnsmasq)
     if [ "$DNS_PID" = "" ]; then
         InterfaceInConf=""
         Bridge_Mode_t=$(syscfg get bridge_mode)
@@ -2677,7 +2677,7 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
                 esac
                 echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                 t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                kill -9 "$(pidof dnsmasq)"
+                kill -9 "$(busybox pidof dnsmasq)"
                 systemctl stop dnsmasq
                 systemctl start dnsmasq
                 case $SELFHEAL_TYPE in
@@ -2700,7 +2700,7 @@ fi
 
 #Checking whether dnsmasq is running or not
 if [ "$thisWAN_TYPE" != "EPON" ]; then
-    DNS_PID=$(pidof dnsmasq)
+    DNS_PID=$(busybox pidof dnsmasq)
     if [ "$DNS_PID" = "" ]; then
         InterfaceInConf=""
         Bridge_Mode_t=$(syscfg get bridge_mode)
@@ -2808,7 +2808,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                         if [ "$confirmZombie" != "" ] ; then
                             echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                             t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                            kill -9 "$(pidof dnsmasq)"
+                            kill -9 "$(busybox pidof dnsmasq)"
                             sysevent set dhcp_server-restart
                             break
                         fi
@@ -2860,7 +2860,7 @@ if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
 #Checking dibbler server is running or not RDKB_10683
-DIBBLER_PID=$(pidof dibbler-server)
+DIBBLER_PID=$(busybox pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
 if [ "$BOX_TYPE" = "HUB4" ]; then
     IPV6_STATUS=`sysevent get ipv6_connection_state`
@@ -3005,7 +3005,7 @@ fi
 
 #Checking the zebra is running or not
 WAN_STATUS=$(sysevent get wan-status)
-ZEBRA_PID=$(pidof zebra)
+ZEBRA_PID=$(busybox pidof zebra)
 if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$BR_MODE" = "0" ]; then
 
@@ -3020,7 +3020,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         #Checking the ntpd is running or not
         if [ "$WAN_TYPE" != "EPON" ]; then
-            NTPD_PID=$(pidof ntpd)
+            NTPD_PID=$(busybox pidof ntpd)
             if [ "$NTPD_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
                 sysevent set ntpd-restart
@@ -3028,7 +3028,7 @@ case $SELFHEAL_TYPE in
 
 
             #Checking if rpcserver is running
-            RPCSERVER_PID=$(pidof rpcserver)
+            RPCSERVER_PID=$(busybox pidof rpcserver)
             if [ "$RPCSERVER_PID" = "" ] && [ -f /usr/bin/rpcserver ]; then
                 echo_t "RDKB_PROCESS_CRASHED : RPCSERVER is not running on ARM side, restarting "
                 /usr/bin/rpcserver &
@@ -3038,7 +3038,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
         #Checking the ntpd is running or not for TCCBR
         if [ "$WAN_TYPE" != "EPON" ]; then
-            NTPD_PID=$(pidof ntpd)
+            NTPD_PID=$(busybox pidof ntpd)
             if [ "$NTPD_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
                 sysevent set ntpd-restart
@@ -3650,7 +3650,7 @@ if [ ! -f $T2_0_BIN ]; then
 fi
 echo_t "Telemetry 2.0 feature is $T2_ENABLE"
 if [ "$T2_ENABLE" = "true" ]; then
-    T2_PID=$(pidof $T2_0_APP)
+    T2_PID=$(busybox pidof $T2_0_APP)
     if [ "$T2_PID" = "" ]; then
         echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
         if [ -f /lib/rdk/dcm.service ]; then 

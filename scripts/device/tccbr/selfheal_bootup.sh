@@ -377,7 +377,7 @@ fi
 
 # Check whether PSM process is running
 	# Checking PSM's PID
-	PSM_PID=`pidof PsmSsp`
+	PSM_PID=$(busybox pidof PsmSsp)
 	if [ "$PSM_PID" == "" ]; then
 
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
@@ -400,7 +400,7 @@ fi
 	fi
 
 # Check whether PAM process is running
-	PAM_PID=`pidof CcspPandMSsp`
+	PAM_PID=$(busybox pidof CcspPandMSsp)
 	if [ "$PAM_PID" == "" ]; then
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
@@ -461,7 +461,7 @@ fi
             echo_t "[RDKB_SELFHEAL_BOOTUP] : Something went wrong while fetching Bridge mode "
         fi
 
- 	SYSEVENT_PID=`pidof syseventd`
+	SYSEVENT_PID=$(busybox pidof syseventd)
 	if [ "$SYSEVENT_PID" == "" ]
 	then
                 if [ ! -f "$needSelfhealReboot" ]
@@ -490,7 +490,7 @@ fi
     fi
 
     #Check whether dnsmasq is running or not
-    DNS_PID=`pidof dnsmasq`    
+    DNS_PID=$(busybox pidof dnsmasq)
     if [ "$DNS_PID" == "" ]
     then
           InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
