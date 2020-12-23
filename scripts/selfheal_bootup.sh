@@ -225,16 +225,17 @@ db_clean_up_required()
 
 	if [ "$BOX_TYPE" = "XB3" ]
 	then
-		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "pidof CcspWifiSsp"`	
+		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 		if [ ! -z "$WiFi_PID" ]; then
 			echo_t "RDKB_SELFHEAL_BOOTUP : Stopping CcspWifiSsp before cleaning the database"
 			rpcclient $ATOM_ARPING_IP "kill -9 $WiFi_PID"
 		fi
 	else
-		if [ ! -z `pidof CcspWifiSsp` ]; then
+		WiFi_PID=$(busybox pidof CcspWifiSsp)
+		if [ ! -z "$WiFi_PID" ]; then
 			echo_t "RDKB_SELFHEAL_BOOTUP : Stopping CcspWifiSsp before cleaning the database"
-			kill -9 `pidof CcspWifiSsp`
+			kill -9 $WiFi_PID
 		fi
 	fi
 
@@ -439,7 +440,7 @@ fi
 
 # Check whether PSM process is running
 	# Checking PSM's PID
-	PSM_PID=`pidof PsmSsp`
+	PSM_PID=$(busybox pidof PsmSsp)
 	if [ "$PSM_PID" == "" ]; then
 
 		echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need to reboot the unit"
@@ -479,7 +480,7 @@ fi
 	fi
 
 # Check whether PAM process is running
-	PAM_PID=`pidof CcspPandMSsp`
+	PAM_PID=$(busybox pidof CcspPandMSsp)
 	if [ "$PAM_PID" == "" ]; then
 		# Remove the P&M initialized flag
 		rm -rf /tmp/pam_initialized
@@ -612,7 +613,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	fi
 fi
 
- 	SYSEVENT_PID=`pidof syseventd`
+	SYSEVENT_PID=$(busybox pidof syseventd)
 	if [ "$SYSEVENT_PID" == "" ]
 	then
         if [ ! -f "$needSelfhealReboot" ]
@@ -637,7 +638,7 @@ fi
 if [ "$WAN_TYPE" != "EPON" ]; then	
 
     #Check whether dnsmasq is running or not
-    DNS_PID=`pidof dnsmasq`
+    DNS_PID=$(busybox pidof dnsmasq)
     if [ "$DNS_PID" == "" ]
     then
 		  BR_MODE=0
@@ -743,12 +744,12 @@ fi
 
 	if [ "$BOX_TYPE" = "XB3" ]
 	then
-		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "pidof CcspWifiSsp"`
+		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 		RPC_WiF_FILE_EXISTS=`rpcclient $ATOM_ARPING_IP "ls $WiFi_INIT_FILE"`
 		WIFI_INIT_FILE_EXISTS=`echo "$RPC_WiF_FILE_EXISTS" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 	else
-		WiFi_PID=`pidof CcspWifiSsp`
+		WiFi_PID=$(busybox pidof CcspWifiSsp)
 		WIFI_INIT_FILE_EXISTS=`ls /tmp/wifi_initialized`
 	fi
 
