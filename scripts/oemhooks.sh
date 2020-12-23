@@ -53,7 +53,7 @@ case $1 in
                 #killing wifi_apis which is hanging currently
                 ps | grep wifi_api | grep -v "grep" | awk '{print $1}'| xargs -r kill -9
                 #killing already spawned wifi process to avoid duplicate process creation
-                pidof CcspWifiSsp | tr ' ' '\n' | xargs -r kill -9
+                busybox pidof CcspWifiSsp | tr ' ' '\n' | xargs -r kill -9
                 #Initialization of wlmngr is getting nearly 50s to become fully functional.Inoder
                 #to make proper CcspWifiSsp init we have to wait until wlmngr get ready.
                 sleep 60
