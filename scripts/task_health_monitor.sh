@@ -3406,32 +3406,3 @@ if [ "$T2_ENABLE" = "true" ]; then
         ${T2_0_BIN}
     fi
 fi
-
-if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-        # BWGRDK-1069
-        echo_t "getUcastMacs"
-        echo_t "------------"
-        cli "system/l2switch/getUcastMacs"
-        echo_t "macAddressTable"
-        echo_t "---------------"
-        cli "system/l2switch/extswitch/macAddressTable"
-        echo_t "Executing CcspHalExtSw_getAssociatedDevice"
-        eth_api CcspHalExtSw_getAssociatedDevice
-
-        No_of_macs_getUcastMacs=$(cli "system/l2switch/getUcastMacs" | grep -c "RGMI")
-        No_of_macs_macAddressTable=$(cli "system/l2switch/extswitch/macAddressTable" | grep -c "mac address is")
-        echo_t "No. of getUcastMacs MAC addresses is $No_of_macs_getUcastMacs"
-        echo_t "No. of macAddressTable MAC addresses is $No_of_macs_macAddressTable"
-        if [ $No_of_macs_getUcastMacs -lt $No_of_macs_macAddressTable ]; then
-                echo_t "No. of MAC addresses in getUcastMacs is less than that of macAddressTable"
-        else
-                echo_t "No. of MAC addresses in getUcastMacs is more than that of macAddressTable"
-        fi
-
-        # BWGRDK-1090
-        No_of_conntrack_sessions=$(cat /proc/net/nf_conntrack | wc -l)
-        echo_t "Total no. of conntrack sessions is $No_of_conntrack_sessions"
-        echo_t "Total PP session"
-        echo_t "----------------"
-        cli "system/pp/session"
-fi
