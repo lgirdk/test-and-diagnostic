@@ -3403,7 +3403,9 @@ if [ "$T2_ENABLE" = "true" ]; then
     T2_PID=$(pidof $T2_0_APP)
     if [ "$T2_PID" = "" ]; then
         echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
-        ${T2_0_BIN}
+        if [ -f /lib/rdk/dcm.service ]; then 
+            /lib/rdk/dcm.service
+        fi
     fi
 fi
 
