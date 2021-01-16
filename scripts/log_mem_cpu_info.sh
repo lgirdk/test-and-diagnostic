@@ -31,7 +31,38 @@ FW_END="/nvram/.FirmwareUpgradeEndTime"
 TMPFS_THRESHOLD=85
 max_count=12
 DELAY=30
-	timestamp=`getDate`
+timestamp=`getDate`
+
+logTmpFs()
+{
+
+   TMPFS_CUR_USAGE=0
+   TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
+   if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ] || [ "$1" = "log" ]
+   then   
+      echo_t "================================================================================"
+      echo_t ""
+      echo_t "RDKB_DISK_USAGE: Systems Disk Space Usage log at $timestamp is"
+      echo_t ""
+      disk_usage="df"
+      eval $disk_usage
+      if [ "$1" = "log" ]
+      then
+        echo_t "RDKB_TMPFS_USAGE_PERIODIC:$TMPFS_CUR_USAGE"
+        t2CountNotify "TMPFS_USAGE_PERIODIC" "$TMPFS_CUR_USAGE"
+      fi
+      
+      if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
+      then
+        echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
+        t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
+      fi
+      echo_t "================================================================================"
+      echo_t "RDKB_TMPFS_FILELIST"
+      ls -al /tmp/
+      echo_t "================================================================================"
+   fi
+}
 
     totalMemSys=`free | awk 'FNR == 2 {print $2}'`
     usedMemSys=`free | awk 'FNR == 2 {print $3}'`
@@ -188,16 +219,24 @@ DELAY=30
 	count=`syscfg get process_memory_log_count`
 	count=$((count + 1))
 	echo_t "Count is $count"
+        
+        TMPFS_CUR_USAGE=0
+        TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
 
 	if [ "$count" -eq "$max_count" ]
 	then
 		echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
 		echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
 		top -m -b n 1 >> /rdklogs/logs/CPUInfo.txt.0
+                
+                # Log tmpfs data
+                logTmpFs "log"                
+
 		syscfg set process_memory_log_count 0	
 		syscfg commit
 	
 	else
+                
 		# RDKB-6162
 		if [ "$USER_CPU" -ge "25" ]; then
 			echo_t "RDKB_PROC_USAGE_LOG: Top 5 CPU USAGE Process at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
@@ -205,31 +244,14 @@ DELAY=30
 			top_cmd="top -bn1 | head -n10 | tail -6"
 			eval $top_cmd >> /rdklogs/logs/CPUInfo.txt.0
 		fi
+                # Log tmpfs data
+                logTmpFs "max"
+
 		syscfg set process_memory_log_count $count	
 		syscfg commit
 	fi
 
-	echo_t "================================================================================"
-	echo_t ""
-	echo_t "RDKB_DISK_USAGE: Systems Disk Space Usage log at $timestamp is"
-	echo_t ""
-	disk_usage="df"
-	eval $disk_usage
 	count=$((count + 1))
-
-	########### df related ########
-        TMPFS_CUR_USAGE=0
-	TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
-	if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
-	then
-		echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
-		t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
-
-        echo_t "================================================================================"
-        echo_t "RDKB_TMPFS_FILELIST: Systems TempFS file list $timestamp is"
-        ls -al /tmp/
-        echo_t "================================================================================"
-	fi
 
 	nvram_ro_fs=`mount | grep "nvram " | grep dev | grep "[ (]ro[ ,]"`
 	if [ "$nvram_ro_fs" != "" ]; then
