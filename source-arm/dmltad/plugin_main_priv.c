@@ -117,17 +117,6 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamUlongValue",  ARPTable_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamStringValue",  ARPTable_GetParamStringValue);
 
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamBoolValue",  DownloadDiagnostics_GetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamIntValue",  DownloadDiagnostics_GetParamIntValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamUlongValue",  DownloadDiagnostics_GetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamStringValue",  DownloadDiagnostics_GetParamStringValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamBoolValue",  DownloadDiagnostics_SetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamIntValue",  DownloadDiagnostics_SetParamIntValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamUlongValue",  DownloadDiagnostics_SetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_SetParamStringValue",  DownloadDiagnostics_SetParamStringValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Validate",  DownloadDiagnostics_Validate);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Commit",  DownloadDiagnostics_Commit);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_Rollback",  DownloadDiagnostics_Rollback);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamBoolValue",  UploadDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamIntValue",  UploadDiagnostics_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UploadDiagnostics_GetParamUlongValue",  UploadDiagnostics_GetParamUlongValue);
