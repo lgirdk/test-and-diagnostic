@@ -136,7 +136,7 @@ Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL bValu
 }
 
 
-BOOL
+ANSC_STATUS
 Telemetry_GetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pValue)
 {
     CcspTraceDebug(("%s Entered\n", __FUNCTION__));
@@ -146,21 +146,21 @@ Telemetry_GetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pV
         syscfg_get(NULL, "T2ConfigURL", pMyObject->DCMConfigFileURL, sizeof(pMyObject->DCMConfigFileURL));
         AnscCopyString(pValue, pMyObject->DCMConfigFileURL);
         CcspTraceDebug(("%s: Copied the DCMConfigFileURL string into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
     else if(AnscEqualString(ParamName, "UploadRepositoryURL", TRUE))
     {
         syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
         AnscCopyString(pValue, pMyObject->UploadRepositoryURL);
         CcspTraceDebug(("%s: Copied the UploadRepositoryURL string into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
     else
     {
         CcspTraceError(("%s Unknown parameter %s\n", __FUNCTION__, ParamName));
     }
 
-    return FALSE;
+    return ANSC_STATUS_FAILURE;
 }
 
 BOOL
@@ -268,7 +268,7 @@ Telemetry_Rollback
     *  DcmDownloadStatus_Rollback
 
 ***********************************************************************/
-BOOL
+ANSC_STATUS
 DcmDownloadStatus_GetParamStringValue
 (
     ANSC_HANDLE                 hInsContext,
@@ -287,7 +287,7 @@ DcmDownloadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pDcmStatus->HTTPStatusString, buff);
         AnscCopyString(pValue, pMyObject->pDcmStatus->HTTPStatusString);
         CcspTraceDebug(("%s Copied the HTTPStatusString into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
     if (AnscEqualString(ParamName, "LastSuccessTimestamp", TRUE))
     {
@@ -298,7 +298,7 @@ DcmDownloadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pDcmStatus->LastSuccessTimestamp, buff);
         AnscCopyString(pValue, pMyObject->pDcmStatus->LastSuccessTimestamp);
         CcspTraceDebug(("%s Copied the LastSuccessTimestamp into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
     else if (AnscEqualString(ParamName, "LastAttemptTimestamp", TRUE))
     {
@@ -309,9 +309,9 @@ DcmDownloadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pDcmStatus->LastAttemptTimestamp, buff);
         AnscCopyString(pValue, pMyObject->pDcmStatus->LastAttemptTimestamp);
         CcspTraceDebug(("%s Copied the LastAttemptTimestamp into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
-    return FALSE;
+    return ANSC_STATUS_FAILURE;
 }
 
 BOOL
@@ -398,7 +398,7 @@ DcmDownloadStatus_Rollback
     *  UploadStatus_Rollback
 
 ***********************************************************************/
-BOOL
+ANSC_STATUS
 UploadStatus_GetParamStringValue
 (
     ANSC_HANDLE                 hInsContext,
@@ -418,7 +418,7 @@ UploadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pUploadStatus->HTTPStatusString, buff);
         AnscCopyString(pValue, pMyObject->pUploadStatus->HTTPStatusString);
         CcspTraceDebug(("%s Copied the HTTPStatusString into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
     if (AnscEqualString(ParamName, "LastSuccessTimestamp", TRUE))
     {
@@ -430,7 +430,7 @@ UploadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pUploadStatus->LastSuccessTimestamp, buff);
           AnscCopyString(pValue, pMyObject->pUploadStatus->LastSuccessTimestamp);
           CcspTraceDebug(("%s Copied the LastSuccessTimestamp into the parameter\n", __FUNCTION__));
-          return TRUE;
+          return ANSC_STATUS_SUCCESS;
     }
     else if (AnscEqualString(ParamName, "LastAttemptTimestamp", TRUE))
     {
@@ -441,9 +441,9 @@ UploadStatus_GetParamStringValue
         AnscCopyString(pMyObject->pUploadStatus->LastAttemptTimestamp, buff);
         AnscCopyString(pValue, pMyObject->pUploadStatus->LastAttemptTimestamp);
         CcspTraceDebug(("%s Copied the LastAttemptTimestamp into the parameter\n", __FUNCTION__));
-        return TRUE;
+        return ANSC_STATUS_SUCCESS;
     }
-    return FALSE;
+    return ANSC_STATUS_FAILURE;
 }
 
 BOOL
