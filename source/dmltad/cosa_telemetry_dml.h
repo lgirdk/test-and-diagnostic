@@ -52,7 +52,7 @@ Telemetry_SetParamBoolValue
     BOOL                        bValue
 );
 
-BOOL
+ANSC_STATUS
 Telemetry_GetParamStringValue
 (
     ANSC_HANDLE                 hInsContext,
@@ -99,7 +99,7 @@ Telemetry_Rollback
     *  DcmDownloadStatus_Rollback
 
 ***********************************************************************/
-BOOL
+ANSC_STATUS
 DcmDownloadStatus_GetParamStringValue
 (
     ANSC_HANDLE                 hInsContext,
@@ -163,7 +163,7 @@ DcmDownloadStatus_Rollback
     *  UploadStatus_Rollback
 
 ***********************************************************************/
-BOOL
+ANSC_STATUS
 UploadStatus_GetParamStringValue
 (
     ANSC_HANDLE                 hInsContext,
