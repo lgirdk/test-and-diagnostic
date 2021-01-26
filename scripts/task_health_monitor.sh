@@ -1407,10 +1407,14 @@ case $SELFHEAL_TYPE in
           if [ "$HOTSPOT_ENABLE" = "true" ]; then                                                                                      
                 XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
                 XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
+                XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
+                XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
                 XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 
                 open2=`wlctl -i wl0.2 bss`
                 open5=`wlctl -i wl1.2 bss`
+                sec2=`wlctl -i wl0.4 bss`
+                sec5=`wlctl -i wl1.4 bss`
                 open16=`wlctl -i wl1.7 bss`
                 
                 if [ "$XOPEN_24" = "true" ]; then
@@ -1429,6 +1433,22 @@ case $SELFHEAL_TYPE in
                       fi
                 fi
                 
+                if [ "$XSEC_24" = "true" ]; then
+                      if [ "$sec2" = "down" ]; then
+                           wlctl -i wl0.4 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:9 2.4GHz restoring"
+                           xcount=1
+                      fi
+                fi
+
+                if [ "$XSEC_5" = "true" ]; then
+                      if [ "$sec5" = "down" ]; then
+                           wlctl -i wl1.4 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:10 5GHz restoring"
+                           xcount=1
+                      fi
+                fi
+
                 if [ "$XOPEN_16" = "true" ]; then
                       if [ "$open16" = "down" ]; then
                            wlctl -i wl1.7 bss up
