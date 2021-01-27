@@ -1448,7 +1448,35 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-HOTSPOT_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+if [ "$(psmcli get dmsb.hotspot.enable)" = "1" ]; then
+    HOTSPOT_ENABLE="true"
+else
+    HOTSPOT_ENABLE="false"
+fi
+
+if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
+    count=0
+    for i in 5 6; do
+        APENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ "$APENABLE" = "true" ]; then
+            # Accounting is enabled always hence, double the expected relay process count
+            count=$((count+2))
+        fi
+    done
+
+    RELAYPID=$(busybox pidof radius_relay)
+    relay_count=0
+    for j in $RELAYPID; do
+        relay_count=$((relay_count+1))
+    done
+
+    echo "radius process: actual count=$relay_count expected count=$count"
+
+    if [ "$count" -gt "$relay_count" ] ; then
+        echo_t "RDKB_SELFHEAL : radius relay not running for all the instance, needs a restart"
+        sysevent set radiusrelay-restart
+    fi
+fi
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ] && [ ! -f /tmp/.hotspot_blob_inprogress ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
