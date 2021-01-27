@@ -1127,7 +1127,33 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-HOTSPOT_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+if [ "$BOX_TYPE" = "MV1" ]; then
+    count=0
+    set '5 6'
+    for i in $@; do
+        APENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ x"$APENABLE" = x"true" ]; then
+            count=`expr $count + 1`
+        fi
+    done
+    RELAYPID=$(busybox pidof radius_relay)
+    relay_count=0
+    for j in $RELAYPID; do
+        relay_count=`expr $relay_count + 1`
+    done
+
+    if [ "$count" != "$relay_count" ]; then
+        echo_t "RDKB_SELFHEAL : radius relay not running for all the instance, needs a restart"
+        sysevent set radiusrelay-restart
+    fi
+
+fi
+HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
+if [ x"$HOTSPOT_PSM" = x"1" ]; then
+    HOTSPOT_ENABLE="true"
+else
+    HOTSPOT_ENABLE="flase"
+fi
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
@@ -1176,7 +1202,6 @@ case $SELFHEAL_TYPE in
                 l2net_5_VLANID=`psmcli get dmsb.l2net.3.Port.3.Pvid`
                 GRE_VLANID=`psmcli get dmsb.l2net.3.Port.4.Pvid`
 
-                echo_t "Inside BOX_TYPE = MV1"
                 Interface=`psmcli get dmsb.l2net.3.Members.WiFi`
                 if [ "$Interface" = "" ]; then
                     echo_t "PSM value(wifi if) is missing for $l2sd0Prefix.$l2net_24_VLANID and $l2sd0Prefix.$l2net_24_VLANID"
@@ -1189,7 +1214,6 @@ case $SELFHEAL_TYPE in
                 fi
 
                 if [ "$OPEN_24" = "true" ] || [ "$OPEN_5" = "true" ]; then
-                    echo_t "Inside Open 24 = MV1"
 
                     grePresent=$(ifconfig -a | grep "$GREIF")
                     if [ "$grePresent" = "" ]; then
@@ -1256,10 +1280,8 @@ case $SELFHEAL_TYPE in
 
                 grePresent=$(ifconfig -a | grep "$GREIF")
                 if [ -n "$grePresent" ]; then
-                    echo_t "Inside gre not preset"
                     vlanAdded=$(brctl show brlan2 | grep "$GREIF")
                     if [ "$vlanAdded" = "" ]; then
-                        echo_t "Inside vlan not added"
                         echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $GREIF"
                         brctl addif brlan2 $GREIF
                     fi
