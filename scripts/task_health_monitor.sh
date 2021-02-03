@@ -25,6 +25,7 @@ PRIVATE_LAN="brlan0"
 BR_MODE=0
 
 source $TAD_PATH/corrective_action.sh
+DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
@@ -2677,7 +2678,30 @@ if [ "$DIBBLER_PID" = "" ]; then
                             dibbler-server start
                         fi
                     else
-                        echo_t "RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+                            routerMode=`syscfg get last_erouter_mode`
+                            if [ "$routerMode" != "1" ] && [ "$routerMode" != "" ];then
+                              echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+			      PAM_up="`pidof CcspPandMSsp`"
+                              ti_dhcp6c_up="`pidof ti_dhcp6c`"
+                              dibbler_client_up="`pidof dibbler-client`"
+                              if [ "$PAM_up" != "" ];then
+                                 if [ "$ti_dhcp6c_up" != "" ];then
+                                   echo_t "PAM pid $PAM_up & ti_dhcp6c pid $ti_dhcp6c_up"
+                                   echo_t "RDKB_PROCESS_CRASHED : Restarting ti_dhcp6c to reconfigure server.conf"
+                                   sh $DHCPV6_HANDLER disable
+                                   sleep 2
+                                   sh $DHCPV6_HANDLER enable
+                                 elif [ "$dibbler_client_up" != "" ];then
+                                   echo_t "PAM pid $PAM_up & dibbler-client pid $dibbler_client_up"
+                                   echo_t "RDKB_PROCESS_CRASHED : Restarting dibbler_client to reconfigure server.conf"
+                                   dibbler-client stop
+                                   sleep 2
+                                   dibbler-client start
+                                 fi
+                              fi
+                            else
+                               echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
+                            fi
                     fi
                 fi
             ;;
@@ -2742,7 +2766,30 @@ if [ "$DIBBLER_PID" = "" ]; then
                             dibbler-server start
                         fi
                     else
-                        echo_t "RDKB_PROCESS_CRASHED : Server.conf file not present, Cannot restart dibbler"
+                        routerMode=`syscfg get last_erouter_mode`
+                        if [ "$routerMode" != "1" ] && [ "$routerMode" != "" ];then
+                           echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+			   PAM_up="`pidof CcspPandMSsp`"
+                           ti_dhcp6c_up="`pidof ti_dhcp6c`"
+                           dibbler_client_up="`pidof dibbler-client`"
+                           if [ "$PAM_up" != "" ];then
+                              if [ "$ti_dhcp6c_up" != "" ];then
+                                 echo_t "PAM pid $PAM_up & ti_dhcp6c pid $ti_dhcp6c_up"
+                                 echo_t "RDKB_PROCESS_CRASHED : Restarting ti_dhcp6c to reconfigure server.conf"
+                                 sh $DHCPV6_HANDLER disable
+                                 sleep 2
+                                 sh $DHCPV6_HANDLER enable
+                              elif [ "$dibbler_client_up" != "" ];then
+                                 echo_t "PAM pid $PAM_up & dibbler-client pid $dibbler_client_up"
+                                 echo_t "RDKB_PROCESS_CRASHED : Restarting dibbler_client to reconfigure server.conf"
+                                 dibbler-client stop
+                                 sleep 2
+                                 dibbler-client start
+                              fi
+                           fi
+                        else
+                            echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
+                        fi
                     fi
                 fi
             ;;
@@ -2811,7 +2858,7 @@ then
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
 WAN_STATUS=$(sysevent get wan-status)
 WAN_IPv4_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
-DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+#DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
