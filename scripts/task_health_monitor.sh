@@ -1480,7 +1480,7 @@ case $SELFHEAL_TYPE in
             DROPBEAR_ENABLE=$(ps -ww | grep "dropbear" | grep "$ARM_INTERFACE_IP")
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-                t2CountNotify "SYS_SH_DhcpArp_restart"
+                t2CountNotify "SYS_SH_Dropbear_restart"
                 dropbear -E -s -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
             fi
         fi
@@ -1491,7 +1491,7 @@ case $SELFHEAL_TYPE in
             DROPBEAR_PID=$(pidof dropbear)
             if [ "$DROPBEAR_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-                t2CountNotify "SYS_SH_DhcpArp_restart"
+                t2CountNotify "SYS_SH_Dropbear_restart"
                 sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
             fi
             if [ -f "/nvram/ETHWAN_ENABLE" ]; then
@@ -1661,7 +1661,7 @@ case $SELFHEAL_TYPE in
             DROPBEAR_ENABLE=$(ps -w | grep "dropbear" | grep "$ARM_INTERFACE_IP")
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-                t2CountNotify "SYS_SH_DhcpArp_restart"
+                t2CountNotify "SYS_SH_Dropbear_restart"	
                 DROPBEAR_PARAMS_1="/tmp/.dropbear/dropcfg1_tdt2"
                 DROPBEAR_PARAMS_2="/tmp/.dropbear/dropcfg2_tdt2"
                 if [ ! -d '/tmp/.dropbear' ]; then
