@@ -1222,7 +1222,14 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" = "MV1" ]; then
+HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
+if [ x"$HOTSPOT_PSM" = x"1" ]; then
+    HOTSPOT_ENABLE="true"
+else
+    HOTSPOT_ENABLE="flase"
+fi
+
+if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     count=0
     set '5 6'
     for i in $@; do
@@ -1231,24 +1238,24 @@ if [ "$BOX_TYPE" = "MV1" ]; then
             count=`expr $count + 1`
         fi
     done
+    # Accounting is enabled always hence, double the expected relay process count
+    count=`expr $count \* 2`
+
     RELAYPID=$(busybox pidof radius_relay)
     relay_count=0
     for j in $RELAYPID; do
         relay_count=`expr $relay_count + 1`
     done
 
-    if [ "$count" != "$relay_count" ]; then
+    echo "radius process: actual count=$relay_count expected count=$count"
+
+    if [ "$count" -gt "$relay_count" ] ; then
         echo_t "RDKB_SELFHEAL : radius relay not running for all the instance, needs a restart"
         sysevent set radiusrelay-restart
     fi
 
 fi
-HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
-if [ x"$HOTSPOT_PSM" = x"1" ]; then
-    HOTSPOT_ENABLE="true"
-else
-    HOTSPOT_ENABLE="flase"
-fi
+
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
