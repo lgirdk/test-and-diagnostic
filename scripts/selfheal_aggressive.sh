@@ -918,7 +918,7 @@ self_heal_dhcp_clients()
                 if [ $wan_dhcp_client_v6 -eq 0 ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                     if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
-                        /etc/dibbler/dibbler-init.sh
+                        /lib/rdk/dibbler-init.sh
                         sleep 2
                         /usr/sbin/dibbler-client start
                     elif [ "$WAN_TYPE" = "EPON" ]; then
@@ -941,7 +941,7 @@ self_heal_dhcp_clients()
 
                 if [ $wan_dhcp_client_v6 -eq 0 ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                    /etc/dibbler/dibbler-init.sh
+                    /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
                     wan_dhcp_client_v6=1
@@ -1017,7 +1017,7 @@ self_heal_dhcp_clients()
 		if [ $wan_dhcp_client_v6 -eq 0 ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                     if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
-			/etc/dibbler/dibbler-init.sh
+			/lib/rdk/dibbler-init.sh
 			sleep 2
 			/usr/sbin/dibbler-client start
                     elif [ "$WAN_TYPE" = "EPON" ]; then
