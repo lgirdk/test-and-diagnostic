@@ -64,6 +64,24 @@ logTmpFs()
    fi
 }
 
+get_high_mem_processes() {
+    top -bn1 -m | head -n10 | tail -6 > /tmp/mem_info.txt
+    sed -i '/top/d' /tmp/mem_info.txt
+    sed -i -e 's/^/ /' /tmp/mem_info.txt
+
+    local process_pid1=`awk -F ' ' '{ print $1}' /tmp/mem_info.txt | head -n1`
+    local process_pid2=`awk -F ' ' '{ print $1}' /tmp/mem_info.txt | head -n2 | tail -1`
+    local process_pid3=`awk -F ' ' '{ print $1}' /tmp/mem_info.txt | head -n3 | tail -1`
+    local process_name1=`cat /proc/$process_pid1/cmdline`
+    local process_name2=`cat /proc/$process_pid2/cmdline`
+    local process_name3=`cat /proc/$process_pid3/cmdline`
+    local process_mem1=`awk -F ' ' '{ print $2}' /tmp/mem_info.txt | head -n1`
+    local process_mem2=`awk -F ' ' '{ print $2}' /tmp/mem_info.txt | head -n2 | tail -1`
+    local process_mem3=`awk -F ' ' '{ print $2}' /tmp/mem_info.txt | head -n3 | tail -1`
+
+    t2ValNotify "$1" "$process_name1, $process_mem1, $process_name2, $process_mem2, $process_name3, $process_mem3 "
+}
+
     totalMemSys=`free | awk 'FNR == 2 {print $2}'`
     usedMemSys=`free | awk 'FNR == 2 {print $3}'`
     freeMemSys=`free | awk 'FNR == 2 {print $4}'`
@@ -82,11 +100,11 @@ logTmpFs()
 
     echo "USED_MEM:$usedMemSys" | grep -q "USED_MEM:55"
     if [ $? -eq 0 ]; then 
-        t2ValNotify "SYS_ERROR_MemAbove550"
+        get_high_mem_processes "SYS_ERROR_MemAbove550"
     fi
     echo "USED_MEM:$usedMemSys" | grep -q "USED_MEM:6"
     if [ $? -eq 0 ]; then 
-        t2ValNotify "SYS_ERROR_MemAbove600"
+        get_high_mem_processes "SYS_ERROR_MemAbove600"
     fi
     
     echo_t "FREE_MEM:$freeMemSys"
