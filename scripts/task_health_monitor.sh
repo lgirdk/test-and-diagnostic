@@ -1059,6 +1059,20 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     HOTSPOT_PID=$(pidof CcspHotspot)
     if [ "$HOTSPOT_PID" = "" ]; then
         if [ ! -f /tmp/tunnel_destroy_flag ] ; then
+
+            primary=$(sysevent get hotspotfd-primary)
+            secondary=$(sysevent get hotspotfd-secondary)
+            PRIMARY_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            SECOND_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            if [ "$primary" = "" ] ; then
+               echo_t "Primary endpoint is empty. Restoring it"
+               sysevent set hotspotfd-primary $PRIMARY_EP
+            fi
+
+            if [ "$secondary" = "" ] ; then
+               echo_t "Secondary endpoint is empty. Restoring it"
+               sysevent set hotspotfd-secondary $SECOND_EP
+            fi
             echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
             t2CountNotify "WIFI_SH_hotspot_restart"
             resetNeeded "" CcspHotspot
