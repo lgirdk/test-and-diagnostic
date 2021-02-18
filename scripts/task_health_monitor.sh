@@ -599,7 +599,7 @@ case $SELFHEAL_TYPE in
         ###########################################
     ;;
     "SYSTEMD"|"TCCBR")
-        if [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$BOX_TYPE" = "TCCBR" ]; then
+        if [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$BOX_TYPE" = "TCCBR" ]; then
             Check_If_Erouter_Exists=$(ifconfig -a | grep "$WAN_INTERFACE")
             ifconfig $WAN_INTERFACE > /dev/null
             wan_exists=$?
@@ -1894,10 +1894,11 @@ esac
 # Tech XB7  => MODEL_NUM=CGM4331COM
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech CBR2 => MODEL_NUM=CGA4332COM
+# Tech XB8  => MODEL_NUM=CGM4981COM
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
 case $SELFHEAL_TYPE in
     "BASE")
@@ -2694,10 +2695,11 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
     # Tech XB7  => MODEL_NUM=CGM4331COM
     # CMX  XB7  => MODEL_NUM=TG4482A
     # Tech CBR2 => MODEL_NUM=CGA4332COM
+    # Tech XB8  => MODEL_NUM=CGM4981COM
     # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
     # Ref: RDKB-25546
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
     then
     checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -2836,10 +2838,11 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 		# Tech XB7  => MODEL_NUM=CGM4331COM
 		# Tech CBR2 => MODEL_NUM=CGA4332COM
 		# CMX  XB7  => MODEL_NUM=TG4482A
+                # Tech XB8  => MODEL_NUM=CGM4981COM
 		# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 		# Ref: RDKB-25546
 		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 		then
                 checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -2895,10 +2898,11 @@ esac
 # Tech XB7  => MODEL_NUM=CGM4331COM
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
+# Tech XB8  => MODEL_NUM=CGM4981COM
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(pidof dibbler-server)
@@ -3097,10 +3101,11 @@ esac
 # Tech XB7  => MODEL_NUM=CGM4331COM
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
+# Tech XB8  => MODEL_NUM=CGM4981COM
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
@@ -3522,10 +3527,11 @@ fi
 # Tech XB7  => MODEL_NUM=CGM4331COM
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
+# Tech XB8  => MODEL_NUM=CGM4981COM
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] 
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] 
 then
 case $SELFHEAL_TYPE in
     "BASE")

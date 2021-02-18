@@ -1052,8 +1052,10 @@ self_heal_dhcp_clients()
 # Tech XB7  => MODEL_NUM=CGM4331COM
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech CBR2  => MODEL_NUM=CGA4332COM
+# Tech XB8  => MODEL_NUM=CGM4981COM
+
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
     exit
 fi
