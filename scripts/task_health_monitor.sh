@@ -924,6 +924,9 @@ else
                     esac
                     resetNeeded "" CcspHomeSecurity
                 fi
+	esac
+
+    fi #Not HUb4
 
                 isADVPID=0
                 case $SELFHEAL_TYPE in
@@ -972,12 +975,6 @@ else
                         esac
                     fi  # [ -f $ADVSEC_PATH ]
                 fi  # [ "$advsec_bridge_mode" != "2" ]
-            ;;
-            "TCCBR")
-            ;;
-        esac
-
-    fi #Not HUb4 && SR300
 fi #BWG
 case $SELFHEAL_TYPE in
     "BASE")
