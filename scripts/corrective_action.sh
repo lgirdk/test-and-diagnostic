@@ -1086,7 +1086,9 @@ logNetworkInfo()
         "SYSTEMD")
             #The Parameter l2sd0 in this instance is telling the script that it's being called
             # for information and not due to a crashed process. This should be refactored
-            /rdklogger/backupLogs.sh "false" "l2sd0"
+            if [ "$1" != "false" ]; then
+                /rdklogger/backupLogs.sh "false" "l2sd0"
+            fi
         ;;
     esac
 
