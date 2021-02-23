@@ -266,7 +266,7 @@ self_heal_interfaces()
                             if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
                                 echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate brlan0 interface"
                                 t2CountNotify "SYS_ERROR_brlan0_not_created"
-                                logNetworkInfo
+                                logNetworkInfo "false"
 
                                 ipv4_status=$(sysevent get ipv4_4-status)
                                 lan_status=$(sysevent get lan-status)
@@ -331,7 +331,7 @@ self_heal_interfaces()
                             if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
                                 echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
                                 t2CountNotify "SYS_ERROR_brlan0_not_created"
-                                logNetworkInfo
+                                logNetworkInfo "false"
 
                                 ipv4_status=$(sysevent get ipv4_4-status)
                                 lan_status=$(sysevent get lan-status)
@@ -1000,9 +1000,10 @@ self_heal_dhcp_clients()
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
 # Tech XB7  => MODEL_NUM=CGM4331COM
+# CMX  XB7  => MODEL_NUM=TG4482A
 # Tech CBR2  => MODEL_NUM=CGA4332COM
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
     exit
 fi
