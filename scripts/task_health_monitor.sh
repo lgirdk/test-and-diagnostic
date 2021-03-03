@@ -23,6 +23,7 @@ TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
 BR_MODE=0
+CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
 
 source $TAD_PATH/corrective_action.sh
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
@@ -274,69 +275,160 @@ case $SELFHEAL_TYPE in
                     /usr/bin/logbackup &
                 fi
             fi
-            if [ -f $PING_PATH/ping_peer ]; then
-                WAN_STATUS=$(sysevent get wan-status)
-                if [ "$WAN_STATUS" = "started" ]; then
-                    ## Check Peer ip is accessible
-                    loop=1
-                    while [ $loop -le 3 ]
-                      do
-                        PING_RES=$(ping_peer)
-                        CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                        if [ "$CHECK_PING_RES" != "" ]; then
-                            if [ $CHECK_PING_RES -ne 100 ]; then
-                                ping_success=1
-                                echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-                                break
-                            else
-                                echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
-                                ping_failed=1
-                            fi
-                        else
-                            if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
-                                check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
-                                check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
-                                if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]; then
-                                    echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
-                                    rpc_ifconfig l2sd0.500 >/dev/null 2>&1
-                                    sleep 3
-                                fi
-                                PING_RES=$(ping_peer)
-                                CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                                if [ "$CHECK_PING_RES" != "" ]; then
-                                    if [ $CHECK_PING_RES -ne 100 ]; then
-                                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
-                                        break
-                                    fi
-                                fi
-                            fi
-                            ping_failed=1
-                        fi
-
-                        if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
-                            echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-                            t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                            echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                        else
-                            echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-                            t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                            echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                            echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-                            #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-                            reason="Peer_down"
-                            rebootCount=1
-                            #setRebootreason $reason $rebootCount
-                            rebootNeeded RM "" $reason $rebootCount
-
-                        fi
-                        loop=$((loop+1))
-                        sleep 5
-                      done
-                else
-                    echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
-                fi
+            if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+              # BWGRDK1271
+              if [ -f $PING_PATH/ping_peer ]; then
+                  WAN_STATUS=$(sysevent get wan-status)
+                  if [ "$WAN_STATUS" = "started" ]; then
+                      ## Check Peer ip is accessible
+                      loop=1
+                      ping_peer_rbt_thresh=$(syscfg get ping_peer_reboot_threshold)
+                      if [ -z "$ping_peer_rbt_thresh" ]; then
+                          echo "RDKB_SELFHEAL : syscfg ping_peer_reboot_threshold unavail. Set older value 3" >> $CONSOLE_LOG
+                          ping_peer_rbt_thresh=3
+                      fi
+                      while [ "$loop" -le $ping_peer_rbt_thresh ]
+                        do
+                          PING_RES=$(ping_peer)
+                          CHECK_PING_RES=$(echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                          if [ "$CHECK_PING_RES" != "" ]
+                          then
+                              if [ "$CHECK_PING_RES" -ne 100 ]
+                              then
+                                  ping_success=1
+                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+                                  timestamp=$( date +%d"/"%m"/"%Y" "%T )
+                                  echo "$timestamp : RDKB_SELFHEAL : Ping to Peer IP is success" >> $CONSOLE_LOG
+                                  break
+                              else
+                                  echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
+                                  timestamp=$( date +%d"/"%m"/"%Y" "%T )
+                                  echo "$timestamp : [RDKB_PLATFORM_ERROR] : ATOM interface is not reachable" >> $CONSOLE_LOG
+                                  ping_failed=1
+                              fi
+                          else
+                              if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                                  check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
+                                  check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
+                                  if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]
+                                  then
+                                      echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
+                                      rpc_ifconfig l2sd0.500 >/dev/null 2>&1
+                                      sleep 3
+                                  fi
+                                  PING_RES=$(ping_peer)
+                                  CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                                  if [ "$CHECK_PING_RES" != "" ]; then
+                                      if [ "$CHECK_PING_RES" -ne 100 ]; then
+                                          echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
+                                          break
+                                      fi
+                                  fi
+                              fi
+                              ping_failed=1
+                          fi
+                          if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt $ping_peer_rbt_thresh ]; then
+                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                              echo "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop" >> $CONSOLE_LOG
+                          else
+                              cli docsis/cmstatus | grep -i "The CM status is OPERATIONAL" >/dev/null 2>&1
+                              if [ $? -eq 0 ]; then
+                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                                  echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM OPERATIONAL. Rebooting device" >> $CONSOLE_LOG
+                                  t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                                  echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                                  echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+                                  #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+                                  reason="Peer_down"
+                                  rebootCount=1
+                                  #setRebootreason $reason $rebootCount
+                                  rebootNeeded RM "" $reason $rebootCount
+                              else
+                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop. Skip reboot as CM is not OPERATIONAL"
+                                  echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM NOT OPERATIONAL. Skip Reboot" >> $CONSOLE_LOG
+                                  cli docsis/cmstatus
+                                  echo_t "RDKB_SELFHEAL : Wan Status - $(sysevent get wan-status)"
+                                  break
+                              fi
+                          fi
+                          loop=$((loop+1))
+                          sleep 5
+                        done
+                  else
+                      echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
+                      timestamp=$( date +%d"/"%m"/"%Y" "%T )
+                      echo "$timestamp : RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed" >> $CONSOLE_LOG
+                  fi
+              else
+                  echo_t "RDKB_SELFHEAL : ping_peer command not found"
+              fi
             else
-                echo_t "RDKB_SELFHEAL : ping_peer command not found"
+              if [ -f $PING_PATH/ping_peer ]; then
+                  WAN_STATUS=$(sysevent get wan-status)
+                  if [ "$WAN_STATUS" = "started" ]; then
+                      ## Check Peer ip is accessible
+                      loop=1
+                      while [ $loop -le 3 ]
+                        do
+                          PING_RES=$(ping_peer)
+                          CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                          if [ "$CHECK_PING_RES" != "" ]; then
+                              if [ $CHECK_PING_RES -ne 100 ]; then
+                                  ping_success=1
+                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+                                  break
+                              else
+                                  echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
+                                  ping_failed=1
+                              fi
+                          else
+                              if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                                  check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
+                                  check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
+                                  if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]; then
+                                      echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
+                                      rpc_ifconfig l2sd0.500 >/dev/null 2>&1
+                                      sleep 3
+                                  fi
+                                  PING_RES=$(ping_peer)
+                                  CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                                  if [ "$CHECK_PING_RES" != "" ]; then
+                                      if [ $CHECK_PING_RES -ne 100 ]; then
+                                          echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
+                                          break
+                                      fi
+                                  fi
+                              fi
+                              ping_failed=1
+                          fi
+
+                          if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
+                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                          else
+                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                              echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+                              #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+                              reason="Peer_down"
+                              rebootCount=1
+                              #setRebootreason $reason $rebootCount
+                              rebootNeeded RM "" $reason $rebootCount
+
+                          fi
+                          loop=$((loop+1))
+                          sleep 5
+                        done
+                  else
+                      echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
+                  fi
+              else
+                  echo_t "RDKB_SELFHEAL : ping_peer command not found"
+              fi
             fi
 
             if [ -f $PING_PATH/arping_peer ]; then
