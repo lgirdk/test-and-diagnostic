@@ -17,7 +17,7 @@
 # limitations under the License.
 ##########################################################################
 
-libdiagnostic_la_CPPFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_COSA_SIM_ -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
+libdiagnostic_la_CPPFLAGS = -D_ANSC_LINUX -D_ANSC_USER -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
 
 if CCSP_ARCH_ARM
 OPT_SRCS=source-arm/diagnostic/BbhmDiagIpPing source-arm/dmltad
