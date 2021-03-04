@@ -20,6 +20,16 @@
 #ifndef  _COSA_THERMAL_DML_H
 #define  _COSA_THERMAL_DML_H
 
+/* define data type to hold fan information */
+typedef struct fanInfo_s {
+
+    ULONG       fanIndex;
+    BOOL        status;
+    unsigned    speed;
+    unsigned    rotorLock;
+    BOOL        maxOverride;
+} fanInfo_t;
+
 /***********************************************************************
 
 /***********************************************************************

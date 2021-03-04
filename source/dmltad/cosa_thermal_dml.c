@@ -22,12 +22,23 @@
 #include "cosa_thermal_dml.h"
 #include "platform_hal.h"
 
+/* using pre defined values for number of fans, hal api to return number of fans may need to be added */
+#if defined (_CBR2_PRODUCT_REQ_)
+#define NUM_FAN 2
+#else
+#define NUM_FAN 1
+#endif
+
+fanInfo_t fanInfo[NUM_FAN];
+
 /***********************************************************************
 
  APIs for Object:
 
     Fan.
-
+    
+    *  Fan_GetEntryCount
+    *  Fan_GetEntry
     *  Fan_GetParamBoolValue
     *  Fan_GetParamUlongValue
     *  Fan_SetParamBoolValue
@@ -36,6 +47,100 @@
     *  Fan_Rollback
 
 ***********************************************************************/
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        Fan_GetEntryCount
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to retrieve the count of the table.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The count of the table
+
+**********************************************************************/
+ULONG
+Fan_GetEntryCount
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return NUM_FAN;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ANSC_HANDLE
+        Fan_GetEntry
+            (
+                ANSC_HANDLE                 hInsContext,
+                ULONG                       nIndex,
+                ULONG*                      pInsNumber
+            );
+
+    description:
+
+        This function is called to retrieve the entry specified by the index.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                ULONG                       nIndex,
+                The index of this entry;
+
+                ULONG*                      pInsNumber
+                The output instance number;
+
+    return:     The handle to identify the entry
+
+**********************************************************************/
+
+ANSC_HANDLE
+Fan_GetEntry
+    (
+        ANSC_HANDLE                 hInsContext,
+        ULONG                       nIndex,
+        ULONG*                      pInsNumber
+    )
+{
+    int fanIndex = nIndex;
+
+    if (nIndex < NUM_FAN)
+    {
+
+#ifdef FAN_THERMAL_CTR
+
+        fanInfo[fanIndex].fanIndex = nIndex;
+        fanInfo[fanIndex].status = platform_hal_getFanStatus(fanIndex);
+        fanInfo[fanIndex].speed  = platform_hal_getFanSpeed(fanIndex);
+        fanInfo[fanIndex].rotorLock  = platform_hal_getRotorLock(fanIndex);
+        fanInfo[fanIndex].maxOverride = FALSE; 
+
+#endif
+
+        *pInsNumber  = nIndex + 1;
+
+        return &fanInfo[fanIndex];
+    } 
+    else
+    {
+        return NULL;
+    }
+}
 
 /**********************************************************************
 
@@ -74,13 +179,24 @@ BOOL Fan_GetParamBoolValue
         BOOL*                       bValue
     )
 {
+
 #ifdef FAN_THERMAL_CTR
+
+    fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
+
     if( AnscEqualString(ParamName, "Status", TRUE))
     {
-        *bValue = platform_hal_getFanStatus();
+        *bValue = platform_hal_getFanStatus(pFanInfo->fanIndex);
         return TRUE;
     }
+    if( AnscEqualString(ParamName, "MaxOverride", TRUE))
+    {
+        *bValue = pFanInfo->maxOverride;
+        return TRUE;
+    }
+
 #endif
+
     return FALSE;
 }
 
@@ -121,10 +237,13 @@ BOOL Fan_SetParamBoolValue
         BOOL                        bValue
     )
 {
+    fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
+
 #ifdef FAN_THERMAL_CTR
     if( AnscEqualString(ParamName, "MaxOverride", TRUE))
     {
-        platform_hal_setFanMaxOverride( bValue );
+        platform_hal_setFanMaxOverride( bValue, pFanInfo->fanIndex );
+
         return TRUE;
     }
 #endif
@@ -169,10 +288,14 @@ Fan_GetParamUlongValue
         ULONG*                      pUlong
     )
 {
+
 #ifdef FAN_THERMAL_CTR
+
+    fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
+
     if( AnscEqualString(ParamName, "Speed", TRUE))
     {
-        *pUlong= platform_hal_getRPM();
+        *pUlong= platform_hal_getRPM(pFanInfo->fanIndex);
         return TRUE;
     }
 
@@ -180,7 +303,7 @@ Fan_GetParamUlongValue
     {
         int rotor;
 
-        rotor = platform_hal_getRotorLock();
+        rotor = platform_hal_getRotorLock(pFanInfo->fanIndex);
         switch( rotor ) {
             case -1:
                 *pUlong = 1; //Not_Applicable
