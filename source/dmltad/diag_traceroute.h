@@ -45,6 +45,7 @@ struct tracert_cfg {
     char        host[257];
     char        ifname[IFNAMSIZ];
     unsigned    cnt;        /* number of probe packets per hop. */
+    unsigned    bport;      /* Base port number */
     unsigned    timeo;      /* timeout for each probe */
     unsigned    size;       /* packet length */
     unsigned    tos;        /* TOS or DSCP/ENC */
