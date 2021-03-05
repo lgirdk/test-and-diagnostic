@@ -2358,6 +2358,8 @@ TraceRoute_GetParamUlongValue
 
     if (strcmp(ParamName, "NumberOfTries") == 0)
         *puLong = cfg.cnt;
+    else if (strcmp(ParamName, "BasePort") == 0)
+        *puLong = cfg.bport;
     else if (strcmp(ParamName, "Timeout") == 0)
         *puLong = cfg.timo;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
@@ -2621,6 +2623,8 @@ TraceRoute_SetParamUlongValue
 
     if (strcmp(ParamName, "NumberOfTries") == 0)
         cfg.cnt = uValue;
+    else if (strcmp(ParamName, "BasePort") == 0)
+        cfg.bport = uValue;
     else if (strcmp(ParamName, "Timeout") == 0)
         cfg.timo = uValue;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
