@@ -112,6 +112,8 @@
 
 #define  BBHM_TRACERT_DEF_PACKET_SIZE                   32
 
+#define  BBHM_TRACERT_DEF_BASEPORT                      33434
+
 #define  BBHM_TRACERT_MAX_TIME_BETWEEN_IN_MILLISECONDS  600000        /* in milliseconds */
 #define  BBHM_TRACERT_MIN_TIME_BETWEEN_IN_MILLISECONDS  0
 
@@ -167,6 +169,7 @@ _BBHM_TRACERT_PROPERTY
     ANSC_IPV4_ADDRESS                    DstIp;
     char*                                pDstAddrName;
     ULONG                                NumPkts;
+    ULONG                                BasePort;
     ULONG                                PktSize;
     ULONG                                TimeBetween;
     ULONG                                TimeOut;
