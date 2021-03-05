@@ -417,6 +417,8 @@ BbhmDiagitInitialize
     pMyObject->SetDstIp                     = BbhmDiagitSetDstIp;
     pMyObject->GetNumPkts                   = BbhmDiagitGetNumPkts;
     pMyObject->SetNumPkts                   = BbhmDiagitSetNumPkts;
+    pMyObject->GetBasePort                  = BbhmDiagitGetBasePort;
+    pMyObject->SetBasePort                  = BbhmDiagitSetBasePort;
     pMyObject->GetPktSize                   = BbhmDiagitGetPktSize;
     pMyObject->SetPktSize                   = BbhmDiagitSetPktSize;
     pMyObject->GetTimeBetween               = BbhmDiagitGetTimeBetween;
