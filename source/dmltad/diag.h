@@ -76,6 +76,7 @@ typedef struct diag_cfg_s {
     /* DH  Diag We have to be comptible with TR-181 -- it is not wise to do the opposite.*/
     char        Interface[DIAG_CFG_REF_STRING_LENGTH+1];
     unsigned    cnt;
+    unsigned    bport;
     unsigned    timo;
     unsigned    size;
     unsigned    tos;
