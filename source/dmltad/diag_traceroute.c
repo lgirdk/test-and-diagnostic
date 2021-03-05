@@ -50,6 +50,7 @@
 #define TRACERT_DEF_TIMO    5000        /* mSec */
 #define TRACERT_DEF_SIZE    64
 #define TRACERT_DEF_MAXHOP  30
+#define TRACERT_DEF_BASEPORT 33434
 
 static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *stat);
 static diag_err_t tracert_stop(diag_obj_t *diag);
@@ -62,6 +63,7 @@ static diag_obj_t diag_tracert = {
     .mutex      = PTHREAD_MUTEX_INITIALIZER,
     .cfg        = {
         .cnt    = TRACERT_DEF_CNT,
+        .bport  = TRACERT_DEF_BASEPORT,
         .timo   = TRACERT_DEF_TIMO,
         .size   = TRACERT_DEF_SIZE,
         .maxhop = TRACERT_DEF_MAXHOP,
@@ -250,6 +252,18 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     if (cfg->cnt)
     {
         rc = sprintf_s(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
+        if (rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
+        }
+    }
+    if (cfg->bport)
+    {
+        rc = sprintf_s(cmd + strlen(cmd), left, "-p %u ", cfg->bport);
         if (rc < EOK)
         {
             ERR_CHK(rc);
