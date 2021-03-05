@@ -71,6 +71,7 @@ static diag_obj_t diag_tracert = {
     .mutex      = PTHREAD_MUTEX_INITIALIZER,
     .cfg        = {
         .cnt    = TRACERT_DEF_CNT,
+        .bport  = 33434,
         .timo   = TRACERT_DEF_TIMO,
         .size   = TRACERT_DEF_SIZE,
         .maxhop = TRACERT_DEF_MAXHOP,
@@ -263,6 +264,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 
     if (cfg->cnt)
         left -= snprintf(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
+    if (cfg->bport)
+        left -= snprintf(cmd + strlen(cmd), left, "-p %u ", cfg->bport);
     if (cfg->timo)
         left -= snprintf(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
     if (cfg->tos)

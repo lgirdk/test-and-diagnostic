@@ -2280,6 +2280,8 @@ TraceRoute_GetParamUlongValue
 
     if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
         *puLong = cfg.cnt;
+    else if( AnscEqualString(ParamName, "X_LGI-COM_BasePort", TRUE))
+        *puLong = cfg.bport;
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
         *puLong = cfg.timo * 1000;
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
@@ -2540,6 +2542,8 @@ TraceRoute_SetParamUlongValue
 
     if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
         cfg.cnt = uValue;
+    if( AnscEqualString(ParamName, "X_LGI-COM_BasePort", TRUE))
+        cfg.bport = uValue;
     else if( AnscEqualString(ParamName, "Timeout", TRUE))
         cfg.timo = uValue / 1000;
     else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
