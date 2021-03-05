@@ -20,13 +20,11 @@
 libdiagnostic_la_CPPFLAGS = -D_ANSC_LINUX -D_ANSC_USER -D_COSA_SIM_ -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
 
 if CCSP_ARCH_ARM
-libdiagnostic_la_CPPFLAGS += -D_ANSC_LITTLE_ENDIAN_
 OPT_SRCS=source-arm/diagnostic/BbhmDiagIpPing source-arm/dmltad
 EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/diagnostic/BbhmDiagIpPing/libdiagprivarm.la
 endif
 
 if CCSP_ARCH_PC
-libdiagnostic_la_CPPFLAGS += -D_ANSC_LITTLE_ENDIAN_
 #noinst_LTLIBRARIES = libdiagprivpc.la libdmlpc.la
 #libdiagprivpc_la_SOURCES = $(top_srcdir)/source/diagnostic/BbhmDiagIpPing/bbhm_diagip_operation_priv.c
 #libdmlpc_la_SOURCES = $(top_srcdir)/source/dmltad/cosa_diagnostic_apis_priv.c $(top_srcdir)/source/dmltad/plugin_main_priv.c

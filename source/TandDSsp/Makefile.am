@@ -18,23 +18,11 @@
 ##########################################################################
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
-AM_LDFLAGS = -lccsp_common -ldl
 
-if CCSP_ARCH_ARM
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-endif
-
-if CCSP_ARCH_MIPS
-endif
-
-if CCSP_ARCH_PC
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-endif
-
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
+
 bin_PROGRAMS = CcspTandDSsp
-CcspTandDSsp_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp $(CPPFLAGS)
+
+CcspTandDSsp_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
 CcspTandDSsp_SOURCES = ssp_messagebus_interface.c ssp_action_priv.c ssp_main.c ssp_action.c ssp_messagebus_interface_priv.c dm_pack_datamodel.c
 CcspTandDSsp_LDFLAGS = -lccsp_common -ldl -rdynamic
