@@ -38,6 +38,6 @@ AM_CFLAGS += $(AM_CPPFLAGS)
 if ENABLE_MTA
 AM_LDFLAGS += -lhal_mta
 endif
-Selfhealutil_CPPFLAGS = -I$(top_srcdir)/hal/include
+Selfhealutil_CPPFLAGS =
 Selfhealutil_SOURCES = selfheal_utility.c
 endif
