@@ -19,11 +19,9 @@
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
 
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
-
 
 noinst_LTLIBRARIES = libdiagprivarm.la
-libdiagprivarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp $(CPPFLAGS)
+
+libdiagprivarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
 libdiagprivarm_la_SOURCES = bbhm_diagip_operation_priv.c

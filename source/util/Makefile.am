@@ -19,21 +19,19 @@
 
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
 
 ACLOCAL_AMFLAGS = -I m4
-AM_CPPFLAGS = -Wall -Werror
 
 AM_LDFLAGS =  -lpthread -lz
 
 bin_PROGRAMS = Sub64
-Sub64_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util $(CPPFLAGS)
+Sub64_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util
 Sub64_SOURCES = sub64.c
 
 if CCSP_ARCH_ARM
 bin_PROGRAMS += Selfhealutil
 AM_CFLAGS += $(AM_CPPFLAGS)
 AM_LDFLAGS += -lhal_mta
-Selfhealutil_CPPFLAGS = -I$(top_srcdir)/hal/include
+Selfhealutil_CPPFLAGS =
 Selfhealutil_SOURCES = selfheal_utility.c
 endif
