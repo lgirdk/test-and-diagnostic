@@ -167,6 +167,7 @@ _BBHM_TRACERT_PROPERTY
     ANSC_IPV4_ADDRESS                    DstIp;
     char*                                pDstAddrName;
     ULONG                                NumPkts;
+    ULONG                                BasePort;
     ULONG                                PktSize;
     ULONG                                TimeBetween;
     ULONG                                TimeOut;
