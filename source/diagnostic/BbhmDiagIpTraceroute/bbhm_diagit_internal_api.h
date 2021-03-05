@@ -171,6 +171,19 @@ BbhmDiagitSetNumPkts
     );
 
 ULONG
+BbhmDiagitGetBasePort
+    (
+        ANSC_HANDLE                 hThisObject
+    );
+
+ANSC_STATUS
+BbhmDiagitSetBasePort
+    (
+        ANSC_HANDLE                 hThisObject,
+        ULONG                        ulBasePort
+    );
+
+ULONG
 BbhmDiagitGetPktSize
     (
         ANSC_HANDLE                 hThisObject
