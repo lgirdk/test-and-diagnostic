@@ -397,6 +397,8 @@ typedef  char*
     PFN_BBHMDIAGIT_SET_ADDR                 SetDstIp;                                 \
     PFN_BBHMDIAGIT_GET_ULONG                GetNumPkts;                               \
     PFN_BBHMDIAGIT_SET_ULONG                SetNumPkts;                               \
+    PFN_BBHMDIAGIT_SET_ULONG                GetBasePort;                              \
+    PFN_BBHMDIAGIT_SET_ULONG                SetBasePort;                              \
     PFN_BBHMDIAGIT_GET_ULONG                GetPktSize;                               \
     PFN_BBHMDIAGIT_SET_ULONG                SetPktSize;                               \
     PFN_BBHMDIAGIT_GET_ULONG                GetTimeBetween;                           \

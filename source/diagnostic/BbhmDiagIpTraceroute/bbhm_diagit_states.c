@@ -651,6 +651,19 @@ BbhmDiagitGetNumPkts
     return  pProperty->NumPkts;
 }
 
+ULONG
+BbhmDiagitGetBasePort
+    (
+        ANSC_HANDLE                 hThisObject
+    )
+{
+    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
+    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
+    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
+
+    return  pProperty->BasePort;
+}
+
 
 /**********************************************************************
 
@@ -691,6 +704,22 @@ BbhmDiagitSetNumPkts
     PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
 
     pProperty->NumPkts    = ulNumPkts;
+
+    return  returnStatus;
+}
+
+ANSC_STATUS
+BbhmDiagitSetBasePort
+    (
+        ANSC_HANDLE                 hThisObject,
+        ULONG                       ulBasePort
+    )
+{
+    ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
+    PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT   )hThisObject;
+    PBBHM_TRACERT_PROPERTY          pProperty    = (PBBHM_TRACERT_PROPERTY            )&pMyObject->Property;
+
+    pProperty->BasePort    = ulBasePort;
 
     return  returnStatus;
 }
@@ -2075,6 +2104,7 @@ BbhmDiagitResetProperty
     pProperty->DstIpType    = BBHM_TRACERT_DEF_INET_ADDRESS_TYPE;
     pProperty->DstIp.Value  = 0;
     pProperty->NumPkts      = BBHM_TRACERT_DEF_NUMBER_PACKETS;
+    pProperty->BasePort     = BBHM_TRACERT_DEF_BASEPORT;
     pProperty->PktSize      = BBHM_TRACERT_DEF_PACKET_SIZE;
     pProperty->TimeBetween  = BBHM_TRACERT_DEF_TIME_BETWEEN_IN_MILLISECONDS;
     pProperty->TimeOut      = BBHM_TRACERT_DEF_TIME_OUT_IN_MILLISECONDS;
@@ -2111,6 +2141,7 @@ BbhmDiagitResetProperty
         pProperty->pDstAddrName = AnscCloneString(pDslhTracertObj->Host);
         pProperty->pSrcAddrName = AnscCloneString(pDslhTracertObj->IfAddrName);
         pProperty->NumPkts      = pDslhTracertObj->NumberOfTries;
+        pProperty->BasePort     = pDslhTracertObj->BasePort;
         pProperty->PktSize      = pDslhTracertObj->DataBlockSize;
 
         pProperty->TimeBetween  = pDslhTracertObj->Timeout;
@@ -2237,6 +2268,7 @@ BbhmDiagitSetDiagParams
             pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
             pDiagInfo->MaxHopCount          = pNewDiagInfo->MaxHopCount;
             pDiagInfo->NumberOfTries        = pNewDiagInfo->NumberOfTries;
+            pDiagInfo->BasePort             = pNewDiagInfo->BasePort;
             pDiagInfo->DataBlockSize        = pNewDiagInfo->DataBlockSize;
             pDiagInfo->UpdatedAt            = 0;
         }
@@ -2255,6 +2287,7 @@ BbhmDiagitSetDiagParams
         pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
         pDiagInfo->MaxHopCount          = pNewDiagInfo->MaxHopCount;
         pDiagInfo->NumberOfTries        = pNewDiagInfo->NumberOfTries;
+        pDiagInfo->BasePort             = pNewDiagInfo->BasePort;
         pDiagInfo->DataBlockSize        = pNewDiagInfo->DataBlockSize;
         pDiagInfo->UpdatedAt            = 0;
     }
