@@ -37,7 +37,7 @@ if [ "$UPTIME" -lt 1800 ]; then
     exit 0
 fi
 
-if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+if [ "$BOX_TYPE" = "XB3" ]; then
 SYSCFG_DB_FILE="/nvram/syscfg.db"
 else
 SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
