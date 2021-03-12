@@ -37,11 +37,7 @@ if [ "$UPTIME" -lt 1800 ]; then
     exit 0
 fi
 
-if [ "$BOX_TYPE" = "XB3" ]; then
 SYSCFG_DB_FILE="/nvram/syscfg.db"
-else
-SYSCFG_DB_FILE="/opt/secure/data/syscfg.db"
-fi
 
 #Removing erouter0 "_inst_num" dynamic enteries from database
 erouter_inst_num=`grep tr_erouter0 $SYSCFG_DB_FILE | grep "_inst_num" | cut -d "=" -f1`
