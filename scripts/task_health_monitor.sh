@@ -533,13 +533,16 @@ case $SELFHEAL_TYPE in
 
         fi
 
-        #ARRISXB6-9443 temp fix. Need to generalize and improve.
-        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-            brctl show brlan0 | grep "nmoca0" >> /dev/null
-            if [ $? -ne 0 ] ; then
-                echo_t "Moca is not part of brlan0.. adding it"
-                t2CountNotify "SYS_SH_MOCA_add_brlan0"
-                sysevent set multinet-syncMembers 1
+        HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+        if [ "$HOME_LAN_ISOLATION" = "0" ];then
+            #ARRISXB6-9443 temp fix. Need to generalize and improve.
+            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                brctl show brlan0 | grep "nmoca0" >> /dev/null
+                if [ $? -ne 0 ] ; then
+                    echo_t "Moca is not part of brlan0.. adding it"
+                    t2CountNotify "SYS_SH_MOCA_add_brlan0"
+                    sysevent set multinet-syncMembers 1
+                fi
             fi
         fi
 
