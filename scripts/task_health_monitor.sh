@@ -1185,7 +1185,6 @@ case $SELFHEAL_TYPE in
                     t2CountNotify "SYS_ERROR_GRETunnel_restored"
                     rcount=1
                 fi
-	    fi
             fi
             fi
             #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
