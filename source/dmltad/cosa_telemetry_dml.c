@@ -74,11 +74,20 @@ BOOL Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL 
         /* Telemetry agent receives the events only if T2Enable is enabled */
         if (bValue == TRUE)
         {
+#ifdef _PUMA6_ARM_
+            system("rpcclient2 'syscfg set telemetry_enable true; syscfg set T2Enable true'");
+#endif
             if (syscfg_set(NULL, "T2Enable", "true") != 0)
             {
                 CcspTraceError(("syscfg_set failed for Telemetry2 Enable\n"));
                 return FALSE;
             }
+        }
+        else
+        {
+#ifdef _PUMA6_ARM_
+            system("rpcclient2 'syscfg set telemetry_enable false; syscfg set T2Enable false'");
+#endif
         }
 
         if (syscfg_set_commit(NULL, "telemetry_enable", bValue ? "true" : "false") != 0)
@@ -198,7 +207,11 @@ BOOL Telemetry_Commit ( ANSC_HANDLE hInsContext )
                 CcspTraceInfo(("%s: Telemetry is disabled \n", __FUNCTION__));
                 CcspTraceInfo(("%s: Stop Telemetry Service, removing the cronjob (autodownload_dcmconfig.sh) from the cron table\n", __FUNCTION__));
                 system("crontab -l | grep -v 'autodownload_dcmconfig.sh' | crontab -");
+#ifdef _PUMA6_ARM_
+                system("killall -9 telemetry2_0; rpcclient2 'killall -9 telemetry2_0'");
+#else
                 system("killall -9 telemetry2_0");
+#endif
                 break;
             }
 	    case TELE_ST_RELOAD :
