@@ -266,6 +266,13 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
     syscfg_get(NULL, "telemetry_enable", buf, sizeof(buf));
     pMyObject->Enable = (!strncmp(buf, "true", 4)) ? TRUE : FALSE;
 
+#ifdef _PUMA6_ARM_
+    if (pMyObject->Enable == TRUE)
+    {
+        system("rpcclient2 'syscfg set telemetry_enable true; syscfg set T2Enable true'");
+    }
+#endif
+
     pMyObject->DCMConfigForceDownload = FALSE;
 
     memset(uploadURL, 0, sizeof(uploadURL));
