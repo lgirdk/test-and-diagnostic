@@ -27,6 +27,7 @@ CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
 
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
@@ -2808,7 +2809,7 @@ then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
-    IPV6_STATUS=`sysevent get ipv6-status`
+#    IPV6_STATUS=`sysevent get ipv6-status`
     DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
     routerMode="`syscfg get last_erouter_mode`"
     if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
@@ -2817,7 +2818,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                 DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
                 if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                     echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ]; then
+		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
 		else
@@ -2872,7 +2873,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                     sleep 2
                     #need to restart dhcp client to generate dibbler conf
 		    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ]; then
+		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
                 else
@@ -3022,7 +3023,7 @@ esac
 if [ "$BOX_TYPE" != "HUB4" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
     echo_t "isIPv6 = $isIPv6"
-    if [ "$isIPv6" = "" ]; then
+    if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
                 echo_t "[RDKB_SELFHEAL] : $DHCPV6_ERROR_FILE file present and $WAN_INTERFACE ipv6 address is empty, restarting dhcpv6 client"
@@ -3050,7 +3051,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
             fi
-            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
             if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
                 echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                 /usr/sbin/dibbler-client stop
@@ -3061,7 +3062,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
             fi
         ;;
         "BASE")
-            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
             task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
             if [ "$task_to_be_killed" = "" ]; then
                 task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
@@ -3091,7 +3092,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
             fi
-            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
             echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
             /usr/sbin/dibbler-client stop
             fi
@@ -3174,7 +3175,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$thisWAN_TYPE" != "EPON" ]; then
                     
         #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ]; then
+	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ]; then
         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
         t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
 		wan_dhcp_client_v6=0
