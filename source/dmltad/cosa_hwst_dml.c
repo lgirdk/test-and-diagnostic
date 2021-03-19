@@ -99,6 +99,7 @@ hwHealthTest_GetParamBoolValue
         return TRUE;
 #else
         *pBool = FALSE;
+        return TRUE;
 #endif
     }
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
@@ -334,8 +335,8 @@ hwHealthTest_GetParamStringValue
         AnscCopyString(pValue, hwst_result_string);
         AnscTraceFlow(("%s Results - Overall result: %s\n", __FUNCTION__, pValue));
         fclose(p);
-        return 0;
 #endif
+        return 0;
     }
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return 1;

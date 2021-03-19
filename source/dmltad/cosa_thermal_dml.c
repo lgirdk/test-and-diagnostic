@@ -195,6 +195,11 @@ BOOL Fan_GetParamBoolValue
         return TRUE;
     }
 
+#else
+
+    *bValue = FALSE;
+    return TRUE;
+
 #endif
 
     return FALSE;
@@ -321,6 +326,12 @@ Fan_GetParamUlongValue
         }
         return TRUE;
     }
+
+#else
+
+    *pUlong = 0;
+    return TRUE;
+
 #endif
     return FALSE;
 }
