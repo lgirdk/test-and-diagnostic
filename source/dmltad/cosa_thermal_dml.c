@@ -199,6 +199,12 @@ BOOL Fan_GetParamBoolValue
         *bValue = platform_hal_getFanStatus(pFanInfo->fanIndex);
         return TRUE;
     }
+
+#else
+
+    *bValue = FALSE;
+    return TRUE;
+
 #endif
 
     return FALSE;
@@ -325,6 +331,12 @@ Fan_GetParamUlongValue
         }
         return TRUE;
     }
+
+#else
+
+    *pUlong = 0;
+    return TRUE;
+
 #endif
     return FALSE;
 }
