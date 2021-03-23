@@ -45,7 +45,7 @@ RDKLOGGER_PATH="/rdklogger"
 
 case $SELFHEAL_TYPE in
     "BASE")
-        VERSION_FILE="/fss/gw/version.txt"
+        VERSION_FILE="/version.txt"
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
 
@@ -60,7 +60,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "TCCBR")
-        VERSION_FILE="/fss/gw/version.txt"
+        VERSION_FILE="/version.txt"
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
     ;;
@@ -735,7 +735,7 @@ resetNeeded()
                         "BASE")
                             echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                             t2CountNotify "SYS_INFO_snmpsubagent_restart"
-                            cd /fss/gw/usr/ccsp/snmp/
+                            cd /usr/ccsp/snmp/
                             if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
                                 sh run_subagent.sh tcp:127.0.0.1:705 &
                             else
