@@ -48,6 +48,8 @@ case $1 in
                 sleep 5
                 systemctl start wifi
                 sleep 5
+                #killing radiohealth.sh to stop wifi_api calls
+                ps | grep radiohealth.sh | grep -v "grep" | awk '{print $1}'| xargs -r kill -9
                 #killing wifi_apis which is hanging currently
                 ps | grep wifi_api | grep -v "grep" | awk '{print $1}'| xargs -r kill -9
                 #killing already spawned wifi process to avoid duplicate process creation
