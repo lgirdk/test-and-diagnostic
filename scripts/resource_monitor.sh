@@ -24,6 +24,8 @@ rebootDeviceNeeded=0
 rebootNeededforbrlan1=0
 batteryMode=0
 IsAlreadyCountReseted=0
+AtomHighLoadCount=0
+AtomHighLoadCountThreshold=0
 
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
@@ -324,13 +326,32 @@ Curr_AtomLoad_Avg=`rpcclient $ATOM_ARPING_IP "cat /proc/loadavg" | sed '4q;d'`
 Load_Avg1=`echo $Curr_AtomLoad_Avg | awk  '{print $1}'`
 Load_Avg10=`echo $Curr_AtomLoad_Avg | awk  '{print $2}'`
 Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
-        if [ ${Load_Avg1%%.*} -ge 5 ] && [ ${Load_Avg10%%.*} -ge 5 ] && [ ${Load_Avg15%%.*} -ge 5 ]; then
+# Calculate value of AtomHighLoad threshold for an hour based on RESOURCE_MONITOR_INTERVAL
+AtomHighLoadCountThreshold=$((3600/$RESOURCE_MONITOR_INTERVAL))
+if [ "$AtomHighLoadCountThreshold" -eq 0 ]; then
+    AtomHighLoadCountThreshold=1
+fi
+    if [ ${Load_Avg1%%.*} -ge 5 ] && [ ${Load_Avg10%%.*} -ge 5 ] && [ ${Load_Avg15%%.*} -ge 5 ]; then
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+            AtomHighLoadCount=$(($AtomHighLoadCount + 1))
+            echo_t "RDKB_SELFHEAL : ATOM_HIGH_LOADAVG detected. $AtomHighLoadCount / $AtomHighLoadCountThreshold"
+            if [ "$AtomHighLoadCount" -ge "$AtomHighLoadCountThreshold" ]; then
 		#echo_t "Setting Last reboot reason as ATOM_HIGH_LOADAVG"
-		reason="ATOM_HIGH_LOADAVG"
+                reason="ATOM_HIGH_LOADAVG"
 		rebootCount=1
 		#setRebootreason $reason $rebootCount
 		rebootNeeded RM ATOM_HIGH_LOADAVG $reason $rebootCount
-	    fi
+            fi
+        else
+	    #echo_t "Setting Last reboot reason as ATOM_HIGH_LOADAVG"
+            reason="ATOM_HIGH_LOADAVG"
+            rebootCount=1
+	    #setRebootreason $reason $rebootCount
+	    rebootNeeded RM ATOM_HIGH_LOADAVG $reason $rebootCount
+        fi
+    else
+        AtomHighLoadCount=0
+    fi
 fi
 
 ####################################################
