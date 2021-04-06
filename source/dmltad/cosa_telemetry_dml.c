@@ -218,6 +218,9 @@ Telemetry_Commit
             {
                 CcspTraceInfo(("%s: Telemetry is enabled, downloading DCMConfigFile\n", __FUNCTION__));
                 CcspTraceInfo(("%s: Starting  Telemetry service\n", __FUNCTION__));
+#ifdef _PUMA6_ARM_
+                system("/usr/sbin/icu -R -B -p 192.168.254.253:2222; rpcclient2 '/usr/sbin/icu -R -B -p 192.168.254.254:2222'");
+#endif
                 system("/usr/bin/telemetry2_0 &");
                 break;
             }
@@ -228,6 +231,7 @@ Telemetry_Commit
                 system("crontab -l | grep -v 'autodownload_dcmconfig.sh' | crontab -");
 #ifdef _PUMA6_ARM_
                 system("killall -9 telemetry2_0; rpcclient2 'killall -9 telemetry2_0'");
+                system("killall -9 icu; rpcclient2 'killall -9 icu'");
 #else
                 system("killall -9 telemetry2_0");
 #endif
