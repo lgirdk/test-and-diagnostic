@@ -270,6 +270,7 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
     if (pMyObject->Enable == TRUE)
     {
         system("rpcclient2 'syscfg set telemetry_enable true; syscfg set T2Enable true'");
+        system("rpcclient2 '/usr/sbin/icu -R -B -p 192.168.254.254:2222'");
     }
 #endif
 
