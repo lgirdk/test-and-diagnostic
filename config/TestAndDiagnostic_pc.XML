@@ -678,7 +678,7 @@
                     </parameter>
                      <parameter>
                             <name>Authentication</name>
-                            <type>string(2048)</type>
+                            <type>string(4096)</type>
                             <syntax>string</syntax>
                             <writable>true</writable>
                     </parameter>
