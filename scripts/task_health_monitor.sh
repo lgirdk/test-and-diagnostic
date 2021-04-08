@@ -420,12 +420,18 @@ case $SELFHEAL_TYPE in
               fi
             else
               if [ -f $PING_PATH/ping_peer ]; then
-                  WAN_STATUS=$(sysevent get wan-status)
-                  if [ "$WAN_STATUS" = "started" ]; then
+                  SYSEVENTD_PID=$(pidof syseventd)
+                  if [ "$SYSEVENTD_PID" != "" ]; then
                       ## Check Peer ip is accessible
                       loop=1
                       while [ $loop -le 3 ]
                         do
+                          WAN_STATUS=$(sysevent get wan-status)
+                          echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS"
+                          if [ $WAN_STATUS != "started" ]; then
+                             echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS, Peer_down check bypassed"
+                             break
+                          fi
                           PING_RES=$(ping_peer)
                           CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
                           if [ "$CHECK_PING_RES" != "" ]; then
@@ -467,6 +473,22 @@ case $SELFHEAL_TYPE in
                               t2CountNotify "SYS_SH_pingPeerIP_Failed"
                               echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                               echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+
+                              if [ "$BOX_TYPE" = "XB3" ]; then
+                                 if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then
+                                 echo_t "Ping to peer failed check, whether ATOM is good through RPC"
+                                    RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+                                    RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+                                    if [ "$RPC_OK" != "" ]; then
+                                       echo_t "RPC Communication with ATOM is OK"
+                                       break
+                                    else
+                                       echo_t "RPC Communication with ATOM have an issue"
+                                    fi
+                                 else
+                                    echo_t "ATOM_ARPING_IP is NULL , not checking communication using rpcclient"
+                                 fi
+                              fi
                               #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
                               reason="Peer_down"
                               rebootCount=1
@@ -478,7 +500,7 @@ case $SELFHEAL_TYPE in
                           sleep 5
                         done
                   else
-                      echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
+                      echo_t "RDKB_SELFHEAL : syseventd crashed , Peer_down check bypassed"
                   fi
               else
                   echo_t "RDKB_SELFHEAL : ping_peer command not found"
