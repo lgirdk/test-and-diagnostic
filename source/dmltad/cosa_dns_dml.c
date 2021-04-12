@@ -952,16 +952,14 @@ NSLookupDiagnostics_Validate
 		  */
 		if ( 0 == AnscSizeOfString(pNSLookupDiagInfo->DNSServer) )
 		{
-			parameterValStruct_t varStruct 		= { 0 };
+			parameterValStruct_t varStruct;
 			UCHAR	   ucEntryNameValue[128]	= { 0 };
-			UCHAR	   ucEntryParamName[128]	= { 0 };
-			int 	   			 ulEntryNameLen = 0;
+			int ulEntryNameLen;
 
-			AnscCopyString( ucEntryParamName, "Device.DNS.Client.Server.1.DNSServer");
-
-			varStruct.parameterName  = ucEntryParamName;
+			varStruct.parameterName  = "Device.DNS.Client.Server.1.DNSServer";
 			varStruct.parameterValue = ucEntryNameValue;
 
+			ulEntryNameLen = sizeof(ucEntryNameValue);
 			if ( ANSC_STATUS_SUCCESS == COSAGetParamValueByPathName(  g_MessageBusHandle, 
 																	   &varStruct,
 																	   (ULONG *)&ulEntryNameLen ) 
