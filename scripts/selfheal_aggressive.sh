@@ -158,8 +158,7 @@ self_heal_dnsmasq_restart()
 {
     kill -9 `pidof dnsmasq`
     if [ "$BOX_TYPE" != "XF3" ]; then
-        sysevent set dhcp_server-stop
-        sysevent set dhcp_server-start
+        sysevent set dhcp_server-restart
     else
         systemctl stop CcspXdnsSsp.service
         systemctl stop dnsmasq

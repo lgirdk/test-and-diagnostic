@@ -525,8 +525,7 @@ fi
 	 	 echo "`cat /var/dnsmasq.conf`"
 
 		 echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
-	         sysevent set dhcp_server-stop
-	         sysevent set dhcp_server-start
+	         sysevent set dhcp_server-restart
         fi
     fi
     

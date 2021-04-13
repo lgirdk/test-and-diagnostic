@@ -673,9 +673,8 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				  if [ "" == "`sysevent get lan_status-dhcp`" ] ; then
 					  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting lan_status-dhcp event to started"
 					  sysevent set lan_status-dhcp started
-                      echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
-					  sysevent set dhcp_server-stop
-					  sysevent set dhcp_server-start
+                      			  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
+					  sysevent set dhcp_server-restart
 				  fi
 			  fi
     else
@@ -738,8 +737,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	 	 echo "`cat /var/dnsmasq.conf`"
 
 		 echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
-	         sysevent set dhcp_server-stop
-	         sysevent set dhcp_server-start
+	         ysevent set dhcp_server-restart
         fi
     fi
 fi

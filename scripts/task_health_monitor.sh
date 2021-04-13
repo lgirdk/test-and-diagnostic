@@ -2770,8 +2770,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                 cat /var/dnsmasq.conf
 
                 echo_t "[RDKB_SELFHEAL] : Setting an event to restart dnsmasq"
-                sysevent set dhcp_server-stop
-                sysevent set dhcp_server-start
+                sysevent set dhcp_server-restart
             fi
         fi
 
@@ -2797,8 +2796,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                             echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                             t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                             kill -9 "$(pidof dnsmasq)"
-                            sysevent set dhcp_server-stop
-                            sysevent set dhcp_server-start
+                            sysevent set dhcp_server-restart
                             break
                         fi
                       done
