@@ -581,7 +581,7 @@ ARPTable_GetParamBoolValue
     PCOSA_DML_DIAG_ARP_TABLE        pArpTable           = (PCOSA_DML_DIAG_ARP_TABLE)hInsContext;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Static", TRUE))
+    if (strcmp(ParamName, "Static") == 0)
     {
         /* collect value */
         *pBool    =  pArpTable->Static;
@@ -731,7 +731,7 @@ ARPTable_GetParamStringValue
 
     /* check the parameter name and return the corresponding value */
 
-    if( AnscEqualString(ParamName, "IPAddress", TRUE))
+    if (strcmp(ParamName, "IPAddress") == 0)
     {
         /* collect value */
         AnscCopyString(pValue, pArpTable->IPAddress);
@@ -739,7 +739,7 @@ ARPTable_GetParamStringValue
         return 0;
     }
 
-    if( AnscEqualString(ParamName, "MACAddress", TRUE))
+    if (strcmp(ParamName, "MACAddress") == 0)
     {
         /* collect value */
         if ( sizeof(pArpTable->MACAddress) <= *pUlSize)
@@ -1055,7 +1055,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamBoolValue
 	)
 {
     /* check the parameter name and return the corresponding value */
-	if ( AnscEqualString(ParamName, "Run", TRUE))
+	if (strcmp(ParamName, "Run") == 0)
     {
 	    *pBool = g_is_pingtest_running;
 	    return TRUE;
@@ -1104,7 +1104,7 @@ X_RDKCENTRAL_COM_PingTest_SetParamBoolValue
     )
 {
     /* check the parameter name and set the corresponding value */
-	if ( AnscEqualString(ParamName, "Run", TRUE))
+	if (strcmp(ParamName, "Run") == 0)
     {
 		if( bValue )
 		{
@@ -1181,7 +1181,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 	//Fill Device Details it's already not filled case
 	COSA_IP_diag_FillDeviceDetails( );
 
-    if( AnscEqualString(ParamName, "PartnerID", TRUE))
+    if (strcmp(ParamName, "PartnerID") == 0)
     {
 		if ( *pUlSize < AnscSizeOfString( devdetails->PartnerID ) )
 		{
@@ -1195,7 +1195,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 		return 0;
     }
 
-    if( AnscEqualString(ParamName, "ecmMAC", TRUE))
+    if (strcmp(ParamName, "ecmMAC") == 0)
     {
 		if ( *pUlSize < AnscSizeOfString( devdetails->ecmMAC ) )
 		{
@@ -1209,7 +1209,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 		return 0;
     }
 
-    if( AnscEqualString(ParamName, "DeviceID", TRUE))
+    if (strcmp(ParamName, "DeviceID") == 0)
     {
 		if ( *pUlSize < AnscSizeOfString( devdetails->DeviceID ) )
 		{
@@ -1223,7 +1223,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 		return 0;
     }
 
-    if( AnscEqualString(ParamName, "DeviceModel", TRUE))
+    if (strcmp(ParamName, "DeviceModel") == 0)
     {
 		if ( *pUlSize < AnscSizeOfString( devdetails->DeviceModel ) )
 		{
@@ -1500,7 +1500,7 @@ IPPing_GetParamUlongValue
             || diag_geterr(DIAG_MD_PING, &err) != DIAG_ERR_OK)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         switch (state) {
             case DIAG_ST_NONE:
@@ -1533,23 +1533,23 @@ IPPing_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
+    if (strcmp(ParamName, "NumberOfRepetitions") == 0)
         *puLong = cfg.cnt;
-    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+    else if (strcmp(ParamName, "Timeout") == 0)
         *puLong = cfg.timo * 1000;
-    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+    else if (strcmp(ParamName, "DataBlockSize") == 0)
         *puLong = cfg.size;
-    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+    else if (strcmp(ParamName, "DSCP") == 0)
         *puLong = cfg.tos >> 2;
-    else if( AnscEqualString(ParamName, "SuccessCount", TRUE))
+    else if (strcmp(ParamName, "SuccessCount") == 0)
         *puLong = statis.u.ping.success;
-    else if( AnscEqualString(ParamName, "FailureCount", TRUE))
+    else if (strcmp(ParamName, "FailureCount") == 0)
         *puLong = statis.u.ping.failure;
-    else if( AnscEqualString(ParamName, "AverageResponseTime", TRUE))
+    else if (strcmp(ParamName, "AverageResponseTime") == 0)
         *puLong = statis.u.ping.rtt_avg;
-    else if( AnscEqualString(ParamName, "MinimumResponseTime", TRUE))
+    else if (strcmp(ParamName, "MinimumResponseTime") == 0)
         *puLong = statis.u.ping.rtt_min;
-    else if( AnscEqualString(ParamName, "MaximumResponseTime", TRUE))
+    else if (strcmp(ParamName, "MaximumResponseTime") == 0)
         *puLong = statis.u.ping.rtt_max;
     else
         return FALSE;
@@ -1609,7 +1609,7 @@ IPPing_GetParamStringValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return -1;
 
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         /*
          *  Revert to TR-181 definition -- object reference
@@ -1633,7 +1633,7 @@ IPPing_GetParamStringValue
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
     }
-    else if( AnscEqualString(ParamName, "Host", TRUE))
+    else if (strcmp(ParamName, "Host") == 0)
     {
         if (*pUlSize <= strlen(cfg.host))
         {
@@ -1780,7 +1780,7 @@ IPPing_SetParamUlongValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE)) {
+    if (strcmp(ParamName, "DiagnosticsState") == 0) {
         if (uValue == DSLH_DIAG_STATE_TYPE_Requested + 1) {
             if (diag_start(DIAG_MD_PING) != 0)
                 return FALSE;
@@ -1789,11 +1789,11 @@ IPPing_SetParamUlongValue
         return FALSE;
     }
 
-    if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
+    if (strcmp(ParamName, "NumberOfRepetitions") == 0)
         cfg.cnt = uValue;
-    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+    else if (strcmp(ParamName, "Timeout") == 0)
         cfg.timo = uValue / 1000;
-    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+    else if (strcmp(ParamName, "DataBlockSize") == 0)
     	{
     		char buf[256];
 		memset(buf,0,sizeof(buf));
@@ -1805,7 +1805,7 @@ IPPing_SetParamUlongValue
 			syscfg_commit();
 		}*/
 	}
-   else if( AnscEqualString(ParamName, "DSCP", TRUE))
+   else if (strcmp(ParamName, "DSCP") == 0)
        cfg.tos = uValue;
     else 
         return FALSE;
@@ -1859,7 +1859,7 @@ IPPing_SetParamStringValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         /*
          *  Revert to TR-181 definition -- object reference
@@ -1896,7 +1896,7 @@ IPPing_SetParamStringValue
             }
         }
     }
-    else if( AnscEqualString(ParamName, "Host", TRUE))
+    else if (strcmp(ParamName, "Host") == 0)
     {
 		ANSC_STATUS             ret;
 		char wrapped_host[64]={0};
@@ -2176,7 +2176,7 @@ TraceRoute_GetParamUlongValue
         return FALSE;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         switch (state) {
             case DIAG_ST_NONE:
@@ -2214,17 +2214,17 @@ TraceRoute_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
+    if (strcmp(ParamName, "NumberOfTries") == 0)
         *puLong = cfg.cnt;
-    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+    else if (strcmp(ParamName, "Timeout") == 0)
         *puLong = cfg.timo * 1000;
-    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+    else if (strcmp(ParamName, "DataBlockSize") == 0)
         *puLong = cfg.size;
-    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+    else if (strcmp(ParamName, "DSCP") == 0)
         *puLong = cfg.tos >> 2;
-    if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
+    if (strcmp(ParamName, "MaxHopCount") == 0)
         *puLong = cfg.maxhop;
-    if( AnscEqualString(ParamName, "ResponseTime", TRUE))
+    if (strcmp(ParamName, "ResponseTime") == 0)
         *puLong = statis.u.tracert.resptime;
 
     return TRUE;
@@ -2283,7 +2283,7 @@ TraceRoute_GetParamStringValue
         return -1;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         /*
          *  Revert to TR-181 definition -- object reference
@@ -2308,7 +2308,7 @@ TraceRoute_GetParamStringValue
         }
     }
 
-    if( AnscEqualString(ParamName, "Host", TRUE))
+    if (strcmp(ParamName, "Host") == 0)
     {
         if (*pUlSize <= strlen(cfg.host))
         {
@@ -2450,7 +2450,7 @@ TraceRoute_SetParamUlongValue
 {
     diag_cfg_t                      cfg;
 
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         if (uValue == DSLH_DIAG_STATE_TYPE_Requested + 1)
             if (diag_start(DIAG_MD_TRACERT) == DIAG_ERR_OK)
@@ -2461,15 +2461,15 @@ TraceRoute_SetParamUlongValue
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "NumberOfTries", TRUE))
+    if (strcmp(ParamName, "NumberOfTries") == 0)
         cfg.cnt = uValue;
-    else if( AnscEqualString(ParamName, "Timeout", TRUE))
+    else if (strcmp(ParamName, "Timeout") == 0)
         cfg.timo = uValue / 1000;
-    else if( AnscEqualString(ParamName, "DataBlockSize", TRUE))
+    else if (strcmp(ParamName, "DataBlockSize") == 0)
         cfg.size = uValue;
-    else if( AnscEqualString(ParamName, "DSCP", TRUE))
+    else if (strcmp(ParamName, "DSCP") == 0)
         cfg.tos = uValue << 2;
-    else if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
+    else if (strcmp(ParamName, "MaxHopCount") == 0)
         cfg.maxhop = uValue;
     else
         return FALSE;
@@ -2524,7 +2524,7 @@ TraceRoute_SetParamStringValue
         return FALSE;
 
     /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         /*
          *  Revert to TR-181 definition -- object reference
@@ -2561,7 +2561,7 @@ TraceRoute_SetParamStringValue
             }
         }
     }
-    else if( AnscEqualString(ParamName, "Host", TRUE))
+    else if (strcmp(ParamName, "Host") == 0)
     {
 		ANSC_STATUS             ret;
 		char wrapped_host[64]={0};
@@ -2976,7 +2976,7 @@ RouteHops_GetParamUlongValue
     if (!hop)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "ErrorCode", TRUE))
+    if (strcmp(ParamName, "ErrorCode") == 0)
     {
         *puLong = hop->icmperr;
         return TRUE;
@@ -3037,7 +3037,7 @@ RouteHops_GetParamStringValue
     if (!hop)
         return FALSE;
 
-    if( AnscEqualString(ParamName, "Host", TRUE))
+    if (strcmp(ParamName, "Host") == 0)
     {
         if (strlen(hop->host) >= *pUlSize) {
             *pUlSize = strlen(hop->host) + 1;
@@ -3047,7 +3047,7 @@ RouteHops_GetParamStringValue
         snprintf(pValue, *pUlSize, "%s", hop->host);
         return 0;
     }
-    if( AnscEqualString(ParamName, "HostAddress", TRUE))
+    if (strcmp(ParamName, "HostAddress") == 0)
     {
         if (strlen(hop->addr) >= *pUlSize) {
             *pUlSize = strlen(hop->addr) + 1;
@@ -3057,7 +3057,7 @@ RouteHops_GetParamStringValue
         snprintf(pValue, *pUlSize, "%s", hop->addr);
         return 0;
     }
-    if( AnscEqualString(ParamName, "RTTimes", TRUE))
+    if (strcmp(ParamName, "RTTimes") == 0)
     {
         if (strlen(hop->rtts) >= *pUlSize) {
             *pUlSize = strlen(hop->rtts) + 1;
@@ -3223,7 +3223,7 @@ DownloadDiagnostics_GetParamUlongValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3245,7 +3245,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3261,7 +3261,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3277,7 +3277,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "TestBytesReceived", TRUE))
+    if (strcmp(ParamName, "TestBytesReceived") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3299,7 +3299,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "TotalBytesReceived", TRUE))
+    if (strcmp(ParamName, "TotalBytesReceived") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3381,7 +3381,7 @@ DownloadDiagnostics_GetParamStringValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3396,7 +3396,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "DownloadURL", TRUE))
+    if (strcmp(ParamName, "DownloadURL") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3411,7 +3411,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if( AnscEqualString(ParamName, "ROMTime", TRUE))
+    if (strcmp(ParamName, "ROMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3447,7 +3447,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "BOMTime", TRUE))
+    if (strcmp(ParamName, "BOMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3483,7 +3483,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "EOMTime", TRUE))
+    if (strcmp(ParamName, "EOMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3519,7 +3519,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenRequestTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenRequestTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3555,7 +3555,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenResponseTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenResponseTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3590,7 +3590,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-	if ( AnscEqualString(ParamName, "DownloadTransports", TRUE) )
+	if (strcmp(ParamName, "DownloadTransports") == 0)
 	{
 		if (!pValue || !pUlSize)
 			return -1;
@@ -3744,7 +3744,7 @@ DownloadDiagnostics_SetParamUlongValue
 	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         uValue--;
         if ( uValue != (ULONG)DSLH_TR143_DIAGNOSTIC_Requested )
@@ -3756,13 +3756,13 @@ DownloadDiagnostics_SetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         pDownloadInfo->DSCP= uValue;
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         pDownloadInfo->EthernetPriority = uValue;
         return TRUE;
@@ -3819,13 +3819,13 @@ DownloadDiagnostics_SetParamStringValue
 	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         AnscCopyString(pDownloadInfo->Interface, pString);
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DownloadURL", TRUE))
+    if (strcmp(ParamName, "DownloadURL") == 0)
     {
         if ( !pString || !(*pString) )
         {
@@ -4164,7 +4164,7 @@ UploadDiagnostics_GetParamUlongValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4186,7 +4186,7 @@ UploadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         if ( pUploadInfo )
         {
@@ -4202,7 +4202,7 @@ UploadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         if ( pUploadInfo )
         {
@@ -4218,7 +4218,7 @@ UploadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "TestFileLength", TRUE))
+    if (strcmp(ParamName, "TestFileLength") == 0)
     {
         if ( pUploadInfo )
         {
@@ -4234,7 +4234,7 @@ UploadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "TotalBytesSent", TRUE))
+    if (strcmp(ParamName, "TotalBytesSent") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4316,7 +4316,7 @@ UploadDiagnostics_GetParamStringValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         if ( pUploadInfo )
         {
@@ -4331,7 +4331,7 @@ UploadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "UploadURL", TRUE))
+    if (strcmp(ParamName, "UploadURL") == 0)
     {
         if ( pUploadInfo )
         {
@@ -4346,7 +4346,7 @@ UploadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "ROMTime", TRUE))
+    if (strcmp(ParamName, "ROMTime") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4382,7 +4382,7 @@ UploadDiagnostics_GetParamStringValue
        return 0;
     }
 
-    if ( AnscEqualString(ParamName, "BOMTime", TRUE))
+    if (strcmp(ParamName, "BOMTime") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4418,7 +4418,7 @@ UploadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "EOMTime", TRUE))
+    if (strcmp(ParamName, "EOMTime") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4454,7 +4454,7 @@ UploadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenRequestTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenRequestTime") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4490,7 +4490,7 @@ UploadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenResponseTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenResponseTime") == 0)
     {
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
@@ -4666,7 +4666,7 @@ UploadDiagnostics_SetParamUlongValue
 	pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         uValue--;
         if ( uValue != (ULONG)DSLH_TR143_DIAGNOSTIC_Requested )
@@ -4678,19 +4678,19 @@ UploadDiagnostics_SetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         pUploadInfo->DSCP = uValue;
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         pUploadInfo->EthernetPriority = uValue;
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "TestFileLength", TRUE))
+    if (strcmp(ParamName, "TestFileLength") == 0)
     {
         if ( uValue == 0 )
         {
@@ -4752,13 +4752,13 @@ UploadDiagnostics_SetParamStringValue
 	pUploadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         AnscCopyString(pUploadInfo->Interface, pString);
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "UploadURL", TRUE))
+    if (strcmp(ParamName, "UploadURL") == 0)
     {
         if ( !pString || !(*pString) )
         {
@@ -5010,7 +5010,7 @@ UDPEchoConfig_GetParamBoolValue
     PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Enable", TRUE))
+    if (strcmp(ParamName, "Enable") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5026,7 +5026,7 @@ UDPEchoConfig_GetParamBoolValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EchoPlusEnabled", TRUE))
+    if (strcmp(ParamName, "EchoPlusEnabled") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5042,7 +5042,7 @@ UDPEchoConfig_GetParamBoolValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EchoPlusSupported", TRUE))
+    if (strcmp(ParamName, "EchoPlusSupported") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5151,7 +5151,7 @@ UDPEchoConfig_GetParamUlongValue
 
     /* check the parameter name and return the corresponding value */
 
-    if ( AnscEqualString(ParamName, "UDPPort", TRUE))
+    if (strcmp(ParamName, "UDPPort") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5167,7 +5167,7 @@ UDPEchoConfig_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "PacketsReceived", TRUE))
+    if (strcmp(ParamName, "PacketsReceived") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                         (
@@ -5189,7 +5189,7 @@ UDPEchoConfig_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "PacketsResponded", TRUE))
+    if (strcmp(ParamName, "PacketsResponded") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                         (
@@ -5211,7 +5211,7 @@ UDPEchoConfig_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "BytesReceived", TRUE))
+    if (strcmp(ParamName, "BytesReceived") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                         (
@@ -5233,7 +5233,7 @@ UDPEchoConfig_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "BytesResponded", TRUE))
+    if (strcmp(ParamName, "BytesResponded") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                         (
@@ -5315,7 +5315,7 @@ UDPEchoConfig_GetParamStringValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5330,7 +5330,7 @@ UDPEchoConfig_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "SourceIPAddress", TRUE))
+    if (strcmp(ParamName, "SourceIPAddress") == 0)
     {
         if ( pUdpEchoInfo )
         {
@@ -5345,7 +5345,7 @@ UDPEchoConfig_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TimeFirstPacketReceived", TRUE))
+    if (strcmp(ParamName, "TimeFirstPacketReceived") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
@@ -5381,7 +5381,7 @@ UDPEchoConfig_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TimeLastPacketReceived", TRUE))
+    if (strcmp(ParamName, "TimeLastPacketReceived") == 0)
     {
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
@@ -5465,13 +5465,13 @@ UDPEchoConfig_SetParamBoolValue
     PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Enable", TRUE))
+    if (strcmp(ParamName, "Enable") == 0)
     {
         pUdpEchoInfo->Enable = bValue;
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EchoPlusEnabled", TRUE))
+    if (strcmp(ParamName, "EchoPlusEnabled") == 0)
     {
         pUdpEchoInfo->EchoPlusEnabled = bValue;
         return TRUE;
@@ -5569,7 +5569,7 @@ UDPEchoConfig_SetParamUlongValue
 
     /* check the parameter name and set the corresponding value */
 
-    if ( AnscEqualString(ParamName, "UDPPort", TRUE))
+    if (strcmp(ParamName, "UDPPort") == 0)
     {
         if ( uValue == 0 )
         {
@@ -5628,13 +5628,13 @@ UDPEchoConfig_SetParamStringValue
 
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         AnscCopyString(pUdpEchoInfo->Interface, pString);
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "SourceIPAddress", TRUE))
+    if (strcmp(ParamName, "SourceIPAddress") == 0)
     {
         AnscCopyString(pUdpEchoInfo->SourceIPName, pString);
         return TRUE;
@@ -5886,13 +5886,13 @@ SpeedTest_GetParamBoolValue
     )
 {
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
+    if (strcmp(ParamName, "Enable_Speedtest") == 0)
     {
 	    AnscTraceFlow(("%s Enable_Speedtest : %d\n",  __FUNCTION__, g_enable_speedtest));
 	    *pBool = g_enable_speedtest;
 	    return TRUE;
     } else
-    if ( AnscEqualString(ParamName, "Run", TRUE))
+    if (strcmp(ParamName, "Run") == 0)
     {
 	    AnscTraceFlow(("%s Speedtest Run : %d \n", __FUNCTION__, g_run_speedtest));
 	    *pBool = g_run_speedtest;
@@ -5941,13 +5941,13 @@ SpeedTest_SetParamBoolValue
     )
 {
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Enable_Speedtest", TRUE))
+    if (strcmp(ParamName, "Enable_Speedtest") == 0)
     {
         AnscTraceFlow(("%s Enable Speedtest : %d \n", __FUNCTION__, bValue));
         g_enable_speedtest = bValue;
         return TRUE;
     }
-    else if ( AnscEqualString(ParamName, "Run", TRUE))
+    else if (strcmp(ParamName, "Run") == 0)
     {
         AnscTraceFlow(("%s Run Speedtest : %d \n",__FUNCTION__, bValue));
         g_run_speedtest = bValue;
@@ -6175,7 +6175,7 @@ SpeedTest_GetParamStringValue
     int  byteCount = 0;
     memset(strClientVersionBuf, 0, sizeof(strClientVersionBuf));
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    if (strcmp(ParamName, "Argument") == 0)
     {
         if (  *pUlSize > SPEEDTEST_ARG_SIZE )
         {
@@ -6286,7 +6286,7 @@ SpeedTest_SetParamStringValue
 
     int len = strlen(pString);
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Argument", TRUE))
+    if (strcmp(ParamName, "Argument") == 0)
     {
 	if ( len <= (SPEEDTEST_ARG_SIZE ) ){
 		AnscTraceFlow(("SpeedTest Argument set : %s : string len : %d: \n",pString,len));
