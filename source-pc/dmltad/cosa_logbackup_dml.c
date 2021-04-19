@@ -79,14 +79,14 @@ BOOL LogBackup_GetParamBoolValue
     )
 {
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
         *bValue = g_logbackup_enable;
         return TRUE;
     }
 
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs") == 0)
     {
         *bValue = false;
         return TRUE;
@@ -132,7 +132,7 @@ BOOL LogBackup_SetParamBoolValue
     )
 {
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
 
         if( g_logbackup_enable == bValue )
@@ -160,7 +160,7 @@ BOOL LogBackup_SetParamBoolValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_SyncandUploadLogs") == 0)
     {
 	SyncAndUploadLogs();
 	return TRUE;
@@ -207,7 +207,7 @@ LogBackup_GetParamUlongValue
     )
 {
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Interval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Interval") == 0)
     {
         *puLong = g_logbackup_interval;
         return TRUE;
@@ -255,7 +255,7 @@ LogBackup_SetParamUlongValue
     )
 {
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Interval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Interval") == 0)
     {
         if( g_logbackup_interval == uValue )
         {
