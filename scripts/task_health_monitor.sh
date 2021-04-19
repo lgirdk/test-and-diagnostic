@@ -1433,7 +1433,7 @@ case $SELFHEAL_TYPE in
                 sec2=`wlctl -i wl0.4 bss`
                 sec5=`wlctl -i wl1.4 bss`
                 open16=`wlctl -i wl1.7 bss`
-                
+                xcount=0 
                 if [ "$XOPEN_24" = "true" ]; then
                       if [ "$open2" = "down" ]; then
                            wlctl -i wl0.2 bss up
