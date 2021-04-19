@@ -20,5 +20,9 @@
 #reset and stop the count 
 #ebtables -F;
 traffic_count -F;
-rm /tmp/eblist;
+if [ -f /tmp/eblist ];then
+	rm /tmp/eblist;
+else
+	echo "eblist not found"
+fi
 rm /tmp/rxtx_enabled;
