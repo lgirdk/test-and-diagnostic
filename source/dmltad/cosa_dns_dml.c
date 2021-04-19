@@ -279,7 +279,7 @@ NSLookupDiagnostics_GetParamUlongValue
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo   = pMyObject->hDiagNSLookInfo;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         pNSLookupDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -299,7 +299,7 @@ NSLookupDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
+    if (strcmp(ParamName, "Timeout") == 0)
     {
         if ( !pNSLookupDiagInfo )
         {
@@ -313,7 +313,7 @@ NSLookupDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
+    if (strcmp(ParamName, "NumberOfRepetitions") == 0)
     {
         if ( !pNSLookupDiagInfo )
         {
@@ -327,7 +327,7 @@ NSLookupDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "SuccessCount", TRUE))
+    if (strcmp(ParamName, "SuccessCount") == 0)
     {
         pNSLookupDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -408,7 +408,7 @@ NSLookupDiagnostics_GetParamStringValue
     }
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->Interface) < *pUlSize )
         {
@@ -424,7 +424,7 @@ NSLookupDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if( AnscEqualString(ParamName, "HostName", TRUE))
+    if (strcmp(ParamName, "HostName") == 0)
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->HostName) < *pUlSize )
         {
@@ -440,7 +440,7 @@ NSLookupDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if( AnscEqualString(ParamName, "DNSServer", TRUE))
+    if (strcmp(ParamName, "DNSServer") == 0)
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->DNSServer) < *pUlSize )
         {
@@ -595,7 +595,7 @@ NSLookupDiagnostics_SetParamUlongValue
     }
 
     /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         if ( (uValue - 1) == (ULONG)DSLH_DIAG_STATE_TYPE_Requested )
         {
@@ -612,7 +612,7 @@ NSLookupDiagnostics_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "Timeout", TRUE))
+    if (strcmp(ParamName, "Timeout") == 0)
     {
         pDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -628,7 +628,7 @@ NSLookupDiagnostics_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "NumberOfRepetitions", TRUE))
+    if (strcmp(ParamName, "NumberOfRepetitions") == 0)
     {
         pDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -696,7 +696,7 @@ NSLookupDiagnostics_SetParamStringValue
     }
 
     /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         pDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -711,7 +711,7 @@ NSLookupDiagnostics_SetParamStringValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "HostName", TRUE))
+    if (strcmp(ParamName, "HostName") == 0)
     {
         pDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -726,7 +726,7 @@ NSLookupDiagnostics_SetParamStringValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "DNSServer", TRUE))
+    if (strcmp(ParamName, "DNSServer") == 0)
     {
         pDiagInfo = (PDSLH_NSLOOKUP_INFO)CosaDmlDiagGetResults(DSLH_DIAGNOSTIC_TYPE_NSLookup);
 
@@ -1458,21 +1458,21 @@ Result_GetParamUlongValue
     }
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Status", TRUE))
+    if (strcmp(ParamName, "Status") == 0)
     {
         *puLong = pEchoInfo->Status + 1;
 
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "AnswerType", TRUE))
+    if (strcmp(ParamName, "AnswerType") == 0)
     {
         *puLong = pEchoInfo->AnswerType + 1;
 
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "ResponseTime", TRUE))
+    if (strcmp(ParamName, "ResponseTime") == 0)
     {
         *puLong = pEchoInfo->ResponsTime;
 
@@ -1541,7 +1541,7 @@ Result_GetParamStringValue
     }
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "HostNameReturned", TRUE))
+    if (strcmp(ParamName, "HostNameReturned") == 0)
     {
         if ( pEchoInfo->HostNameReturned )
         {
@@ -1562,7 +1562,7 @@ Result_GetParamStringValue
         return ANSC_STATUS_FAILURE;
     }
 
-    if( AnscEqualString(ParamName, "IPAddresses", TRUE))
+    if (strcmp(ParamName, "IPAddresses") == 0)
     {
         if ( pEchoInfo->IPAddresses )
         {
@@ -1583,7 +1583,7 @@ Result_GetParamStringValue
         return ANSC_STATUS_FAILURE;
     }
 
-    if( AnscEqualString(ParamName, "DNSServerIP", TRUE))
+    if (strcmp(ParamName, "DNSServerIP") == 0)
     {
         AnscCopyString(pValue, pEchoInfo->DNSServerIPName);
 

@@ -184,12 +184,12 @@ BOOL Fan_GetParamBoolValue
 
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
 
-    if( AnscEqualString(ParamName, "Status", TRUE))
+    if (strcmp(ParamName, "Status") == 0)
     {
         *bValue = platform_hal_getFanStatus(pFanInfo->fanIndex);
         return TRUE;
     }
-    if( AnscEqualString(ParamName, "MaxOverride", TRUE))
+    if (strcmp(ParamName, "MaxOverride") == 0)
     {
         *bValue = pFanInfo->maxOverride;
         return TRUE;
@@ -240,7 +240,7 @@ BOOL Fan_SetParamBoolValue
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
 
 #ifdef FAN_THERMAL_CTR
-    if( AnscEqualString(ParamName, "MaxOverride", TRUE))
+    if (strcmp(ParamName, "MaxOverride") == 0)
     {
         platform_hal_setFanMaxOverride( bValue, pFanInfo->fanIndex );
 
@@ -293,13 +293,13 @@ Fan_GetParamUlongValue
 
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
 
-    if( AnscEqualString(ParamName, "Speed", TRUE))
+    if (strcmp(ParamName, "Speed") == 0)
     {
         *pUlong= platform_hal_getRPM(pFanInfo->fanIndex);
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "RotorLock", TRUE))
+    if (strcmp(ParamName, "RotorLock") == 0)
     {
         int rotor;
 
