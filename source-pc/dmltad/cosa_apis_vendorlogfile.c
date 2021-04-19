@@ -236,7 +236,7 @@ VendorLogFile_GetParamBoolValue
     )
 {
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Persistent", TRUE))
+    if (strcmp(ParamName, "Persistent") == 0)
     {
         /* collect value */
 		*pBool = TRUE;
@@ -331,7 +331,7 @@ VendorLogFile_GetParamUlongValue
     )
 {
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "MaximumSize", TRUE))
+    if (strcmp(ParamName, "MaximumSize") == 0)
     {
         /* collect value */
 		*puLong = 0;
@@ -391,7 +391,7 @@ VendorLogFile_GetParamStringValue
     )
 {
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "Alias", TRUE))
+    if (strcmp(ParamName, "Alias") == 0)
     {
         /* collect value */
 	    AnscCopyString(pValue, "Syslogs");
@@ -399,7 +399,7 @@ VendorLogFile_GetParamStringValue
 		return 0;
     }
 
-    if( AnscEqualString(ParamName, "Name", TRUE))
+    if (strcmp(ParamName, "Name") == 0)
     {
         /* collect value */
 	    AnscCopyString(pValue, "/var/log/messages");
@@ -583,7 +583,7 @@ VendorLogFile_SetParamStringValue
     )
 {
     /* check the parameter name and set the corresponding value */
-    if( AnscEqualString(ParamName, "Alias", TRUE))
+    if (strcmp(ParamName, "Alias") == 0)
     {
         /* save update to backup */
         return TRUE;

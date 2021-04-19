@@ -91,7 +91,7 @@ hwHealthTest_GetParamBoolValue
     )
 {
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "executeTest", TRUE))
+    if (strcmp(ParamName, "executeTest") == 0)
     {
 #ifdef COLUMBO_HWTEST
         *pBool = hwst_runTest;
@@ -144,7 +144,7 @@ hwHealthTest_SetParamBoolValue
     )
 {
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "executeTest", TRUE))
+    if (strcmp(ParamName, "executeTest") == 0)
     {
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Execute tests : %d \n", __FUNCTION__, bValue));
@@ -292,7 +292,7 @@ hwHealthTest_GetParamStringValue
         char*                       pValue
     )
 {
-    if ( AnscEqualString(ParamName, "Results", TRUE))
+    if (strcmp(ParamName, "Results") == 0)
     {
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Results get\n", __FUNCTION__));

@@ -81,31 +81,31 @@ BOOL SelfHeal_GetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
         *bValue = pMyObject->Enable;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDK_CPUProcAnalyzer_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDK_CPUProcAnalyzer_Enable") == 0)
     {
         *bValue = FALSE;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable") == 0)
     {
         *bValue = pMyObject->DNSPingTest_Enable;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode") == 0)
     {
         *bValue = pMyObject->DiagnosticMode;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_NoWaitLogSync", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_NoWaitLogSync") == 0)
     {
         *bValue = pMyObject->NoWaitLogSync;
         return TRUE;
@@ -154,7 +154,7 @@ BOOL SelfHeal_SetParamBoolValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[128];
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
         if( pMyObject->Enable == bValue )
         {
@@ -241,7 +241,7 @@ BOOL SelfHeal_SetParamBoolValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDK_CPUProcAnalyzer_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDK_CPUProcAnalyzer_Enable") == 0)
     {
         if (bValue) 
         {
@@ -266,7 +266,7 @@ BOOL SelfHeal_SetParamBoolValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable") == 0)
     {
         if( pMyObject->DNSPingTest_Enable == bValue )
         {
@@ -280,7 +280,7 @@ BOOL SelfHeal_SetParamBoolValue
 		}
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DiagnosticMode") == 0)
     {
         if( pMyObject->DiagnosticMode == bValue )
         {
@@ -295,7 +295,7 @@ BOOL SelfHeal_SetParamBoolValue
     }
 
 
-    if (AnscEqualString(ParamName, "X_RDKCENTRAL-COM_NoWaitLogSync", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_NoWaitLogSync") == 0)
     {
         if( pMyObject->NoWaitLogSync == bValue )
         {
@@ -371,43 +371,43 @@ SelfHeal_GetParamUlongValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
 
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold") == 0)
 	{
 			*puLong = pMyObject->FreeMemThreshold;
 			return TRUE;
 	}
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold") == 0)
 	{
 			*puLong = pMyObject->MemFragThreshold;
 			return TRUE;
 	}
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval") == 0)
 	{
 			*puLong = pMyObject->CpuMemFragInterval;
 			return TRUE;
 	}
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount") == 0)
     {
         *puLong = pMyObject->MaxRebootCnt;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxResetCount", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MaxResetCount") == 0)
     {
         *puLong = pMyObject->MaxResetCnt;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency") == 0)
     {
         *puLong = pMyObject->DiagModeLogUploadFrequency;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_LogBackupThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_LogBackupThreshold") == 0)
     {
         *puLong = pMyObject->LogBackupThreshold;
         return TRUE;
@@ -457,7 +457,7 @@ SelfHeal_SetParamUlongValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[8];
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold") == 0)
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf,sizeof(buf),"%d",uValue);
@@ -477,7 +477,7 @@ SelfHeal_SetParamUlongValue
 		return TRUE;
 	}
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold") == 0)
 	{
 		memset(buf, 0, sizeof(buf));
 		snprintf(buf,sizeof(buf),"%d",uValue);
@@ -497,7 +497,7 @@ SelfHeal_SetParamUlongValue
 		return TRUE;
 	}
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_CpuMemFragInterval") == 0)
 	{
 		if((uValue >= 1) && (uValue <= 120))
 		{
@@ -526,7 +526,7 @@ SelfHeal_SetParamUlongValue
 		}
 	}
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MaxRebootCount") == 0)
     {
         if( pMyObject->MaxRebootCnt == uValue )
         {
@@ -549,7 +549,7 @@ SelfHeal_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MaxResetCount", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MaxResetCount") == 0)
     {
         if( pMyObject->MaxResetCnt == uValue )
         {
@@ -572,7 +572,7 @@ SelfHeal_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DiagMode_LogUploadFrequency") == 0)
     {
         if( pMyObject->DiagModeLogUploadFrequency == uValue )
         {
@@ -599,7 +599,7 @@ SelfHeal_SetParamUlongValue
         return TRUE;
     }
 
-    if (AnscEqualString(ParamName, "X_RDKCENTRAL-COM_LogBackupThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_LogBackupThreshold") == 0)
     {
         if( pMyObject->LogBackupThreshold == uValue )
         {
@@ -644,7 +644,7 @@ SelfHeal_GetParamStringValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_URL") == 0)
     {
         /* collect value */
         if ( AnscSizeOfString(pMyObject->DNSPingTest_URL) < *pUlSize)
@@ -672,7 +672,7 @@ SelfHeal_SetParamStringValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
 
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_DNS_URL", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_URL") == 0)
     {
 		if ( ANSC_STATUS_SUCCESS == CosaDmlModifySelfHealDNSPingTestURL( pMyObject, strValue ) )
 		{
@@ -815,7 +815,7 @@ BOOL ConnectivityTest_GetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction") == 0)
     {
         *bValue = pMyObject->pConnTest->CorrectiveAction;
         return TRUE;
@@ -862,7 +862,7 @@ BOOL ConnectivityTest_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction") == 0)
     {
         if ( pMyObject->pConnTest->CorrectiveAction == bValue )
         {
@@ -900,35 +900,35 @@ ConnectivityTest_GetParamUlongValue
 {
 
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingInterval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_PingInterval") == 0)
     {
         /* collect value */
 		*pUlong = pMyObject->pConnTest->PingInterval; 
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_NumPingsPerServer", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_NumPingsPerServer") == 0)
     {
         /* collect value */
 		*pUlong = pMyObject->pConnTest->PingCount; 
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MinNumPingServer", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MinNumPingServer") == 0)
     {
         /* collect value */
 		*pUlong = pMyObject->pConnTest->MinPingServer; 
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingRespWaitTime", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_PingRespWaitTime") == 0)
     {
         /* collect value */
 		*pUlong = pMyObject->pConnTest->WaitTime; 
         return TRUE;
     }
     
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_LastReboot", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_LastReboot") == 0)
     {
         /* collect value */
         char buf[64]={0};
@@ -953,14 +953,14 @@ ConnectivityTest_GetParamIntValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_RebootInterval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_RebootInterval") == 0)
     {
         /* collect value */
 	    *pInt = pMyObject->pConnTest->RouterRebootInterval ;
 	    return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_CurrentCount", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_CurrentCount") == 0)
     {
         /* collect value */
         char buf[16]={0};
@@ -986,7 +986,7 @@ ConnectivityTest_SetParamUlongValue
 {
 
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingInterval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_PingInterval") == 0)
     {
         if ( pMyObject->pConnTest->PingInterval == uValue )
         {
@@ -1015,7 +1015,7 @@ ConnectivityTest_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_NumPingsPerServer", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_NumPingsPerServer") == 0)
     {
         if ( pMyObject->pConnTest->PingCount == uValue )
         {
@@ -1039,7 +1039,7 @@ ConnectivityTest_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_MinNumPingServer", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_MinNumPingServer") == 0)
     {
         if ( pMyObject->pConnTest->MinPingServer == uValue )
         {
@@ -1063,7 +1063,7 @@ ConnectivityTest_SetParamUlongValue
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_PingRespWaitTime", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_PingRespWaitTime") == 0)
     {
         if ( pMyObject->pConnTest->WaitTime == uValue )
         {
@@ -1099,7 +1099,7 @@ ConnectivityTest_SetParamIntValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_RebootInterval", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_RebootInterval") == 0)
     {
         if ( pMyObject->pConnTest->RouterRebootInterval == pInt )
         {
@@ -1346,7 +1346,7 @@ IPv4PingServerTable_GetParamStringValue
     PUCHAR                                    pString       = NULL;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI") == 0)
     {
         /* collect value */
         if ( AnscSizeOfString(pServerIpv4->Ipv4PingServerURI) < *pUlSize)
@@ -1374,7 +1374,7 @@ IPv4PingServerTable_SetParamStringValue
 {
 	PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4  = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)pSelfHealCxtLink->hContext;
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI") == 0)
     {
 		 AnscCopyString(pServerIpv4->Ipv4PingServerURI,strValue);
 		 /* Add entery in the database */
@@ -1609,7 +1609,7 @@ IPv6PingServerTable_GetParamStringValue
     PUCHAR                                    pString       = NULL;
 	
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI") == 0)
     {
         /* collect value */
         if ( AnscSizeOfString(pServerIpv6->Ipv6PingServerURI) < *pUlSize)
@@ -1636,7 +1636,7 @@ IPv6PingServerTable_SetParamStringValue
 {
 	PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6  = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)pSelfHealCxtLink->hContext;
-	if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI", TRUE))
+	if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI") == 0)
     {
 		 AnscCopyString(pServerIpv6->Ipv6PingServerURI,strValue);
 		 /* Add entery in the database */
@@ -1728,19 +1728,19 @@ ResourceMonitor_GetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
     PCOSA_DML_RESOUCE_MONITOR           pRescMonitor = pMyObject->pResMonitor;
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_UsageComputeWindow", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_UsageComputeWindow") == 0)
     {
         *puLong = pRescMonitor->MonIntervalTime;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_AvgCPUThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_AvgCPUThreshold") == 0)
     {
         *puLong = pRescMonitor->AvgCpuThreshold;
         return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_AvgMemoryThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_AvgMemoryThreshold") == 0)
     {
         *puLong = pRescMonitor->AvgMemThreshold;
         return TRUE;
@@ -1789,7 +1789,7 @@ ResourceMonitor_SetParamUlongValue
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
     PCOSA_DML_RESOUCE_MONITOR           pRescMonitor = pMyObject->pResMonitor;
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_UsageComputeWindow", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_UsageComputeWindow") == 0)
     {
         if ( pRescMonitor->MonIntervalTime == uValue )
         {
@@ -1831,7 +1831,7 @@ ResourceMonitor_SetParamUlongValue
 	return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_AvgCPUThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_AvgCPUThreshold") == 0)
     { 
         if ( pRescMonitor->MonIntervalTime == uValue )
         {
@@ -1855,7 +1855,7 @@ ResourceMonitor_SetParamUlongValue
 	return TRUE;
     }
 
-    if( AnscEqualString(ParamName, "X_RDKCENTRAL-COM_AvgMemoryThreshold", TRUE))
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_AvgMemoryThreshold") == 0)
     { 
         if ( pRescMonitor->MonIntervalTime == uValue )
         {
@@ -2054,25 +2054,25 @@ CpuMemFrag_GetParamStringValue
 	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
 
 	/* check the parameter name and return the corresponding value */
-	if( AnscEqualString(ParamName, "DMA", TRUE))
+	if (strcmp(ParamName, "DMA") == 0)
 	{
 		AnscCopyString( pValue, pCpuMemFragDma->dma);
 		return 0;
 	}
 
-	if( AnscEqualString(ParamName, "DMA32", TRUE))
+	if (strcmp(ParamName, "DMA32") == 0)
 	{
 		AnscCopyString( pValue, pCpuMemFragDma->dma32);
 		return 0;
 	}
 
-	if( AnscEqualString(ParamName, "Normal", TRUE))
+	if (strcmp(ParamName, "Normal") == 0)
 	{
 		AnscCopyString( pValue, pCpuMemFragDma->normal);
 		return 0;
 	}
 
-	if( AnscEqualString(ParamName, "Highmem", TRUE))
+	if (strcmp(ParamName, "Highmem") == 0)
 	{
 		AnscCopyString( pValue, pCpuMemFragDma->highmem);
 		return 0;
@@ -2096,7 +2096,7 @@ CpuMemFrag_GetParamUlongValue
 	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
 
 	/* check the parameter name and return the corresponding value */
-	if( AnscEqualString(ParamName, "FragPercentage", TRUE))
+	if (strcmp(ParamName, "FragPercentage") == 0)
 	{
 		 /* collect value */
 		*pInt = pCpuMemFragDma->FragPercentage;

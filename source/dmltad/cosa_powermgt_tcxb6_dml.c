@@ -75,7 +75,7 @@ BOOL PowerManagement_GetParamBoolValue
 {
 
     CcspTraceInfo(("%s:%d \n",__FUNCTION__,__LINE__));
-    if( AnscEqualString(ParamName, "PciEPowerManagement", TRUE))
+    if (strcmp(ParamName, "PciEPowerManagement") == 0)
     {
 #if defined(_COSA_BCM_ARM_) && defined(_XB6_PRODUCT_REQ_)
        char buff[1024];
@@ -153,7 +153,7 @@ BOOL PowerManagement_SetParamBoolValue
 {
 
     CcspTraceInfo(("In %s:%d  \n",__FUNCTION__,__LINE__));
-    if( AnscEqualString(ParamName, "PciEPowerManagement", TRUE))
+    if (strcmp(ParamName, "PciEPowerManagement") == 0)
     {
 #if defined(_COSA_BCM_ARM_) && defined(_XB6_PRODUCT_REQ_)
         if ( (int)bValue == 1 ) {
