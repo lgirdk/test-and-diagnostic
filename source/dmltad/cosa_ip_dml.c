@@ -5277,7 +5277,7 @@ SpeedTest_GetParamStringValue
 
         }
     }
-    else if ( AnscEqualString(ParamName, "ClientVersion", TRUE))
+    else if (strcmp(ParamName, "ClientVersion") == 0)
     {
         if (!strcmp(g_clientversion_speedtest,""))
         {
