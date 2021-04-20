@@ -2862,7 +2862,7 @@ then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
-if [ "$BOX_TYPE" = "HUB4" ]
+if [ "$BOX_TYPE" = "HUB4" ]; then
     IPV6_STATUS=`sysevent get ipv6_connection_state`
 fi	
 #    IPV6_STATUS=`sysevent get ipv6-status`
