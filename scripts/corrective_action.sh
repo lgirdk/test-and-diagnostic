@@ -808,6 +808,12 @@ resetNeeded()
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
 
+            elif [ "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "harvester" ]; then
+                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                cd /usr/ccsp/harvester
+                $BINPATH/$ProcessName &
+                cd -
+
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "PsmSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 t2CountNotify "SYS_SH_PSMProcess_restart"

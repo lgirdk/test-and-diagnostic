@@ -1134,6 +1134,13 @@ case $SELFHEAL_TYPE in
                 resetNeeded snmp snmp_subagent
             fi
         fi
+
+        # Checking harvester PID
+        HARVESTER_PID=$(pidof harvester)
+        if [ "$HARVESTER_PID" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : harvester is not running, need restart"
+            resetNeeded harvester harvester
+        fi
     ;;
     "SYSTEMD")
     ;;
