@@ -244,6 +244,7 @@ BOOL Fan_SetParamBoolValue
     if( AnscEqualString(ParamName, "MaxOverride", TRUE))
     {
         platform_hal_setFanMaxOverride( bValue, pFanInfo->fanIndex );
+        fanInfo[pFanInfo->fanIndex].maxOverride = bValue;
 
         return TRUE;
     }
