@@ -75,6 +75,8 @@
 static ULONG last_tick;
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 64
+#define SPEEDTEST_VERSION_LOG_FILE "/tmp/.speedtest-client-version.log"
+#define SPEEDTEST_VERSION_SIZE 32
 #define TIME_NO_NEGATIVE(x) ((long)(x) < 0 ? 0 : (x))
 
 #ifndef ROUTEHOPS_HOST_STRING
@@ -92,6 +94,7 @@ BOOL g_run_speedtest = FALSE;
 BOOL g_is_pingtest_running = FALSE;
 
 char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
+char g_clientversion_speedtest[SPEEDTEST_VERSION_SIZE + 1] = {0};
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -6167,6 +6170,10 @@ SpeedTest_GetParamStringValue
     )
 {
     int len = strlen(g_argument_speedtest);
+    FILE *filePtr = NULL;
+    char strClientVersionBuf[512];
+    int  byteCount = 0;
+    memset(strClientVersionBuf, 0, sizeof(strClientVersionBuf));
     /* check the parameter name and return the corresponding value */
     if ( AnscEqualString(ParamName, "Argument", TRUE))
     {
@@ -6182,12 +6189,59 @@ SpeedTest_GetParamStringValue
 
 	}
     }
+    else if ( AnscEqualString(ParamName, "ClientVersion", TRUE))
+    {
+        if (!strcmp(g_clientversion_speedtest,""))
+        {
+            filePtr = fopen(SPEEDTEST_VERSION_LOG_FILE, "r");
+            if (filePtr != NULL)
+            {
+                byteCount = fread(strClientVersionBuf, 1, (sizeof(strClientVersionBuf) - 1), filePtr);
+                strClientVersionBuf[byteCount-1] = '\0';
+            }
+            else
+            {
+                AnscTraceFlow(( "<%s> syscfg_get failed to parse log file for ClientVersion\n", __FUNCTION__ ));
+                return 1;
+            }
+            if (!strcmp(strClientVersionBuf, ""))
+            {
+                AnscTraceWarning(("%s syscfg_get failed ClientVersion is set to Null \n",__FUNCTION__));
+                return 1;
+            }
+            else
+            {
+                char *token = strtok(strClientVersionBuf, " \n");
+                while( token != NULL )
+                {
+                    if(!strcmp(token,"version:"))
+                    {
+                        AnscCopyString(strClientVersionBuf, token+9);
+                        if( strClientVersionBuf[strlen(strClientVersionBuf)-1] == '\n' )
+                        {
+                            strClientVersionBuf[strlen(strClientVersionBuf)-1] = '\0';
+                        }
+                        break;
+                    }
+                    token = strtok(NULL, " \n");
+                }
+                AnscCopyString(g_clientversion_speedtest, strClientVersionBuf);
+                AnscCopyString(pValue, g_clientversion_speedtest);
+                return 0;
+            }
+        }
+        else
+        {
+            AnscCopyString(pValue, g_clientversion_speedtest);
+            remove(SPEEDTEST_VERSION_LOG_FILE);
+            return 0;
+        }
+    }
     else
     {
-
-		AnscTraceWarning(("SpeedTest Argument get :Unsupported parameter '%s'\n", ParamName));
-		return -1;
-    } 
+        AnscTraceWarning(("SpeedTest Argument/ClientVersion get :Unsupported parameter '%s'\n", ParamName));
+        return -1;
+    }
 }
 
 

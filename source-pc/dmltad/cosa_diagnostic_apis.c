@@ -289,6 +289,17 @@ CosaDiagInitialize
 	g_enable_speedtest = FALSE ;
     }
 
+    /*Executing Spped Test version script to acquire ClientVersion Object*/
+    FILE *pOpenPtr = NULL;
+    AnscTraceFlow(("Executing Speedtest to acquire version\n"));
+    pOpenPtr = popen("/usr/ccsp/tad/speedtest_version.sh &", "r");
+    if (pOpenPtr == NULL)
+    {
+        AnscTraceWarning(("%s syscfg_get failed to acquire Speedtest ClientVersion\n",__FUNCTION__));
+    }
+    pclose(pOpenPtr);
+
+
     /* Initiation all functions */
 
     return returnStatus;
