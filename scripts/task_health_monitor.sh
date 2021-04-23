@@ -638,9 +638,9 @@ case $SELFHEAL_TYPE in
                               echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 
                               if [ "$BOX_TYPE" = "XB3" ]; then
-                                 if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then
+                                 if [ -f /usr/bin/rpcclient2 ] ;then
                                  echo_t "Ping to peer failed check, whether ATOM is good through RPC"
-                                    RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+                                    RPC_RES=`rpcclient2 pwd`
                                     RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
                                     if [ "$RPC_OK" != "" ]; then
                                        echo_t "RPC Communication with ATOM is OK"
@@ -649,7 +649,7 @@ case $SELFHEAL_TYPE in
                                        echo_t "RPC Communication with ATOM have an issue"
                                     fi
                                  else
-                                    echo_t "ATOM_ARPING_IP is NULL , not checking communication using rpcclient"
+                                    echo_t "Not checking communication using rpcclient"
                                  fi
                               fi
                               #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"

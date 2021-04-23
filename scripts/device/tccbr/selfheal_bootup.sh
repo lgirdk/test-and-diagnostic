@@ -289,8 +289,8 @@ loop=1
         then
 	     echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
              # This test is done only for XB3 cases 
-       	     if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
-			RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+       	     if [ -f /usr/bin/rpcclient2 ]; then 
+			RPC_RES=`rpcclient2 pwd`
 			RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
 			if [ "$RPC_OK" != "" ]
 	         	then
@@ -299,7 +299,7 @@ loop=1
 			   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
 			fi
 	     else
-			echo_t "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+			echo_t "Not checking communication using rpcclient"
 	     fi
       	 fi
 
@@ -339,8 +339,8 @@ fi
         if [ "$isCRAlive" == "" ]; then
 				# Test CR Alive or not using rpcclient
 		# This test is done only for XB3 cases 
-		if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ]; then 
-			RPC_RES=`rpcclient $ATOM_ARPING_IP "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
+		if [ -f /usr/bin/rpcclient2 ]; then 
+			RPC_RES=`rpcclient2 "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
 			isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
 			isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
 			if [ "$isRpcOk" != "" ]; then
@@ -355,7 +355,7 @@ fi
 				echo_t "RDKB_SELFHEAL_BOOTUP : CR process is not alive thru RPC as well"
 			fi
 		else
-			echo_t "Non-XB3 case / ATOM_ARPING_IP is NULL not checking CR process using rpcclient"
+			echo_t "Not checking CR process using rpcclient"
 		fi
 
                 # Retest by querying some other parameter

@@ -238,11 +238,11 @@ db_clean_up_required()
 
 	if [ "$BOX_TYPE" = "XB3" ]
 	then
-		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
+		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 		if [ ! -z "$WiFi_PID" ]; then
 			echo_t "RDKB_SELFHEAL_BOOTUP : Stopping CcspWifiSsp before cleaning the database"
-			rpcclient $ATOM_ARPING_IP "kill -9 $WiFi_PID"
+			rpcclient2 "kill -9 $WiFi_PID"
 		fi
 	else
 		WiFi_PID=$(busybox pidof CcspWifiSsp)
@@ -394,8 +394,8 @@ then
 		then
 		     echo_t "RDKB_SELFHEAL_BOOTUP : Ping to peer failed check whether ATOM is really down thru RPC"
 		     # This test is done only for XB3 cases 
-	       	     if [ -f /usr/bin/rpcclient ] && [ "$ATOM_ARPING_IP" != "" ];then 
-				RPC_RES=`rpcclient $ATOM_ARPING_IP pwd`
+	       	     if [ -f /usr/bin/rpcclient2 ];then 
+				RPC_RES=`rpcclient2 pwd`
 				RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
 				if [ "$RPC_OK" != "" ]
 			 	then
@@ -404,7 +404,7 @@ then
 				   	echo_t "RDKB_SELFHEAL_BOOTUP : RPC Communication with ATOM is NOK"    
 				fi
 		     else
-				echo_t "Non-XB3 case / ATOM_ARPING_IP is NULL not checking communication using rpcclient"
+				echo_t "Not checking communication using rpcclient"
 		     fi
 	      	 fi
 
@@ -445,7 +445,7 @@ fi
         		
 				if [ "$WAN_TYPE" != "EPON" ]; then
 					# Test CR Alive or not using rpcclient
-				    RPC_RES=`rpcclient $ATOM_ARPING_IP "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
+				    RPC_RES=`rpcclient2 "dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name"`
 				    isRpcOk=`echo $RPC_RES | grep "RPC CONNECTED"`
 				    isCRAlive=`echo $RPC_RES | grep "Execution succeed"`
 				    if [ "$isRpcOk" != "" ]
@@ -800,9 +800,9 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 fi
 	if [ "$BOX_TYPE" = "XB3" ]
 	then
-		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
+		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
-		RPC_WiF_FILE_EXISTS=`rpcclient $ATOM_ARPING_IP "ls $WiFi_INIT_FILE"`
+		RPC_WiF_FILE_EXISTS=`rpcclient2 "ls $WiFi_INIT_FILE"`
 		WIFI_INIT_FILE_EXISTS=`echo "$RPC_WiF_FILE_EXISTS" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 	else
 		WiFi_PID=$(busybox pidof CcspWifiSsp)
