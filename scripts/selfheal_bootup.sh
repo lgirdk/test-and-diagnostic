@@ -749,7 +749,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	 	 echo "`cat /var/dnsmasq.conf`"
 
 		 echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
-	         ysevent set dhcp_server-restart
+		 sysevent set dhcp_server-restart
         fi
     fi
 fi
