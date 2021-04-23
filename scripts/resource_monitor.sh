@@ -386,7 +386,7 @@ if [ "$BOX_TYPE" = "XB3" ] ; then
 ####################################################
 #Logic:We will read ATOM load average on ARM side using rpcclient, 
 #	based on the load average threshold value,reboot the box.
-Curr_AtomLoad_Avg=`rpcclient $ATOM_ARPING_IP "cat /proc/loadavg" | sed '4q;d'`
+Curr_AtomLoad_Avg=`rpcclient2 "cat /proc/loadavg" | sed '4q;d'`
 Load_Avg1=`echo $Curr_AtomLoad_Avg | awk  '{print $1}'`
 Load_Avg10=`echo $Curr_AtomLoad_Avg | awk  '{print $2}'`
 Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
