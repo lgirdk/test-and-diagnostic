@@ -116,13 +116,7 @@ done
 # Check if we need to collect peer buddyinfo, then do rpcclient 
 if [ "$CR_IN_PEER" = "yes" ]
 then                                    
-    if [ "$MODEL_NUM" = "TG1682G" ]
-    then                 
-         ip=$PEER_ARPING_IP
-    else                                      
-         ip=$PEER_INTERFACE_IP                                          
-    fi                    
-    peer_buddyinfo=`rpcclient $ip "cat $HOST_BUDDYINFO_FILE" | grep -v CONNECTED`
+    peer_buddyinfo=`rpcclient2 "cat $HOST_BUDDYINFO_FILE" | grep -v CONNECTED`
                                                
    for line in $peer_buddyinfo;                                          
    do  
