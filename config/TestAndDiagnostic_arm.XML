@@ -1219,8 +1219,11 @@
             <objects>
                 <object>
                     <name>Fan</name>
-                    <objectType>object</objectType>
+                    <objectType>staticTable</objectType>
+                    <maxInstance>3</maxInstance>
                     <functions>
+                        <func_GetEntryCount>Fan_GetEntryCount</func_GetEntryCount>
+                        <func_GetEntry>Fan_GetEntry</func_GetEntry>
                         <func_GetParamBoolValue>Fan_GetParamBoolValue</func_GetParamBoolValue>
                         <func_GetParamUlongValue>Fan_GetParamUlongValue</func_GetParamUlongValue>
                         <func_GetParamStringValue>Fan_GetParamStringValue</func_GetParamStringValue>
