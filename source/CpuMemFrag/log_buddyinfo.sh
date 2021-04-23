@@ -122,7 +122,7 @@ then
     else                                      
          ip=$PEER_INTERFACE_IP                                          
     fi                    
-    peer_buddyinfo=`rpcclient $ip "cat $HOST_BUDDYINFO_FILE" | grep -v CONNECTED`
+    peer_buddyinfo=`rpcclient2 "cat $HOST_BUDDYINFO_FILE" | grep -v CONNECTED`
                                                
    for line in $peer_buddyinfo;                                          
    do  
