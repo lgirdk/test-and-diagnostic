@@ -25,7 +25,7 @@ VERSION_LOG_FILE=/tmp/.speedtest-client-version.log
 if [ "$BOX_TYPE" = XB3 ] && [ "$MODEL_NUM" = TG1682G ]
 then
  # C speedtest client
- rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client -v" > $VERSION_LOG_FILE
+ rpcclient2 "/usr/bin/speedtest-client -v" > $VERSION_LOG_FILE
 elif [ "$BOX_TYPE" = XB6 ]
 then
  # C speedtest client
@@ -37,7 +37,7 @@ then
 elif [ "$BOX_TYPE" = XB3 ] && ( [ "$MODEL_NUM" = DPC3941 ] || [ "$MODEL_NUM" = DPC3941B ] )
 then
  # C speedtest client
- rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+ rpcclient2 "sh /etc/measurement-client-download.sh &"
 elif [ "$BOX_TYPE" = SR213 ]
 then
 # C speedtest client
