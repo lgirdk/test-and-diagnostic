@@ -36,7 +36,7 @@ then
    then
     # C speedtest client
     echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Executing speedtest-client-c for XB3A" >> $LOG_FILE
-    rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client &"
+    rpcclient2 "/usr/bin/speedtest-client &"
    elif [ "$BOX_TYPE" = XB6 ]
    then
     # C speedtest client
@@ -55,7 +55,7 @@ then
    then
     # C speedtest client
     echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Downloading and/or executing speedtest-client-c for XB3C" >> $LOG_FILE
-    rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+    rpcclient2 "sh /etc/measurement-client-download.sh &"
    elif [ "$BOX_TYPE" = SR213 ]
    then
     # C speedtest client
