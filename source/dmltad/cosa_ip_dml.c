@@ -2238,9 +2238,9 @@ TraceRoute_GetParamUlongValue
         *puLong = cfg.size;
     else if( AnscEqualString(ParamName, "DSCP", TRUE))
         *puLong = cfg.tos >> 2;
-    if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
+    else if( AnscEqualString(ParamName, "MaxHopCount", TRUE))
         *puLong = cfg.maxhop;
-    if( AnscEqualString(ParamName, "ResponseTime", TRUE))
+    else if( AnscEqualString(ParamName, "ResponseTime", TRUE))
         *puLong = statis.u.tracert.resptime;
 
     return TRUE;
@@ -2323,8 +2323,7 @@ TraceRoute_GetParamStringValue
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
     }
-
-    if( AnscEqualString(ParamName, "Host", TRUE))
+    else if( AnscEqualString(ParamName, "Host", TRUE))
     {
         if (*pUlSize <= strlen(cfg.host))
         {
