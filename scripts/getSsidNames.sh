@@ -34,7 +34,7 @@ if [ "$triband_radio" == "true" ]; then
     got_6=0
 fi
 if [ "x$BOX_TYPE" = "xXB3" ]; then
-GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
+GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 else
    if [ "$OneWiFiEnabled" == "true" ]; then
