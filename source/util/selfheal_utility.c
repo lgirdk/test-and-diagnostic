@@ -30,8 +30,10 @@
   
 int mtaBatteryGetPowerMode()
 {
+    #ifdef ENABLE_MTA
     char value[32] = {0};
     ULONG size = 0;
+
     if ( mta_hal_BatteryGetPowerStatus(value, &size) == 0 )
     {
     	if(strcmp(value,"Battery") == 0)
@@ -40,10 +42,10 @@ int mtaBatteryGetPowerMode()
     	}else {
     		return 0 ;
     	}
-    } else {
-    	return 0 ;
-    }     
-}
+    } 
+    #endif
+        return 0 ;
+ }
 
 int main(int argc,char *argv[])
 {
@@ -53,8 +55,10 @@ int main(int argc,char *argv[])
    	    return 0;
 	if (strcmp(argv[1],"power_mode")==0)
 	{
+		#ifdef ENABLE_MTA
 		mta_hal_InitDB();
 		powermode_status= mtaBatteryGetPowerMode();
+                #endif
 	}
 	return powermode_status ;
 }

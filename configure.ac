@@ -79,6 +79,15 @@ AM_CONDITIONAL(CCSP_ARCH_ATOM, test "x$CCSP_ARCH" = xatom)
 AM_CONDITIONAL(CCSP_ARCH_PC, test "x$CCSP_ARCH" = xpc)
 AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
 
+AC_ARG_ENABLE([mta],
+[  --enable-mta    Turn on mta],
+[case "${enableval}" in
+  yes) ENABLE_MTA=true ;;
+  no)  ENABLE_MTA=false ;;
+  *) AC_MSG_ERROR([bad value ${enableval} for --enable-mta]) ;;
+esac],[ENABLE_MTA=false])
+AM_CONDITIONAL([ENABLE_MTA], [test x$ENABLE_MTA = xtrue])
+
 AC_CONFIG_FILES(
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
