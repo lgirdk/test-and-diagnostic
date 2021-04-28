@@ -20,6 +20,7 @@
 
 TAD_PATH="/usr/ccsp/tad"
 source $TAD_PATH/corrective_action.sh
+source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 
@@ -43,6 +44,7 @@ Dhcpv6_Client_restart ()
 		fi
 	fi
 	if [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ];then
+		sysevent set dibbler_server_conf-status ""
 		if [ "$1" = "dibbler-client" ];then
 			dibbler-client stop
             		sleep 2
@@ -54,6 +56,7 @@ Dhcpv6_Client_restart ()
 	                sh $DHCPV6_HANDLER enable
             		sleep 8
 		fi
+		wait_till_state "dibbler_server_conf" "ready"
 		touch /tmp/dhcpv6-client_restarted
 	fi
 	if [ ! -f "$DIBBLER_SERVER_CONF" ];then

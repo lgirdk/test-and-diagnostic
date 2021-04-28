@@ -29,7 +29,7 @@ DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
-
+source /etc/utopia/service.d/event_handler_functions.sh
 ovs_enable=`syscfg get mesh_ovs_enable`
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
@@ -208,17 +208,19 @@ Dhcpv6_Client_restart ()
 		fi
 	fi
 	if [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ];then
+		sysevent set dibbler_server_conf-status ""
 		if [ "$1" = "dibbler-client" ];then
 			dibbler-client stop
             		sleep 2
             		dibbler-client start
-            		sleep 8
+            		sleep 5
 		elif [ "$1" = "ti_dhcp6c" ];then
 			sh $DHCPV6_HANDLER disable
 	                sleep 2
 	                sh $DHCPV6_HANDLER enable
-            		sleep 8
+            		sleep 5
 		fi
+		wait_till_state "dibbler_server_conf" "ready"
 		touch /tmp/dhcpv6-client_restarted
 	fi
 	if [ ! -f "$DIBBLER_SERVER_CONF" ];then
