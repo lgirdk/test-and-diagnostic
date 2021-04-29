@@ -511,7 +511,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 
                     # l2sd0.100 is an interface specific to intel platform. Not applicable for other soc vendors.
-                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ]
+                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]
                     then
                         check_if_l2sd0_100_created="NotApplicable"
                         check_if_l2sd0_100_up="NotApplicable"
@@ -732,7 +732,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 			fi
 	  fi
 
-	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ]
+	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ]
 	  then
 	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1

@@ -40,6 +40,7 @@ case $BOX_TYPE in
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
     "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
     "HUB4") SELFHEAL_TYPE="SYSTEMD";;
+    "SR300") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -847,7 +848,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         case $BOX_TYPE in
-            "HUB4")
+            "HUB4"|"SR300")
                 Harvester_PID=$(pidof harvester)
                 if [ "$Harvester_PID" != "" ]; then
                     Harvester_CPU=$(top -bn1 | grep "harvester" | grep -v "grep" | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//' | awk '{$1=$1};1')
@@ -900,7 +901,7 @@ esac
 if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
 else
-    if [ "$BOX_TYPE" != "HUB4" ]; then
+    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
@@ -974,7 +975,7 @@ else
             ;;
         esac
 
-    fi #Not HUb4
+    fi #Not HUb4 && SR300
 fi #BWG
 case $SELFHEAL_TYPE in
     "BASE")
@@ -1498,7 +1499,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
             #Checking dropbear PID
             DROPBEAR_PID=$(pidof dropbear)
             if [ "$DROPBEAR_PID" = "" ]; then
@@ -2062,7 +2063,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
             # Checking whether brlan0 is created properly , if not recreate it
             lanSelfheal=$(sysevent get lan_selfheal)
             echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
@@ -2229,7 +2230,7 @@ case $SELFHEAL_TYPE in
                       done
                 fi
             fi
-        fi #Not HUB4
+        fi #Not HUB4 && SR300
     ;;
 esac
 fi
@@ -2627,7 +2628,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
             firewall_rules=$(iptables-save)
             check_if_brlan1=$(echo "$firewall_rules" | grep "brlan1")
             if [ "$check_if_brlan1" = "" ]; then
@@ -2787,7 +2788,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ]; then
+                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
                     echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
                     IsAnyOneInfFailtoUp=1
                 fi
@@ -3114,7 +3115,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
     echo_t "isIPv6 = $isIPv6"
     if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
@@ -3138,7 +3139,7 @@ erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
 erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
 erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
 IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ]; then
+if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
     case $SELFHEAL_TYPE in
         "SYSTEMD")
             if [ "$erouter0_up_check" = "" ]; then
@@ -3198,7 +3199,7 @@ fi
 #Logic ends here for RDKB-25714
 wan_dhcp_client_v4=1
 wan_dhcp_client_v6=1
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$WAN_STATUS" = "started" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = "started" ]; then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
 
@@ -3419,7 +3420,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
@@ -3504,7 +3505,7 @@ case $SELFHEAL_TYPE in
                 fi
                 wan_dhcp_client_v6=1
             fi
-        fi #Not HUB4
+        fi #Not HUB4 && SR300
     ;;
 esac
 fi
@@ -3662,6 +3663,8 @@ if [ "$isPeriodicFWCheckEnable" = "false" ] || [ "$isPeriodicFWCheckEnable" = ""
                 fDwnldPid=$(ps w | grep -w "xf3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
             elif [ "$BOX_TYPE" = "HUB4" ]; then
                 fDwnldPid=$(ps w | grep -w "hub4_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            elif [ "$BOX_TYPE" = "SR300" ]; then
+                fDwnldPid=$(ps w | grep -w "sr300_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
             else
                 fDwnldPid=$(ps w | grep -w "xb6_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
             fi
