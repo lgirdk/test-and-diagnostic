@@ -1665,6 +1665,28 @@ if [ "$thisPARODUS_PID" != "" ]; then
     fi
 fi
 
+#Implement selfheal mechanism for aker to restart aker process in selfheal window  in XB3 devices
+case $SELFHEAL_TYPE in
+    "BASE")
+	# Checking Aker PID
+	AKER_PID=$(pidof aker)
+	if [ -f "/etc/AKER_ENABLE" ] &&  [ "$AKER_PID" = "" ]; then
+		echo_t "[RDKB_PROCESS_CRASHED] : aker process is not running need restart"
+		t2CountNotify "SYS_SH_akerCrash"
+		if [ ! -f  "/tmp/aker_cmd.cmd" ] ; then
+			echo_t "aker_cmd.cmd don't exist in tmp, creating it."
+			echo "/usr/bin/aker -p $PARODUS_URL -c $AKER_URL -w parcon -d /nvram/pcs.bin -f /nvram/pcs.bin.md5" > /tmp/aker_cmd.cmd
+		fi
+		aker_cmd=`cat /tmp/aker_cmd.cmd`
+		$aker_cmd &
+	fi
+    ;;
+    "TCCBR")
+    ;;
+    "SYSTEMD")
+    ;;
+esac
+
 case $SELFHEAL_TYPE in
     "BASE")
         # TODO: move DROPBEAR BASE code with TCCBR,SYSTEMD code!
