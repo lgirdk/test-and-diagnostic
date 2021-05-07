@@ -31,6 +31,7 @@ Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 ovs_enable=`syscfg get mesh_ovs_enable`
+bridgeUtilEnable=`syscfg get bridge_util_enable`
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
@@ -613,20 +614,35 @@ case $SELFHEAL_TYPE in
             fi
 
         fi
+	
+        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
+          HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+          if [ "$HOME_LAN_ISOLATION" = "0" ];then
+              #ARRISXB6-9443 temp fix. Need to generalize and improve.
+                  if [ "x$ovs_enable" = "xtrue" ];then
+                      ovs-vsctl list-ifaces brlan0 |grep "moca0" >> /dev/null
+                  else
+                      brctl show brlan0 | grep "moca0" >> /dev/null
+                  fi
+                  if [ $? -ne 0 ] ; then
+                      echo_t "Moca is not part of brlan0.. adding it"
+                      t2CountNotify "SYS_SH_MOCA_add_brlan0"
+                      sysevent set multinet-syncMembers 1
+                  fi
 
-        HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
-        if [ "$HOME_LAN_ISOLATION" = "0" ];then
-            #ARRISXB6-9443 temp fix. Need to generalize and improve.
-            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-                brctl show brlan0 | grep "nmoca0" >> /dev/null
-                if [ $? -ne 0 ] ; then
-                    echo_t "Moca is not part of brlan0.. adding it"
-                    t2CountNotify "SYS_SH_MOCA_add_brlan0"
-                    sysevent set multinet-syncMembers 1
-                fi
-            fi
-        fi
-
+          else
+                  if [ "x$ovs_enable" = "xtrue" ];then
+                      ovs-vsctl list-ifaces brlan10 |grep "moca0" >> /dev/null
+                  else
+                      brctl show brlan10 | grep "moca0" >> /dev/null
+                  fi
+                  if [ $? -ne 0 ] ; then
+                      echo_t "Moca is not part of brlan10.. adding it"
+                      #t2CountNotify "SYS_SH_MOCA_add_brlan10"
+                      sysevent set multinet-syncMembers 9
+                  fi
+          fi
+	fi
     ;;
 esac
 
@@ -1211,8 +1227,13 @@ case $SELFHEAL_TYPE in
 	    fi
         if [ "$OPEN_24" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
-            brctlPresent=$(brctl show | grep "brlan2")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+			if [ "x$ovs_enable" = "xtrue" ];then
+				brPresent=$(ovs-vsctl show | grep "brlan2")
+			else
+				brPresent=$(brctl show | grep "brlan2")
+			fi
+            
+            if [ "$grePresent" = "" ] || [ "$brPresent" = "" ] ; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
@@ -1251,8 +1272,13 @@ case $SELFHEAL_TYPE in
             #l2sd0.103 case
             if [ "$OPEN_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
-            brctlPresent=$(brctl show | grep "brlan3")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+			if [ "x$ovs_enable" = "xtrue" ];then
+				brPresent=$(ovs-vsctl show | grep "brlan3")
+			else
+				brPresent=$(brctl show | grep "brlan3")
+			fi
+            
+            if [ "$grePresent" = "" ] || [ "$brPresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
@@ -1293,10 +1319,18 @@ case $SELFHEAL_TYPE in
               do
                 grePresent=$(ifconfig -a | grep "$grePrefix.10$index")
                 if [ -n "$grePresent" ]; then
-                    vlanAdded=$(brctl show $brlanPrefix$index | grep "$l2sd0Prefix.10$index")
+                    if [ "x$ovs_enable" = "xtrue" ];then
+                    	vlanAdded=$(ovs-vsctl show $brlanPrefix$index | grep "$l2sd0Prefix.10$index")
+                    else
+                    	vlanAdded=$(brctl show $brlanPrefix$index | grep "$l2sd0Prefix.10$index")
+                    fi
                     if [ "$vlanAdded" = "" ]; then
                         echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
-                        brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
+                        if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" ];then
+                        	/usr/bin/bridgeUtils add-port $brlanPrefix$index $l2sd0Prefix.10$index
+                        else
+                        	brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
+                        fi
                     fi
                 fi
               done
@@ -1311,8 +1345,12 @@ case $SELFHEAL_TYPE in
             #Secured Xfinity 2.4
             if [ "$SECURED_24" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
-            brctlPresent=$(brctl show | grep "brlan4")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+			if [ "x$ovs_enable" = "xtrue" ];then
+				brPresent=$(ovs-vsctl show | grep "brlan4")
+			else
+				brPresent=$(brctl show | grep "brlan4")
+            fi
+            if [ "$grePresent" = "" ] || [ "$brPresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
@@ -1347,8 +1385,13 @@ case $SELFHEAL_TYPE in
             #Secured Xfinity 5
             if [ "$SECURED_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
-            brctlPresent=$(brctl show | grep "brlan5")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+			if [ "x$ovs_enable" = "xtrue" ];then
+				brPresent=$(ovs-vsctl show | grep "brlan5")
+			else
+				brPresent=$(brctl show | grep "brlan5")
+			fi
+            
+            if [ "$grePresent" = "" ] || [ "$brPresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
@@ -1381,8 +1424,13 @@ case $SELFHEAL_TYPE in
             PUBLIC_5=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
             if [ "$PUBLIC_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Public_5_VLANID")
-            brctlPresent=$(brctl show | grep "brpub")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
+			if [ "x$ovs_enable" = "xtrue" ];then
+				brPresent=$(ovs-vsctl show | grep "brpub")
+			else
+				brPresent=$(brctl show | grep "brpub")
+			fi
+            
+            if [ "$grePresent" = "" ] || [ "$brPresent" = "" ]; then
                 ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
@@ -1919,7 +1967,12 @@ case $SELFHEAL_TYPE in
                         if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]; then
                             echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
                             echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 and l2sd0.100 o/p "
-                            ifconfig brlan0;ifconfig l2sd0.100; brctl show
+                            ifconfig brlan0;ifconfig l2sd0.100;							
+                            if [ "x$ovs_enable" = "xtrue" ];then
+                            	ovs-vsctl show
+                            else
+                            	brctl show
+                            fi
                             logNetworkInfo
 
                             ipv4_status=$(sysevent get ipv4_4-status)
@@ -1972,7 +2025,13 @@ case $SELFHEAL_TYPE in
                 if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
                     echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
-                    ifconfig brlan1;ifconfig l2sd0.101; brctl show
+                    ifconfig brlan1;ifconfig l2sd0.101; 
+                    if [ "x$ovs_enable" = "xtrue" ];then
+                    	ovs-vsctl show
+                    else
+                    	brctl show
+                    fi
+					
                     ipv5_status=$(sysevent get ipv4_5-status)
                     lan_l3net=$(sysevent get homesecurity_lan_l3net)
 
@@ -2185,7 +2244,11 @@ case $SELFHEAL_TYPE in
                 t2CountNotify "WIFI_INFO_mesh_enabled"
 
                 # Fetch mesh tunnels from the brlan0 bridge if they exist
-                brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
+                if [ "x$ovs_enable" = "xtrue" ];then
+                    brctl0_ifaces=$(ovs-vsctl list-ifaces brlan0 | egrep "pgd")
+                else
+                    brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
+                fi
                 br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
 
                 for ifn in $br0_ifaces
@@ -2200,7 +2263,7 @@ case $SELFHEAL_TYPE in
                       done
                     if [ "$brFound" = "false" ]; then
                         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
-                            if [ "x$ovs_enable" = "xtrue" ];then
+                            if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" ];then
                                 echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan0  :"
                                 /usr/bin/bridgeUtils add-port brlan0 $ifn;
                             else
@@ -2212,7 +2275,11 @@ case $SELFHEAL_TYPE in
 
                 # Fetch mesh tunnels from the brlan1 bridge if they exist
                 if [ "$thisIS_BCI" != "yes" ]; then
-                    brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
+                    if [ "x$ovs_enable" = "xtrue" ];then
+                    	brctl1_ifaces=$(ovs-vsctl list-ifaces brlan1 | egrep "pgd")
+                    else
+                    	brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
+                    fi
                     br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
 
                     for ifn in $br1_ifaces
@@ -2227,7 +2294,7 @@ case $SELFHEAL_TYPE in
                           done
                         if [ "$brFound" = "false" ]; then
                             echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
-                            if [ "x$ovs_enable" = "xtrue" ];then
+                            if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" ];then
                                 echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan1  :"
                                 /usr/bin/bridgeUtils add-port brlan1 $ifn;
                             else
@@ -3386,7 +3453,11 @@ case $SELFHEAL_TYPE in
             t2CountNotify  "WIFI_INFO_mesh_enabled"
 
             # Fetch mesh tunnels from the brlan0 bridge if they exist
-            brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
+            if [ "x$ovs_enable" = "xtrue" ];then
+            	brctl0_ifaces=$(ovs-vsctl list-ifaces brlan0 | egrep "pgd")
+            els
+            	brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
+            fi
             br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
 
             for ifn in $br0_ifaces
@@ -3401,13 +3472,21 @@ case $SELFHEAL_TYPE in
                   done
                 if [ "$brFound" = "false" ]; then
                     echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
-                    brctl addif brlan0 $ifn;
+                    if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" f];then
+                    	/usr/bin/bridgeUtils add-port brlan0 $ifn
+                    else
+                    	brctl addif brlan0 $ifn;
+                    fi
                 fi
               done
 
             # Fetch mesh tunnels from the brlan1 bridge if they exist
             if [ "$thisIS_BCI" != "yes" ]; then
-                brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
+                if [ "x$ovs_enable" = "xtrue" ];then
+                    brctl1_ifaces=$(ovs-vsctl list-ifaces brlan1 | egrep "pgd")
+                else
+                    brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
+                fi
                 br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
 
                 for ifn in $br1_ifaces
@@ -3422,7 +3501,11 @@ case $SELFHEAL_TYPE in
                       done
                     if [ "$brFound" = "false" ]; then
                         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
-                        brctl addif brlan1 $ifn;
+                        if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" ];then
+                        	/usr/bin/bridgeUtils add-port brlan1 $ifn
+                        else
+                        	brctl addif brlan1 $ifn;
+                        fi
                     fi
                   done
             fi
