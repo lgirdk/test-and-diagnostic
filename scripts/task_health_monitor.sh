@@ -821,6 +821,18 @@ case $SELFHEAL_TYPE in
                 /usr/sbin/mocadlfw &
             fi
         fi
+
+	# BWGRDK-1384: Selfheal mechanism for ripd process
+	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+	    staticIp_check=$(psmcli get dmsb.truestaticip.Enable)
+            if [ "$staticIp_check" = "1" ]; then
+		ripdPid=`pidof ripd`
+		if [ -z "$ripdPid" ]; then
+                    echo_t "RDKB_SELFHEAL : ripd process is not running, need restart"
+                    /usr/sbin/ripd -d -f /var/ripd.conf -u root -g root -i /var/ripd.pid &
+		fi
+	    fi
+	fi
     ;;
     "TCCBR")
     ;;
