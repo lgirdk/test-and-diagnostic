@@ -3671,3 +3671,16 @@ case $SELFHEAL_TYPE in
       ;;
 esac
 
+#BWGRDK-1044 conntrack Flush monitoring
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+    CONSOLE_LOGFILE=/rdklogs/logs/ArmConsolelog.txt.0;
+    timestamp=$( date +%d"/"%m"/"%Y" "%T )
+    check_conntrack_D=`ps -w | grep -i "conntrack" | grep " D " | grep -v grep | wc -l`
+    if [ $check_conntrack_D -gt 0 ]; then
+        echo "$timestamp : Conntrack Log start " >> $CONSOLE_LOGFILE
+        dmesg | grep conntrack >> $CONSOLE_LOGFILE
+        echo "$timestamp : Conntrack Log End " >> $CONSOLE_LOGFILE
+        cli system/pp/enable
+    fi
+fi
+
