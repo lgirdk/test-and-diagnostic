@@ -40,7 +40,6 @@ case $BOX_TYPE in
         SELFHEAL_TYPE="BASE";;
 esac
 
-
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
@@ -218,11 +217,9 @@ restart_adv_security()
 
 checkConditionsbeforeAction()
 {
-
     case $SELFHEAL_TYPE in
         "BASE")
             if [ "$1" != "RM" ] && [ "$WAN_TYPE" != "EPON" ]; then
-
                 isIPv4=$(ifconfig $CM_INTERFACE | grep "inet" | grep -v "inet6")
                 if [ "$isIPv4" = "" ]; then
                     isIPv6=$(ifconfig $CM_INTERFACE | grep "inet6" | grep "Scope:Global")
@@ -281,8 +278,7 @@ checkConditionsbeforeAction()
 
     printOnce=1
     while :
-      do
-
+    do
         #xhs traffic implementation pending
         xhsTraffic=1
         /usr/bin/XconfHttpDl http_reboot_status
@@ -316,8 +312,7 @@ checkConditionsbeforeAction()
                 sleep 2
             ;;
         esac
-      done
-
+    done
 }
 
 resetRouter()
@@ -383,7 +378,6 @@ resetRouter()
     esac
 
     if [ $CMRegComplete -eq 1 ]; then
-
         echo_t "RDKB_SELFHEAL : DNS Information :"
         cat /etc/resolv.conf
         echo_t "-------------------------------------------------------"
@@ -396,7 +390,6 @@ resetRouter()
         echo_t "RDKB_SELFHEAL : IProute Information:"
         route
         echo_t "-------------------------------------------------------"
-
         echo_t "-------------------------------------------------------"
         echo_t "RDKB_SELFHEAL : IP6table rules:"
         ip6tables -S
@@ -410,14 +403,10 @@ resetRouter()
         echo_t "RDKB_SELFHEAL : WAN INTERFACE $WAN_INTERFACE Information:"
         ifconfig $WAN_INTERFACE
         echo_t "-------------------------------------------------------"
-
         echo_t "RDKB_REBOOT : Reset router due to PING connectivity test failure"
-
         dmcli eRT setv Device.X_CISCO_COM_DeviceControl.RebootDevice string Router
         touch /tmp/.router_reboot
-
     fi
-
 }
 
 rebootNeeded()
@@ -427,7 +416,6 @@ rebootNeeded()
     # if return value is 0 then box is in diagnostic mode
     CheckAndProceedFurtherBasedonDiagnosticMode
     return_value=$?
-
     if [ $return_value -eq 0 ]; then
         return
     fi
@@ -436,18 +424,14 @@ rebootNeeded()
     # Implement as a indipendent script which can be accessed across both connectivity and resource scripts
     storedTime=$(syscfg get lastActiontakentime)
 
-
     if [ "$storedTime" != "" ] || [ $storedTime -ne 0 ]; then
         currTime=$(date -u +"%s")
         diff=$((currTime-storedTime))
         diff_in_minutes=$((diff / 60))
         diff_in_hours=$((diff_in_minutes / 60))
         if [ $diff_in_hours -ge 24 ]; then
-
             sh $TAD_PATH/selfheal_reset_counts.sh
-
         fi
-
     fi
     case $SELFHEAL_TYPE in
         "BASE")
@@ -469,16 +453,13 @@ rebootNeeded()
     if [ $TODAYS_REBOOT_COUNT -ge "$MAX_REBOOT_COUNT" ]; then
         echo_t "RDKB_SELFHEAL : Today's max reboot count already reached, please wait for reboot till next 24 hour window"
     else
-
         # Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
         checkConditionsbeforeAction $1
-
         return_value=$?
 
         if [ $return_value -eq 0 ]; then
             # Storing Information before corrective action
             storeInformation
-
 
             #touch $REBOOTNEEDED
             TODAYS_REBOOT_COUNT=$((TODAYS_REBOOT_COUNT+1))
@@ -533,13 +514,11 @@ rebootNeeded()
             $RDKLOGGER_PATH/backupLogs.sh "true" "$2"
         fi
     fi
-
 }
 
 # This function will check if captive portal needs to be enabled or not.
 checkCaptivePortal()
 {
-
     # Get all flags from DBs
     isWiFiConfigured=$(syscfg get redirection_flag)
     psmNotificationCP=$(psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges)
@@ -561,11 +540,11 @@ checkCaptivePortal()
         ;;
     esac
     while [ "$psmNotificationCP" = "" ] && [ $iter -le $max_iter ]
-      do
+    do
         iter=$((iter+1))
         echo "$iter"
         psmNotificationCP=$(psmcli get eRT.com.cisco.spvtg.ccsp.Device.WiFi.NotifyWiFiChanges)
-      done
+    done
 
     echo_t "RDKB_SELFHEAL : NotifyWiFiChanges is $psmNotificationCP"
     echo_t "RDKB_SELFHEAL : redirection_flag val is $isWiFiConfigured"
@@ -574,7 +553,7 @@ checkCaptivePortal()
         if [ "$networkResponse" = "204" ] && [ "$psmNotificationCP" = "true" ]; then
             # Check if P&M is up and able to find the captive portal parameter
             while :
-              do
+            do
                 echo_t "RDKB_SELFHEAL : Waiting for PandM to initalize completely to set ConfigureWiFi flag"
                 CHECK_PAM_INITIALIZED=$(find /tmp/ -name "pam_initialized")
                 echo_t "RDKB_SELFHEAL : CHECK_PAM_INITIALIZED is $CHECK_PAM_INITIALIZED"
@@ -602,7 +581,7 @@ checkCaptivePortal()
                     ;;
                 esac
                 sleep 2
-              done
+            done
         else
             echo_t "RDKB_SELFHEAL : We have not received a 204 response or PSM valus is not in sync"
         fi
@@ -654,11 +633,8 @@ resetNeeded()
 
         if [ $diff_in_hours -ge 24 ]; then
             sh $TAD_PATH/selfheal_reset_counts.sh
-
         fi
-
     fi
-
 
     MAX_RESET_COUNT=$(syscfg get max_reset_count)
     TODAYS_RESET_COUNT=$(syscfg get todays_reset_count)
@@ -725,6 +701,7 @@ resetNeeded()
                     cd /usr/ccsp
                 ;;
             esac
+
             if [ "$storedTime" = "" ] || [ $storedTime -eq 0 ]; then
                 storedTime=$(date -u +"%s")
                 syscfg set lastActiontakentime $storedTime
@@ -766,108 +743,90 @@ resetNeeded()
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$ProcessName" = "CcspHomeSecurity" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 CcspHomeSecurity 8081&
-
             elif [ "$BOX_TYPE" = "MV2PLUS" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspWifiSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 t2CountNotify "SYS_SH_WIFIAGENT_restart"
                 cd /usr/ccsp/wifi/
                 $BINPATH/CcspWifiSsp -subsys $Subsys
                 cd -
-
             elif [ "$ProcessName" = "CcspHotspot" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/hotspot
                 $BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
                 cd -
-
             elif [ "$ProcessName" = "hotspotfd" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 hotspotfd $keepalive_args  > /dev/null &
             elif [ "$ProcessName" = "dhcp_snooperd" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 dhcp_snooperd -q $BASEQUEUE -n 2 -e 1  > /dev/null &
-
             elif [ "$ProcessName" = "hotspot_arpd" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 hotspot_arpd -q 0  > /dev/null &
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspLMLite" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/lm
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspXdnsSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/xdns
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspEthAgent" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/ethagent
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "harvester" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/harvester
                 $BINPATH/$ProcessName &
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "PsmSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 t2CountNotify "SYS_SH_PSMProcess_restart"
                 cd /usr/ccsp
                 $BINPATH/PsmSsp -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspTr069PaSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/tr069pa
                 $BINPATH/CcspTr069PaSsp -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspCMAgentSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/cm
                 $BINPATH/CcspCMAgentSsp -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspEPONAgentSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/$folderName
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspMtaAgentSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/mta
                 $BINPATH/CcspMtaAgentSsp -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspMoCA" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd /usr/ccsp/moca
                 $BINPATH/CcspMoCA -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspTandDSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 SelfHealScript_PID=$(busybox pidof self_heal_connectivity_test.sh)
                 if [ "$SelfHealScript_PID" != "" ]; then
                     kill -9 "$SelfHealScript_PID"
                 fi
-
                 SelfHealScript_PID=$(busybox pidof resource_monitor.sh)
                 if [ "$SelfHealScript_PID" != "" ]; then
                     kill -9 "$SelfHealScript_PID"
                 fi
-
                 cd /usr/ccsp/tad
                 $BINPATH/CcspTandDSsp -subsys $Subsys
                 cd -
-
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspAdvSecuritySsp" ]; then
                 if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
                     rm $ADVSEC_AGENT_SHUTDOWN
@@ -875,7 +834,6 @@ resetNeeded()
                     echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 fi
                 restart_adv_security
-
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$folderName" = "advsec_bin" ]; then
                 if [ "$ProcessName" = "AdvSecurityRabid" ]; then
                     if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
@@ -886,7 +844,6 @@ resetNeeded()
                     fi
                     advsec_restart_rabid
                 fi
-
             elif [ "$ProcessName" = "PING" ]; then
                 REBOOTINTERVAL=$(syscfg get router_reboot_Interval)
                 LAST_REBOOT=$(syscfg get last_router_reboot_time)
@@ -900,13 +857,11 @@ resetNeeded()
                     syscfg commit
                     resetRouter
                 fi
-
             elif [ "$3" = "noSubsys" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd $BINPATH
                 ./$ProcessName &
                 cd -
-
             else
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 cd $BINPATH
@@ -914,15 +869,11 @@ resetNeeded()
                 cd -
             fi
         fi  # $return_value
-
     fi  # [ $TODAYS_RESET_COUNT -ge "$MAX_RESET_COUNT" ] && [ "$ProcessName" = "PING" ]
-
 }
-
 
 storeInformation()
 {
-
     case $SELFHEAL_TYPE in
         "BASE")
             # Check if request is for P&M Reset
@@ -954,9 +905,7 @@ storeInformation()
 
     #Record the start statistics
     STARTSTAT=$(getstat)
-
     sleep $DELAY
-
     #Record the end statistics
     ENDSTAT=$(getstat)
 
@@ -978,42 +927,36 @@ storeInformation()
     esac
 
     ACTIVE=$(( USR + SYS + IOW + IRQ + SIRQ + STEAL))
-
     TOTAL=$((ACTIVE + IDLE))
-
     Curr_CPULoad=$(( ACTIVE * 100 / TOTAL ))
-
     echo_t "RDKB_SELFHEAL : Current CPU load is $Curr_CPULoad"
-
     echo_t "RDKB_SELFHEAL : Top 5 tasks running on device with resource usage are below"
     top -bn1 | head -n10 | tail -6
 
     for index in 1 2 3 5 6
-      do
-
+    do
         numberOfEntries=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDeviceNumberOfEntries | grep "value" | awk '{print $5}')
-
         if [ 0$numberOfEntries -ne 0 ]; then
             assocDev=1
             while [ $assocDev -le 0$numberOfEntries ]
-              do
+            do
                 MACADDRESS=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.MACAddress | grep "value" | awk '{print $5}')
                 RSSI=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.SignalStrength | grep "value" | awk '{print $5}')
                 echo_t "RDKB_SELFHEAL : Device $MACADDRESS connected on AccessPoint $index and RSSI is $RSSI dBm"
                 assocDev=$((assocDev+1))
-              done
+            done
         fi
-      done
+    done
 
     for radio_index in 1 2
-      do
+    do
         channel=$(dmcli eRT getv Device.WiFi.Radio.$radio_index.Channel | grep "value" | awk '{print $5}')
         if [ $radio_index -eq 1 ]; then
             echo_t "RDKB_SELFHEAL : 2.4GHz radio is operating on $channel channel"
         else
             echo_t "RDKB_SELFHEAL : 5GHz radio is operating on $channel channel"
         fi
-      done
+    done
 
     # If the crashed process is MoCA, we cannot get MoCA parameters
     if [ $isMOCA -eq 0 ]; then
@@ -1025,13 +968,11 @@ storeInformation()
         ErrorsReceived=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsReceived | grep "value" | awk '{print $5}')
         DiscardPacketsSent=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsSent | grep "value" | awk '{print $5}')
         DiscardPacketsReceived=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsReceived | grep "value" | awk '{print $5}')
-
         EgressNumFlows=$(dmcli eRT getv Device.MoCA.Interface.1.QoS.EgressNumFlows | grep "value" | awk '{print $5}')
         IngressNumFlows=$(dmcli eRT getv Device.MoCA.Interface.1.QoS.IngressNumFlows | grep "value" | awk '{print $5}')
 
         echo_t "RDKB_SELFHEAL : MoCA Statistics info is below"
         echo_t "RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
-
         echo_t "RDKB_SELFHEAL : DiscardPacketsSent=$DiscardPacketsSent DiscardPacketsReceived=$DiscardPacketsReceived"
         echo_t "RDKB_SELFHEAL : EgressNumFlows=$EgressNumFlows IngressNumFlows=$IngressNumFlows"
     else
@@ -1048,7 +989,6 @@ storeInformation()
             ;;
         esac
     fi
-
 }
 
 logNetworkInfo()
@@ -1075,14 +1015,11 @@ logNetworkInfo()
     esac
     echo_t "RDKB_SELFHEAL : brctl o/p :"
     ovs_enable=`syscfg get mesh_ovs_enable`
-
     if [ "x$ovs_enable" = "xtrue" ];then
-            echo_t "RDKB_SELFHEAL : OVS bridge o/p :"
-            ovs-vsctl show  
-            
-    fi 
+        echo_t "RDKB_SELFHEAL : OVS bridge o/p :"
+        ovs-vsctl show
+    fi
     brctl show
-
     echo_t "-------------------------------------------------------"
     echo_t "RDKB_SELFHEAL : ip route list o/p :"
     ip route list
@@ -1109,7 +1046,6 @@ logNetworkInfo()
             fi
         ;;
     esac
-
 }
 
 case $SELFHEAL_TYPE in
@@ -1120,7 +1056,6 @@ case $SELFHEAL_TYPE in
         {
             # As per requirement we need to reboot one time because of this case
             storedRebootTime=$(syscfg get lastActiontakentimeforAtomHang)
-
             if [ "$storedRebootTime" != "" ] || [ $storedRebootTime -ne 0 ]; then
                 currSysTime=$(date -u +"%s")
                 total_diff=$((currSysTime-storedRebootTime))
@@ -1130,7 +1065,6 @@ case $SELFHEAL_TYPE in
                     # Reset the stored DB values
                     syscfg set todays_atom_reboot_count 0
                     syscfg set lastActiontakentimeforAtomHang 0
-
                     syscfg commit
                 fi
             fi
@@ -1141,13 +1075,10 @@ case $SELFHEAL_TYPE in
             # Set the reboot configuration for atom hang
             storedRebootTime=$(date -u +"%s")
             syscfg set lastActiontakentimeforAtomHang $storedRebootTime
-
             TODAYS_ATOM_REBOOT_COUNT=$((TODAYS_ATOM_REBOOT_COUNT+1))
             syscfg set todays_atom_reboot_count $TODAYS_ATOM_REBOOT_COUNT
-
             syscfg commit
         }
-
     ;;
     "SYSTEMD")
     ;;
@@ -1192,7 +1123,6 @@ CheckAndProceedFurtherBasedonDiagnosticMode()
         echo_t "RDKB_SELFHEAL : Box is in diagnositic mode so we don't reboot/reset process during this time"
         return 0
     fi
-
     return 1
 }
 
