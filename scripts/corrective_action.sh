@@ -28,6 +28,7 @@ source /lib/rdk/t2Shared_api.sh
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
+    "MV1") SELFHEAL_TYPE="BASE";;
     "MV2PLUS") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
