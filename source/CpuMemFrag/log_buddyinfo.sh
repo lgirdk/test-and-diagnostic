@@ -35,100 +35,103 @@ IFS=$'\n'
 #
 parse_buddyinfo()
 {
-  if [ "`echo $1 | grep Normal`" != "" ]
-  then
-     data=`echo "$1" | awk -F'Normal ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
-     # Remove last character which will be (,)
-     data=${data%?};
-     if [ "$2" = "host" ]
-     then
-        syscfg set CpuMemFrag_Host_Normal $data
-        echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
-	OutputData=`MemFrag_Calc $data`
-        OverallFragPercentage=`echo $OutputData | cut -d' ' -f1`
-	FragPercentage=`echo $OutputData | cut -d' ' -f2`
-	syscfg set CpuMemFrag_Host_Percentage $FragPercentage
-	echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
-	echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG_OVERALL_PERCENTAGE-Normal,$OverallFragPercentage" >> $LOG_FILE
-     elif [ "$2" = "peer" ]
-     then
-        syscfg set CpuMemFrag_Peer_Normal $data
-        echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
-	OutputData=`MemFrag_Calc $data`
-        OverallFragPercentage=`echo $OutputData | cut -d' ' -f1`
-	FragPercentage=`echo $OutputData | cut -d' ' -f2`
-	syscfg set CpuMemFrag_Peer_Percentage $FragPercentage
-	echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
-	echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG_OVERALL_PERCENTAGE-Normal,$OverallFragPercentage" >> $LOG_FILE
-     fi
-  elif [ "`echo $1 | grep DMA | grep -v DMA32`" != "" ]
-  then
-     data=`echo "$1" | awk -F'DMA ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
-     data=${data%?};
-     if [ "$2" = "host" ]
-     then
-        syscfg set CpuMemFrag_Host_Dma $data
-        echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-DMA,$data" >> $LOG_FILE
-     elif [ "$2" = "peer" ]
-     then
-        syscfg set CpuMemFrag_Peer_Dma $data
-        echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA,$data" >> $LOG_FILE
-     fi
-  elif [ "`echo $1 | grep DMA32`" != "" ]
-  then
-     data=`echo "$1" | awk -F'DMA32 ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
-     data=${data%?}
-     if [ "$2" = "host" ]
-     then
-        syscfg set CpuMemFrag_Host_Dma32 $data
-        echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-DMA32,$data" >> $LOG_FILE
-     elif [ "$2" = "peer" ]
-     then
-        syscfg set CpuMemFrag_Peer_Dma32 $data
-        echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA32,$data" >> $LOG_FILE
-     fi
-  elif [ "`echo $1 | grep -i HighMem`" != "" ]
-  then
-     data=`echo "$1" | awk -F'HighMem ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
-     data=${data%?}
-     if [ "$2" = "host" ]
-     then
-        syscfg set CpuMemFrag_Host_Highmem $data
-        echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-HIGHMEM,$data" >> $LOG_FILE
-     elif [ "$2" = "peer" ]
-     then
-        syscfg set CpuMemFrag_Peer_Highmem $data
-        echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-HIGHMEM,$data" >> $LOG_FILE
-     fi
-  else
-     echo_t "BuddyInfo : Unknown zone found in $1"
-  fi
+    if [ "`echo $1 | grep Normal`" != "" ]
+    then
+        data=`echo "$1" | awk -F'Normal ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
+        # Remove last character which will be (,)
+        data=${data%?};
+        if [ "$2" = "host" ]
+        then
+            syscfg set CpuMemFrag_Host_Normal $data
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
+            OutputData=`MemFrag_Calc $data`
+            OverallFragPercentage=`echo $OutputData | cut -d' ' -f1`
+            FragPercentage=`echo $OutputData | cut -d' ' -f2`
+            syscfg set CpuMemFrag_Host_Percentage $FragPercentage
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG_OVERALL_PERCENTAGE-Normal,$OverallFragPercentage" >> $LOG_FILE
+        elif [ "$2" = "peer" ]
+        then
+            syscfg set CpuMemFrag_Peer_Normal $data
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-Normal,$data" >> $LOG_FILE
+            OutputData=`MemFrag_Calc $data`
+            OverallFragPercentage=`echo $OutputData | cut -d' ' -f1`
+            FragPercentage=`echo $OutputData | cut -d' ' -f2`
+            syscfg set CpuMemFrag_Peer_Percentage $FragPercentage
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG_PERCENTAGE-Normal,$FragPercentage" >> $LOG_FILE
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG_OVERALL_PERCENTAGE-Normal,$OverallFragPercentage" >> $LOG_FILE
+        fi
 
-  syscfg commit
+    elif [ "`echo $1 | grep DMA | grep -v DMA32`" != "" ]
+    then
+        data=`echo "$1" | awk -F'DMA ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
+        data=${data%?};
+        if [ "$2" = "host" ]
+        then
+            syscfg set CpuMemFrag_Host_Dma $data
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-DMA,$data" >> $LOG_FILE
+        elif [ "$2" = "peer" ]
+        then
+            syscfg set CpuMemFrag_Peer_Dma $data
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA,$data" >> $LOG_FILE
+        fi
+
+    elif [ "`echo $1 | grep DMA32`" != "" ]
+    then
+        data=`echo "$1" | awk -F'DMA32 ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
+        data=${data%?}
+        if [ "$2" = "host" ]
+        then
+            syscfg set CpuMemFrag_Host_Dma32 $data
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-DMA32,$data" >> $LOG_FILE
+        elif [ "$2" = "peer" ]
+        then
+            syscfg set CpuMemFrag_Peer_Dma32 $data
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-DMA32,$data" >> $LOG_FILE
+        fi
+
+    elif [ "`echo $1 | grep -i HighMem`" != "" ]
+    then
+        data=`echo "$1" | awk -F'HighMem ' '{print $2}' | sed -e 's/^[ \t]*//' | sed 's/[[:space:]][[:space:]]*/,/g'`
+        data=${data%?}
+        if [ "$2" = "host" ]
+        then
+            syscfg set CpuMemFrag_Host_Highmem $data
+            echo_t "PROC_BUDDYINFO_HOST:CPU_MEM_FRAG-HIGHMEM,$data" >> $LOG_FILE
+        elif [ "$2" = "peer" ]
+        then
+            syscfg set CpuMemFrag_Peer_Highmem $data
+            echo_t "PROC_BUDDYINFO_PEER:CPU_MEM_FRAG-HIGHMEM,$data" >> $LOG_FILE
+        fi
+
+    else
+        echo_t "BuddyInfo : Unknown zone found in $1"
+    fi
+
+    syscfg commit
 }
 
 # Call parser function for each line found in /proc/buddyinfo of host processor
 for line in $host_buddyinfo;
 do
-  parse_buddyinfo $line "host"
+    parse_buddyinfo $line "host"
 done
 
-# Check if we need to collect peer buddyinfo, then do rpcclient 
+# Check if we need to collect peer buddyinfo, then do rpcclient
 if [ "$CR_IN_PEER" = "yes" ]
-then                                    
+then
     if [ "$MODEL_NUM" = "TG1682G" ]
-    then                 
-         ip=$PEER_ARPING_IP
-    else                                      
-         ip=$PEER_INTERFACE_IP                                          
-    fi                    
+    then
+        ip=$PEER_ARPING_IP
+    else
+        ip=$PEER_INTERFACE_IP
+    fi
     peer_buddyinfo=`rpcclient2 "cat $HOST_BUDDYINFO_FILE" | grep -v CONNECTED`
-                                               
-   for line in $peer_buddyinfo;                                          
-   do  
-     parse_buddyinfo $line "peer"                      
-   done
-else                   
-  echo_t "BuddyInfo: Peer buddyinfo not needed"                                                                 
-fi 
 
+    for line in $peer_buddyinfo;
+    do
+        parse_buddyinfo $line "peer"
+    done
+else
+    echo_t "BuddyInfo: Peer buddyinfo not needed"
+fi
