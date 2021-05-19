@@ -304,7 +304,7 @@ do
 		if [ "$BOX_TYPE" = "XB3" ]
                 then
 			if [ $Curr_CPULoad_Avg -ge $CPU_THRESHOLD ]; then
-				bootup_time_sec=`cut -d'.' -f1 /proc/uptime`
+				bootup_time_sec=$(cut -d. -f1 /proc/uptime)
 				if [ $bootup_time_sec -ge 2700 ]; then
 					total_ds_cpu=0
 					ds_cpu_usage=`top -bn1 | grep downstream_manager | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//'`

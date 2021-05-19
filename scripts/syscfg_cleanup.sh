@@ -31,7 +31,7 @@ if [ -f "/nvram/syscfg_clean" ]; then
     exit 1
 fi
 
-UPTIME=`awk '{print $1}' /proc/uptime | awk -F '.' '{print $1}'`
+UPTIME=$(cut -d. -f1 /proc/uptime)
 if [ "$UPTIME" -lt 1800 ]; then
     echo "Uptime is less than 30 mins, exiting the syscfg_cleanup"
     exit 0

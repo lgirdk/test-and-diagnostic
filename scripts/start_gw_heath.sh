@@ -18,7 +18,8 @@
 # limitations under the License.
 ##########################################################################
 
-UPTIME=`awk '{print $1}' /proc/uptime | awk -F '.' '{print $1}'`
+UPTIME=$(cut -d. -f1 /proc/uptime)
+
 if [ "$UPTIME" -lt 900 ]
 then
     exit 0
