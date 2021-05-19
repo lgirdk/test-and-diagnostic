@@ -17,6 +17,8 @@
  * limitations under the License.
 */
 
+#include <syscfg/syscfg.h>
+
 #include "ansc_platform.h"
 #include "cosa_selfheal_apis.h"
 #include "cosa_selfheal_dml.h"
