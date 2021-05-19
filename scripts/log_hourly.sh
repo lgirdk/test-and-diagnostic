@@ -17,7 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-UPTIME=`awk '{print $1}' /proc/uptime | awk -F '.' '{print $1}'`
+
+UPTIME=$(cut -d. -f1 /proc/uptime)
 
 if [ "$UPTIME" -lt 1800 ]
 then

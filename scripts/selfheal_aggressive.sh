@@ -1065,7 +1065,7 @@ do
     echo_t "[RDKB_AGG_SELFHEAL] : INTERVAL is: $INTERVAL"
     sleep ${INTERVAL}m
 
-    BOOTUP_TIME_SEC=`cut -d'.' -f1 /proc/uptime`
+    BOOTUP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     if [ ! -f /tmp/selfheal_bootup_completed ] && [ $BOOTUP_TIME_SEC -lt 900 ] ; then
         continue
     fi
@@ -1083,13 +1083,13 @@ do
 		fi
     fi
 
-    START_TIME_SEC=`cut -d'.' -f1 /proc/uptime`
+    START_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     self_heal_peer_ping
     self_heal_dnsmasq_zombie
     self_heal_interfaces
     self_heal_dibbler_server
     self_heal_dhcp_clients
-    STOP_TIME_SEC=`cut -d'.' -f1 /proc/uptime`
+    STOP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     TOTAL_TIME_SEC=$((STOP_TIME_SEC-START_TIME_SEC))
     echo_t "[RDKB_AGG_SELFHEAL]: Total execution time: $TOTAL_TIME_SEC sec"
 done
