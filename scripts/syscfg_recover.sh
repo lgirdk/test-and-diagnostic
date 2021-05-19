@@ -32,7 +32,7 @@ source /lib/rdk/t2Shared_api.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 # skipping the run if uptime is lessthan 15 mins to avoid the race condtion 
-UPTIME=`cat /proc/uptime  | awk '{print $1}' | awk -F '.' '{print $1}'`
+UPTIME=$(cut -d. -f1 /proc/uptime)
 if [ "$UPTIME" -lt 900 ]
 then
     echo_t "RDKB_SELFHEAL : Uptime is lessthan 15 mins, so exiting the run at $UPTIME"
