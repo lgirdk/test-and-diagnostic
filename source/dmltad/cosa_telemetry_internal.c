@@ -261,8 +261,6 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
 
     CcspTraceDebug(("%s Entered\n", __FUNCTION__));
 
-    syscfg_init();
-
     syscfg_get(NULL, "telemetry_enable", buf, sizeof(buf));
     pMyObject->Enable = (!strncmp(buf, "true", 4)) ? TRUE : FALSE;
 
