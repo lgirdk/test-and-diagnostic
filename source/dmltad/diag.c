@@ -721,7 +721,6 @@ diag_err_t diag_init_blocksize(void)
         return DIAG_ERR_PARAM;
     }
         
-	syscfg_init();
 	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
 	cfg.size = atoi(buf);
@@ -741,7 +740,6 @@ diag_err_t diag_init_count(void)
     {
         return DIAG_ERR_PARAM;
     }
-    syscfg_init();
     memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "IPPingNumberOfRepetitions", buf, sizeof(buf));
     cfg.cnt = atoi(buf);
@@ -757,7 +755,6 @@ diag_err_t diag_init_interval(void)
     {
         return DIAG_ERR_PARAM;
     }
-    syscfg_init();
     memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "IPPingTimeout", buf, sizeof(buf));
     cfg.timo = atoi(buf);
@@ -773,7 +770,6 @@ diag_err_t diag_init_maxhop(void)
     {
         return DIAG_ERR_PARAM;
     }
-    syscfg_init();
     memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "TraceRouteMaxHopCount", buf, sizeof(buf));
     cfg.maxhop = atoi(buf);
