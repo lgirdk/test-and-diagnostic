@@ -29,7 +29,7 @@ if [ "$isUpforDays" = "" ]
 then
     days=0
     notInDays=`uptime | awk -F, '{sub(".*up ",x,$1);print $1}'`
-    
+
     # Check whether we have got any hour field
     isMoreThanHour=`uptime | awk -F, '{sub(".*up ",x,$1);print $1}' | grep ":"`
     if [ "$isMoreThanHour" != "" ]
@@ -41,12 +41,12 @@ then
         hours=0
         minutes=`echo $notInDays | cut -f1 -d" "`
     fi
-    
+
 else
     # Get days and uptime
     upInDays=`uptime | awk -F, '{sub(".*up ",x,$1);print $1,$2}'`
-    
-    days=`echo $upInDays | cut -f1 -d" "` 
+
+    days=`echo $upInDays | cut -f1 -d" "`
     if [ "$days" -eq 1 ]
     then
         # Check whether we have got any hour field
@@ -58,21 +58,21 @@ else
 
     if [ "$isHourPresent" != "" ]
     then
-       hours=`echo $isHourPresent | tr -d " " | cut -f1 -d:`
-       minutes=`echo $isHourPresent | cut -f2 -d":"`
+        hours=`echo $isHourPresent | tr -d " " | cut -f1 -d:`
+        minutes=`echo $isHourPresent | cut -f2 -d":"`
     else
-       hours=0    
+        hours=0
     fi
 fi
-    
+
 echo "UPTIMEDAY:$days"
 echo "UPTIMEHR:$hours"
 echo "UPTIMEMIN:$minutes"
 
 if [ "$days" = "0" ]
 then
-	t2CountNotify "ZeroUptime"
+    t2CountNotify "ZeroUptime"
 else
-	t2ValNotify "UPDays_split" "$days"
-	t2ValNotify "UPTIME_split" "$days"
+    t2ValNotify "UPDays_split" "$days"
+    t2ValNotify "UPTIME_split" "$days"
 fi
