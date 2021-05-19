@@ -99,8 +99,8 @@ rm -rf $CRON_FILE_BK
 echo "Running apply system defaults"
 apply_system_defaults
 
-if [ "$BOX_TYPE" = "XB3" ];then
-	echo "XB3 device, restaring PandM"
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+	echo "XB3/Mv1 device, restaring PandM"
 	cd /usr/ccsp/pam/
 	kill -9 $(busybox pidof CcspPandMSsp)
 	/usr/bin/CcspPandMSsp -subsys eRT.
