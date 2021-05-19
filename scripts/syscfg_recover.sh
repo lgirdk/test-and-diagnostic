@@ -35,55 +35,54 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 UPTIME=$(cut -d. -f1 /proc/uptime)
 if [ "$UPTIME" -lt 900 ]
 then
-    echo_t "RDKB_SELFHEAL : Uptime is lessthan 15 mins, so exiting the run at $UPTIME"
+    echo_t "RDKB_SELFHEAL : Uptime is less than 15 mins, so exiting the run at $UPTIME"
     exit 0
 fi
 
 #check whether syscfg is proper or not
 syscfg get redirection_flag > /dev/null
 if [ $? == 0 ]; then
-	exit
+    exit
 fi
 
 #check whether syscfg is proper or not once again
 syscfg get selfheal_enable > /dev/null
 if [ $? != 0 ]; then
-	echo_t "RDKB_SELFHEAL : syscfg queries are failing"
-	echo_t "RDKB_SELFHEAL : Memory Dump"
-	echo_t "==========================="
-	free -m
-	df -h
-	du -h $SYSCFG_MOUNT
-	echo_t "==========================="
+    echo_t "RDKB_SELFHEAL : syscfg queries are failing"
+    echo_t "RDKB_SELFHEAL : Memory Dump"
+    echo_t "==========================="
+    free -m
+    df -h
+    du -h $SYSCFG_MOUNT
+    echo_t "==========================="
+    echo_t "RDKB_SELFHEAL : Recreating syscfg DB again..."
 
-	echo_t "RDKB_SELFHEAL : Recreating syscfg DB again..."
+    if [ -f $SYSCFG_SHM_FILE ]; then
+        rm -rf $SYSCFG_SHM_FILE
+    fi
 
-	if [ -f $SYSCFG_SHM_FILE ]; then 
-		rm -rf $SYSCFG_SHM_FILE		
-	fi
+    #Re-create syscfg create again
+    syscfg_create -f $SYSCFG_FILE
+    syscfg_oldDB=$?
+    if [ $syscfg_oldDB -eq 0 ]; then
+        echo_t "RDKB_SELFHEAL : syscfg DB functional now"
 
-	#Re-create syscfg create again
-	syscfg_create -f $SYSCFG_FILE
-	syscfg_oldDB=$?
-	if [ $syscfg_oldDB -eq 0 ]; then
-	   echo_t "RDKB_SELFHEAL : syscfg DB functional now"
+        SELFHEAL_ENABLE=`syscfg get selfheal_enable`
+        if [ "$SELFHEAL_ENABLE" == "true" ]; then
+            SelfHealScript_PID=$(busybox pidof self_heal_connectivity_test.sh)
+            if [ "$SelfHealScript_PID" == "" ]; then
+                echo_t "Restarting selfheal connectivity script"
+                $TAD_PATH/self_heal_connectivity_test.sh &
+            fi
 
-		SELFHEAL_ENABLE=`syscfg get selfheal_enable`
-		if [ "$SELFHEAL_ENABLE" == "true" ]; then
-			SelfHealScript_PID=$(busybox pidof self_heal_connectivity_test.sh)
-			if [ "$SelfHealScript_PID" == "" ]; then
-				echo_t "Restarting selfheal connectivity script"
-				$TAD_PATH/self_heal_connectivity_test.sh &
-			fi
-
-			SelfHealScript_PID=$(busybox pidof resource_monitor.sh)
-			if [ "$SelfHealScript_PID" == "" ]; then
-				echo_t "Restarting resource monitor script"
-				t2CountNotify "SYS_SH_ResourceMonitor_restart"
-				$TAD_PATH/resource_monitor.sh & 
-			fi
-		fi
-	else
-	   echo_t "RDKB_SELFHEAL : syscfg DB creation failed"		
-	fi
+            SelfHealScript_PID=$(busybox pidof resource_monitor.sh)
+            if [ "$SelfHealScript_PID" == "" ]; then
+                echo_t "Restarting resource monitor script"
+                t2CountNotify "SYS_SH_ResourceMonitor_restart"
+                $TAD_PATH/resource_monitor.sh &
+            fi
+        fi
+    else
+       echo_t "RDKB_SELFHEAL : syscfg DB creation failed"
+    fi
 fi
