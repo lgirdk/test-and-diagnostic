@@ -33,16 +33,16 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 getDateTime()
 {
-	dandtwithns_now=`date +'%Y-%m-%d:%H:%M:%S:%6N'`
-	echo "$dandtwithns_now"
+    dandtwithns_now=`date +'%Y-%m-%d:%H:%M:%S:%6N'`
+    echo "$dandtwithns_now"
 }
 
 if [ -f /tmp/CPUUsageReachedMAXThreshold ]; then
-	rm -rf /tmp/CPUUsageReachedMAXThreshold
-	echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPUUsageReachedMAXThreshold file after 24hrs uptime"
+    rm -rf /tmp/CPUUsageReachedMAXThreshold
+    echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPUUsageReachedMAXThreshold file after 24hrs uptime"
 fi
 
 if [ -f /tmp/CPU5MinsUsageReachedMAXThreshold ]; then
-	rm -rf /tmp/CPU5MinsUsageReachedMAXThreshold
-	echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPU5MinsUsageReachedMAXThreshold file after 24hrs uptime"
+    rm -rf /tmp/CPU5MinsUsageReachedMAXThreshold
+    echo "[`getDateTime`] RDKB_SELFHEAL : Removed /tmp/CPU5MinsUsageReachedMAXThreshold file after 24hrs uptime"
 fi
