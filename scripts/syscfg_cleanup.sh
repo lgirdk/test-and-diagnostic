@@ -86,7 +86,7 @@ check_cleanup_brlan_inst_num=`grep tr_brlan0 $SYSCFG_DB_FILE | grep "_inst_num" 
 check_cleanup_brlan_alias=`grep tr_brlan0 $SYSCFG_DB_FILE | grep "_alias" `
 
 #Check that cleanup is successful or not
-if [ "$check_cleanup_erouter_inst_num" = "" ] && [ "$check_cleanup_erouter_alias" = "" ] && [ "$check_cleanup_brlan_inst_num" = "" ] && [ "$check_cleanup_brlan_alias" = "" ] ;then
+if [ "$check_cleanup_erouter_inst_num" = "" ] && [ "$check_cleanup_erouter_alias" = "" ] && [ "$check_cleanup_brlan_inst_num" = "" ] && [ "$check_cleanup_brlan_alias" = "" ]; then
     echo "Database clean up success"
     t2CountNotify "SYS_INFO_DBCleanup"
     touch /nvram/syscfg_clean
@@ -103,19 +103,19 @@ rm -rf $CRON_FILE_BK
 echo "Running apply system defaults"
 apply_system_defaults
 
-if [ "$BOX_TYPE" = "XB3" ];then
-    echo "XB3 device, restaring PandM"
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+    echo "XB3/MV1 device, restarting PandM"
     cd /usr/ccsp/pam/
     kill -9 $(busybox pidof CcspPandMSsp)
     /usr/bin/CcspPandMSsp -subsys eRT.
 
     isPeriodicFWCheckEnable=`syscfg get PeriodicFWCheck_Enable`
     PID_XCONF=$(busybox pidof xb3_firmwareDwnld.sh)
-    if [ "$isPeriodicFWCheckEnable" == "false" ] && [ "$PID_XCONF" == "" ] ;then
+    if [ "$isPeriodicFWCheckEnable" == "false" ] && [ "$PID_XCONF" == "" ]; then
         echo "XCONF SCRIPT : Calling XCONF Client"
         /etc/xb3_firmwareDwnld.sh &
     fi
-elif [ "$BOX_TYPE" = "XB6" ];then
+elif [ "$BOX_TYPE" = "XB6" ]; then
     echo "XB6 device, restaring PandM"
     systemctl restart CcspPandMSsp.service
 fi
