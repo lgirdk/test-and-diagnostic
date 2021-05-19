@@ -144,14 +144,6 @@ int main(int argc,char *argv[])
         return -1;
     }
 
-/* Lets initialize syscfg*/
-    if (syscfg_init() == -1)
-    {
-       write_to_logfile("syscfg_init failed rxtx\n");
-       fclose(log_fd);
-       return -1;
-    }
-
     if (start_rxtx() != SUCCESS)
     {
         write_to_logfile("RxTx100 Capture Failed\n");
