@@ -17,6 +17,8 @@
  * limitations under the License.
 */
 
+#include <syscfg/syscfg.h>
+
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_logbackup_dml.h"

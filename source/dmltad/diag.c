@@ -47,8 +47,9 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <syscfg/syscfg.h>
 #include <sysevent/sysevent.h>
+#include <syscfg/syscfg.h>
+
 #include "diag_inter.h"
 #include "ccsp_base_api.h"
 
