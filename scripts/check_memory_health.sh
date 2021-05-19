@@ -30,19 +30,16 @@ echo_t "RDKB_MEM_HEALTH : Free Memory $free_mem_in_mb MB"
 
 if [ "$Min_Mem_Value" -ne 0 ] && [ "$free_mem_in_mb" -le "$Min_Mem_Value" ]
 then
-	# No need todo corrective action during box is in DiagnosticMode state
-	DiagnosticMode=`syscfg get Selfheal_DiagnosticMode`
-	if [ "$DiagnosticMode" == "true" ]
-	then
-		echo_t "RDKB_MEM_HEALTH : System free memory reached minimum threshold"
-		echo_t "RDKB_MEM_HEALTH : Box is in diagnositic mode, so system not allow to clear the cache memory"				
-	else
-		echo_t "RDKB_MEM_HEALTH : System free memory reached minimum threshold , clearing the cache memory"
-		t2CountNotify "SYS_ERROR_Drop_cache"
-		sync
-		echo 1 > /proc/sys/vm/drop_caches	
-	fi
+    # No need todo corrective action during box is in DiagnosticMode state
+    DiagnosticMode=`syscfg get Selfheal_DiagnosticMode`
+    if [ "$DiagnosticMode" == "true" ]
+    then
+        echo_t "RDKB_MEM_HEALTH : System free memory reached minimum threshold"
+        echo_t "RDKB_MEM_HEALTH : Box is in diagnositic mode, so system not allow to clear the cache memory"
+    else
+        echo_t "RDKB_MEM_HEALTH : System free memory reached minimum threshold , clearing the cache memory"
+        t2CountNotify "SYS_ERROR_Drop_cache"
+        sync
+        echo 1 > /proc/sys/vm/drop_caches
+    fi
 fi
-
-
-
