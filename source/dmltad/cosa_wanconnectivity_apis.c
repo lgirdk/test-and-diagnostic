@@ -129,13 +129,6 @@ ANSC_STATUS CosaWanCnctvtyChk_Init (VOID)
     char buf[BUFLEN_8] = {0};
     int rc = RBUS_ERROR_SUCCESS;
 
-    // Initialize syscfg to make syscfg calls
-    if (0 != syscfg_init())
-    {
-        WANCHK_LOG_ERROR("%s: syscfg int failed \n", __FUNCTION__);
-        return ANSC_STATUS_FAILURE;
-    }
-
     sysevent_fd_wanchk = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT,
                       SE_VERSION, "wan_connectivity_check", &sysevent_token_wanchk);
     if (sysevent_fd_wanchk < 0)
