@@ -409,7 +409,6 @@ CosaDmlGetSelfHealCfg(
 	ULONG entryCountIPv4 = 0;
 	ULONG entryCountIPv6 = 0;
 
-	syscfg_init();
 	get_logbackupcfg();
 	pConnTest = (PCOSA_DML_CONNECTIVITY_TEST)AnscAllocateMemory(sizeof(COSA_DML_CONNECTIVITY_TEST));
 	pMyObject->pConnTest = pConnTest;

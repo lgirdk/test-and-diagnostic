@@ -285,7 +285,6 @@ CosaDiagInitialize
     pMyObject->PreviousVisitTime  = 0;
 
     /* Initialize speedtest enable */
-    syscfg_init();
     char buf[8]={0};
     if(syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0)
     {
