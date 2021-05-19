@@ -779,7 +779,6 @@ diag_err_t diag_init_blocksize(void)
         return DIAG_ERR_PARAM;
     }
         
-	syscfg_init();
 	rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
     ERR_CHK(rc);
 	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
