@@ -48,6 +48,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <syscfg/syscfg.h>
+#include <sysevent/sysevent.h>
 #include "diag_inter.h"
 #include "ccsp_base_api.h"
 
@@ -62,6 +63,18 @@ static diag_obj_t *diag_tracert;
 diag_pingtest_stat_t diag_pingtest_stat;
 
 diag_err_t diag_init_blocksize(void);
+
+#ifdef _HUB4_PRODUCT_REQ_
+#ifdef NAT46_KERNEL_SUPPORT
+
+#define SE_IP_ADDR      "127.0.0.1"
+#define SE_PROG_NAME    "tad"
+#define MAPT_INTERFACE  "map0"
+static bool is_MAPT();
+static bool is_IPv6(const char *);
+
+#endif //NAT46_KERNEL_SUPPORT
+#endif //_HUB4_PRODUCT_REQ_
 
 static void trim(char *line)
 {
@@ -443,6 +456,19 @@ static void *diag_task(void *arg)
         snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", buf);
         fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, buf);
     }
+
+#ifdef _HUB4_PRODUCT_REQ_
+#ifdef NAT46_KERNEL_SUPPORT
+
+    if(is_MAPT() == TRUE && is_IPv6(cfg.host) == FALSE)
+    {
+        snprintf(cfg.ifname, sizeof(cfg.ifname), MAPT_INTERFACE);
+        fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, cfg.ifname);
+    }
+
+#endif //NAT46_KERNEL_SUPPORT
+#endif //_HUB4_PRODUCT_REQ_
+
 /*RDKB-12522:If Diagstate comes first and wait for daig params to set*/
    if(!strlen(cfg.host))
     {
@@ -710,3 +736,65 @@ diag_err_t diag_getPartnerID( char *partnerID )
 	
 	return DIAG_ERR_OK;
 }
+
+#ifdef _HUB4_PRODUCT_REQ_
+#ifdef NAT46_KERNEL_SUPPORT
+
+static bool is_MAPT()
+{
+    int sysevent_fd = -1;
+    token_t sysevent_token;
+    char buf[128] = {'\0'};
+    int ret = FALSE;
+
+    sysevent_fd =  sysevent_open(SE_IP_ADDR, SE_SERVER_WELL_KNOWN_PORT, SE_VERSION, SE_PROG_NAME, &sysevent_token);
+    if (sysevent_fd >= 0)
+    {
+        if (0 == sysevent_get(sysevent_fd, sysevent_token, "mapt_config_flag", buf, sizeof(buf)))
+	{
+	    if (0 == strcmp(buf, "set"))
+	    {
+                ret = TRUE;
+                fprintf(stderr, "%s: MAPT Mode !!!!\n", __FUNCTION__);
+	    }
+	}
+	else
+	{
+	    fprintf(stderr, "%s:  sysevent_get FAIL !!!!\n", __FUNCTION__);
+	}
+	sysevent_close(sysevent_fd, sysevent_token);
+    }
+    else
+    {
+        fprintf(stderr, "%s:  sysevent_open FAIL !!!!\n", __FUNCTION__);
+    }
+
+    return ret;
+}
+
+static bool is_IPv6(const char *host)
+{
+    int ret = FALSE;
+    struct in6_addr in6addr;
+    char *ipPtr = NULL;
+
+    if( (host[0] == '\'') && (host[strlen(host)-1] == '\'') )
+    {
+        ipPtr = strdup(host);
+        if(ipPtr != NULL)
+        {
+            ipPtr++;
+            ipPtr[strlen(ipPtr)-1] = '\0';
+
+            if (inet_pton(AF_INET6, ipPtr, &in6addr) > 0)
+            {
+                ret = TRUE;
+            }
+            free(ipPtr);
+        }
+    }
+    return ret;
+}
+
+#endif //NAT46_KERNEL_SUPPORT
+#endif //_HUB4_PRODUCT_REQ_

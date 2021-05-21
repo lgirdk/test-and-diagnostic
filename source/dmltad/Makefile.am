@@ -18,7 +18,7 @@
 ##########################################################################
 AM_CFLAGS = -D_ANSC_LINUX
 AM_CFLAGS += -D_ANSC_USER
-AM_LDFLAGS = -lccsp_common -lsyscfg
+AM_LDFLAGS = -lccsp_common -lsyscfg -lsysevent
 
 AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
@@ -45,4 +45,4 @@ libdmltad_la_SOURCES = cosa_apis_util.c plugin_main.c cosa_apis_util_priv.c cosa
                        cosa_logbackup_dml.c cosa_logbackup_apis.c cosa_powermgt_tcxb6_dml.c cosa_thermal_dml.c cosa_hwst_dml.c #cosa_apis_deviceinfo.c cosa_deviceinfo_util.c
 libdmltad_la_DEPENDENCIES=$(EXTRA_DEPENDENCIES)
 libdmltad_la_LIBADD=$(libdmltad_la_DEPENDENCIES)
-libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg
+libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg -lsysevent
