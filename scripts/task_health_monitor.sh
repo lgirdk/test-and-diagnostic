@@ -23,11 +23,12 @@ TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
 BR_MODE=0
-CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
+CONSOLE_LOG="/rdklogs/logs/ArmConsolelog.txt.0"
 
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
+
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 ovs_enable=`syscfg get mesh_ovs_enable`
@@ -35,6 +36,7 @@ ovs_enable=`syscfg get mesh_ovs_enable`
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
+    "MV1") SELFHEAL_TYPE="BASE";;
     "MV2PLUS") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
@@ -103,12 +105,10 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
 
 exec 3>&1 4>&2 >> $SELFHEALFILE 2>&1
-
 
 
 # set thisREADYFILE for several tests below:
@@ -172,67 +172,66 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         WAN_INTERFACE="erouter0"
-
         if [ -f $ADVSEC_PATH ]; then
             source $ADVSEC_PATH
         fi
-
         brlan1_firewall="/tmp/brlan1_firewall_rule_validated"
     ;;
 esac
 
-#Find the DHCPv6 client type 
+#Find the DHCPv6 client type
 ti_dhcpv6_type="`pidof ti_dhcp6c`"
 dibbler_client_type="`pidof dibbler-client`"
 if [ "$ti_dhcpv6_type" = "" ] && [ ! -z "$dibbler_client_type" ];then
-	DHCPv6_TYPE="dibbler-client"
+    DHCPv6_TYPE="dibbler-client"
 elif [ ! -z "$ti_dhcpv6_type" ] && [ "$dibbler_client_type" = "" ];then
-	DHCPv6_TYPE="ti_dhcp6c"
+    DHCPv6_TYPE="ti_dhcp6c"
 else
-	DHCPv6_TYPE=""
+    DHCPv6_TYPE=""
 fi
 echo_t "DHCPv6_Client_type is $DHCPv6_TYPE"
+
 #function to restart Dhcpv6_Client
 Dhcpv6_Client_restart ()
 {
-	if [ "$1" = "" ];then
-		echo_t "DHCPv6 Client not running"
-		return 
-	fi
-	process_restart_need=0
-	if [ "$2" = "restart_for_dibbler-server" ];then
-        	PAM_UP="`pidof CcspPandMSsp`"
-		if [ "$PAM_UP" != "" ];then
-                	echo_t "PAM pid $PAM_UP & $1 pid $dibbler_client_type $ti_dhcpv6_type"
-                        echo_t "RDKB_PROCESS_CRASHED : Restarting $1 to reconfigure server.conf"
-			process_restart_need=1
-		fi
-	fi
-	if [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ];then
-		sysevent set dibbler_server_conf-status ""
-		if [ "$1" = "dibbler-client" ];then
-			dibbler-client stop
-            		sleep 2
-            		dibbler-client start
-            		sleep 5
-		elif [ "$1" = "ti_dhcp6c" ];then
-			sh $DHCPV6_HANDLER disable
-	                sleep 2
-	                sh $DHCPV6_HANDLER enable
-            		sleep 5
-		fi
-		wait_till_state "dibbler_server_conf" "ready"
-		touch /tmp/dhcpv6-client_restarted
-	fi
-	if [ ! -f "$DIBBLER_SERVER_CONF" ];then
-		return 2
-	elif [ ! -s  "$DIBBLER_SERVER_CONF" ];then
-		return 1
-        elif [ "`pidof dibbler-server`" = "" ];then
-        	dibbler-server stop
-                sleep 2
-                dibbler-server start
-	fi
+    if [ "$1" = "" ];then
+        echo_t "DHCPv6 Client not running"
+        return
+    fi
+    process_restart_need=0
+    if [ "$2" = "restart_for_dibbler-server" ];then
+        PAM_UP="`pidof CcspPandMSsp`"
+        if [ "$PAM_UP" != "" ];then
+            echo_t "PAM pid $PAM_UP & $1 pid $dibbler_client_type $ti_dhcpv6_type"
+            echo_t "RDKB_PROCESS_CRASHED : Restarting $1 to reconfigure server.conf"
+            process_restart_need=1
+        fi
+    fi
+    if [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ];then
+        sysevent set dibbler_server_conf-status ""
+        if [ "$1" = "dibbler-client" ];then
+            dibbler-client stop
+            sleep 2
+            dibbler-client start
+            sleep 5
+        elif [ "$1" = "ti_dhcp6c" ];then
+            sh $DHCPV6_HANDLER disable
+            sleep 2
+            sh $DHCPV6_HANDLER enable
+            sleep 5
+        fi
+        wait_till_state "dibbler_server_conf" "ready"
+        touch /tmp/dhcpv6-client_restarted
+    fi
+    if [ ! -f "$DIBBLER_SERVER_CONF" ];then
+        return 2
+    elif [ ! -s  "$DIBBLER_SERVER_CONF" ];then
+        return 1
+    elif [ "`pidof dibbler-server`" = "" ];then
+        dibbler-server stop
+        sleep 2
+        dibbler-server start
+    fi
 }
 
 rebootDeviceNeeded=0
@@ -241,8 +240,9 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 
 case $SELFHEAL_TYPE in
     "BASE")
+
         ###########################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             wifi_check=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
             wifi_timeout=$(echo "$wifi_check" | grep "$CCSP_ERR_TIMEOUT")
             wifi_not_exist=$(echo "$wifi_check" | grep "$CCSP_ERR_NOT_EXIST")
@@ -253,7 +253,6 @@ case $SELFHEAL_TYPE in
                 echo_t "WIFI_QUERY : $wifi_check"
                 WIFI_QUERY_ERROR=1
             fi
-
 
             if [ ! -f $PEER_COMM_ID ]; then
                 GetConfigFile $PEER_COMM_ID
@@ -324,8 +323,8 @@ case $SELFHEAL_TYPE in
             fi
 
         fi
-        ###########################################
 
+        ###########################################
         if [ "$MULTI_CORE" = "yes" ]; then
             if [ "$CORE_TYPE" = "arm" ]; then
                 # Checking logbackup PID
@@ -336,181 +335,181 @@ case $SELFHEAL_TYPE in
                 fi
             fi
             if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-              # BWGRDK1271
-              if [ -f $PING_PATH/ping_peer ]; then
-                  WAN_STATUS=$(sysevent get wan-status)
-                  if [ "$WAN_STATUS" = "started" ]; then
-                      ## Check Peer ip is accessible
-                      loop=1
-                      ping_peer_rbt_thresh=$(syscfg get ping_peer_reboot_threshold)
-                      if [ -z "$ping_peer_rbt_thresh" ]; then
-                          echo "RDKB_SELFHEAL : syscfg ping_peer_reboot_threshold unavail. Set older value 3" >> $CONSOLE_LOG
-                          ping_peer_rbt_thresh=3
-                      fi
-                      while [ "$loop" -le $ping_peer_rbt_thresh ]
+                # BWGRDK1271
+                if [ -f $PING_PATH/ping_peer ]; then
+                    WAN_STATUS=$(sysevent get wan-status)
+                    if [ "$WAN_STATUS" = "started" ]; then
+                        ## Check Peer ip is accessible
+                        loop=1
+                        ping_peer_rbt_thresh=$(syscfg get ping_peer_reboot_threshold)
+                        if [ -z "$ping_peer_rbt_thresh" ]; then
+                            echo "RDKB_SELFHEAL : syscfg ping_peer_reboot_threshold unavail. Set older value 3" >> $CONSOLE_LOG
+                            ping_peer_rbt_thresh=3
+                        fi
+                        while [ "$loop" -le $ping_peer_rbt_thresh ]
                         do
-                          PING_RES=$(ping_peer)
-                          CHECK_PING_RES=$(echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                          if [ "$CHECK_PING_RES" != "" ]
-                          then
-                              if [ "$CHECK_PING_RES" -ne 100 ]
-                              then
-                                  ping_success=1
-                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-                                  timestamp=$(date '+%d/%m/%Y %T')
-                                  echo "$timestamp : RDKB_SELFHEAL : Ping to Peer IP is success" >> $CONSOLE_LOG
-                                  break
-                              else
-                                  echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
-                                  timestamp=$(date '+%d/%m/%Y %T')
-                                  echo "$timestamp : [RDKB_PLATFORM_ERROR] : ATOM interface is not reachable" >> $CONSOLE_LOG
-                                  ping_failed=1
-                              fi
-                          else
-                              if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
-                                  check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
-                                  check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
-                                  if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]
-                                  then
-                                      echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
-                                      rpc_ifconfig l2sd0.500 >/dev/null 2>&1
-                                      sleep 3
-                                  fi
-                                  PING_RES=$(ping_peer)
-                                  CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                                  if [ "$CHECK_PING_RES" != "" ]; then
-                                      if [ "$CHECK_PING_RES" -ne 100 ]; then
-                                          echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
-                                          break
-                                      fi
-                                  fi
-                              fi
-                              ping_failed=1
-                          fi
-                          if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt $ping_peer_rbt_thresh ]; then
-                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                              echo "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop" >> $CONSOLE_LOG
-                          else
-                              cli docsis/cmstatus | grep -i "The CM status is OPERATIONAL" >/dev/null 2>&1
-                              if [ $? -eq 0 ]; then
-                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-                                  echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM OPERATIONAL. Rebooting device" >> $CONSOLE_LOG
-                                  t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                                  echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                                  echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-                                  #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-                                  reason="Peer_down"
-                                  rebootCount=1
-                                  #setRebootreason $reason $rebootCount
-                                  rebootNeeded RM "" $reason $rebootCount
-                              else
-                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop. Skip reboot as CM is not OPERATIONAL"
-                                  echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM NOT OPERATIONAL. Skip Reboot" >> $CONSOLE_LOG
-                                  cli docsis/cmstatus
-                                  echo_t "RDKB_SELFHEAL : Wan Status - $(sysevent get wan-status)"
-                                  break
-                              fi
-                          fi
-                          loop=$((loop+1))
-                          sleep 5
-                        done
-                  else
-                      echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
-                      timestamp=$(date '+%d/%m/%Y %T')
-                      echo "$timestamp : RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed" >> $CONSOLE_LOG
-                  fi
-              else
-                  echo_t "RDKB_SELFHEAL : ping_peer command not found"
-              fi
-            else
-              if [ -f $PING_PATH/ping_peer ]; then
-                  SYSEVENTD_PID=$(pidof syseventd)
-                  if [ "$SYSEVENTD_PID" != "" ]; then
-                      ## Check Peer ip is accessible
-                      loop=1
-                      while [ $loop -le 3 ]
-                        do
-                          WAN_STATUS=$(sysevent get wan-status)
-                          echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS"
-                          if [ $WAN_STATUS != "started" ]; then
-                             echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS, Peer_down check bypassed"
-                             break
-                          fi
-                          PING_RES=$(ping_peer)
-                          CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                          if [ "$CHECK_PING_RES" != "" ]; then
-                              if [ $CHECK_PING_RES -ne 100 ]; then
-                                  ping_success=1
-                                  echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-                                  break
-                              else
-                                  echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
-                                  ping_failed=1
-                              fi
-                          else
-                              if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
-                                  check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
-                                  check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
-                                  if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]; then
-                                      echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
-                                      rpc_ifconfig l2sd0.500 >/dev/null 2>&1
-                                      sleep 3
-                                  fi
-                                  PING_RES=$(ping_peer)
-                                  CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-                                  if [ "$CHECK_PING_RES" != "" ]; then
-                                      if [ $CHECK_PING_RES -ne 100 ]; then
-                                          echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
-                                          break
-                                      fi
-                                  fi
-                              fi
-                              ping_failed=1
-                          fi
-
-                          if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
-                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                          else
-                              echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-                              t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                              echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
-                              echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-
-                              if [ "$BOX_TYPE" = "XB3" ]; then
-                                 if [ -f /usr/bin/rpcclient2 ] ;then
-                                 echo_t "Ping to peer failed check, whether ATOM is good through RPC"
-                                    RPC_RES=`rpcclient2 pwd`
-                                    RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
-                                    if [ "$RPC_OK" != "" ]; then
-                                       echo_t "RPC Communication with ATOM is OK"
-                                       break
-                                    else
-                                       echo_t "RPC Communication with ATOM have an issue"
+                            PING_RES=$(ping_peer)
+                            CHECK_PING_RES=$(echo $PING_RES | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                            if [ "$CHECK_PING_RES" != "" ]
+                            then
+                                if [ "$CHECK_PING_RES" -ne 100 ]
+                                then
+                                    ping_success=1
+                                    echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+                                    timestamp=$(date '+%d/%m/%Y %T')
+                                    echo "$timestamp : RDKB_SELFHEAL : Ping to Peer IP is success" >> $CONSOLE_LOG
+                                    break
+                                else
+                                    echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
+                                    timestamp=$(date '+%d/%m/%Y %T')
+                                    echo "$timestamp : [RDKB_PLATFORM_ERROR] : ATOM interface is not reachable" >> $CONSOLE_LOG
+                                    ping_failed=1
+                                fi
+                            else
+                                if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                                    check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
+                                    check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
+                                    if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]
+                                    then
+                                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
+                                        rpc_ifconfig l2sd0.500 >/dev/null 2>&1
+                                        sleep 3
                                     fi
-                                 else
-                                    echo_t "Not checking communication using rpcclient"
-                                 fi
-                              fi
-                              #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
-                              reason="Peer_down"
-                              rebootCount=1
-                              #setRebootreason $reason $rebootCount
-                              rebootNeeded RM "" $reason $rebootCount
-
-                          fi
-                          loop=$((loop+1))
-                          sleep 5
+                                    PING_RES=$(ping_peer)
+                                    CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                                    if [ "$CHECK_PING_RES" != "" ]; then
+                                        if [ "$CHECK_PING_RES" -ne 100 ]; then
+                                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
+                                            break
+                                        fi
+                                    fi
+                                fi
+                                ping_failed=1
+                            fi
+                            if [ "$ping_failed" -eq 1 ] && [ "$loop" -lt $ping_peer_rbt_thresh ]; then
+                                echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                                t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                                echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                                echo "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop" >> $CONSOLE_LOG
+                            else
+                                cli docsis/cmstatus | grep -i "The CM status is OPERATIONAL" >/dev/null 2>&1
+                                if [ $? -eq 0 ]; then
+                                    echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                                    echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM OPERATIONAL. Rebooting device" >> $CONSOLE_LOG
+                                    t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                                    echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                                    echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+                                    #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+                                    reason="Peer_down"
+                                    rebootCount=1
+                                    #setRebootreason $reason $rebootCount
+                                    rebootNeeded RM "" $reason $rebootCount
+                                else
+                                    echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop. Skip reboot as CM is not OPERATIONAL"
+                                    echo "RDKB_SELFHEAL : Ping to Peer IP failed after max retry. CM NOT OPERATIONAL. Skip Reboot" >> $CONSOLE_LOG
+                                    cli docsis/cmstatus
+                                    echo_t "RDKB_SELFHEAL : Wan Status - $(sysevent get wan-status)"
+                                    break
+                                fi
+                            fi
+                            loop=$((loop+1))
+                            sleep 5
                         done
-                  else
-                      echo_t "RDKB_SELFHEAL : syseventd crashed , Peer_down check bypassed"
-                  fi
-              else
-                  echo_t "RDKB_SELFHEAL : ping_peer command not found"
-              fi
+                    else
+                        echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed"
+                        timestamp=$(date '+%d/%m/%Y %T')
+                        echo "$timestamp : RDKB_SELFHEAL : wan-status is $WAN_STATUS , Peer_down check bypassed" >> $CONSOLE_LOG
+                    fi
+                else
+                    echo_t "RDKB_SELFHEAL : ping_peer command not found"
+                fi
+
+            else
+                if [ -f $PING_PATH/ping_peer ]; then
+                    SYSEVENTD_PID=$(pidof syseventd)
+                    if [ "$SYSEVENTD_PID" != "" ]; then
+                        ## Check Peer ip is accessible
+                        loop=1
+                        while [ $loop -le 3 ]
+                        do
+                            WAN_STATUS=$(sysevent get wan-status)
+                            echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS"
+                            if [ $WAN_STATUS != "started" ]; then
+                               echo_t "RDKB_SELFHEAL : wan-status is $WAN_STATUS, Peer_down check bypassed"
+                               break
+                            fi
+                            PING_RES=$(ping_peer)
+                            CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                            if [ "$CHECK_PING_RES" != "" ]; then
+                                if [ $CHECK_PING_RES -ne 100 ]; then
+                                    ping_success=1
+                                    echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+                                    break
+                                else
+                                    echo_t "[RDKB_PLATFORM_ERROR] : ATOM interface is not reachable"
+                                    ping_failed=1
+                                fi
+                            else
+                                if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
+                                    check_if_l2sd0_500_up=$(ifconfig l2sd0.500 | grep "UP" )
+                                    check_if_l2sd0_500_ip=$(ifconfig l2sd0.500 | grep "inet" )
+                                    if [ "$check_if_l2sd0_500_up" = "" ] || [ "$check_if_l2sd0_500_ip" = "" ]; then
+                                        echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is not up, setting to recreate interface"
+                                        rpc_ifconfig l2sd0.500 >/dev/null 2>&1
+                                        sleep 3
+                                    fi
+                                    PING_RES=$(ping_peer)
+                                    CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                                    if [ "$CHECK_PING_RES" != "" ]; then
+                                        if [ $CHECK_PING_RES -ne 100 ]; then
+                                            echo_t "[RDKB_PLATFORM_ERROR] : l2sd0.500 is up,Ping to Peer IP is success"
+                                            break
+                                        fi
+                                    fi
+                                fi
+                                ping_failed=1
+                            fi
+
+                            if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
+                                echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                                t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                                echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                            else
+                                echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                                t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                                echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
+                                echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+
+                                if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+                                   if [ -f /usr/bin/rpcclient2 ] ;then
+                                   echo_t "Ping to peer failed check, whether ATOM is good through RPC"
+                                      RPC_RES=`rpcclient2 pwd`
+                                      RPC_OK=`echo $RPC_RES | grep "RPC CONNECTED"`
+                                      if [ "$RPC_OK" != "" ]; then
+                                         echo_t "RPC Communication with ATOM is OK"
+                                         break
+                                      else
+                                         echo_t "RPC Communication with ATOM have an issue"
+                                      fi
+                                   else
+                                      echo_t "Not checking communication using rpcclient"
+                                   fi
+                                fi
+                                #echo_t " RDKB_SELFHEAL : Setting Last reboot reason as Peer_down"
+                                reason="Peer_down"
+                                rebootCount=1
+                                #setRebootreason $reason $rebootCount
+                                rebootNeeded RM "" $reason $rebootCount
+                            fi
+                            loop=$((loop+1))
+                            sleep 5
+                        done
+                    else
+                        echo_t "RDKB_SELFHEAL : syseventd crashed , Peer_down check bypassed"
+                    fi
+                else
+                    echo_t "RDKB_SELFHEAL : ping_peer command not found"
+                fi
             fi
 
             if [ -f $PING_PATH/arping_peer ]; then
@@ -521,9 +520,11 @@ case $SELFHEAL_TYPE in
         else
             echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
         fi
+
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
             atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
+            dmesg -n 5
             if [ "x$atomOnlyReboot" = "x" ]; then
                 crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
                 isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
@@ -575,6 +576,7 @@ case $SELFHEAL_TYPE in
             else
                 echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
             fi
+
         elif [ "$WAN_TYPE" = "EPON" ]; then
             CR_PID=$(busybox pidof CcspCrSsp)
             if [ "$CR_PID" = "" ]; then
@@ -595,8 +597,6 @@ case $SELFHEAL_TYPE in
         fi
 
 
-
-
         ###########################################
     ;;
     "SYSTEMD"|"TCCBR")
@@ -612,7 +612,6 @@ case $SELFHEAL_TYPE in
                 rebootCount=1
                 rebootNeeded RM "" $reason $rebootCount
             fi
-
         fi
 
         HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
@@ -753,7 +752,7 @@ case $SELFHEAL_TYPE in
             fi
         fi
 
-        # Checking Test adn Daignostic's PID
+        # Checking Test and Diagnostic's PID
         TandD_PID=$(busybox pidof CcspTandDSsp)
         if [ "$TandD_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
@@ -782,7 +781,6 @@ case $SELFHEAL_TYPE in
         if [ "$XDNS_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
-
         fi
 
         # Checking CcspEthAgent PID
@@ -790,7 +788,6 @@ case $SELFHEAL_TYPE in
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
-
         fi
 
         # Checking snmp v2 subagent PID
@@ -835,17 +832,17 @@ case $SELFHEAL_TYPE in
             fi
         fi
 
-	# BWGRDK-1384: Selfheal mechanism for ripd process
-	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-	    staticIp_check=$(psmcli get dmsb.truestaticip.Enable)
+        # BWGRDK-1384: Selfheal mechanism for ripd process
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+            staticIp_check=$(psmcli get dmsb.truestaticip.Enable)
             if [ "$staticIp_check" = "1" ]; then
-		ripdPid=`pidof ripd`
-		if [ -z "$ripdPid" ]; then
+                ripdPid=`pidof ripd`
+                if [ -z "$ripdPid" ]; then
                     echo_t "RDKB_SELFHEAL : ripd process is not running, need restart"
                     /usr/sbin/ripd -d -f /var/ripd.conf -u root -g root -i /var/ripd.pid &
-		fi
-	    fi
-	fi
+                fi
+            fi
+        fi
     ;;
     "TCCBR")
     ;;
@@ -986,12 +983,14 @@ else
                     fi  # [ -f $ADVSEC_PATH ]
                 fi  # [ "$advsec_bridge_mode" != "2" ]
 fi #BWG
+
 case $SELFHEAL_TYPE in
     "BASE")
     ;;
     "TCCBR")
 
         atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
+        dmesg -n 5
         if [ "x$atomOnlyReboot" = "x" ]; then
             crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
             isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
@@ -1022,7 +1021,6 @@ case $SELFHEAL_TYPE in
 
         ###########################################
 
-
         PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
@@ -1037,7 +1035,6 @@ case $SELFHEAL_TYPE in
         if [ "$MTA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
             resetNeeded mta CcspMtaAgentSsp
-
         fi
 
         WiFi_Flag=false
@@ -1061,10 +1058,8 @@ case $SELFHEAL_TYPE in
                     t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                     # Remove the wifi initialized flag
                     rm -rf /tmp/wifi_initialized
-
                     #TCCBR-4286 Workaround for wifi process hung
                     sh $TAD_PATH/oemhooks.sh "CCSP_WIFI_HUNG"
-
                     resetNeeded wifi CcspWifiSsp
                     WiFi_Flag=true
                 fi
@@ -1116,7 +1111,6 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
             resetNeeded lm CcspLMLite
-
         fi
 
         # Checking XdnsSsp PID
@@ -1124,7 +1118,6 @@ case $SELFHEAL_TYPE in
         if [ "$XDNS_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
-
         fi
 
         # Checking CcspEthAgent PID
@@ -1132,7 +1125,6 @@ case $SELFHEAL_TYPE in
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
-
         fi
 
         # Checking snmp subagent PID
@@ -1160,7 +1152,7 @@ HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
 if [ x"$HOTSPOT_PSM" = x"1" ]; then
     HOTSPOT_ENABLE="true"
 else
-    HOTSPOT_ENABLE="flase"
+    HOTSPOT_ENABLE="false"
 fi
 
 if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
@@ -1174,22 +1166,17 @@ if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     done
     # Accounting is enabled always hence, double the expected relay process count
     count=`expr $count \* 2`
-
     RELAYPID=$(busybox pidof radius_relay)
     relay_count=0
     for j in $RELAYPID; do
         relay_count=`expr $relay_count + 1`
     done
-
     echo "radius process: actual count=$relay_count expected count=$count"
-
     if [ "$count" -gt "$relay_count" ] ; then
         echo_t "RDKB_SELFHEAL : radius relay not running for all the instance, needs a restart"
         sysevent set radiusrelay-restart
     fi
-
 fi
-
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
@@ -1202,7 +1189,6 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     HOTSPOT_PID=$(busybox pidof CcspHotspot)
     if [ "$HOTSPOT_PID" = "" ]; then
         if [ ! -f /tmp/tunnel_destroy_flag ] ; then
-
             primary=$(sysevent get hotspotfd-primary)
             secondary=$(sysevent get hotspotfd-secondary)
             PRIMARY_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
@@ -1211,7 +1197,6 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
                echo_t "Primary endpoint is empty. Restoring it"
                sysevent set hotspotfd-primary $PRIMARY_EP
             fi
-
             if [ "$secondary" = "" ] ; then
                echo_t "Secondary endpoint is empty. Restoring it"
                sysevent set hotspotfd-secondary $SECOND_EP
@@ -1253,11 +1238,11 @@ case $SELFHEAL_TYPE in
 
                     grePresent=$(ifconfig -a | grep "$GREIF")
                     if [ "$grePresent" = "" ]; then
+
                         #l2sd0.102 case
                         ifconfig | grep "$l2sd0Prefix\.$l2net_24_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "ComunityWifi is enabled, but $l2sd0Prefix.$l2net_24_VLANID interface is not created try creating it"
-
+                            echo_t "CommunityWifi is enabled, but $l2sd0Prefix.$l2net_24_VLANID interface is not created try creating it"
                             sysevent set multinet_3-status stopped
                             $UTOPIA_PATH/service_multinet_exec multinet-start 3
                             ifconfig $l2sd0Prefix.$l2net_24_VLANID up
@@ -1284,8 +1269,7 @@ case $SELFHEAL_TYPE in
                         #l2sd0.103 case
                         ifconfig | grep "$l2sd0Prefix\.$l2net_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$l2net_5_VLANID interface is not created try creatig it"
-
+                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$l2net_5_VLANID interface is not created try creating it"
                             sysevent set multinet_4-status stopped
                             $UTOPIA_PATH/service_multinet_exec multinet-start 3
                             ifconfig $l2sd0Prefix.$l2net_5_VLANID up
@@ -1322,7 +1306,6 @@ case $SELFHEAL_TYPE in
                         brctl addif brlan2 $GREIF
                     fi
                 fi
-
                 l2netPresent=$(ifconfig -a | grep "$l2sd0Prefix\.$l2net_24_VLANID")
                 if [ -n "$l2netPresent" ]; then
                     vlanAdded=$(brctl show brlan2 | grep "$l2sd0Prefix\.$l2net_24_VLANID")
@@ -1341,240 +1324,238 @@ case $SELFHEAL_TYPE in
                 fi
 
             # ----------------------------------------------------------------
-            else 
+            else
             # ----------------------------------------------------------------
 
-            #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
-            #If they are not present below code shall re-create them
-            #l2sd0.102 case , also adding a strict rule that they are up, since some
-            #devices we observed l2sd0 not up
+                #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
+                #If they are not present below code shall re-create them
+                #l2sd0.102 case , also adding a strict rule that they are up, since some
+                #devices we observed l2sd0 not up
 
-            if [ "$MODEL_NUM" = "DPC3939B" ]; then
-		Xfinity_Open_24_VLANID="2312"
-		Xfinity_Open_5_VLANID="2315"
-		Xfinity_Secure_24_VLANID="2311"
-		Xfinity_Secure_5_VLANID="2314"
-		Xfinity_Public_5_VLANID="2316"
-	    elif [ "$MODEL_NUM" = "DPC3941B" ]; then
-		Xfinity_Open_24_VLANID="2322"
-		Xfinity_Open_5_VLANID="2325"
-		Xfinity_Secure_24_VLANID="2321"
-		Xfinity_Secure_5_VLANID="2324"
-		Xfinity_Public_5_VLANID="2326"
-	    else
-		Xfinity_Open_24_VLANID="102"
-		Xfinity_Open_5_VLANID="103"
-		Xfinity_Secure_24_VLANID="104"
-		Xfinity_Secure_5_VLANID="105"
-	    fi
-        if [ "$OPEN_24" = "true" ]; then
-            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
-            brctlPresent=$(brctl show | grep "brlan2")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
-                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
-                if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
-
-                    Interface=$(psmcli get dmsb.l2net.3.Members.WiFi)
-                    if [ "$Interface" = "" ]; then
-                        echo_t "PSM value(ath4) is missing for $l2sd0Prefix.$Xfinity_Open_24_VLANID"
-                        psmcli set dmsb.l2net.3.Members.WiFi ath4
-                    fi
-
-                    sysevent set multinet_3-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                    ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
-                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
-                    if [ $? -eq 1 ]; then
-                        echo_t "$l2sd0Prefix.$Xfinity_Open_24_VLANID is not created at First Retry, try again after 2 sec"
-                        sleep 2
-                        sysevent set multinet_3-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 3
-                        ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
+                if [ "$MODEL_NUM" = "DPC3939B" ]; then
+                    Xfinity_Open_24_VLANID="2312"
+                    Xfinity_Open_5_VLANID="2315"
+                    Xfinity_Secure_24_VLANID="2311"
+                    Xfinity_Secure_5_VLANID="2314"
+                    Xfinity_Public_5_VLANID="2316"
+                elif [ "$MODEL_NUM" = "DPC3941B" ]; then
+                    Xfinity_Open_24_VLANID="2322"
+                    Xfinity_Open_5_VLANID="2325"
+                    Xfinity_Secure_24_VLANID="2321"
+                    Xfinity_Secure_5_VLANID="2324"
+                    Xfinity_Public_5_VLANID="2326"
+                else
+                    Xfinity_Open_24_VLANID="102"
+                    Xfinity_Open_5_VLANID="103"
+                    Xfinity_Secure_24_VLANID="104"
+                    Xfinity_Secure_5_VLANID="105"
+                fi
+                if [ "$OPEN_24" = "true" ]; then
+                    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_24_VLANID")
+                    brctlPresent=$(brctl show | grep "brlan2")
+                    if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID is not created after Second Retry, no more retries !!!"
+                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
+
+                            Interface=$(psmcli get dmsb.l2net.3.Members.WiFi)
+                            if [ "$Interface" = "" ]; then
+                                echo_t "PSM value(ath4) is missing for $l2sd0Prefix.$Xfinity_Open_24_VLANID"
+                                psmcli set dmsb.l2net.3.Members.WiFi ath4
+                            fi
+
+                            sysevent set multinet_3-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                            ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$Xfinity_Open_24_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_3-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 3
+                                ifconfig $l2sd0Prefix.$Xfinity_Open_24_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_24_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
                         fi
-                    else
-                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_24_VLANID created at First Retry itself"
                     fi
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 2.4GHz is enabled but gre tunnels not present, restoring it"
-                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=1
                 fi
-            fi
-            fi
 
-            #l2sd0.103 case
-            if [ "$OPEN_5" = "true" ]; then
-            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
-            brctlPresent=$(brctl show | grep "brlan3")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
-                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
-                if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
-
-                    Interface=$(psmcli get dmsb.l2net.4.Members.WiFi)
-                    if [ "$Interface" = "" ]; then
-                        echo_t "PSM value(ath5) is missing for $l2sd0Prefix.$Xfinity_Open_5_VLANID"
-                        psmcli set dmsb.l2net.4.Members.WiFi ath5
-                    fi
-
-                    sysevent set multinet_4-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                    ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
-                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
-                    if [ $? -eq 1 ]; then
-                        echo_t "$l2sd0Prefix.$Xfinity_Open_5_VLANID is not created at First Retry, try again after 2 sec"
-                        sleep 2
-                        sysevent set multinet_4-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 4
-                        ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
+                #l2sd0.103 case
+                if [ "$OPEN_5" = "true" ]; then
+                    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Open_5_VLANID")
+                    brctlPresent=$(brctl show | grep "brlan3")
+                    if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID is not created after Second Retry, no more retries !!!"
+                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
+
+                            Interface=$(psmcli get dmsb.l2net.4.Members.WiFi)
+                            if [ "$Interface" = "" ]; then
+                                echo_t "PSM value(ath5) is missing for $l2sd0Prefix.$Xfinity_Open_5_VLANID"
+                                psmcli set dmsb.l2net.4.Members.WiFi ath5
+                            fi
+
+                            sysevent set multinet_4-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 4
+                            ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$Xfinity_Open_5_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_4-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 4
+                                ifconfig $l2sd0Prefix.$Xfinity_Open_5_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Open_5_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
                         fi
-                    else
-                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Open_5_VLANID created at First Retry itself"
-                    fi
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi:  SSID 5 GHz is enabled but gre tunnels not present, restoring it"
-                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=1
-                fi
-            fi
-            fi
-            #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
-            #if found not attached , then add the device to bridges
-            for index in 2 3 4 5
-              do
-                grePresent=$(ifconfig -a | grep "$grePrefix.10$index")
-                if [ -n "$grePresent" ]; then
-                    vlanAdded=$(brctl show $brlanPrefix$index | grep "$l2sd0Prefix.10$index")
-                    if [ "$vlanAdded" = "" ]; then
-                        echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
-                        brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
                     fi
                 fi
-              done
+                #RDKB-16889: We need to make sure Xfinity hotspot Vlan IDs are attached to the bridges
+                #if found not attached , then add the device to bridges
+                for index in 2 3 4 5
+                do
+                    grePresent=$(ifconfig -a | grep "$grePrefix.10$index")
+                    if [ -n "$grePresent" ]; then
+                        vlanAdded=$(brctl show $brlanPrefix$index | grep "$l2sd0Prefix.10$index")
+                        if [ "$vlanAdded" = "" ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $l2sd0Prefix.10$index"
+                            brctl addif $brlanPrefix$index $l2sd0Prefix.10$index
+                        fi
+                    fi
+                done
 
-            SECURED_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            SECURED_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                SECURED_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                SECURED_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
 
-            #Check for Secured Xfinity hotspot briges and associate them properly if
-            #not proper
-            #l2sd0.103 case
-            
-            #Secured Xfinity 2.4
-            if [ "$SECURED_24" = "true" ]; then
-            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
-            brctlPresent=$(brctl show | grep "brlan4")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
-                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
-                if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
-                    sysevent set multinet_7-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                    ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
-                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
-                    if [ $? -eq 1 ]; then
-                        echo_t "$l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created at First Retry, try again after 2 sec"
-                        sleep 2
-                        sysevent set multinet_7-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 7
-                        ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
+                #Check for Secured Xfinity hotspot briges and associate them properly if
+                #not proper
+                #l2sd0.103 case
+
+                #Secured Xfinity 2.4
+                if [ "$SECURED_24" = "true" ]; then
+                    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_24_VLANID")
+                    brctlPresent=$(brctl show | grep "brlan4")
+                    if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created after Second Retry, no more retries !!!"
+                            echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_24_VLANID interface is not created try creatig it"
+                            sysevent set multinet_7-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                            ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_7-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 7
+                                ifconfig $l2sd0Prefix.$Xfinity_Secure_24_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_24_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID created at First Retry itself"
+                            fi
+                        else
+                        #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
+                        #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
+                        #connect
+                            echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
                         fi
-                    else
-                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_24_VLANID created at First Retry itself"
                     fi
-                else
-                #RDKB-17221: In some rare devices we found though Xfinity secured ssid enabled, but it did'nt create the gre tunnels
-                #but all secured SSIDs Vaps were up and system remained in this state for long not allowing clients to
-                #connect
-                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 2.4 is enabled but gre tunnels not present, restoring it"
-                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=1
                 fi
-            fi
-            fi
 
-            #Secured Xfinity 5
-            if [ "$SECURED_5" = "true" ]; then
-            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
-            brctlPresent=$(brctl show | grep "brlan5")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
-                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
-                if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
-                    sysevent set multinet_8-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                    ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
-                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
-                    if [ $? -eq 1 ]; then
-                        echo_t "$l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created at First Retry, try again after 2 sec"
-                        sleep 2
-                        sysevent set multinet_8-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 8
-                        ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
+                #Secured Xfinity 5
+                if [ "$SECURED_5" = "true" ]; then
+                    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Secure_5_VLANID")
+                    brctlPresent=$(brctl show | grep "brlan5")
+                    if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created after Second Retry, no more retries !!!"
+                            echo_t "XfinityWifi is enabled Secured gre created, but $l2sd0Prefix.$Xfinity_Secure_5_VLANID interface is not created try creatig it"
+                            sysevent set multinet_8-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 8
+                            ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_8-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 8
+                                ifconfig $l2sd0Prefix.$Xfinity_Secure_5_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Secure_5_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
                         fi
-                    else
-                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Secure_5_VLANID created at First Retry itself"
                     fi
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] :XfinityWifi: Secured SSID 5GHz is enabled but gre tunnels not present, restoring it"
-                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=1
                 fi
-            fi
-            fi
 
-            #New Public hotspot
-            PUBLIC_5=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            if [ "$PUBLIC_5" = "true" ]; then
-            grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Public_5_VLANID")
-            brctlPresent=$(brctl show | grep "brpub")
-            if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
-                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
-                if [ $? -eq 1 ]; then
-                    echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
-
-                    Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
-                    if [ "$Interface" = "" ]; then
-                        echo_t "PSM value(ath15) is missing for $l2sd0Prefix.$Xfinity_Public_5_VLANID"
-                        psmcli set dmsb.l2net.11.Members.WiFi ath15
-                    fi
-
-                    sysevent set multinet_11-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 11
-                    ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
-                    ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
-                    if [ $? -eq 1 ]; then
-                        echo_t "$l2sd0Prefix.$Xfinity_Public_5_VLANID is not created at First Retry, try again after 2 sec"
-                        sleep 2
-                        sysevent set multinet_11-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 11
-                        ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
+                #New Public hotspot
+                PUBLIC_5=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                if [ "$PUBLIC_5" = "true" ]; then
+                    grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Public_5_VLANID")
+                    brctlPresent=$(brctl show | grep "brpub")
+                    if [ "$grePresent" = "" ] || [ "$brctlPresent" = "" ] ; then
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
                         if [ $? -eq 1 ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID is not created after Second Retry, no more retries !!!"
+                            echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
+                            Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
+                            if [ "$Interface" = "" ]; then
+                                echo_t "PSM value(ath15) is missing for $l2sd0Prefix.$Xfinity_Public_5_VLANID"
+                                psmcli set dmsb.l2net.11.Members.WiFi ath15
+                            fi
+                            sysevent set multinet_11-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                            ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
+                            ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
+                            if [ $? -eq 1 ]; then
+                                echo_t "$l2sd0Prefix.$Xfinity_Public_5_VLANID is not created at First Retry, try again after 2 sec"
+                                sleep 2
+                                sysevent set multinet_11-status stopped
+                                $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                                ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
+                                ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
+                                if [ $? -eq 1 ]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID is not created after Second Retry, no more retries !!!"
+                                fi
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID created at First Retry itself"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] :Public XfinityWifi:  SSID 5GHz is enabled but gre tunnels not present, restoring it"
+                            t2CountNotify "SYS_ERROR_GRETunnel_restored"
+                            rcount=1
                         fi
-                    else
-                        echo_t "[RDKB_PLATFORM_ERROR] : $l2sd0Prefix.$Xfinity_Public_5_VLANID created at First Retry itself"
                     fi
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] :Public XfinityWifi:  SSID 5GHz is enabled but gre tunnels not present, restoring it"
-                    t2CountNotify "SYS_ERROR_GRETunnel_restored"
-                    rcount=1
                 fi
-              fi
-              fi
 
             # ----------------------------------------------------------------
             fi
@@ -1583,68 +1564,70 @@ case $SELFHEAL_TYPE in
             if [ $rcount -eq 1 ] ; then
                 sh $UTOPIA_PATH/service_multinet/handle_gre.sh hotspotfd-tunnelEP recover
             fi
+
         fi  # [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
+
     ;;
     "TCCBR")
-          if [ "$HOTSPOT_ENABLE" = "true" ]; then                                                                                      
-                XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-                
-                open2=`wlctl -i wl0.2 bss`
-                open5=`wlctl -i wl1.2 bss`
-                sec2=`wlctl -i wl0.4 bss`
-                sec5=`wlctl -i wl1.4 bss`
-                open16=`wlctl -i wl1.7 bss`
-                xcount=0 
-                if [ "$XOPEN_24" = "true" ]; then
-                      if [ "$open2" = "down" ]; then
-                           wlctl -i wl0.2 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR  SSID:5 2.4GHz restoring"
-                           xcount=1
-                      fi
-                fi
-                
-                if [ "$XOPEN_5" = "true" ]; then
-                      if [ "$open5" = "down" ]; then
-                           wlctl -i wl1.2 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:6 5GHz restoring"
-                           xcount=1
-                      fi
-                fi
-                
-                if [ "$XSEC_24" = "true" ]; then
-                      if [ "$sec2" = "down" ]; then
-                           wlctl -i wl0.4 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:9 2.4GHz restoring"
-                           xcount=1
-                      fi
-                fi
+        if [ "$HOTSPOT_ENABLE" = "true" ]; then
+            XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
 
-                if [ "$XSEC_5" = "true" ]; then
-                      if [ "$sec5" = "down" ]; then
-                           wlctl -i wl1.4 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:10 5GHz restoring"
-                           xcount=1
-                      fi
-                fi
+            open2=`wlctl -i wl0.2 bss`
+            open5=`wlctl -i wl1.2 bss`
+            sec2=`wlctl -i wl0.4 bss`
+            sec5=`wlctl -i wl1.4 bss`
+            open16=`wlctl -i wl1.7 bss`
+            xcount=0
+            if [ "$XOPEN_24" = "true" ]; then
+                  if [ "$open2" = "down" ]; then
+                       wlctl -i wl0.2 bss up
+                       echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR  SSID:5 2.4GHz restoring"
+                       xcount=1
+                  fi
+            fi
 
-                if [ "$XOPEN_16" = "true" ]; then
-                      if [ "$open16" = "down" ]; then
-                           wlctl -i wl1.7 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:16 5GHz restoring"
-                           xcount=1
-                      fi
-                fi
-                
-                if [ $xcount -eq 1 ] ; then
-                      echo_t "apply settings"
-                      dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
-                      dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
-                fi
-         fi                                                                                  
+            if [ "$XOPEN_5" = "true" ]; then
+                  if [ "$open5" = "down" ]; then
+                       wlctl -i wl1.2 bss up
+                       echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:6 5GHz restoring"
+                       xcount=1
+                  fi
+            fi
+
+            if [ "$XSEC_24" = "true" ]; then
+                  if [ "$sec2" = "down" ]; then
+                       wlctl -i wl0.4 bss up
+                       echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:9 2.4GHz restoring"
+                       xcount=1
+                  fi
+            fi
+
+            if [ "$XSEC_5" = "true" ]; then
+                  if [ "$sec5" = "down" ]; then
+                       wlctl -i wl1.4 bss up
+                       echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:10 5GHz restoring"
+                       xcount=1
+                  fi
+            fi
+
+            if [ "$XOPEN_16" = "true" ]; then
+                  if [ "$open16" = "down" ]; then
+                       wlctl -i wl1.7 bss up
+                       echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:16 5GHz restoring"
+                       xcount=1
+                  fi
+            fi
+
+            if [ $xcount -eq 1 ] ; then
+                  echo_t "apply settings"
+                  dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                  dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+            fi
+        fi
     ;;
     "SYSTEMD")
     ;;
@@ -1708,11 +1691,11 @@ case $SELFHEAL_TYPE in
                     sh /etc/webgui.sh
                 else
                     for f in /tmp/WEBGUI_*
-                      do
+                    do
                         if [ -f "$f" ]; then  #TODO: file test not needed since we just got list of filenames from shell?
                             rm "$f"
                         fi
-                      done
+                    done
                     touch /tmp/WEBGUI_"$WEBGUI_PID"
                     echo_t "WEBGUI is running with pid $WEBGUI_PID"
                 fi
@@ -1762,79 +1745,79 @@ case $SELFHEAL_TYPE in
 esac
 
 if [ "$MODEL_NUM" = "" ]; then
-	echo_t "Disabling parodus"
+    echo_t "Disabling parodus"
 else
-# Checking for parodus connection stuck issue
-# Checking parodus PID
-PARODUS_PID=$(busybox pidof parodus)
-case $SELFHEAL_TYPE in
-    "BASE")
-        PARODUSSTART_PID=$(busybox pidof parodusStart)
-        if [ "$PARODUS_PID" = "" ] && [ "$PARODUSSTART_PID" = "" ]; then
-            _start_parodus_
-            thisPARODUS_PID=""    # avoid executing 'already-running' code below
-        fi
-    ;;
-    "TCCBR"|"SYSTEMD")
-        thisPARODUS_PID="$PARODUS_PID"
-    ;;
-esac
-if [ "$thisPARODUS_PID" != "" ]; then
-    # parodus process is running,
-    kill_parodus_msg=""
-    # check if parodus is stuck in connecting
-    if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
-        wan_status=$(sysevent get wan-status)
-        if [ "$wan_status" = "started" ]; then
-            time_line=$(awk '/^\{START=[0-9\,]+\}$/' $PARCONNHEALTH_PATH)
-        else
-            time_line=""
-        fi
-        health_time_pair=$(echo "$time_line" | tr -d "}" | cut -d"=" -f2)
-        if [ "$health_time_pair" != "" ]; then
-            conn_start_time=$(echo "$health_time_pair" | cut -d"," -f1)
-            conn_retry_time=$(echo "$health_time_pair" | cut -d"," -f2)
-            echo_t "Parodus connecting time '$health_time_pair'"
-            time_now=$(date +%s)
-            time_now_val=$((time_now+0))
-            time_limit=$((conn_retry_time+1800))
-            if [ $time_now_val -ge $time_limit ]; then
-                # parodus connection health file has a recorded
-                # time stamp that is > 30 minutes old, seems parodus conn is stuck
-                kill_parodus_msg="Parodus Connection TimeStamp Expired."
-                t2CountNotify "SYS_ERROR_parodus_TimeStampExpired"
-            fi
-            time_limit=$((conn_start_time+900))
-            if [ $time_now_val -ge $time_limit ]; then
-                echo_t "Parodus connection lost since 15 minutes"
-            fi
-        fi
-    fi
-    if [ "$kill_parodus_msg" != "" ]; then
-        case $SELFHEAL_TYPE in
-            "BASE")
-                ppid=$(busybox pidof parodus)
-                if [ "$ppid" != "" ]; then
-                    echo_t "$kill_parodus_msg Killing parodus process."
-                    t2CountNotify "SYS_SH_Parodus_Killed"
-                    # want to generate minidump for further analysis hence using signal 11
-                    kill -11 "$ppid"
-                    sleep 1
-                fi
+    # Checking for parodus connection stuck issue
+    # Checking parodus PID
+    PARODUS_PID=$(busybox pidof parodus)
+    case $SELFHEAL_TYPE in
+        "BASE")
+            PARODUSSTART_PID=$(busybox pidof parodusStart)
+            if [ "$PARODUS_PID" = "" ] && [ "$PARODUSSTART_PID" = "" ]; then
                 _start_parodus_
-            ;;
-            "TCCBR"|"SYSTEMD")
-                ppid=$(busybox pidof parodus)
-                if [ "$ppid" != "" ]; then
-                    echo "[$(getDateTime)] $kill_parodus_msg Killing parodus process."
-                    t2CountNotify "SYS_SH_Parodus_Killed"
-                    # want to generate minidump for further analysis hence using signal 11
-                    systemctl kill --signal=11 parodus.service
+                thisPARODUS_PID=""    # avoid executing 'already-running' code below
+            fi
+        ;;
+        "TCCBR"|"SYSTEMD")
+            thisPARODUS_PID="$PARODUS_PID"
+        ;;
+    esac
+    if [ "$thisPARODUS_PID" != "" ]; then
+        # parodus process is running,
+        kill_parodus_msg=""
+        # check if parodus is stuck in connecting
+        if [ "$kill_parodus_msg" = "" ] && [ -f $PARCONNHEALTH_PATH ]; then
+            wan_status=$(sysevent get wan-status)
+            if [ "$wan_status" = "started" ]; then
+                time_line=$(awk '/^\{START=[0-9\,]+\}$/' $PARCONNHEALTH_PATH)
+            else
+                time_line=""
+            fi
+            health_time_pair=$(echo "$time_line" | tr -d "}" | cut -d"=" -f2)
+            if [ "$health_time_pair" != "" ]; then
+                conn_start_time=$(echo "$health_time_pair" | cut -d"," -f1)
+                conn_retry_time=$(echo "$health_time_pair" | cut -d"," -f2)
+                echo_t "Parodus connecting time '$health_time_pair'"
+                time_now=$(date +%s)
+                time_now_val=$((time_now+0))
+                time_limit=$((conn_retry_time+1800))
+                if [ $time_now_val -ge $time_limit ]; then
+                    # parodus connection health file has a recorded
+                    # time stamp that is > 30 minutes old, seems parodus conn is stuck
+                    kill_parodus_msg="Parodus Connection TimeStamp Expired."
+                    t2CountNotify "SYS_ERROR_parodus_TimeStampExpired"
                 fi
-            ;;
-        esac
+                time_limit=$((conn_start_time+900))
+                if [ $time_now_val -ge $time_limit ]; then
+                    echo_t "Parodus connection lost since 15 minutes"
+                fi
+            fi
+        fi
+        if [ "$kill_parodus_msg" != "" ]; then
+            case $SELFHEAL_TYPE in
+                "BASE")
+                    ppid=$(busybox pidof parodus)
+                    if [ "$ppid" != "" ]; then
+                        echo_t "$kill_parodus_msg Killing parodus process."
+                        t2CountNotify "SYS_SH_Parodus_Killed"
+                        # want to generate minidump for further analysis hence using signal 11
+                        kill -11 "$ppid"
+                        sleep 1
+                    fi
+                    _start_parodus_
+                ;;
+                "TCCBR"|"SYSTEMD")
+                    ppid=$(busybox pidof parodus)
+                    if [ "$ppid" != "" ]; then
+                        echo "[$(getDateTime)] $kill_parodus_msg Killing parodus process."
+                        t2CountNotify "SYS_SH_Parodus_Killed"
+                        # want to generate minidump for further analysis hence using signal 11
+                        systemctl kill --signal=11 parodus.service
+                    fi
+                ;;
+            esac
+        fi
     fi
-fi
 fi
 
 #Implement selfheal mechanism for aker to restart aker process in selfheal window  in XB3 devices
@@ -1901,7 +1884,6 @@ case $SELFHEAL_TYPE in
                     echo_t "WEBGUI is in hung state, restarting it"
                     kill -9 "$WEBGUI_PID"
                     rm /tmp/WEBGUI_*
-
                     isPortKilled=$(netstat -anp | grep "21515")
                     if [ "$isPortKilled" != "" ]; then
                         echo_t "Port 21515 is still alive. Killing processes associated to 21515"
@@ -1910,11 +1892,11 @@ case $SELFHEAL_TYPE in
                     sh /etc/webgui.sh
                 else
                     for f in /tmp/WEBGUI_*
-                      do
+                    do
                         if [ -f "$f" ]; then  #TODO: file test not needed since we just got list of filenames from shell?
                             rm "$f"
                         fi
-                      done
+                    done
                     touch /tmp/WEBGUI_"$WEBGUI_PID"
                     echo_t "WEBGUI is running with pid $WEBGUI_PID"
                 fi
@@ -1969,12 +1951,12 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
         if [ "$ACSD_CORE" != "" ]; then
             echo_t "[ACSD_CRASH/RESTART] : ACSD core has been generated inside /tmp :  $ACSD_CORE"
             ACSD_CORE_COUNT=$(ls /tmp | grep -c "core.prog_acsd")
-            echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp  are : $ACSD_CORE_COUNT"
+            echo_t "[ACSD_CRASH/RESTART] : Number of ACSD cores created inside /tmp are : $ACSD_CORE_COUNT"
         fi
     fi
 fi
 
-#Checking Wheteher any core is generated inside /tmp folder
+#Checking Whether any core is generated inside /tmp folder
 CORE_TMP=$(ls /tmp | grep "core.")
 if [ "$CORE_TMP" != "" ]; then
     echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
@@ -1985,7 +1967,6 @@ if [ "$CORE_TMP" != "" ]; then
     echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
 fi
 
-
 # Checking syseventd PID
 SYSEVENT_PID=$(busybox pidof syseventd)
 if [ "$SYSEVENT_PID" = "" ]; then
@@ -1994,7 +1975,7 @@ if [ "$SYSEVENT_PID" = "" ]; then
     echo_t "[syseventd] Previous rebootCounter:$rebootCounter"
 
     if [ ! -f "$SyseventdCrashed"  ] && [ "$rebootCounter" != "1" ] ; then
-        echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintanance window."
+        echo_t "[RDKB_PROCESS_CRASHED] : syseventd is crashed, need to reboot the device in maintenance window."
         t2CountNotify "SYS_ERROR_syseventdCrashed"
         touch $SyseventdCrashed
         case $SELFHEAL_TYPE in
@@ -2010,11 +1991,10 @@ if [ "$SYSEVENT_PID" = "" ]; then
     rebootDeviceNeeded=1
 fi
 
-
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             SNMP_MASTER_PID=$(busybox pidof snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
@@ -2035,7 +2015,6 @@ esac
 
 case $SELFHEAL_TYPE in
     "BASE")
-
         #Checking Wheteher any core is generated inside /tmp folder
         CORE_TMP=$(ls /tmp | grep "core.")
         if [ "$CORE_TMP" != "" ]; then
@@ -2064,227 +2043,151 @@ esac
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
-case $SELFHEAL_TYPE in
-    "BASE")
-        # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
-
-        if [ "$WAN_TYPE" != "EPON" ]; then
-            check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-            check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
-            if [ ! -f /tmp/.router_reboot ]; then
-                if [ "$check_param_get_succeed" != "" ]; then
-                    check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
-                    if [ "$check_device_in_router_mode" != "" ]; then
-                        check_if_brlan0_created=$(ifconfig | grep "brlan0")
-                        check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
-                        check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
-                        check_if_l2sd0_100_created=$(ifconfig | grep "l2sd0.100")
-                        check_if_l2sd0_100_up=$(ifconfig l2sd0.100 | grep "UP" )
-                        if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
-                            echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 and l2sd0.100 o/p "
-                            ifconfig brlan0;ifconfig l2sd0.100; brctl show
-                            logNetworkInfo
-
-                            ipv4_status=$(sysevent get ipv4_4-status)
-                            lan_status=$(sysevent get lan-status)
-
-                            if [ "$lan_status" != "started" ]; then
-                                if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
-                                    echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-                                    sysevent set lan-start
-                                    sleep 60
-				else
-				    if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
-					/etc/utopia/registration.d/02_multinet restart
-				    fi
-
-				    sysevent set multinet-down 1
-				    sleep 5
-				    sysevent set multinet-up 1
-				    sleep 30
-                                fi
-                            else
-				if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
-				    /etc/utopia/registration.d/02_multinet restart
-				fi
-
-				sysevent set multinet-down 1
-				sleep 5
-				sysevent set multinet-up 1
-				sleep 30
-			    fi
-                        fi
-
-                    fi
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
-                    t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
-                fi
-            else
-                rm -rf /tmp/.router_reboot
-            fi
-
-            #TODO: Need to revisit this after enabling CcspHomeSecurity
-            # Checking whether brlan1 and l2sd0.101 interface are created properly
-            if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ]; then
-                check_if_brlan1_created=$(ifconfig | grep "brlan1")
-                check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
-                check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
-                check_if_l2sd0_101_created=$(ifconfig | grep "l2sd0.101")
-                check_if_l2sd0_101_up=$(ifconfig l2sd0.101 | grep "UP" )
-
-                if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
-                    echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
-                    ifconfig brlan1;ifconfig l2sd0.101; brctl show
-                    ipv5_status=$(sysevent get ipv4_5-status)
-                    lan_l3net=$(sysevent get homesecurity_lan_l3net)
-
-                    if [ "$lan_l3net" != "" ]; then
-                        if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
-                            echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
-                            sysevent set ipv4-up $lan_l3net
-                            sleep 60
-			else
-			    if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
-				/etc/utopia/registration.d/02_multinet restart
-			    fi
-			    sysevent set multinet-down 2
-			    sleep 5
-			    sysevent set multinet-up 2
-			    sleep 10
-                        fi
-                    else
-			if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
-			    /etc/utopia/registration.d/02_multinet restart
-			fi
-
-			sysevent set multinet-down 2
-			sleep 5
-			sysevent set multinet-up 2
-			sleep 10
-		    fi
-                fi
-            fi
-        fi
-    ;;
-    "TCCBR")
-        # Checking whether brlan0 created properly , if not recreate it
-        lanSelfheal=$(sysevent get lan_selfheal)
-        echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
-        if [ ! -f /tmp/.router_reboot ]; then
-            if [ "$lanSelfheal" != "done" ]; then
+    case $SELFHEAL_TYPE in
+        "BASE")
+            # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
+            if [ "$WAN_TYPE" != "EPON" ]; then
                 check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
                 check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
-                if [ "$check_param_get_succeed" != "" ]; then
-                    check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
-                    if [ "$check_device_in_router_mode" != "" ]; then
-                        check_if_brlan0_created=$(ifconfig | grep "brlan0")
-                        check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
-                        check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
-                        if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate brlan0 interface"
-                            t2CountNotify "SYS_ERROR_brlan0_not_created"
-                            logNetworkInfo
-
-                            ipv4_status=$(sysevent get ipv4_4-status)
-                            lan_status=$(sysevent get lan-status)
-
-                            if [ "$lan_status" != "started" ]; then
-                                if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
-                                    echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-                                    sysevent set lan-start
+                if [ ! -f /tmp/.router_reboot ]; then
+                    if [ "$check_param_get_succeed" != "" ]; then
+                        check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
+                        if [ "$check_device_in_router_mode" != "" ]; then
+                            check_if_brlan0_created=$(ifconfig | grep "brlan0")
+                            check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
+                            check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
+                            check_if_l2sd0_100_created=$(ifconfig | grep "l2sd0.100")
+                            check_if_l2sd0_100_up=$(ifconfig l2sd0.100 | grep "UP" )
+                            if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
+                                echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 and l2sd0.100 o/p"
+                                ifconfig brlan0;ifconfig l2sd0.100; brctl show
+                                logNetworkInfo
+                                ipv4_status=$(sysevent get ipv4_4-status)
+                                lan_status=$(sysevent get lan-status)
+                                if [ "$lan_status" != "started" ]; then
+                                    if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
+                                        echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+                                        sysevent set lan-start
+                                        sleep 60
+                                    else
+                                        if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
+                                            /etc/utopia/registration.d/02_multinet restart
+                                        fi
+                                        sysevent set multinet-down 1
+                                        sleep 5
+                                        sysevent set multinet-up 1
+                                        sleep 30
+                                    fi
+                                else
+                                    if [ "$check_if_brlan0_created" = "" ] && [ "$check_if_l2sd0_100_created" = "" ]; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                    fi
+                                    sysevent set multinet-down 1
+                                    sleep 5
+                                    sysevent set multinet-up 1
                                     sleep 30
-				else
-				    if [ "$check_if_brlan0_created" = "" ]; then
-					/etc/utopia/registration.d/02_multinet restart
-				    fi
-
-				    sysevent set multinet-down 1
-				    sleep 5
-				    sysevent set multinet-up 1
-				    sleep 30
+                                    fi
                                 fi
-                            else
-
-				if [ "$check_if_brlan0_created" = "" ]; then
-				    /etc/utopia/registration.d/02_multinet restart
-				fi
-
-				sysevent set multinet-down 1
-				sleep 5
-				sysevent set multinet-up 1
-				sleep 30
-			    fi
-                            sysevent set lan_selfheal "done"
-                        fi
-
+                            fi
+                        else
+                        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+                        t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
                     fi
                 else
-                    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
-                    t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
+                    rm -rf /tmp/.router_reboot
                 fi
-            else
-                echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
-                t2CountNotify "SYS_SH_brlan0_restarted"
-                sysevent set lan_selfheal ""
+
+                #TODO: Need to revisit this after enabling CcspHomeSecurity
+                # Checking whether brlan1 and l2sd0.101 interface are created properly
+                if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ]; then
+                    check_if_brlan1_created=$(ifconfig | grep "brlan1")
+                    check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
+                    check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
+                    check_if_l2sd0_101_created=$(ifconfig | grep "l2sd0.101")
+                    check_if_l2sd0_101_up=$(ifconfig l2sd0.101 | grep "UP" )
+                    if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+                        echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
+                        ifconfig brlan1;ifconfig l2sd0.101; brctl show
+                        ipv5_status=$(sysevent get ipv4_5-status)
+                        lan_l3net=$(sysevent get homesecurity_lan_l3net)
+                        if [ "$lan_l3net" != "" ]; then
+                            if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
+                                echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+                                sysevent set ipv4-up $lan_l3net
+                                sleep 60
+                            else
+                                if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
+                                    /etc/utopia/registration.d/02_multinet restart
+                                fi
+                                sysevent set multinet-down 2
+                                sleep 5
+                                sysevent set multinet-up 2
+                                sleep 10
+                            fi
+                        else
+                            if [ "$check_if_brlan1_created" = "" ] && [ "$check_if_l2sd0_101_created" = "" ] ; then
+                                /etc/utopia/registration.d/02_multinet restart
+                            fi
+                            sysevent set multinet-down 2
+                            sleep 5
+                            sysevent set multinet-up 2
+                            sleep 10
+                        fi
+                    fi
+                fi
             fi
-        else
-            rm -rf /tmp/.router_reboot
-        fi
-    ;;
-    "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
-            # Checking whether brlan0 is created properly , if not recreate it
+        ;;
+        "TCCBR")
+            # Checking whether brlan0 created properly , if not recreate it
             lanSelfheal=$(sysevent get lan_selfheal)
             echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
             if [ ! -f /tmp/.router_reboot ]; then
                 if [ "$lanSelfheal" != "done" ]; then
-                    # Check device is in router mode
-                    # Get from syscfg instead of dmcli for performance reasons
-                    check_device_in_bridge_mode=$(syscfg get bridge_mode)
-                    if [ "$check_device_in_bridge_mode" = "0" ]; then
-                        check_if_brlan0_created=$(ifconfig | grep "brlan0")
-                        check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
-                        check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
-                        if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
-                            echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
-                            t2CountNotify "SYS_ERROR_brlan0_not_created"
-                            logNetworkInfo
-
-                            ipv4_status=$(sysevent get ipv4_4-status)
-                            lan_status=$(sysevent get lan-status)
-
-                            if [ "$lan_status" != "started" ]; then
-                                if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
-                                    echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
-                                    sysevent set lan-start
+                    check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+                    check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
+                    if [ "$check_param_get_succeed" != "" ]; then
+                        check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
+                        if [ "$check_device_in_router_mode" != "" ]; then
+                            check_if_brlan0_created=$(ifconfig | grep "brlan0")
+                            check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
+                            check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
+                            if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate brlan0 interface"
+                                t2CountNotify "SYS_ERROR_brlan0_not_created"
+                                logNetworkInfo
+                                ipv4_status=$(sysevent get ipv4_4-status)
+                                lan_status=$(sysevent get lan-status)
+                                if [ "$lan_status" != "started" ]; then
+                                    if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
+                                        echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+                                        sysevent set lan-start
+                                        sleep 30
+                                    else
+                                        if [ "$check_if_brlan0_created" = "" ]; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                        fi
+                                        sysevent set multinet-down 1
+                                        sleep 5
+                                        sysevent set multinet-up 1
+                                        sleep 30
+                                    fi
+                                else
+                                    if [ "$check_if_brlan0_created" = "" ]; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                    fi
+                                    sysevent set multinet-down 1
+                                    sleep 5
+                                    sysevent set multinet-up 1
                                     sleep 30
-				else
-				    if [ "$check_if_brlan0_created" = "" ]; then
-					/etc/utopia/registration.d/02_multinet restart
-				    fi
-
-				    sysevent set multinet-down 1
-				    sleep 5
-				    sysevent set multinet-up 1
-				    sleep 30
                                 fi
-                            else
-
-				if [ "$check_if_brlan0_created" = "" ]; then
-				    /etc/utopia/registration.d/02_multinet restart
-				fi
-
-				sysevent set multinet-down 1
-				sleep 5
-				sysevent set multinet-up 1
-				sleep 30
-			    fi
-                            sysevent set lan_selfheal "done"
+                                sysevent set lan_selfheal "done"
+                            fi
                         fi
-
+                    else
+                        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while fetching device mode "
+                        t2CountNotify "SYS_ERROR_Error_fetching_devicemode"
                     fi
                 else
                     echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
@@ -2294,117 +2197,158 @@ case $SELFHEAL_TYPE in
             else
                 rm -rf /tmp/.router_reboot
             fi
-            # Checking whether brlan1 interface is created properly
-
-            l3netRestart=$(sysevent get l3net_selfheal)
-            echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
-
-            if [ "$l3netRestart" != "done" ]; then
-
-                check_if_brlan1_created=$(ifconfig | grep "brlan1")
-                check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
-                check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
-
-                if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : brlan1 is not completely up, setting event to recreate vlan and brlan1 interface"
-
-                    ipv5_status=$(sysevent get ipv4_5-status)
-                    lan_l3net=$(sysevent get homesecurity_lan_l3net)
-
-                    if [ "$lan_l3net" != "" ]; then
-                        if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
-                            echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
-                            sysevent set ipv4-up $lan_l3net
-                            sleep 30
-			else
-			    if [ "$check_if_brlan1_created" = "" ]; then
-				/etc/utopia/registration.d/02_multinet restart
-			    fi
-
-			    sysevent set multinet-down 2
-			    sleep 5
-			    sysevent set multinet-up 2
-			    sleep 10
+        ;;
+        "SYSTEMD")
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
+                # Checking whether brlan0 is created properly , if not recreate it
+                lanSelfheal=$(sysevent get lan_selfheal)
+                echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
+                if [ ! -f /tmp/.router_reboot ]; then
+                    if [ "$lanSelfheal" != "done" ]; then
+                        # Check device is in router mode
+                        # Get from syscfg instead of dmcli for performance reasons
+                        check_device_in_bridge_mode=$(syscfg get bridge_mode)
+                        if [ "$check_device_in_bridge_mode" = "0" ]; then
+                            check_if_brlan0_created=$(ifconfig | grep "brlan0")
+                            check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
+                            check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
+                            if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : brlan0 is not completely up, setting event to recreate vlan and brlan0 interface"
+                                t2CountNotify "SYS_ERROR_brlan0_not_created"
+                                logNetworkInfo
+                                ipv4_status=$(sysevent get ipv4_4-status)
+                                lan_status=$(sysevent get lan-status)
+                                if [ "$lan_status" != "started" ]; then
+                                    if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
+                                        echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+                                        sysevent set lan-start
+                                        sleep 30
+                                    else
+                                        if [ "$check_if_brlan0_created" = "" ]; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                        fi
+                                        sysevent set multinet-down 1
+                                        sleep 5
+                                        sysevent set multinet-up 1
+                                        sleep 30
+                                    fi
+                                else
+                                    if [ "$check_if_brlan0_created" = "" ]; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                    fi
+                                    sysevent set multinet-down 1
+                                    sleep 5
+                                    sysevent set multinet-up 1
+                                    sleep 30
+                                fi
+                                sysevent set lan_selfheal "done"
+                            fi
                         fi
                     else
-
-			if [ "$check_if_brlan1_created" = "" ]; then
-			    /etc/utopia/registration.d/02_multinet restart
-			fi
-
-			sysevent set multinet-down 2
-			sleep 5
-			sysevent set multinet-up 2
-			sleep 10
-		    fi
-                    sysevent set l3net_selfheal "done"
+                        echo_t "[RDKB_SELFHEAL] : brlan0 already restarted. Not restarting again"
+                        t2CountNotify "SYS_SH_brlan0_restarted"
+                        sysevent set lan_selfheal ""
+                    fi
+                else
+                    rm -rf /tmp/.router_reboot
                 fi
-            else
-                echo_t "[RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
-            fi
-
-            # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
-            MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            if [ "$MESH_ENABLE" = "true" ]; then
-                echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
-                t2CountNotify "WIFI_INFO_mesh_enabled"
-
-                # Fetch mesh tunnels from the brlan0 bridge if they exist
-                brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
-                br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
-
-                for ifn in $br0_ifaces
-                  do
-                    brFound="false"
-
-                    for br in $brctl0_ifaces
-                      do
-                        if [ "$br" = "$ifn" ]; then
-                            brFound="true"
+                # Checking whether brlan1 interface is created properly
+                l3netRestart=$(sysevent get l3net_selfheal)
+                echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
+                if [ "$l3netRestart" != "done" ]; then
+                    check_if_brlan1_created=$(ifconfig | grep "brlan1")
+                    check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
+                    check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
+                    if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : brlan1 is not completely up, setting event to recreate vlan and brlan1 interface"
+                        ipv5_status=$(sysevent get ipv4_5-status)
+                        lan_l3net=$(sysevent get homesecurity_lan_l3net)
+                        if [ "$lan_l3net" != "" ]; then
+                            if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]; then
+                                echo_t "[RDKB_SELFHEAL] : ipv5_4-status is not set , setting event to create homesecurity lan"
+                                sysevent set ipv4-up $lan_l3net
+                                sleep 30
+                            else
+                                if [ "$check_if_brlan1_created" = "" ]; then
+                                /etc/utopia/registration.d/02_multinet restart
+                                fi
+                                sysevent set multinet-down 2
+                                sleep 5
+                                sysevent set multinet-up 2
+                                sleep 10
+                            fi
+                        else
+                            if [ "$check_if_brlan1_created" = "" ]; then
+                                /etc/utopia/registration.d/02_multinet restart
+                            fi
+                            sysevent set multinet-down 2
+                            sleep 5
+                            sysevent set multinet-up 2
+                            sleep 10
                         fi
-                      done
-                    if [ "$brFound" = "false" ]; then
-                        echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
+                        sysevent set l3net_selfheal "done"
+                    fi
+                else
+                    echo_t "[RDKB_SELFHEAL] : brlan1 already restarted. Not restarting again"
+                fi
+
+                # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
+                MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                if [ "$MESH_ENABLE" = "true" ]; then
+                    echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
+                    t2CountNotify "WIFI_INFO_mesh_enabled"
+
+                    # Fetch mesh tunnels from the brlan0 bridge if they exist
+                    brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
+                    br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
+                    for ifn in $br0_ifaces
+                    do
+                        brFound="false"
+                        for br in $brctl0_ifaces
+                        do
+                            if [ "$br" = "$ifn" ]; then
+                                brFound="true"
+                            fi
+                        done
+                        if [ "$brFound" = "false" ]; then
+                            echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
                             if [ "x$ovs_enable" = "xtrue" ];then
                                 echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan0  :"
                                 /usr/bin/bridgeUtils add-port brlan0 $ifn;
                             else
                                 brctl addif brlan0 $ifn;
-                            fi 
-
-                    fi
-                  done
-
-                # Fetch mesh tunnels from the brlan1 bridge if they exist
-                if [ "$thisIS_BCI" != "yes" ]; then
-                    brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
-                    br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
-
-                    for ifn in $br1_ifaces
-                      do
-                        brFound="false"
-
-                        for br in $brctl1_ifaces
-                          do
-                            if [ "$br" = "$ifn" ]; then
-                                brFound="true"
                             fi
-                          done
-                        if [ "$brFound" = "false" ]; then
-                            echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
-                            if [ "x$ovs_enable" = "xtrue" ];then
-                                echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan1  :"
-                                /usr/bin/bridgeUtils add-port brlan1 $ifn;
-                            else
-                                brctl addif brlan1 $ifn;
-                            fi 
                         fi
-                      done
+                    done
+
+                    # Fetch mesh tunnels from the brlan1 bridge if they exist
+                    if [ "$thisIS_BCI" != "yes" ]; then
+                        brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
+                        br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
+                        for ifn in $br1_ifaces
+                        do
+                            brFound="false"
+                            for br in $brctl1_ifaces
+                            do
+                                if [ "$br" = "$ifn" ]; then
+                                    brFound="true"
+                                fi
+                            done
+                            if [ "$brFound" = "false" ]; then
+                                echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
+                                if [ "x$ovs_enable" = "xtrue" ];then
+                                    echo_t "RDKB_SELFHEAL : Ovs is enabled, calling bridgeUtils to  add $ifn to brlan1  :"
+                                    /usr/bin/bridgeUtils add-port brlan1 $ifn;
+                                else
+                                    brctl addif brlan1 $ifn;
+                                fi
+                            fi
+                        done
+                    fi
                 fi
-            fi
-        fi #Not HUB4 && SR300
-    ;;
-esac
+            fi #Not HUB4 && SR300
+        ;;
+    esac
 fi
 
 #!!! TODO: merge this $SELFHEAL_TYPE block !!!
@@ -2470,7 +2414,7 @@ case $SELFHEAL_TYPE in
                     if [ "$isEnabled" != "" ]; then
                         SSID_DISABLED=1
                         echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
-			t2CountNotify "WIFI_INFO_5G_DISABLED"
+                        t2CountNotify "WIFI_INFO_5G_DISABLED"
                     fi
                 else
                     destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
@@ -2619,7 +2563,6 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         ssidStatus_5=$(dmcli eRT getv Device.WiFi.SSID.2.Status)
         isExecutionSucceed=$(echo "$ssidStatus_5" | grep "Execution succeed")
         if [ "$isExecutionSucceed" != "" ]; then
-
             isUp=$(echo "$ssidStatus_5" | grep "Up")
             if [ "$isUp" = "" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
@@ -2651,7 +2594,6 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
     SSID_DISABLED_2G=0
     ssidEnable_2=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
     ssidExecution_2=$(echo "$ssidEnable_2" | grep "Execution succeed")
-
     if [ "$ssidExecution_2" != "" ]; then
         isEnabled_2=$(echo "$ssidEnable_2" | grep "false")
         if [ "$isEnabled_2" != "" ]; then
@@ -2670,7 +2612,6 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         ssidStatus_2=$(dmcli eRT getv Device.WiFi.SSID.1.Status)
         isExecutionSucceed_2=$(echo "$ssidStatus_2" | grep "Execution succeed")
         if [ "$isExecutionSucceed_2" != "" ]; then
-
             isUp=$(echo "$ssidStatus_2" | grep "Up")
             if [ "$isUp" = "" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
@@ -2703,10 +2644,8 @@ echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 #if broadcasting then we need to disable that SSID's for pseduo mode(2)
 #if device is in full bridge-mode(3) then we need to disable both radio and SSID's
 if [ $BR_MODE -eq 1 ]; then
-
     isBridging=$(syscfg get bridge_mode)
     echo_t "[RDKB_SELFHEAL] : BR_MODE:$isBridging"
-
     #full bridge-mode(3)
     if [ "$isBridging" = "3" ]; then
         # Check the status if 2.4GHz Wifi Radio
@@ -2729,7 +2668,6 @@ if [ $BR_MODE -eq 1 ]; then
         RADIO_ENABLED_5G=0
         RadioEnable_5=$(dmcli eRT getv Device.WiFi.Radio.2.Enable)
         RadioExecution_5=$(echo "$RadioEnable_5" | grep "Execution succeed")
-
         if [ "$RadioExecution_5" != "" ]; then
             isEnabled_5=$(echo "$RadioEnable_5" | grep "true")
             if [ "$isEnabled_5" != "" ]; then
@@ -2779,23 +2717,23 @@ if [ $BR_MODE -eq 0 ]; then
 fi
 
 if [ -s /tmp/.ipv4table_error ] || [ -s /tmp/.ipv6table_error ];then
-	firewall_selfheal_count=$(sysevent get firewall_selfheal_count)
-	if [ "$firewall_selfheal_count" = "" ];then
-		firewall_selfheal_count=0
-	fi
-	if [ $firewall_selfheal_count -lt 3 ];then
-		echo_t "[RDKB_SELFHEAL] : iptables error , restarting firewall"
-		echo ">>>> /tmp/.ipv4table_error <<<<"
-		cat /tmp/.ipv4table_error
-		echo ">>>> /tmp/.ipv6table_error <<<<"
-		cat /tmp/.ipv6table_error
-		sysevent set firewall-restart
-		firewall_selfheal_count=$((firewall_selfheal_count + 1))
-		sysevent set firewall_selfheal_count $firewall_selfheal_count
-		echo_t "[RDKB_SELFHEAL] : firewall_selfheal_count is $firewall_selfheal_count"
-	else
-		echo_t "[RDKB_SELFHEAL] : max firewall_selfheal_count reached, not restarting firewall"
-	fi
+    firewall_selfheal_count=$(sysevent get firewall_selfheal_count)
+    if [ "$firewall_selfheal_count" = "" ];then
+        firewall_selfheal_count=0
+    fi
+    if [ $firewall_selfheal_count -lt 3 ];then
+        echo_t "[RDKB_SELFHEAL] : iptables error , restarting firewall"
+        echo ">>>> /tmp/.ipv4table_error <<<<"
+        cat /tmp/.ipv4table_error
+        echo ">>>> /tmp/.ipv6table_error <<<<"
+        cat /tmp/.ipv6table_error
+        sysevent set firewall-restart
+        firewall_selfheal_count=$((firewall_selfheal_count + 1))
+        sysevent set firewall_selfheal_count $firewall_selfheal_count
+        echo_t "[RDKB_SELFHEAL] : firewall_selfheal_count is $firewall_selfheal_count"
+    else
+        echo_t "[RDKB_SELFHEAL] : max firewall_selfheal_count reached, not restarting firewall"
+    fi
 fi
 
 case $SELFHEAL_TYPE in
@@ -2820,7 +2758,7 @@ lan_netmask=$(syscfg get lan_netmask)
 echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : lan_ipaddr = $lan_ipaddr lan_netmask = $lan_netmask"
 
 lost_and_found_enable=$(syscfg get lost_and_found_enable)
-echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] :  lost_and_found_enable = $lost_and_found_enable"
+echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : lost_and_found_enable = $lost_and_found_enable"
 if [ "$lost_and_found_enable" = "true" ]; then
     iot_ifname=$(syscfg get iot_ifname)
     if [ "$iot_ifname" = "l2sd0.106" ]; then
@@ -2863,45 +2801,45 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
     # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
     # Ref: RDKB-25546
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
     then
-    checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
-    if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
-        for zombiepid in $checkIfDnsmasqIsZombie
-          do
-            confirmZombie=$(grep "State:" /proc/$zombiepid/status | grep -i "zombie")
-            if [ "$confirmZombie" != "" ] ; then
-                case $SELFHEAL_TYPE in
-                    "BASE")
-                    ;;
-                    "TCCBR")
-                    ;;
-                    "SYSTEMD")
-                        echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, stopping CcspXdns"
-                        t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                        systemctl stop CcspXdnsSsp.service
-                    ;;
-                esac
-                echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
-                t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                kill -9 "$(busybox pidof dnsmasq)"
-                systemctl stop dnsmasq
-                systemctl start dnsmasq
-                case $SELFHEAL_TYPE in
-                    "BASE")
-                    ;;
-                    "TCCBR")
-                    ;;
-                    "SYSTEMD")
-                        echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting CcspXdns"
-                        t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                        systemctl start CcspXdnsSsp.service
-                    ;;
-                esac
-                break
-            fi
-          done
-    fi
+        checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+        if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
+            for zombiepid in $checkIfDnsmasqIsZombie
+            do
+                confirmZombie=$(grep "State:" /proc/$zombiepid/status | grep -i "zombie")
+                if [ "$confirmZombie" != "" ] ; then
+                    case $SELFHEAL_TYPE in
+                        "BASE")
+                        ;;
+                        "TCCBR")
+                        ;;
+                        "SYSTEMD")
+                            echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, stopping CcspXdns"
+                            t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
+                            systemctl stop CcspXdnsSsp.service
+                        ;;
+                    esac
+                    echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+                    t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
+                    kill -9 "$(busybox pidof dnsmasq)"
+                    systemctl stop dnsmasq
+                    systemctl start dnsmasq
+                    case $SELFHEAL_TYPE in
+                        "BASE")
+                        ;;
+                        "TCCBR")
+                        ;;
+                        "SYSTEMD")
+                            echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting CcspXdns"
+                            t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
+                            systemctl start CcspXdnsSsp.service
+                        ;;
+                    esac
+                    break
+                fi
+            done
+        fi
     fi
 fi
 
@@ -2928,28 +2866,28 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         #TODO: Need to revisit this after enabling CcspHomeSecurity and LnF network
 
-#       case $SELFHEAL_TYPE in
-#           "BASE")
-#               brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-#               lnf_ifname=$(syscfg get iot_ifname)
-#               if [ "$lnf_ifname" = "l2sd0.106" ]; then
-#                   lnf_ifname=$(syscfg get iot_brname)
-#               fi
-#               if [ "$lnf_ifname" != "" ]; then
-#                   echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
-#                   infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
-#               else
-#                   echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
-#                   #Set some value so that dnsmasq won't restart
-#                   infup="NA"
-#               fi
-#           ;;
-#           "TCCBR")
-#           ;;
-#           "SYSTEMD")
-#               brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-#           ;;
-#       esac
+        #       case $SELFHEAL_TYPE in
+        #           "BASE")
+        #               brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+        #               lnf_ifname=$(syscfg get iot_ifname)
+        #               if [ "$lnf_ifname" = "l2sd0.106" ]; then
+        #                   lnf_ifname=$(syscfg get iot_brname)
+        #               fi
+        #               if [ "$lnf_ifname" != "" ]; then
+        #                   echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
+        #                   infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
+        #               else
+        #                   echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
+        #                   #Set some value so that dnsmasq won't restart
+        #                   infup="NA"
+        #               fi
+        #           ;;
+        #           "TCCBR")
+        #           ;;
+        #           "SYSTEMD")
+        #               brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+        #           ;;
+        #       esac
 
         if [ -f /tmp/dnsmaq_noiface ]; then
             rm -rf /tmp/dnsmaq_noiface
@@ -3001,32 +2939,32 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD"|"TCCBR")
-		# ARRIS XB6 => MODEL_NUM=TG3482G
-		# Tech CBR  => MODEL_NUM=CGA4131COM
-		# Tech xb6  => MODEL_NUM=CGM4140COM
-		# Tech XB7  => MODEL_NUM=CGM4331COM
-		# Tech CBR2 => MODEL_NUM=CGA4332COM
-		# CMX  XB7  => MODEL_NUM=TG4482A
-		# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
-		# Ref: RDKB-25546
-		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
-		then
-                checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
-                if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
-                    for zombiepid in $checkIfDnsmasqIsZombie
-                      do
-                        confirmZombie=$(grep "State:" /proc/$zombiepid/status | grep -i "zombie")
-                        if [ "$confirmZombie" != "" ] ; then
-                            echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
-                            t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                            kill -9 "$(busybox pidof dnsmasq)"
-                            sysevent set dhcp_server-restart
-                            break
-                        fi
-                      done
+                # ARRIS XB6 => MODEL_NUM=TG3482G
+                # Tech CBR  => MODEL_NUM=CGA4131COM
+                # Tech xb6  => MODEL_NUM=CGM4140COM
+                # Tech XB7  => MODEL_NUM=CGM4331COM
+                # Tech CBR2 => MODEL_NUM=CGA4332COM
+                # CMX  XB7  => MODEL_NUM=TG4482A
+                # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
+                # Ref: RDKB-25546
+                if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+                       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+                then
+                    checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+                    if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
+                        for zombiepid in $checkIfDnsmasqIsZombie
+                        do
+                            confirmZombie=$(grep "State:" /proc/$zombiepid/status | grep -i "zombie")
+                            if [ "$confirmZombie" != "" ] ; then
+                                echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
+                                t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
+                                kill -9 "$(busybox pidof dnsmasq)"
+                                sysevent set dhcp_server-restart
+                                break
+                            fi
+                        done
+                    fi
                 fi
-		fi
             ;;
         esac
     fi   # [ "$DNS_PID" = "" ]
@@ -3071,148 +3009,142 @@ esac
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
-#Checking dibbler server is running or not RDKB_10683
-DIBBLER_PID=$(busybox pidof dibbler-server)
-if [ "$DIBBLER_PID" = "" ]; then
+    #Checking dibbler server is running or not RDKB_10683
+    DIBBLER_PID=$(busybox pidof dibbler-server)
+    if [ "$DIBBLER_PID" = "" ]; then
 if [ "$BOX_TYPE" = "HUB4" ]; then
     IPV6_STATUS=`sysevent get ipv6_connection_state`
 fi	
-#    IPV6_STATUS=`sysevent get ipv6-status`
-    DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
-    routerMode="`syscfg get last_erouter_mode`"
-    if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
-        case $SELFHEAL_TYPE in
-            "BASE"|"TCCBR")
-                DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
-                if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
-                    echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
+        #IPV6_STATUS=`sysevent get ipv6-status`
+        DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
+        routerMode="`syscfg get last_erouter_mode`"
+        if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
+            case $SELFHEAL_TYPE in
+                "BASE"|"TCCBR")
+                    DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
+                    if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
+                        echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
+                    elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
 	        elif [ "$IPV6_STATUS" != "up" ] && [ "$BOX_TYPE" = "HUB4" ];then
                     echo_t "IPV6 not Started. Skip Dibbler Server restart for now"		
-		else
-                    echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-                    t2CountNotify "SYS_SH_Dibbler_restart"
-                    if [ -f "/etc/dibbler/server.conf" ]; then
-                        BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
-                        if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
-                            echo "DADFAILED : BRLAN0_DADFAILED"
-                            t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
-
-
-                            if [ "$BOX_TYPE" = "TCCBR" ]; then
-                                echo "DADFAILED : Recovering device from DADFAILED state"
-                                echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-                                sleep 1
-                                echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-
-                                sleep 1
-
-				Dhcpv6_Client_restart "dibbler-client" "Idle"
-                            fi
-                        elif [ ! -s  "/etc/dibbler/server.conf" ]; then
-			    Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			    ret_val=`echo $?`
-			    if [ "$ret_val" = "1" ];then
-                            	echo "DIBBLER : Dibbler Server Config is empty"
-                            	t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
-			    fi
-                        else
-                            dibbler-server stop
-                            sleep 2
-                            dibbler-server start
-                        fi
                     else
-			echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-			Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			ret_val=`echo $?`
-			if [ "$ret_val" = "2" ];then
-				echo_t "DIBBLER : Restart of dibbler failed with reason 2"
-			fi
+                        echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                        t2CountNotify "SYS_SH_Dibbler_restart"
+                        if [ -f "/etc/dibbler/server.conf" ]; then
+                            BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
+                            if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
+                                echo "DADFAILED : BRLAN0_DADFAILED"
+                                t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
+                                if [ "$BOX_TYPE" = "TCCBR" ]; then
+                                    echo "DADFAILED : Recovering device from DADFAILED state"
+                                    echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                    sleep 1
+                                    echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                    sleep 1
+                                    Dhcpv6_Client_restart "dibbler-client" "Idle"
+                                fi
+                            elif [ ! -s  "/etc/dibbler/server.conf" ]; then
+                                Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                                ret_val=`echo $?`
+                                if [ "$ret_val" = "1" ];then
+                                    echo "DIBBLER : Dibbler Server Config is empty"
+                                    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                fi
+                            else
+                                dibbler-server stop
+                                sleep 2
+                                dibbler-server start
+                            fi
+                        else
+                            echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                            ret_val=`echo $?`
+                            if [ "$ret_val" = "2" ];then
+                                echo_t "DIBBLER : Restart of dibbler failed with reason 2"
+                            fi
+                        fi
                     fi
-                fi
-            ;;
-            "SYSTEMD")
-                #ARRISXB6-7776 .. check if IANAEnable is set to 0
-                IANAEnable=$(syscfg show | grep "dhcpv6spool00::IANAEnable" | cut -d"=" -f2)
-                if [ "$IANAEnable" = "0" ] ; then
-                    echo "[$(getDateTime)] IANAEnable disabled, enable and restart dhcp6 client and dibbler"
-                    syscfg set dhcpv6spool00::IANAEnable 1
-                    syscfg commit
-                    sleep 2
-                    #need to restart dhcp client to generate dibbler conf
-		    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
+                ;;
+                "SYSTEMD")
+                    #ARRISXB6-7776 .. check if IANAEnable is set to 0
+                    IANAEnable=$(syscfg show | grep "dhcpv6spool00::IANAEnable" | cut -d"=" -f2)
+                    if [ "$IANAEnable" = "0" ] ; then
+                        echo "[$(getDateTime)] IANAEnable disabled, enable and restart dhcp6 client and dibbler"
+                        syscfg set dhcpv6spool00::IANAEnable 1
+                        syscfg commit
+                        sleep 2
+                        #need to restart dhcp client to generate dibbler conf
+                        Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                    elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
 	        elif [ "$IPV6_STATUS" != "up" ] && [ "$BOX_TYPE" = "HUB4" ];then
                     echo_t "IPV6 not Started. Skip Dibbler Server restart for now"			
-                else
-                    echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-                    t2CountNotify "SYS_SH_Dibbler_restart"
-                    if [ -f "/etc/dibbler/server.conf" ]; then
-                        BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
-                        if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
-                            echo "DADFAILED : BRLAN0_DADFAILED"
-                            t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
-
-                            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
-                                echo "DADFAILED : Recovering device from DADFAILED state"
-                                # save global ipv6 address before disable it
-                                v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
-                                echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-                                sleep 1
-                                echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-                                # re-add global ipv6 address after enabled it
-                                ip -6 addr add $v6addr dev $PRIVATE_LAN
-                                sleep 1
-
+                    else
+                        echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                        t2CountNotify "SYS_SH_Dibbler_restart"
+                        if [ -f "/etc/dibbler/server.conf" ]; then
+                            BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
+                            if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
+                                echo "DADFAILED : BRLAN0_DADFAILED"
+                                t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
+                                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+                                    echo "DADFAILED : Recovering device from DADFAILED state"
+                                    # save global ipv6 address before disable it
+                                    v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
+                                    echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                    sleep 1
+                                    echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
+                                    # re-add global ipv6 address after enabled it
+                                    ip -6 addr add $v6addr dev $PRIVATE_LAN
+                                    sleep 1
+                                    dibbler-server stop
+                                    sleep 1
+                                    dibbler-server start
+                                    sleep 5
+                                elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                                    echo "DADFAILED : Recovering device from DADFAILED state"
+                                    # save global ipv6 address before disable it
+                                    v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
+                                    sh $DHCPV6_HANDLER disable
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
+                                    sleep 1
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
+                                    sleep 1
+                                    sh $DHCPV6_HANDLER enable
+                                    # re-add global ipv6 address after enabled it
+                                    ip -6 addr add $v6addr dev $PRIVATE_LAN
+                                    sleep 5
+                                fi
+                            elif [ ! -s  "/etc/dibbler/server.conf" ]; then
+                                Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                                ret_val=`echo $?`
+                                if [ "$ret_val" = "1" ];then
+                                    echo "DIBBLER : Dibbler Server Config is empty"
+                                    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                fi
+                            else
                                 dibbler-server stop
-                                sleep 1
+                                sleep 2
                                 dibbler-server start
-                                sleep 5
-                            elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-                                echo "DADFAILED : Recovering device from DADFAILED state"
-                                # save global ipv6 address before disable it
-                                v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
-                                sh $DHCPV6_HANDLER disable
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
-                                sleep 1
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
-                                sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
-                                sleep 1
-                                sh $DHCPV6_HANDLER enable
-                                # re-add global ipv6 address after enabled it
-                                ip -6 addr add $v6addr dev $PRIVATE_LAN
-                                sleep 5
-                            fi
-                        elif [ ! -s  "/etc/dibbler/server.conf" ]; then
-			    Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-                            ret_val=`echo $?`
-                            if [ "$ret_val" = "1" ];then
-                                echo "DIBBLER : Dibbler Server Config is empty"
-                                t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
                         else
-                            dibbler-server stop
-                            sleep 2
-                            dibbler-server start
-                        fi
-                    else
-			echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-			Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			ret_val=`echo $?`
-                        if [ "$ret_val" = "2" ];then
-                           echo_t "DIBBLER : Restart of dibbler failed with reason 2"
+                            echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                            ret_val=`echo $?`
+                            if [ "$ret_val" = "2" ];then
+                               echo_t "DIBBLER : Restart of dibbler failed with reason 2"
+                            fi
                         fi
                     fi
-                fi
-            ;;
-        esac
+                ;;
+            esac
+        fi
     fi
-fi
 fi
 
 #Checking the zebra is running or not
@@ -3220,7 +3152,6 @@ WAN_STATUS=$(sysevent get wan-status)
 ZEBRA_PID=$(busybox pidof zebra)
 if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$BR_MODE" = "0" ]; then
-
         echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
         t2CountNotify "SYS_SH_Zebra_restart"
         /etc/utopia/registration.d/20_routing restart
@@ -3232,14 +3163,12 @@ case $SELFHEAL_TYPE in
     "BASE")
         #Checking the ntpd is running or not
         if [ "$WAN_TYPE" != "EPON" ]; then
-	    #TODO: Revisit when NTP daemon is enabled
-#           NTPD_PID=$(busybox pidof ntpd)
-#           if [ "$NTPD_PID" = "" ]; then
-#               echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
-#               sysevent set ntpd-restart
-#           fi
-
-
+            #TODO: Revisit when NTP daemon is enabled
+            #           NTPD_PID=$(busybox pidof ntpd)
+            #           if [ "$NTPD_PID" = "" ]; then
+            #               echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
+            #               sysevent set ntpd-restart
+            #           fi
             #Checking if rpcserver is running
             RPCSERVER_PID=$(busybox pidof rpcserver)
             if [ "$RPCSERVER_PID" = "" ] && [ -f /usr/bin/rpcserver ]; then
@@ -3306,9 +3235,10 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ -f "$DHCPV6_ERRO
             ;;
         esac
         rm -rf $DHCPV6_ERROR_FILE
-	Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+        Dhcpv6_Client_restart "ti_dhcp6" "Idle"
     fi
 fi
+
 #Logic added in reference to RDKB-25714
 #to check erouter0 has Global IPv6 or not and accordingly kill the process
 #responsible for the same. The killed processes will get restarted
@@ -3325,39 +3255,39 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 ifconfig $WAN_INTERFACE up
             fi
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
-                echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
-                /usr/sbin/dibbler-client stop
-            elif [ "$BOX_TYPE" = "XB6" ]; then
-                echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
-                sh $DHCPV6_HANDLER disable
-            fi
+                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
+                    echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
+                    /usr/sbin/dibbler-client stop
+                elif [ "$BOX_TYPE" = "XB6" ]; then
+                    echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
+                    sh $DHCPV6_HANDLER disable
+                fi
             fi
         ;;
         "BASE")
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
-            if [ "$task_to_be_killed" = "" ]; then
-                task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
-            fi
-            if [ "$erouter0_up_check" = "" ]; then
-                echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
-                ifconfig $WAN_INTERFACE up
-                #Adding to kill ipv4 process to solve RDKB-27177
-                task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
-                if [ "x$task_to_kill" = "x" ]; then
-                    task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
+                if [ "$task_to_be_killed" = "" ]; then
+                    task_to_be_killed=$(ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
                 fi
-                if [ "x$task_to_kill" != "x" ]; then
-                    kill $task_to_kill
+                if [ "$erouter0_up_check" = "" ]; then
+                    echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
+                    ifconfig $WAN_INTERFACE up
+                    #Adding to kill ipv4 process to solve RDKB-27177
+                    task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
+                    if [ "x$task_to_kill" = "x" ]; then
+                        task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
+                    fi
+                    if [ "x$task_to_kill" != "x" ]; then
+                        kill $task_to_kill
+                    fi
+                    #RDKB-27177 fix ends here
                 fi
-                #RDKB-27177 fix ends here
-            fi
-            if [ "$task_to_be_killed" != "" ]; then
-                echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
-                kill "$task_to_be_killed"
-                sleep 3
-            fi
+                if [ "$task_to_be_killed" != "" ]; then
+                    echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
+                    kill "$task_to_be_killed"
+                    sleep 3
+                fi
             fi
         ;;
         "TCCBR")
@@ -3395,7 +3325,6 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
             else
                 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
                     dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
-
                     if [ "$UDHCPC_Enable" = "true" ]; then
                         check_wan_dhcp_client_v4=$(ps w | grep "sbin/udhcpc" | grep "erouter")
                     else
@@ -3426,8 +3355,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
 
     case $SELFHEAL_TYPE in
         "BASE")
-            if [ "$BOX_TYPE" = "XB3" ]; then
-
+            if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
                 if [ "$check_wan_dhcp_client_v4" != "" ] && [ "$check_wan_dhcp_client_v6" != "" ]; then
                     if [ "$(cat /proc/net/dbrctl/mode)"  = "standbay" ]; then
                         echo_t "RDKB_SELFHEAL : dbrctl mode is standbay, changing mode to registered"
@@ -3445,19 +3373,19 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
 
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
-          echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-          t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
-	  wan_dhcp_client_v4=0
+        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
+        t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+        wan_dhcp_client_v4=0
     fi
 
     if [ "$thisWAN_TYPE" != "EPON" ]; then
-                    
+
         #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ]; then
-        echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
-		wan_dhcp_client_v6=0
-	fi
+        if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
+            t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+            wan_dhcp_client_v6=0
+        fi
 
         DHCP_STATUS_query=$(dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
         DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
@@ -3493,7 +3421,6 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
                     sh /usr/ccsp/epon_utility.sh
                 else
                     if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$BOX_TYPE" = "XB3" ]; then
-
                         if [ "$UDHCPC_Enable" = "true" ]; then
                             V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
                         else
@@ -3501,7 +3428,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                         fi
                     else
-			if [ "$BOX_TYPE" = "MV1" ]; then
+                        if [ "$BOX_TYPE" = "MV1" ]; then
                             sysevent set dhcp_client-restart
                         else
                             DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
@@ -3529,7 +3456,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-		    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
                 fi
                 wan_dhcp_client_v6=1
             fi
@@ -3570,20 +3497,20 @@ case $SELFHEAL_TYPE in
             br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
 
             for ifn in $br0_ifaces
-              do
+            do
                 brFound="false"
 
                 for br in $brctl0_ifaces
-                  do
+                do
                     if [ "$br" = "$ifn" ]; then
                         brFound="true"
                     fi
-                  done
+                done
                 if [ "$brFound" = "false" ]; then
                     echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
                     brctl addif brlan0 $ifn;
                 fi
-              done
+            done
 
             # Fetch mesh tunnels from the brlan1 bridge if they exist
             if [ "$thisIS_BCI" != "yes" ]; then
@@ -3591,20 +3518,20 @@ case $SELFHEAL_TYPE in
                 br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
 
                 for ifn in $br1_ifaces
-                  do
+                do
                     brFound="false"
 
                     for br in $brctl1_ifaces
-                      do
+                    do
                         if [ "$br" = "$ifn" ]; then
                             brFound="true"
                         fi
-                      done
+                    done
                     if [ "$brFound" = "false" ]; then
                         echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan1"
                         brctl addif brlan1 $ifn;
                     fi
-                  done
+                done
             fi
         fi
     ;;
@@ -3620,7 +3547,6 @@ case $SELFHEAL_TYPE in
                     sh /usr/ccsp/epon_utility.sh
                 else
                     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-
                         if [ "$UDHCPC_Enable" = "true" ]; then
                             V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
                         else
@@ -3629,12 +3555,10 @@ case $SELFHEAL_TYPE in
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
                         fi
                     else
- 
                         DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
                         V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                     fi
                 fi
-
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                 eval "$V4_EXEC_CMD"
                 sleep 5
@@ -3648,9 +3572,6 @@ case $SELFHEAL_TYPE in
                 if [ $? -ne 0 ] ; then
                     ifconfig $WAN_INTERFACE up
                     sleep 2
-
-
-
                     if [ "$UDHCPC_Enable" = "true" ]; then
                         echo_t "restart udhcp"
                         DHCPC_PID_FILE="/tmp/udhcpc.erouter0.pid"
@@ -3658,23 +3579,17 @@ case $SELFHEAL_TYPE in
                         echo_t "restart ti_udhcp"
                         DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
                     fi
-
-
                     if [ -f $DHCPC_PID_FILE ]; then
                         echo_t "SERVICE_DHCP : Killing $(cat $DHCPC_PID_FILE)"
                         kill -9 "$(cat $DHCPC_PID_FILE)"
                         rm -f $DHCPC_PID_FILE
                     fi
-
-
                     if [ "$UDHCPC_Enable" = "true" ]; then
                         V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     else
                         #For AXB6 b -4 option is added to avoid timeout.
                         V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
                     fi
-
-
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                     eval "$V4_EXEC_CMD"
                     sleep 5
@@ -3692,7 +3607,7 @@ case $SELFHEAL_TYPE in
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-		    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
                 fi
                 wan_dhcp_client_v6=1
             fi
@@ -3710,67 +3625,62 @@ fi
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] 
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
-case $SELFHEAL_TYPE in
-    "BASE")
-    ;;
-    "TCCBR")
-    ;;
-    "SYSTEMD")
-        if [ "$MULTI_CORE" = "yes" ]; then
-            if [ -f $PING_PATH/ping_peer ]; then
-                ## Check Peer ip is accessible
-                loop=1
-                while [ $loop -le 3 ]
-                  do
-                    PING_RES=$(ping_peer)
-                    CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
-
-                    if [ "$CHECK_PING_RES" != "" ]; then
-                        if [ $CHECK_PING_RES -ne 100 ]; then
-                            ping_success=1
-                            echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
-                            break
+    case $SELFHEAL_TYPE in
+        "BASE")
+        ;;
+        "TCCBR")
+        ;;
+        "SYSTEMD")
+            if [ "$MULTI_CORE" = "yes" ]; then
+                if [ -f $PING_PATH/ping_peer ]; then
+                    ## Check Peer ip is accessible
+                    loop=1
+                    while [ $loop -le 3 ]
+                    do
+                        PING_RES=$(ping_peer)
+                        CHECK_PING_RES=$(echo "$PING_RES" | grep "packet loss" | cut -d"," -f3 | cut -d"%" -f1)
+                        if [ "$CHECK_PING_RES" != "" ]; then
+                            if [ $CHECK_PING_RES -ne 100 ]; then
+                                ping_success=1
+                                echo_t "RDKB_SELFHEAL : Ping to Peer IP is success"
+                                break
+                            else
+                                ping_failed=1
+                            fi
                         else
                             ping_failed=1
                         fi
-                    else
-                        ping_failed=1
-                    fi
-
-                    if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
-                        echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
-                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                    else
-                        echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
-                        t2CountNotify "SYS_SH_pingPeerIP_Failed"
-                        echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
-                        echo_t "Setting Last reboot reason Peer_down"
-                        reason="Peer_down"
-                        rebootCount=1
-                        rebootNeeded RM "" $reason $rebootCount
-
-                    fi
-                    loop=$((loop+1))
-                    sleep 5
-                  done
-            else
-                echo_t "RDKB_SELFHEAL : ping_peer command not found"
+                        if [ $ping_failed -eq 1 ] && [ $loop -lt 3 ]; then
+                            echo_t "RDKB_SELFHEAL : Ping to Peer IP failed in iteration $loop"
+                            t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                        else
+                            echo_t "RDKB_SELFHEAL : Ping to Peer IP failed after iteration $loop also ,rebooting the device"
+                            t2CountNotify "SYS_SH_pingPeerIP_Failed"
+                            echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
+                            echo_t "Setting Last reboot reason Peer_down"
+                            reason="Peer_down"
+                            rebootCount=1
+                            rebootNeeded RM "" $reason $rebootCount
+                        fi
+                        loop=$((loop+1))
+                        sleep 5
+                    done
+                else
+                    echo_t "RDKB_SELFHEAL : ping_peer command not found"
+                fi
+                if [ -f $PING_PATH/arping_peer ]; then
+                    $PING_PATH/arping_peer
+                else
+                    echo_t "RDKB_SELFHEAL : arping_peer command not found"
+                fi
             fi
-
-            if [ -f $PING_PATH/arping_peer ]; then
-                $PING_PATH/arping_peer
-            else
-                echo_t "RDKB_SELFHEAL : arping_peer command not found"
-            fi
-        fi
-    ;;
-esac
+        ;;
+    esac
 fi
 
 if [ $rebootDeviceNeeded -eq 1 ]; then
-
     inMaintWindow=0
     doMaintReboot=1
     case $SELFHEAL_TYPE in
@@ -3836,7 +3746,7 @@ if [ "$isPeriodicFWCheckEnable" = "false" ] || [ "$isPeriodicFWCheckEnable" = ""
                 firmDwnldPid=$(ps w | grep -w "xb3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
                 if [ "$firmDwnldPid" = "" ]; then
                     echo_t "Restarting XB3 firmwareDwnld script"
-                    exec  /etc/xb3_firmwareDwnld.sh &
+                    exec /etc/xb3_firmwareDwnld.sh &
                 fi
             fi
         ;;
@@ -3845,7 +3755,7 @@ if [ "$isPeriodicFWCheckEnable" = "false" ] || [ "$isPeriodicFWCheckEnable" = ""
                 fDwnldPid=$(ps w | grep -w "cbr_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
                 if [ "$fDwnldPid" = "" ]; then
                     echo_t "Restarting CBR firmwareDwnld script"
-                    exec  /etc/cbr_firmwareDwnld.sh &
+                    exec /etc/cbr_firmwareDwnld.sh &
                 fi
             fi
         ;;
@@ -3881,7 +3791,7 @@ if [ "$T2_ENABLE" = "true" ]; then
     T2_PID=$(busybox pidof $T2_0_APP)
     if [ "$T2_PID" = "" ]; then
         echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
-        if [ -f /lib/rdk/dcm.service ]; then 
+        if [ -f /lib/rdk/dcm.service ]; then
             /lib/rdk/dcm.service
         fi
     fi
@@ -3889,14 +3799,14 @@ fi
 
 # Checking D process running or not
 case $SELFHEAL_TYPE in
-      "BASE"|"SYSTEMD"|"TCCBR")
-      check_D_process=`ps -w | grep " DW " | grep -v grep | wc -l`
-      if [ $check_D_process -eq 0 ]; then
-           echo_t "[RDKB_SELFHEAL] : There is no D process running in this device"
-      else
-           echo_t "[RDKB_SELFHEAL] : D process is running in this device"
-      fi
-      ;;
+    "BASE"|"SYSTEMD"|"TCCBR")
+    check_D_process=`ps -w | grep " DW " | grep -v grep | wc -l`
+    if [ $check_D_process -eq 0 ]; then
+        echo_t "[RDKB_SELFHEAL] : There is no D process running in this device"
+    else
+        echo_t "[RDKB_SELFHEAL] : D process is running in this device"
+    fi
+    ;;
 esac
 
 #BWGRDK-1044 conntrack Flush monitoring
