@@ -1970,8 +1970,8 @@ IPPing_SetParamStringValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    /* check if pString doesn't hold null or whitespaces */
-    if(AnscValidStringCheck(pString) != TRUE)
+    /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
+    if (AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
     if (strcmp(ParamName, "Interface") == 0)
@@ -2658,8 +2658,8 @@ TraceRoute_SetParamStringValue
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return FALSE;
    
-    /* check if strValue doesn't hold null or whitespaces */
-    if(AnscValidStringCheck(pString) != TRUE)
+    /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
+    if (AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
     /* check the parameter name and set the corresponding value */
