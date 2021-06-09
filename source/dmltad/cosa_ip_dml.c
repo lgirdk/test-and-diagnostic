@@ -1959,7 +1959,7 @@ IPPing_SetParamStringValue
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
 
-    /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
+    /* fail if pString is NULL, an empty string or contains <space> or any of <>&|'" */
     if (AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
@@ -2646,7 +2646,7 @@ TraceRoute_SetParamStringValue
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return FALSE;
    
-    /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
+    /* fail if pString is NULL, an empty string or contains <space> or any of <>&|'" */
     if (AnscValidStringCheck(pString) != TRUE)
         return FALSE;
 
