@@ -1912,7 +1912,7 @@ IPPing_SetParamStringValue
         return FALSE;
       }
     }
-    else if(AnscValidStringCheck(pString) != TRUE)    /* check if pString doesn't hold null or whitespaces */
+    else if (AnscValidStringCheck(pString) != TRUE) /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
     {
       return FALSE;
     }
@@ -2626,7 +2626,7 @@ TraceRoute_SetParamStringValue
         return FALSE;
       }
     }
-    else if(AnscValidStringCheck(pString) != TRUE)    /* check if pString doesn't hold null or whitespaces */
+    else if (AnscValidStringCheck(pString) != TRUE) /* fail if pString is NULL, an empty string or contains <space> or any of <>&,'"| */
     {
       return FALSE;
     }
