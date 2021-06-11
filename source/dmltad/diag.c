@@ -780,17 +780,16 @@ static bool is_IPv6(const char *host)
 
     if( (host[0] == '\'') && (host[strlen(host)-1] == '\'') )
     {
-        ipPtr = strdup(host);
+        ipPtr = strdup(host+1);
         if(ipPtr != NULL)
         {
-            ipPtr++;
             ipPtr[strlen(ipPtr)-1] = '\0';
 
             if (inet_pton(AF_INET6, ipPtr, &in6addr) > 0)
             {
                 ret = TRUE;
             }
-            free(ipPtr);
+            free((char*)ipPtr);
         }
     }
     return ret;
