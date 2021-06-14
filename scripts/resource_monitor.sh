@@ -147,9 +147,18 @@ do
 	Curr_CPULoad=$(( $active * 100 / $total ))
 
 	echo_t "RDKB_SELFHEAL : CPU usage is $Curr_CPULoad at timestamp $timestamp"
-	if [ $Curr_CPULoad -eq 100 ]; then 
-	    t2CountNotify "SYS_ERROR_CPU100"
-	fi
+        # From XF3-4272 which was added as platform specific patch 
+        if [ "$BOX_TYPE" = "XF3" ]; then
+            OUTPUT="$(cat /proc/loadavg)"
+            echo_t "RDKB_SELFHEAL : LOAD_AVERAGE $OUTPUT"
+            MEMTOTAL="$(cat /proc/meminfo | grep MemTotal | sed -e 's/MemTotal://g' | sed -e 's/kB//g' | sed -e 's/^[ \t]*//' )"
+            MEMFREE="$(cat /proc/meminfo | grep MemFree| sed -e 's/MemFree://g' | sed -e 's/kB//g' | sed -e 's/^[ \t]*//' )"
+            echo_t "RDKB_SELFHEAL : MEM_TOTAL kB $MEMTOTAL"
+            echo_t "RDKB_SELFHEAL : MEM_FREE kB $MEMFREE"
+            MEM_USED=$(expr $MEMTOTAL - $MEMFREE)
+            echo_t "RDKB_SELFHEAL : USED_MEM kB $MEM_USED"
+        fi
+
 	CPU_THRESHOLD=`syscfg get avg_cpu_threshold`
 
 	count_val=0
