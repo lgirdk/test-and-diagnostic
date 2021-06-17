@@ -34,11 +34,15 @@ rm /tmp/zombies.txt
 
 
 if [ "xstarted" == "x`sysevent get wan-status`" ];then
+
 	if [  "x`ip -4 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then
 		echo "ipv4 default gateway is missing" >> /rdklogs/logs/Consolelog.txt.0
 	fi
 
-	if [  "x`ip -6 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then
+       
+	if [ "x`ip -6 route show | grep "default via" | grep erouter0 | grep -i "dead:beef"`"  != "x" ];then
+        	echo "Device is connected to virtual cmts, default ipv6 erouter entry not needed in erouter table"  >> /rdklogs/logs/Consolelog.txt.0
+	elif [  "x`ip -6 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then
 		echo "ipv6 default gateway is missing" >> /rdklogs/logs/Consolelog.txt.0
 	fi
 fi
