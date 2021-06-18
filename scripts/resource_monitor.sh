@@ -23,6 +23,7 @@ UTOPIA_PATH="/etc/utopia/service.d"
 rebootDeviceNeeded=0
 rebootNeededforbrlan1=0
 batteryMode=0
+prevBatteryMode=0
 IsAlreadyCountReseted=0
 AtomHighLoadCount=0
 AtomHighLoadCountThreshold=0
@@ -373,11 +374,20 @@ fi
   	then
   		Selfhealutil power_mode
   		batteryMode=$?
-  	        echo_t "RDKB_SELFHEAL : batteryMode is  $batteryMode"
-  	        if [ $batteryMode -eq 1 ]; then 
-  	            t2CountNotify "SYS_INFO_Invoke_batterymode"
-  	        fi
-    	fi	
+                # When batterymode is not 1 or 0, then instead of exiting from script
+                # consider previous successful batterymode
+                if [ "$batteryMode" != "0" ] && [ "$batteryMode" != "1" ]
+                then
+                    echo_t "RDKB_SELFHEAL : batteryMode failed"
+                    echo_t  "Error received: $batteryMode"
+                    batteryMode=$prevBatteryMode
+                else
+  	            echo_t "RDKB_SELFHEAL : batteryMode is  $batteryMode"
+                    prevBatteryMode=$batteryMode
+  	            if [ $batteryMode -eq 1 ]; then 
+  	              t2CountNotify "SYS_INFO_Invoke_batterymode"
+  	           fi
+    	fi	fi
      	fi
 
   	if [ $batteryMode = 0 ]
