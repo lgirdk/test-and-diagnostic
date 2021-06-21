@@ -78,6 +78,9 @@ extern PBBHM_UDP_ECHOSRV_OBJECT        g_UdpechoObj;
 
 void *                          g_MessageBusHandle = NULL;
 
+COSAGetParamValueStringProc        g_GetParamValueString;
+COSANotifyDiagCompleteProc         g_NotifyDiagComplete;
+
 ANSC_STATUS ANSC_EXPORT_API
 COSA_Diag_Init
     (

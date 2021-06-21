@@ -189,6 +189,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         return DIAG_ERR_OTHER;
     }
 
+    memset (stat, 0, sizeof(diag_stat_t));
+
     if (strncmp(line, "traceroute to", strlen("traceroute to")) != 0) {
         if (strstr(line, "Name or service not known") != NULL
                 || strstr(line, "bad address") != NULL)
