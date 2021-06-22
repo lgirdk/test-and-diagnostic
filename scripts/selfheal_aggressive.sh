@@ -267,12 +267,20 @@ self_heal_interfaces()
                             check_if_brlan0_created=$(ifconfig | grep "brlan0")
                             check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
                             check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
-                            check_if_l2sd0_100_created=$(ifconfig | grep "l2sd0\.100")
-                            check_if_l2sd0_100_up=$(ifconfig l2sd0.100 | grep "UP" )
+                            if [ "$BOX_TYPE" = "MV1" ]; then
+                                check_if_l2sd0_100_created=$(ifconfig | grep "l2sd0\.100")
+                                check_if_l2sd0_100_up=$(ifconfig l2sd0.100 | grep "UP" )
+                            else
+                                check_if_l2sd0_100_created="NotApplicable"
+                                check_if_l2sd0_100_up="NotApplicable"
+                            fi
                             if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]; then
                                 echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0 or l2sd0.100 is not completely up, setting event to recreate vlan and brlan0 interface"
                                 echo_t "[RDKB_AGG_SELFHEAL_BOOTUP] : brlan0 and l2sd0.100 o/p "
-                                ifconfig brlan0;ifconfig l2sd0.100; 
+                                ifconfig brlan0
+                                if [ "$BOX_TYPE" = "MV1" ]; then
+                                    ifconfig l2sd0.100
+                                fi
                                 if [ "x$ovs_enable" = "xtrue" ];then
                                     ovs-vsctl list-ifaces brlan0
                                 else
@@ -320,7 +328,7 @@ self_heal_interfaces()
                 fi
 
                 # Checking whether brlan1 and l2sd0.101 interface are created properly
-                if [ "$IS_BCI" != "yes" ]; then
+                if [ "$IS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
                     check_if_brlan1_created=$(ifconfig | grep "brlan1")
                     check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                     check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")

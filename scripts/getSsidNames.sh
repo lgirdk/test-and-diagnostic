@@ -33,7 +33,7 @@ if [ "$triband_radio" == "true" ]; then
     ssid6value=""
     got_6=0
 fi
-if [ "x$BOX_TYPE" = "xXB3" ]; then
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
 GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 else
