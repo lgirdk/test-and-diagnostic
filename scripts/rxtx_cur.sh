@@ -25,7 +25,7 @@ source /etc/device.properties
 PODMAC=/tmp/podmac.txt
 source /lib/rdk/t2Shared_api.sh
 
-if [ $BOX_TYPE = "XB3" ]; then
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
     MAC=`rpcclient2 "ifconfig eth0" | grep HWaddr | awk '{print $5}'`
 fi
 
@@ -59,7 +59,7 @@ while read mac rxpkts rxbytes txpkts txbytes other && [[ ! -z $mac ]]; do
 done < /tmp/rxtx_cur.txt
 IFS=$OIFS
 if [ ! -z "$high_upload_mac" ];then
-    if [ $BOX_TYPE = "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
         rpcclient2 "echo "High_UploadData_Usage_Client_Bytes:$high_upload_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
         rpcclient2 "echo "High_UploadData_Usage_Client_MAC:$high_upload_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
 	t2ValNotify "HighUpldBytes_split" "$high_upload_bytes"
@@ -72,7 +72,7 @@ if [ ! -z "$high_upload_mac" ];then
     fi
 fi
 if [ ! -z "$high_download_mac" ];then
-    if [ $BOX_TYPE = "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
         rpcclient2 "echo "High_DownloadData_Usage_Client_Bytes:$high_download_bytes" >> /rdklogs/logs/Harvesterlog.txt.0"
         rpcclient2 "echo "High_DownloadData_Usage_Client_MAC:$high_download_mac" >> /rdklogs/logs/Harvesterlog.txt.0"
 	t2ValNotify "HighDnldBytes_split" "$high_download_bytes"
