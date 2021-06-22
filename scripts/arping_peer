@@ -34,7 +34,7 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 arping -I $SOURCE_ARPING_INTF $PEER_ARPING_IP -c 3 > /tmp/.arpingresult
 
-arpingSuccess=`cat /tmp/.arpingresult | tail -n1 | grep "reply"`
+arpingSuccess=`cat /tmp/.arpingresult | tail -n1 | grep "response"`
 
 if [ "$arpingSuccess" != "" ]
 then
