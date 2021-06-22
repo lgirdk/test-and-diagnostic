@@ -236,7 +236,7 @@ setRebootreason()
 db_clean_up_required()
 {
 
-	if [ "$BOX_TYPE" = "XB3" ]
+	if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 	then
 		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
@@ -359,7 +359,7 @@ isIPv6=""
 		echo_t "RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
 	fi
 
-if [ "$BOX_TYPE" = "XB3" ]
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 then
 
 	#RDKB-21681 Need RDKlogging for All SQUASHFS errors
@@ -556,13 +556,13 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 
                     # l2sd0.100 is an interface specific to intel platform. Not applicable for other soc vendors.
-                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]
+                    if [ "$BOX_TYPE" = "MV1" ]
                     then
-                        check_if_l2sd0_100_created="NotApplicable"
-                        check_if_l2sd0_100_up="NotApplicable"
-                    else
 		        check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
 		        check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+                    else
+                        check_if_l2sd0_100_created="NotApplicable"
+                        check_if_l2sd0_100_up="NotApplicable"
                     fi
 			  
 		   if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
@@ -626,13 +626,13 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
 			
 				# l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
-				if [ "$BOX_TYPE" = "XB6" ]
+				if [ "$BOX_TYPE" = "MV1" ]
 				then
-					check_if_l2sd0_101_created="NotApplicable"
-					check_if_l2sd0_101_up="NotApplicable"
-				else
 					check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
 					check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+				else
+					check_if_l2sd0_101_created="NotApplicable"
+					check_if_l2sd0_101_up="NotApplicable"
 				fi
 			
 			if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
@@ -797,7 +797,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 		fi
 	fi
 fi
-	if [ "$BOX_TYPE" = "XB3" ]
+	if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 	then
 		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
