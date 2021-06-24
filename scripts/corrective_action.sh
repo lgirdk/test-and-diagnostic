@@ -28,6 +28,7 @@ source /lib/rdk/t2Shared_api.sh
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
+    "MV2PLUS") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
@@ -770,7 +771,7 @@ resetNeeded()
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 CcspHomeSecurity 8081&
 
-            elif [ "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspWifiSsp" ]; then
+            elif [ "$BOX_TYPE" = "MV2PLUS" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspWifiSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 t2CountNotify "SYS_SH_WIFIAGENT_restart"
                 cd /usr/ccsp/wifi/
