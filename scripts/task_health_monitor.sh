@@ -42,6 +42,7 @@ PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
+    "MV2PLUS") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
@@ -529,7 +530,7 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
         fi
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
             atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
             if [ "x$atomOnlyReboot" = "x" ]; then
                 crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
@@ -842,6 +843,15 @@ case $SELFHEAL_TYPE in
         if [ "$MOCA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
+        fi
+
+        if [ "$BOX_TYPE" = "MV2PLUS" ]; then
+            # Checking CcspWifiSsp PID
+            WIFI_PID=$(busybox pidof CcspWifiSsp)
+            if [ "$WIFI_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : CcspWifiSsp process is not running, need restart"
+                resetNeeded wifi CcspWifiSsp
+            fi
         fi
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
