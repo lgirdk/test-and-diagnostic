@@ -757,6 +757,7 @@ resetNeeded()
                 fi
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspPandMSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                t2CountNotify "SYS_SH_PAM_restart"
                 cd /usr/ccsp/pam/
                 $BINPATH/CcspPandMSsp -subsys $Subsys
                 cd -

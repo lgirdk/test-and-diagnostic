@@ -2440,7 +2440,7 @@ else
                 cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_SH_PAM_Restart"
+                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
                     PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
@@ -2464,7 +2464,7 @@ else
                 cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
                 if [ "$cr_timeout" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_SH_PAM_Restart"
+                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
                     PANDM_PID=$(busybox pidof CcspPandMSsp)
                     rm -rf /tmp/pam_initialized
                     systemctl restart CcspPandMSsp.service
@@ -2497,7 +2497,7 @@ case $SELFHEAL_TYPE in
                 cr_pam_notexist=$(echo "$cr_query" | grep "CCSP_ERR_NOT_EXIST")
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_SH_PAM_Restart"
+                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
                     PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
