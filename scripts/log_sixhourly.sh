@@ -19,7 +19,7 @@
 ##########################################################################
 
 source /etc/utopia/service.d/log_capture_path.sh
-
+MAPT_CONFIG=`sysevent get mapt_config_flag`
 dt=`date "+%m-%d-%y-%I-%M%p"`
 ps -l | grep '^Z' > /tmp/zombies.txt
 count=`wc -l < /tmp/zombies.txt`
@@ -32,14 +32,16 @@ if [ $count -ne 0 ];then
 fi
 rm /tmp/zombies.txt
 
-
 if [ "xstarted" == "x`sysevent get wan-status`" ];then
-
+        if [ "$MAPT_CONFIG" != "set" ]; then
 	if [  "x`ip -4 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then
 		echo "ipv4 default gateway is missing" >> /rdklogs/logs/Consolelog.txt.0
+        fi
+        elif [  "x`ip -4 route show table erouter | grep "default via" | grep map0 | cut -f3 -d' ' `" == "x" ]; then
+                echo "ipv4 map0 default gateway is missing" >> /rdklogs/logs/Consolelog.txt.0
 	fi
-
        
+ 
 	if [ "x`ip -6 route show | grep "default via" | grep erouter0 | grep -i "dead:beef"`"  != "x" ];then
         	echo "Device is connected to virtual cmts, default ipv6 erouter entry not needed in erouter table"  >> /rdklogs/logs/Consolelog.txt.0
 	elif [  "x`ip -6 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then

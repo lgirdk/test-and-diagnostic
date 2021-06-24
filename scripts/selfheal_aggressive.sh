@@ -759,7 +759,7 @@ self_heal_dhcp_clients()
             case $SELFHEAL_TYPE in
                 "SYSTEMD")
                     udhcpc_enable=`syscfg get UDHCPEnable`
-                    if [ "$erouter0_up_check" = "" ]; then
+                    if [ "$erouter0_up_check" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
                         if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] ) || [ "$udhcpc_enable" = "true" ]; then
@@ -811,7 +811,7 @@ self_heal_dhcp_clients()
                     fi
                     ;;
                 "TCCBR")
-                    if [ "$erouter0_up_check" = "" ]; then
+                    if [ "$erouter0_up_check" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
                         #Adding to kill ipv4 process, later restarted to solve RDKB-27177
@@ -888,7 +888,7 @@ self_heal_dhcp_clients()
                     fi
                 fi
 
-                if [ "$check_wan_dhcp_client_v4" = "" ]; then
+                if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
                     t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                     wan_dhcp_client_v4=0
@@ -909,13 +909,13 @@ self_heal_dhcp_clients()
 
                 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "INTEL_PUMA" ] ; then
                     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-                    if [ "$check_wan_dhcp_client_v4" = "" ] && [ "$LAST_EROUTER_MODE" != "2" ]; then
+                    if [ "$check_wan_dhcp_client_v4" = "" ] && [ "$LAST_EROUTER_MODE" != "2" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
                         t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                         wan_dhcp_client_v4=0
                     fi
                 else
-                    if [ "$check_wan_dhcp_client_v4" = "" ]; then
+                    if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
                         t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                         wan_dhcp_client_v4=0
@@ -956,7 +956,7 @@ self_heal_dhcp_clients()
             DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
             DHCP_STATUS=$(echo "$DHCP_STATUS_query" | grep "value" | cut -f3 -d":" | awk '{print $1}')
 
-            if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
+            if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
 
                 echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
                 if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
@@ -978,7 +978,7 @@ self_heal_dhcp_clients()
 
         case $SELFHEAL_TYPE in
             "BASE")
-                if [ $wan_dhcp_client_v4 -eq 0 ]; then
+                if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                         V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
@@ -1020,7 +1020,7 @@ self_heal_dhcp_clients()
                 fi
                 ;;
             "TCCBR")
-                if [ $wan_dhcp_client_v4 -eq 0 ]; then
+                if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                     eval "$V4_EXEC_CMD"
@@ -1047,7 +1047,7 @@ self_heal_dhcp_clients()
 	;;
 	"SYSTEMD")
             if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
-		if [ $wan_dhcp_client_v4 -eq 0 ]; then
+		if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
 			V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
@@ -1168,6 +1168,8 @@ do
 		fi
     fi
 
+    MAPT_CONFIG=`sysevent get mapt_config_flag`
+ 
     START_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     self_heal_peer_ping
     self_heal_dnsmasq_zombie

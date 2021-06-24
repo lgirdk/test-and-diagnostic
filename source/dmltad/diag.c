@@ -94,8 +94,8 @@ diag_pingtest_stat_t diag_pingtest_stat;
 
 diag_err_t diag_init_blocksize(void);
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef NAT46_KERNEL_SUPPORT
+#if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined (NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 
 #define SE_IP_ADDR      "127.0.0.1"
 #define SE_PROG_NAME    "tad"
@@ -516,8 +516,8 @@ static void *diag_task(void *arg)
         fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, buf);
     }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef NAT46_KERNEL_SUPPORT
+#if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined (NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 
     if(is_MAPT() == TRUE && is_IPv6(cfg.host) == FALSE)
     {
@@ -803,8 +803,8 @@ diag_err_t diag_getPartnerID( char *partnerID )
 	return DIAG_ERR_OK;
 }
 
-#ifdef _HUB4_PRODUCT_REQ_
-#ifdef NAT46_KERNEL_SUPPORT
+#if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
+#if defined (NAT46_KERNEL_SUPPORT) || defined (FEATURE_SUPPORT_MAPT_NAT46)
 
 static bool is_MAPT()
 {

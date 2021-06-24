@@ -37,6 +37,7 @@ if [ -d "/sys/module/openvswitch/" ];then
    ovs_enable=true
 fi
 bridgeUtilEnable=`syscfg get bridge_util_enable`
+MAPT_CONFIG=`sysevent get mapt_config_flag`
 
 PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
 
@@ -3426,11 +3427,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             else
                 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
                     dhcp_cli_output=$(ps w | grep "ti_" | grep "erouter0")
-
+                    if [ "$MAPT_CONFIG" != "set" ]; then
                     if [ "$UDHCPC_Enable" = "true" ]; then
                         check_wan_dhcp_client_v4=$(ps w | grep "sbin/udhcpc" | grep "erouter")
                     else
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
+                    fi
                     fi
                     if [ "$dibbler_client_enable" = "true" ]; then
                         check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
@@ -3470,7 +3472,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     esac
 
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ]; then
+    if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ] && [ "$MAPT_CONFIG" != "set" ]; then
           echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
           t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
 	  wan_dhcp_client_v4=0
@@ -3492,7 +3494,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
         if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
 
             echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
-            if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
+            if ([ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]) || [ $wan_dhcp_client_v6 -eq 0 ]; then
                 case $SELFHEAL_TYPE in
                     "BASE"|"TCCBR")
                         echo_t "DHCP_CLIENT : DHCPStatus is not Bound, restarting WAN"
@@ -3511,7 +3513,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE")
-            if [ $wan_dhcp_client_v4 -eq 0 ]; then
+            if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ]; then
@@ -3553,7 +3555,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             fi
         ;;
         "TCCBR")
-            if [ $wan_dhcp_client_v4 -eq 0 ]; then
+            if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]; then
                 V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                 eval "$V4_EXEC_CMD"
@@ -3645,7 +3647,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
+        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
@@ -3677,7 +3679,7 @@ case $SELFHEAL_TYPE in
 
             #ARRISXB6-8319
             #check if interface is down or default route is missing.
-            if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ]; then
+            if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ] && [ "$MAPT_CONFIG" != "set" ]; then
                 ip route show default | grep "default"
                 if [ $? -ne 0 ] ; then
                     ifconfig $WAN_INTERFACE up

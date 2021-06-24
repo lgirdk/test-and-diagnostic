@@ -253,9 +253,10 @@ CheckandRebootBasedOnCurrentHealth()
 
 	CheckandSetCMStatus
 	CheckandSetCMIPStatus
-	CheckandSetWANIPStatus
+if [ "x$MAPT_CONFIG" != "xset" ]; then
 	CheckandSetIPv4PingStatus
-
+fi
+	CheckandSetWANIPStatus
 	CompareStoredAndCurrGWHealthStatus
 
 	echo_t "gw_health current = $bitmask"
@@ -282,8 +283,10 @@ CheckandStoreCurrentHealth()
 
 	CheckandSetCMStatus
 	CheckandSetCMIPStatus
-	CheckandSetWANIPStatus
+if [ "x$MAPT_CONFIG" != "xset" ]; then
 	CheckandSetIPv4PingStatus
+fi
+	CheckandSetWANIPStatus
 
 	#Update current gw health status
 	syscfg set gw_health "$bitmask" 
@@ -293,6 +296,8 @@ CheckandStoreCurrentHealth()
 }
 
 echo_t "check_gw_health.sh called with $1"
+
+MAPT_CONFIG=`sysevent get mapt_config_flag`
 
 case "$1" in
 

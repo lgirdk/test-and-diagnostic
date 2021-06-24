@@ -221,7 +221,7 @@ runPingTest()
         IPv6_Gateway_addr=`ip -6 neigh show | grep $WAN_INTERFACE | grep lladdr |cut -f1 -d ' '`
     fi
 
-	if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]
+	if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$MAPT_CONFIG" != "set" ]
 	then
 		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv4_Gateway_addr`
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
@@ -316,7 +316,7 @@ runPingTest()
         fi
     fi
 
-		if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ]
+		if [ "$ping4_success" -ne 1 ] &&  [ "$ping6_success" -ne 1 ] && [ "$MAPT_CONFIG" != "set" ]
 		then
 			if [ "$IPv4_Gateway_addr" == "" ]
              	 then
@@ -345,7 +345,7 @@ runPingTest()
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
 			resetNeeded "" PING
 		fi
-	elif [ "$ping4_success" -ne 1 ]
+	elif [ "$ping4_success" -ne 1 ] && [ "$MAPT_CONFIG" != "set" ]
 	then
                 if [ "$IPv4_Gateway_addr" != "" ]
                 then
@@ -413,7 +413,7 @@ runPingTest()
 		PING_SERVER_IS=`syscfg get Ipv4_PingServer_$ping4_server_num`
 		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0.0.0.0" ]
 		then
-			PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
+			PING_OUTPUT=`ping -I $WAN_INTERFACE_IPV4 -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $PING_SERVER_IS`
 			CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
 			if [ "$CHECK_PACKET_RECEIVED" != "" ]
 			then
@@ -565,6 +565,11 @@ do
 	then
 		echo_t "RDKB_SELFHEAL : WAN is not up, bypassing ping test"
 	else
+		MAPT_CONFIG=`sysevent get mapt_config_flag`
+		if [ "$MAPT_CONFIG" == "set" ]
+		then
+			WAN_INTERFACE_IPV4="map0"
+		fi
 		runPingTest
 		runDNSPingTest
 	fi
