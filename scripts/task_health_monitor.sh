@@ -3455,7 +3455,7 @@ case $SELFHEAL_TYPE in
             # Fetch mesh tunnels from the brlan0 bridge if they exist
             if [ "x$ovs_enable" = "xtrue" ];then
             	brctl0_ifaces=$(ovs-vsctl list-ifaces brlan0 | egrep "pgd")
-            els
+            else
             	brctl0_ifaces=$(brctl show brlan0 | egrep "pgd")
             fi
             br0_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.100" | awk '{print $1}')
