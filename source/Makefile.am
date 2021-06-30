@@ -17,3 +17,7 @@
 # limitations under the License.
 ##########################################################################
 SUBDIRS = TandDSsp dmltad util 
+
+if WITH_GTEST_SUPPORT
+SUBDIRS += test
+endif
