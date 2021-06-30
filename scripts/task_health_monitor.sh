@@ -837,7 +837,7 @@ case $SELFHEAL_TYPE in
             MOCADLFW_PID=$(busybox pidof mocadlfw)
             if [ "$MOCADLFW_PID" = "" ]; then
                 echo_t "OEM_PROCESS_MOCADLFW_CRASHED : mocadlfw process is not running, need restart"
-                /usr/sbin/mocadlfw &
+                /usr/sbin/mocadlfw > /dev/null 2>&1 &
             fi
         fi
 
