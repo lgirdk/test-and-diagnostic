@@ -42,7 +42,7 @@ ping_success=0
 needSelfhealReboot="/nvram/self_healreboot"
 crash_count=0
 MF_WiFi_Index="5 6 9 10"
-PSM_CONFIG="/nvram/bbhm_cur_cfg.xml"
+PSM_CONFIG="/tmp/bbhm_cur_cfg.xml"
 WiFi_INIT_FILE="/tmp/wifi_initialized"
 
 
