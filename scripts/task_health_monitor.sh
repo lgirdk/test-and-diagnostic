@@ -30,7 +30,11 @@ DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
-ovs_enable=`syscfg get mesh_ovs_enable`
+ovs_enable=false
+
+if [ -d "/sys/module/openvswitch/" ];then
+   ovs_enable=true
+fi
 bridgeUtilEnable=`syscfg get bridge_util_enable`
 
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
