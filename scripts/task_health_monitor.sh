@@ -562,7 +562,6 @@ case $SELFHEAL_TYPE in
                     isCRHung=$(echo "$crReTestop" | grep "$CCSP_ERR_TIMEOUT")
                     if [ "$isCRHung" != "" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not responding, need to reboot the unit"
-                        t2CountNotify "SYS_SH_CMReset_PingFailed"
                         vendor=$(getVendorName)
                         modelName=$(getModelName)
                         CMMac=$(getCMMac)
