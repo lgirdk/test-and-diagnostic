@@ -608,9 +608,7 @@ DcmRetryConfig_SetParamUlongValue
             return FALSE;
         }
         /* save update to backup */
-        char value[12];
-        snprintf(value, sizeof(value), "%u", uValue);
-        if (syscfg_set(NULL, "dcm_retry_attemptInterval", value) != 0)
+        if (syscfg_set_u(NULL, "dcm_retry_attemptInterval", uValue) != 0)
         {
             CcspTraceWarning(("%s syscfg set failed for dcm_retry_attemptInterval\n", __FUNCTION__));
             return FALSE;
@@ -637,9 +635,7 @@ DcmRetryConfig_SetParamUlongValue
             return FALSE;
         }
         /* save update to backup */
-        char value[12];
-        snprintf(value, sizeof(value), "%u", uValue);
-        if (syscfg_set(NULL, "dcm_retry_maxAttempts", value) != 0)
+        if (syscfg_set_u(NULL, "dcm_retry_maxAttempts", uValue) != 0)
         {
             CcspTraceWarning(("%s syscfg set failed for dcm_retry_maxAttempts\n", __FUNCTION__));
             return FALSE;
