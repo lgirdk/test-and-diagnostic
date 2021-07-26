@@ -1865,7 +1865,7 @@ CORE_TMP=$(ls /tmp | grep "core.")
 if [ "$CORE_TMP" != "" ]; then
     echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
     if [ "$CORE_TMP" = "snmp_subagent.core.gz" ]; then
-        t2CountNotify "SYS_ERROR _snmpSubagentcrash"
+        t2CountNotify "SYS_ERROR_snmpSubagentcrash"
     fi
     CORE_COUNT=$(ls /tmp | grep -c "core.")
     echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
@@ -1927,7 +1927,7 @@ case $SELFHEAL_TYPE in
         if [ "$CORE_TMP" != "" ]; then
             echo_t "[PROCESS_CRASH] : core has been generated inside /tmp :  $CORE_TMP"
             if [ "$CORE_TMP" = "snmp_subagent.core.gz" ]; then
-                t2CountNotify "SYS_ERROR _snmpSubagentcrash"
+                t2CountNotify "SYS_ERROR_snmpSubagentcrash"
             fi
             CORE_COUNT=$(ls /tmp | grep -c "core.")
             echo_t "[PROCESS_CRASH] : Number of cores created inside /tmp are : $CORE_COUNT"
