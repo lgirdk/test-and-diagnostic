@@ -163,9 +163,7 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
 	}
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-        if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
+        if (syscfg_set(NULL, "selfheal_enable", (bValue ? "true" : "false")) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
@@ -304,13 +302,7 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));	
-        if(bValue)
-            strcpy(buf,"true");
-        else
-            strcpy(buf,"false");
-
-        if (syscfg_set(NULL, "log_backup_enable", buf) != 0)
+        if (syscfg_set(NULL, "log_backup_enable", (bValue ? "true" : "false")) != 0)
         {
             AnscTraceWarning(("syscfg_set failed\n"));
         }
@@ -457,14 +449,10 @@ SelfHeal_SetParamUlongValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    char buf[8];
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold") == 0)
 	{
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%d",uValue);
-
-		if (syscfg_set(NULL, "Free_Mem_Threshold", buf) != 0)
+		if (syscfg_set_u(NULL, "Free_Mem_Threshold", uValue) != 0)
 		{
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
@@ -481,10 +469,7 @@ SelfHeal_SetParamUlongValue
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold") == 0)
 	{
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%d",uValue);
-
-		if (syscfg_set(NULL, "Mem_Frag_Threshold", buf) != 0)
+		if (syscfg_set_u(NULL, "Mem_Frag_Threshold", uValue) != 0)
 		{
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
@@ -503,10 +488,7 @@ SelfHeal_SetParamUlongValue
 	{
 		if((uValue >= 1) && (uValue <= 120))
 		{
-			memset(buf, 0, sizeof(buf));
-			snprintf(buf,sizeof(buf),"%d",uValue);
-
-			if (syscfg_set(NULL, "CpuMemFrag_Interval", buf) != 0)
+			if (syscfg_set_u(NULL, "CpuMemFrag_Interval", uValue) != 0)
 			{
 					CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 					return FALSE;
@@ -535,9 +517,7 @@ SelfHeal_SetParamUlongValue
             return TRUE;
 	}
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "max_reboot_count", buf) != 0)
+        if (syscfg_set_u(NULL, "max_reboot_count", uValue) != 0)
         {
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
@@ -558,9 +538,7 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "max_reset_count", buf) != 0)
+        if (syscfg_set_u(NULL, "max_reset_count", uValue) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
@@ -581,9 +559,7 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "diagMode_LogUploadFrequency", buf) != 0)
+        if (syscfg_set_u(NULL, "diagMode_LogUploadFrequency", uValue) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
@@ -608,10 +584,8 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-	memset(buf, 0, sizeof(buf));
-        sprintf(buf, "%d", uValue);
 
-        if (syscfg_set(NULL, "log_backup_threshold", buf) != 0)
+        if (syscfg_set_u(NULL, "log_backup_threshold", uValue) != 0)
         {
             AnscTraceWarning(("syscfg_set failed\n"));
         }
@@ -872,10 +846,7 @@ BOOL ConnectivityTest_SetParamBoolValue
         }
 	CcspTraceWarning(("%s Changing X_RDKCENTRAL-COM_CorrectiveAction state to %d \n",__FUNCTION__,bValue));
         /* save update to backup */
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", buf) != 0)
+		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", (bValue ? "true" : "false")) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
 			return FALSE;
@@ -1001,9 +972,7 @@ ConnectivityTest_SetParamUlongValue
 			return FALSE;
 		}
         /* save update to backup */
-		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_PingInterval", value) != 0)
+		if (syscfg_set_u(NULL, "ConnTest_PingInterval", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingInterval\n",__FUNCTION__));
 			return FALSE;
@@ -1024,9 +993,7 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
          
-		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_NumPingsPerServer", value) != 0)
+		if (syscfg_set_u(NULL, "ConnTest_NumPingsPerServer", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
 			return FALSE;
@@ -1048,9 +1015,7 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
    
-		char value[10];
-		snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_MinNumPingServer", value) != 0)
+		if (syscfg_set_u(NULL, "ConnTest_MinNumPingServer", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
 			return FALSE;
@@ -1071,9 +1036,8 @@ ConnectivityTest_SetParamUlongValue
         {
             return  TRUE;
         }
-		char value[10];
-        snprintf(value, sizeof(value), "%u", uValue);
-		if (syscfg_set(NULL, "ConnTest_PingRespWaitTime", value) != 0)
+
+		if (syscfg_set_u(NULL, "ConnTest_PingRespWaitTime", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
 			return FALSE;
@@ -1107,10 +1071,8 @@ ConnectivityTest_SetParamIntValue
         {
             return  TRUE;
         }
-        char cValue[10];
-        memset(cValue, 0, sizeof(cValue));
-        snprintf(cValue, sizeof(cValue), "%d", pInt);
-        if (syscfg_set(NULL, "router_reboot_Interval", cValue) != 0)
+
+        if (syscfg_set_u(NULL, "router_reboot_Interval", pInt) != 0)
         {
 		CcspTraceWarning(("%s syscfg set failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
 		return FALSE;
@@ -1250,7 +1212,6 @@ IPv4PingServerTable_AddEntry
     PSINGLE_LINK_ENTRY                   pSListEntry       = NULL;
     ANSC_STATUS                          returnStatus      = ANSC_STATUS_SUCCESS;
     CHAR                                 tmpBuff[64]       = {0};
-	CHAR 								 buf[8];
     BOOL                                      bridgeMode;
 	PCOSA_DATAMODEL_SELFHEAL                   pMyObject         = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
 	int Qdepth = 0;
@@ -1281,8 +1242,7 @@ IPv4PingServerTable_AddEntry
 
 	pSelfHeal->pConnTest->IPv4EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
-	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv4EntryCount);
-	if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
+	if (syscfg_set_u(NULL, "Ipv4PingServer_Count", pSelfHeal->pConnTest->IPv4EntryCount) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
 	}
@@ -1544,11 +1504,9 @@ IPv6PingServerTable_AddEntry
 
 	pSelfHealCxtLink->hContext = (ANSC_HANDLE)pServerIpv6;
 	
-	char buf[8];
 	pSelfHeal->pConnTest->IPv6EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %d ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
-	snprintf(buf,sizeof(buf),"%d",pSelfHeal->pConnTest->IPv6EntryCount);
-	if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
+	if (syscfg_set_u(NULL, "Ipv6PingServer_Count", pSelfHeal->pConnTest->IPv6EntryCount) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
 	}
@@ -1798,16 +1756,15 @@ ResourceMonitor_SetParamUlongValue
             return TRUE;
         }
   
-        char buf[8];
 #if defined(_ARRIS_XB6_PRODUCT_REQ_) || defined(_CBR_PRODUCT_REQ_) || \
 (defined(_XB6_PRODUCT_REQ_) && defined(_COSA_BCM_ARM_))
+        char buf[8];
 	ULONG aggressive_interval;
         memset(buf, 0, sizeof(buf));
 
-	syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf));
-	if( buf == NULL )
+	if (syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf)) != 0)
 	{
-	    AnscTraceWarning(("syscfg_get returns NULL for AggressiveInterval !\n"));
+	    AnscTraceWarning(("syscfg_get failed for AggressiveInterval !\n"));
 	    return FALSE;
 	}
 	aggressive_interval = atol(buf);
@@ -1817,9 +1774,8 @@ ResourceMonitor_SetParamUlongValue
 	    return FALSE;
 	}
 #endif
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
+
+        if (syscfg_set_u(NULL, "resource_monitor_interval", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
@@ -1840,10 +1796,7 @@ ResourceMonitor_SetParamUlongValue
             return TRUE;
         }
 
-        char buf[8];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "avg_cpu_threshold", buf) != 0)
+        if (syscfg_set_u(NULL, "avg_cpu_threshold", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
@@ -1864,10 +1817,7 @@ ResourceMonitor_SetParamUlongValue
             return TRUE;
         }
 
-        char buf[8];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "avg_memory_threshold", buf) != 0)
+        if (syscfg_set_u(NULL, "avg_memory_threshold", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;

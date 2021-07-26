@@ -1812,35 +1812,27 @@ IPPing_SetParamUlongValue
 
     if (strcmp(ParamName, "NumberOfRepetitions") == 0)
     {
-        char buf[10];
-
         cfg.cnt = uValue;
 
-        sprintf(buf, "%lu", cfg.cnt);
-        if(syscfg_set(NULL, "IPPingNumberOfRepetitions", buf) == 0)
+        if(syscfg_set_u(NULL, "IPPingNumberOfRepetitions", cfg.cnt) == 0)
         {
             syscfg_commit();
         }
     }
     else if (strcmp(ParamName, "Timeout") == 0)
     {
-        char buf[10];
-
         cfg.timo = uValue / 1000;
 
-        sprintf(buf, "%lu", cfg.timo);
-        if(syscfg_set(NULL, "IPPingTimeout", buf) == 0)
+        if(syscfg_set_u(NULL, "IPPingTimeout", cfg.timo) == 0)
         {
             syscfg_commit();
         }
     }
     else if (strcmp(ParamName, "DataBlockSize") == 0)
     	{
-    		char buf[256];
-		memset(buf,0,sizeof(buf));
+
 		cfg.size = uValue;
-		sprintf(buf, "%d",cfg.size);
-        	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
+        	if (syscfg_set_u(NULL, "selfheal_ping_DataBlockSize",cfg.size) == 0) 
 		{
 			syscfg_commit();
 		}
@@ -2555,12 +2547,8 @@ TraceRoute_SetParamUlongValue
         cfg.tracednsquerytype = uValue;
     else if (strcmp(ParamName, "MaxHopCount") == 0)
     {
-        char buf[10];
-
         cfg.maxhop = uValue;
-
-        sprintf(buf, "%lu", cfg.maxhop);
-        if(syscfg_set(NULL, "TraceRouteMaxHopCount", buf) == 0)
+        if(syscfg_set_u(NULL, "TraceRouteMaxHopCount", cfg.maxhop) == 0)
         {
             syscfg_commit();
         }
@@ -5228,9 +5216,7 @@ SpeedTest_Commit
 
     if( g_enable_speedtest != speedtest_setting )
     {
-        char buf[8]={0};
-        snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
-        if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+        if (syscfg_set(NULL, "enable_speedtest", (g_enable_speedtest ? "true" : "false")) != 0)
         {
             AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
             return 1;

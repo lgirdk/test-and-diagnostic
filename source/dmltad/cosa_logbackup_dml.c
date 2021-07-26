@@ -142,10 +142,7 @@ BOOL LogBackup_SetParamBoolValue
             return TRUE;
 	}
         
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
+        if (syscfg_set(NULL, "logbackup_enable", (bValue ? "true" : "false")) != 0)
         {
 	    	CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	   	return FALSE;
@@ -263,10 +260,7 @@ LogBackup_SetParamUlongValue
             return TRUE;
 	}
         
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%d",uValue);
-        if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
+        if (syscfg_set_u(NULL, "logbackup_interval", uValue) != 0)
         {
 		CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
@@ -390,10 +384,8 @@ LogBackup_Rollback
 
 //*****************************************
 get_logbackupcfg()
-{
-
+{	
 	char buf[128];
-	
 	memset(buf,0,sizeof(buf));
 	if((syscfg_get( NULL, "logbackup_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
 	{
@@ -401,9 +393,7 @@ get_logbackupcfg()
 	}
 	else
 	{
-	        memset(buf, 0, sizeof(buf));
-	        snprintf(buf,sizeof(buf),"true");
-	        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
+	        if (syscfg_set(NULL, "logbackup_enable", "true") != 0)
 	        {
 		    	CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
 		   	
@@ -425,9 +415,7 @@ get_logbackupcfg()
 	}
 	else
 	{
-	        memset(buf, 0, sizeof(buf));
-	        snprintf(buf,sizeof(buf),"30");
-	        if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
+	        if (syscfg_set(NULL, "logbackup_interval", "30") != 0)
 	        {
 			CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
 	        }
