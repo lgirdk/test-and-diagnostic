@@ -104,6 +104,7 @@ case $SELFHEAL_TYPE in
 esac
 
 
+CCSP_ERR_NOT_CONNECT=190
 CCSP_ERR_TIMEOUT=191
 CCSP_ERR_NOT_EXIST=192
 
@@ -675,11 +676,13 @@ else
     psm_name=$(dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name)
     psm_name_timeout=$(echo "$psm_name" | grep "$CCSP_ERR_TIMEOUT")
     psm_name_notexist=$(echo "$psm_name" | grep "$CCSP_ERR_NOT_EXIST")
-    if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ]; then
+    psm_name_notconnect=$(echo "$psm_name" | grep "$CCSP_ERR_NOT_CONNECT")
+    if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ] || [ "$psm_name_notconnect" != "" ]; then
         psm_health=$(dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health)
         psm_health_timeout=$(echo "$psm_health" | grep "$CCSP_ERR_TIMEOUT")
         psm_health_notexist=$(echo "$psm_health" | grep "$CCSP_ERR_NOT_EXIST")
-        if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ]; then
+        psm_health_notconnect=$(echo "$psm_health" | grep "$CCSP_ERR_NOT_CONNECT")
+        if [ "$psm_health_timeout" != "" ] || [ "$psm_health_notexist" != "" ] || [ "$psm_health_notconnect" != "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : PSM_process is in hung state, need restart"
             t2CountNotify "SYS_SH_PSMHung"
             case $SELFHEAL_TYPE in
@@ -2433,12 +2436,14 @@ else
         "BASE"|"TCCBR")
             pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
             pandm_notexist=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_EXIST")
-            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]; then
+            pandm_notconnect=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_CONNECT")
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
                 cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
                 cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
                 cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
-                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
+                cr_pam_notconnect=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_CONNECT")
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
                     PANDM_PID=$(busybox pidof CcspPandMSsp)
@@ -2490,12 +2495,14 @@ case $SELFHEAL_TYPE in
 
             pandm_timeout=$(echo "$bridgeMode" | grep "CCSP_ERR_TIMEOUT")
             pandm_notexist=$(echo "$bridgeMode" | grep "CCSP_ERR_NOT_EXIST")
-            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]; then
+            pandm_notconnect=$(echo "$bridgeMode" | grep "CCSP_ERR_NOT_CONNECT")
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
                 cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
                 cr_timeout=$(echo "$cr_query" | grep "CCSP_ERR_TIMEOUT")
                 cr_pam_notexist=$(echo "$cr_query" | grep "CCSP_ERR_NOT_EXIST")
-                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
+                cr_pam_notconnect=$(echo "$cr_query" | grep "CCSP_ERR_NOT_CONNECT")
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
                     PANDM_PID=$(busybox pidof CcspPandMSsp)
