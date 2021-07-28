@@ -534,7 +534,8 @@ case $SELFHEAL_TYPE in
                     # Retest by querying some other parameter
                     crReTestop=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
                     isCRAlive=$(echo "$crReTestop" | grep "Can't find destination compo")
-                    if [ "$isCRAlive" != "" ]; then
+                    RBUS_STATUS=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable | grep value | awk '{print $NF}'`
+                    if [ "$isCRAlive" != "" ] || [ "$RBUS_STATUS" == "true" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
                         vendor=$(getVendorName)
                         modelName=$(getModelName)
