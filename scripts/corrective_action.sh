@@ -735,7 +735,7 @@ resetNeeded()
                     case $SELFHEAL_TYPE in
                         "BASE")
                             echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                            t2CountNotify "SYS_INFO_snmpsubagent_restart"
+                            t2CountNotify "SYS_INFO_snmp_subagent_restart"
                             cd /usr/ccsp/snmp/
                             if [ "$DEVICE_MODEL" = "TCHXB3" ]; then
                                 sh run_subagent.sh tcp:127.0.0.1:705 &
@@ -746,7 +746,7 @@ resetNeeded()
                         ;;
                         "TCCBR")
                             echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                            t2CountNotify "SYS_INFO_snmpsubagent_restart"
+                            t2CountNotify "SYS_INFO_snmp_subagent_restart"
                             cd /usr/ccsp/snmp/
                             sh run_subagent.sh /var/tmp/cm_snmp_ma &
                             cd -
