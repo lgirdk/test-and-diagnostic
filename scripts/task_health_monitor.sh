@@ -2985,12 +2985,16 @@ then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(busybox pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
-if [ "$BOX_TYPE" = "HUB4" ]; then
-    IPV6_STATUS=`sysevent get ipv6_connection_state`
-fi	
 #    IPV6_STATUS=`sysevent get ipv6-status`
     DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
     routerMode="`syscfg get last_erouter_mode`"
+
+if [ "$BOX_TYPE" = "HUB4" ]; then
+    IPV6_STATUS=`sysevent get ipv6_connection_state`
+    #Since dibbler client not supported for hub4
+    DHCPV6C_ENABLED="1"
+fi
+
     if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
         case $SELFHEAL_TYPE in
             "BASE"|"TCCBR")
