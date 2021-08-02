@@ -126,7 +126,7 @@ case $SELFHEAL_TYPE in
         thisREADYFILE="/tmp/.qtn_ready"
         case $MACHINE_IMAGE_NAME in
             *CGM4331COM*) thisREADYFILE="/tmp/.brcm_wifi_ready";;
-            *TG4482A*) thisREADYFILE="/tmp/.qtn_ready";; ## This will need to change during integration effort
+            *TG4482A*) thisREADYFILE="/tmp/.puma_wifi_ready";; ## This will need to change during integration effort
             *) ;;
         esac
     ;;
