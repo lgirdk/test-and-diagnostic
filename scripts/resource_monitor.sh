@@ -27,7 +27,7 @@ prevBatteryMode=0
 IsAlreadyCountReseted=0
 AtomHighLoadCount=0
 AtomHighLoadCountThreshold=0
-
+snmp_cm_agent_count=0
 source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
 #source /etc/device.properties
@@ -179,7 +179,7 @@ do
 			Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
 			Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
 			echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
-			t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+			t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"            
 			rm -rf /tmp/Process_info.txt
 			touch /tmp/CPUUsageReachedMAXThreshold
 		fi
@@ -265,6 +265,27 @@ do
 				Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
 				echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 				t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+                                if [ "$BOX_TYPE" = "XB3" ]
+				then
+               			     if [ `echo $Process1|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process2|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process3|grep -c "snmp_agent_cm"` -gt 0 ]
+                                     then
+                                         snmp_cm_agent_count=$((snmp_cm_agent_count+1))
+                                     else
+                                         snmp_cm_agent_count=0
+                                     fi
+                                     if [ $snmp_cm_agent_count -ge 4 ]
+                                     then
+                                         checkMaintenanceWindow
+                                         if [ $reb_window -eq 1 ]
+                                         then
+                                             #In maintenance window, add telemetry and reboot
+                                             t2CountNotify "SYS_ERROR_SnmpCMHighCPU_reboot"
+                                             reason="SNMP_AGENT_CM_HIGH_CPU"
+                                             rebootCount=1
+                                             rebootNeeded RM SNMP_AGENT_CM_HIGH_CPU $reason $rebootCount
+                                         fi
+                                     fi
+                                fi
 				rm -rf /tmp/Process_info.txt
 				touch /tmp/CPU5MinsUsageReachedMAXThreshold
 			fi

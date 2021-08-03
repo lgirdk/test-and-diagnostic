@@ -523,6 +523,9 @@ rebootNeeded()
             elif [ "$2" = "DS_MANAGER_HIGH_CPU" ]; then
                 echo_t "RDKB_REBOOT : Rebooting due to downstream_manager process having high CPU"
                 echo_t "DS_MANAGER_HIGH_CPU : Rebooting due to downstream_manager process having high CPU"
+            elif [ "$2" = "SNMP_AGENT_CM_HIGH_CPU" ]; then
+                echo_t "RDKB_REBOOT : Rebooting due to snmp_agent_cm process having high CPU"
+                echo_t "SNMP_AGENT_CM_HIGH_CPU : Rebooting due to snmp_agent_cm process having high CPU"
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$2" = "ATOM_HIGH_LOADAVG" ]; then
                 echo_t "RDKB_REBOOT : Rebooting due to $2 threshold reached"
                 syscfg set highloadavg_reboot_count 1
