@@ -320,7 +320,7 @@ get_high_mem_processes() {
         # vmInfoHeader: swpd,free,buff,cache,si,so
         # vmInfoValues: <int>,<int>,<int>,<int>,<int>,<int>
         echo "VM STATS SINCE BOOT ARM"
-        swaped=`free | awk 'FNR == 4 {print $3}'`
+        swaped=`free | grep Swap | awk '{print $3}'`
         cache=`awk 'FNR == 4 {print $2}' /proc/meminfo`
         buff=`awk 'FNR == 3 {print $2}' /proc/meminfo`
         swaped_in=`grep pswpin /proc/vmstat | cut -d ' ' -f2`
