@@ -244,7 +244,6 @@ do
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
 
 		echo_t "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
-		t2CountNotify "SYS_ERROR_avg_cpu"
 		if [ "$Curr_CPULoad_Avg" = "100" ]
 		then
 			t2CountNotify "SYS_ERROR_5min_avg_cpu_100"
