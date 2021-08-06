@@ -74,5 +74,4 @@ then
 	t2CountNotify "ZeroUptime"
 else
 	t2ValNotify "UPDays_split" "$days"
-	t2ValNotify "UPTIME_split" "$days"
 fi
