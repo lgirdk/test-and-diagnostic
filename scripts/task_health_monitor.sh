@@ -2990,7 +2990,6 @@ if [ "$DIBBLER_PID" = "" ]; then
     routerMode="`syscfg get last_erouter_mode`"
 
 if [ "$BOX_TYPE" = "HUB4" ]; then
-    IPV6_STATUS=`sysevent get ipv6_connection_state`
     #Since dibbler client not supported for hub4
     DHCPV6C_ENABLED="1"
 fi
@@ -3004,8 +3003,6 @@ fi
 		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
-	        elif [ "$IPV6_STATUS" != "up" ] && [ "$BOX_TYPE" = "HUB4" ];then
-                    echo_t "IPV6 not Started. Skip Dibbler Server restart for now"		
 		else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
@@ -3061,8 +3058,6 @@ fi
 		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
-	        elif [ "$IPV6_STATUS" != "up" ] && [ "$BOX_TYPE" = "HUB4" ];then
-                    echo_t "IPV6 not Started. Skip Dibbler Server restart for now"			
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
