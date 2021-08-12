@@ -394,6 +394,10 @@ fi
 	    checkMaintenanceWindow
 	    if [ $reb_window -eq 1 ]
 	    then
+                if [ ! -f "/nvram/syscfg_clean" ]; then
+                    echo_t "Calling syscfg cleanup during maintenance window..."
+                    sh /usr/ccsp/tad/syscfg_cleanup.sh
+                fi
 	        if [ $IsAlreadyCountReseted -eq 0 ]
 			then
 			    syscfg set todays_reset_count 0
