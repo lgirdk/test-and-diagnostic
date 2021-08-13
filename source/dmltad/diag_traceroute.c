@@ -339,7 +339,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 #endif
             hops[nhop].icmperr = 0; // TODO: we can use output: '!H, !S, ...'
 #if !defined(_PLATFORM_RASPBERRYPI_)
-            strncpy(line_cpy,line,strlen(line));
+            strcpy(line_cpy,line);
             char* savePtr;
             char* token = strtok_r(line_cpy, "(",&savePtr);
             while (token = strtok_r(savePtr, "(",&savePtr)) {
