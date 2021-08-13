@@ -219,6 +219,11 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         sscanf(line,"%[^(] (%[^)])",msg,dest_ip);
 
         while (fgets(line, sizeof(line), fp) != NULL) {
+            if (strstr(line, "Invalid argument") != NULL){
+                if (hops) free(hops);
+                pclose(fp);
+                return DIAG_ERR_OTHER;
+            }
             ptr = realloc(hops, (nhop + 1) * sizeof(tracert_hop_t));
             if (ptr == NULL) {
                 if (hops) free(hops);
