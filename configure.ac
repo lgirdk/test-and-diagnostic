@@ -48,37 +48,6 @@ AC_C_INLINE
 # Checks for library functions.
 AC_FUNC_MALLOC
 
-AC_ARG_WITH([ccsp-arch],
-[AC_HELP_STRING([--with-ccsp-arch={arm,atom,pc,mips}],
-                [specify the ccsp board CPU platform])],
-[case x"$withval" in
-   xarm)
-     CCSP_ARCH=arm
-     ;;
-   xatom)
-     CCSP_ARCH=atom
-     ;;
-   xpc)
-     CCSP_ARCH=pc
-     ;;
-   xmips)
-     CCSP_ARCH=mips
-     ;;
-   *)
-     AC_MSG_ERROR([$withval is an invalid option to --with-ccsp-arch])
-     ;;
- esac],
-[CCSP_ARCH=''])
-if test x"${CCSP_ARCH}" != x; then
-  AC_DEFINE_UNQUOTED(CCSP_ARCH, "$CCSP_ARCH",
-                     [The board CPU architecture])
-fi
-
-AM_CONDITIONAL(CCSP_ARCH_ARM, test "x$CCSP_ARCH" = xarm)
-AM_CONDITIONAL(CCSP_ARCH_ATOM, test "x$CCSP_ARCH" = xatom)
-AM_CONDITIONAL(CCSP_ARCH_PC, test "x$CCSP_ARCH" = xpc)
-AM_CONDITIONAL(CCSP_ARCH_MIPS, test "x$CCSP_ARCH" = xmips)
-
 AC_ARG_ENABLE([mta],
 [  --enable-mta    Turn on mta],
 [case "${enableval}" in
@@ -93,14 +62,8 @@ AC_CONFIG_FILES(
 	source/dmltad/Makefile
 	source/util/Makefile
 	source/Makefile
-	source-pc/TandDSsp/Makefile
-	source-pc/dmltad/Makefile
-	source-pc/util/Makefile
-	source-pc/Makefile
         source-arm/diagnostic/BbhmDiagIpPing/Makefile
         source-arm/dmltad/Makefile
-        source-mips/diagnostic/BbhmDiagIpPing/Makefile
-        source-mips/dmltad/Makefile
 	Makefile
 )
 
