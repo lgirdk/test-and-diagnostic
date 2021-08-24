@@ -244,7 +244,7 @@ if [ "$count" -eq "$max_count" ]
 then
     echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
     echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
-    top -m -b n 1 >> /rdklogs/logs/CPUInfo.txt.0
+    top -b n 1 >> /rdklogs/logs/CPUInfo.txt.0
 
     # Log tmpfs data
     logTmpFs "log"
@@ -315,7 +315,7 @@ if [ "$BOX_TYPE" = "XB3" ]  || [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = 
                 systemctl restart snmpSubAgent
                 sleep 2
             else
-                SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+                SNMP_PID=`ps -aux | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
                 kill -9 $SNMP_PID
                 resetNeeded snmp snmp_subagent maintanance_window
             fi
