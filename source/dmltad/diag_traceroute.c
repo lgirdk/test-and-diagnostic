@@ -369,7 +369,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         stat->u.tracert.nhop = nhop;
         stat->u.tracert.hops = hops;
 
-        if((nhop > 0) && (nhop >= cfg->maxhop) && (strncmp(dest_ip,hops[nhop-1].addr,65)!=0))
+        if((nhop > 0) && (nhop > cfg->maxhop) && (strncmp(dest_ip,hops[nhop-1].addr,65)!=0))
         {
 	    stat->u.tracert.resptime = 0;
 	    err = DIAG_ERR_MAXHOPS;
