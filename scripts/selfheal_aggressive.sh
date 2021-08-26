@@ -23,6 +23,7 @@ source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+PRIVATE_LAN="brlan0"
 
 exec 5>&1 6>&2 >> /rdklogs/logs/SelfHealAggressive.txt 2>&1
 
@@ -504,16 +505,17 @@ self_heal_dibbler_server()
     BR_MODE=`syscfg get bridge_mode`
     DIBBLER_PID=$(busybox pidof dibbler-server)
     if [ "$DIBBLER_PID" = "" ]; then
-#        IPV6_STATUS=$(sysevent get ipv6-status)
-	routerMode="`syscfg get last_erouter_mode`"
+#       IPV6_STATUS=$(sysevent get ipv6-status)
+        routerMode="`syscfg get last_erouter_mode`"
         DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
         if [ $BR_MODE -eq 0 ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
+            Sizeof_ServerConf=`stat -c %s $DIBBLER_SERVER_CONF`
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
                     DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
                     if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                         echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
-		    elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
+                        elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
                     else
@@ -528,32 +530,37 @@ self_heal_dibbler_server()
                                     echo "DADFAILED : Recovering device from DADFAILED state"
                                     echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                     sleep 1
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
+                                    sleep 1
                                     echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                     sleep 1
-				    Dhcpv6_Client_restart "dibbler-client" "Idle"
+                                    sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
+                                    sleep 5
+                                    Dhcpv6_Client_restart "dibbler-client" "Idle"
                                 fi
-                            elif [ ! -s  "/etc/dibbler/server.conf" ]; then
+                            elif [ $Sizeof_ServerConf -le 1 ]; then
+                                #some times the size of dibbler conf is 1 which fails empty file check.
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
-				#TCCBR-5359 work around to get server.conf by restart dibbler-client once.
-				Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			    	ret_val=`echo $?`
-			    	if [ "$ret_val" = "1" ];then
-                            		echo "DIBBLER : Dibbler Server Config is empty"
-                            		t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
-				fi
+                                #TCCBR-5359 work around to get server.conf by restart dibbler-client once.
+                                Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                                ret_val=`echo $?`
+                                if [ "$ret_val" = "1" ];then
+                                    echo "DIBBLER : Dibbler Server Config is empty"
+                                    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                fi
                             else
                                 dibbler-server stop
                                 sleep 2
                                 dibbler-server start
                             fi
                         else
-				echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-				Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-				ret_val=`echo $?`
-				if [ "$ret_val" = "2" ];then
-					echo_t "DIBBLER : Restart of dibbler failed with reason 2"
-				fi
+                            echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                            ret_val=`echo $?`
+                            if [ "$ret_val" = "2" ];then
+                                echo_t "DIBBLER : Restart of dibbler failed with reason 2"
+                            fi
                         fi
                     fi
                     ;;
@@ -566,7 +573,7 @@ self_heal_dibbler_server()
                         syscfg commit
                         sleep 2
                         #need to restart dhcp client to generate dibbler conf
-			Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                        Dhcpv6_Client_restart "ti_dhcp6" "Idle"
                     elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
@@ -608,22 +615,23 @@ self_heal_dibbler_server()
                                     ip -6 addr add $v6addr dev $PRIVATE_LAN
                                     sleep 5
                                 fi
-                            elif [ ! -s  "/etc/dibbler/server.conf" ]; then
-				Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-                            	ret_val=`echo $?`
-                            	if [ "$ret_val" = "1" ];then
-                            	    echo "DIBBLER : Dibbler Server Config is empty"
-                            	    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
-                            	fi
+                            elif [ $Sizeof_ServerConf -le 1 ]; then
+                                #some times the size of dibbler conf is 1 which fails empty file check.
+                                Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                                ret_val=`echo $?`
+                                if [ "$ret_val" = "1" ];then
+                                    echo "DIBBLER : Dibbler Server Config is empty"
+                                    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                fi
                             else
                                 dibbler-server stop
                                 sleep 2
                                 dibbler-server start
                             fi
                         else
-			    echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-			    Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			    ret_val=`echo $?`
+                            echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                            ret_val=`echo $?`
                             if [ "$ret_val" = "2" ];then
                                 echo_t "DIBBLER : Restart of dibbler failed with reason 2"
                             fi

@@ -2977,25 +2977,26 @@ then
 #Checking dibbler server is running or not RDKB_10683
 DIBBLER_PID=$(busybox pidof dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
-#    IPV6_STATUS=`sysevent get ipv6-status`
+#   IPV6_STATUS=`sysevent get ipv6-status`
     DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
     routerMode="`syscfg get last_erouter_mode`"
 
-if [ "$BOX_TYPE" = "HUB4" ]; then
-    #Since dibbler client not supported for hub4
-    DHCPV6C_ENABLED="1"
-fi
+    if [ "$BOX_TYPE" = "HUB4" ]; then
+        #Since dibbler client not supported for hub4
+        DHCPV6C_ENABLED="1"
+    fi
 
     if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
+        Sizeof_ServerConf=`stat -c %s $DIBBLER_SERVER_CONF`
         case $SELFHEAL_TYPE in
             "BASE"|"TCCBR")
                 DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
                 if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                     echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
+                elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
-		else
+                else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
                     if [ -f "/etc/dibbler/server.conf" ]; then
@@ -3010,30 +3011,28 @@ fi
                                 echo "1" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
                                 sleep 1
                                 echo "0" > /proc/sys/net/ipv6/conf/$PRIVATE_LAN/disable_ipv6
-
                                 sleep 1
-
-				Dhcpv6_Client_restart "dibbler-client" "Idle"
+                                Dhcpv6_Client_restart "dibbler-client" "Idle"
                             fi
-                        elif [ ! -s  "/etc/dibbler/server.conf" ]; then
-			    Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			    ret_val=`echo $?`
-			    if [ "$ret_val" = "1" ];then
-                            	echo "DIBBLER : Dibbler Server Config is empty"
-                            	t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
-			    fi
+                        elif [ $Sizeof_ServerConf -le 1 ]; then
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                            ret_val=`echo $?`
+                            if [ "$ret_val" = "1" ];then
+                                echo "DIBBLER : Dibbler Server Config is empty"
+                                t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                            fi
                         else
                             dibbler-server stop
                             sleep 2
                             dibbler-server start
                         fi
                     else
-			echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-			Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			ret_val=`echo $?`
-			if [ "$ret_val" = "2" ];then
-				echo_t "DIBBLER : Restart of dibbler failed with reason 2"
-			fi
+                        echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                        Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                        ret_val=`echo $?`
+                        if [ "$ret_val" = "2" ];then
+                            echo_t "DIBBLER : Restart of dibbler failed with reason 2"
+                        fi
                     fi
                 fi
             ;;
@@ -3046,10 +3045,10 @@ fi
                     syscfg commit
                     sleep 2
                     #need to restart dhcp client to generate dibbler conf
-		    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
-		elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
-                        #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
-                        echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
+                    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
+                    #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
+                    echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
                 else
                     echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                     t2CountNotify "SYS_SH_Dibbler_restart"
@@ -3090,8 +3089,8 @@ fi
                                 ip -6 addr add $v6addr dev $PRIVATE_LAN
                                 sleep 5
                             fi
-                        elif [ ! -s  "/etc/dibbler/server.conf" ]; then
-			    Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                         elif [ $Sizeof_ServerConf -le 1 ]; then
+                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
                             ret_val=`echo $?`
                             if [ "$ret_val" = "1" ];then
                                 echo "DIBBLER : Dibbler Server Config is empty"
@@ -3103,9 +3102,9 @@ fi
                             dibbler-server start
                         fi
                     else
-			echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
-			Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-			ret_val=`echo $?`
+                        echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
+                        Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                        ret_val=`echo $?`
                         if [ "$ret_val" = "2" ];then
                            echo_t "DIBBLER : Restart of dibbler failed with reason 2"
                         fi
