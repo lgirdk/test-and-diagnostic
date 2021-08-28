@@ -2538,16 +2538,8 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
                 isDown=$(echo "$ssidStatus_5" | grep "Down")
                 if [ "$isDown" != "" ]; then
-                    case $SELFHEAL_TYPE in
-                        "BASE"|"SYSTEMD")
                             echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
                             t2CountNotify "WIFI_INFO_5GPrivateSSID_OFF"
-                        ;;
-                        "TCCBR")
-                            echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID is off."
-                            t2CountNotify "WIFI_INFO_5GPrivateSSID_OFF"
-                        ;;
-                    esac
                 else
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."
                     echo "$ssidStatus_5"
