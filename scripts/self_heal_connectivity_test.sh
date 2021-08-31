@@ -556,9 +556,14 @@ do
 		sleep $INTERVAL
 	fi
 
-
-	runPingTest
-	runDNSPingTest
+	wan_status=`sysevent get wan-status`
+	if [ "$wan_status" = "" ] || [ "$wan_status" = "stopped" ]
+	then
+		echo_t "RDKB_SELFHEAL : WAN is not up, bypassing ping test"
+	else
+		runPingTest
+		runDNSPingTest
+	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 	# ping -I $WAN_INTERFACE -c $PINGCOUNT 
