@@ -574,11 +574,11 @@ self_heal_dibbler_server()
                         echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                         t2CountNotify "SYS_SH_Dibbler_restart"
                         if [ -f "/etc/dibbler/server.conf" ]; then
-                            BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
+                            BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link" | grep "tentative" | grep "dadfailed")
                             if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                                 echo "DADFAILED : BRLAN0_DADFAILED"
                                 t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
-                                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+                                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ]; then
                                     echo "DADFAILED : Recovering device from DADFAILED state"
                                     # save global ipv6 address before disable it
                                     v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}')
