@@ -888,14 +888,14 @@ resetNeeded()
                 restart_adv_security
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$folderName" = "advsec_bin" ]; then
-                if [ "$ProcessName" = "AdvSecurityRabid" ]; then
+                if [ "$ProcessName" = "AdvSecurityAgent" ]; then
                     if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
                         rm $ADVSEC_AGENT_SHUTDOWN
                     else
                         echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
                         t2CountNotify "SYS_SH_CUJO_restart"
                     fi
-                    advsec_restart_rabid
+                    advsec_restart_agent
                 fi
 
             elif [ "$ProcessName" = "PING" ]; then
