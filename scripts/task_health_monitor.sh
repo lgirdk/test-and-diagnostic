@@ -2824,8 +2824,10 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                 touch /tmp/dnsmaq_noiface
             fi
         else
-            echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
-            t2CountNotify "SYS_SH_dnsmasq_restart"
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] ; then
+                echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+                t2CountNotify "SYS_SH_dnsmasq_restart"
+            fi
         fi
     else
         brlan0up=$(grep "brlan0" /var/dnsmasq.conf)
