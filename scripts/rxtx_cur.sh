@@ -86,37 +86,19 @@ if [ ! -z "$high_download_mac" ];then
 fi
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
-
-if [ $BOX_TYPE = "HUB4" ]; then
-    grep -v "\* \*" /nvram/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f3 > /tmp/cli47
-    grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f3 > /tmp/cli4
-else
-    grep -v "\* \*" /nvram/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f2 > /tmp/cli47
-    grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
-fi
+grep -v "\* \*" /nvram/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f2 > /tmp/cli47
+grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
 if [ -z "$MAC" ]
 then
-    if [ $BOX_TYPE = "HUB4" ]; then
-        ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 1  > /tmp/cli46
-    else
-        ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
-    fi
+	ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
 else
-    if [ $BOX_TYPE = "HUB4" ]; then
-        ip nei show | grep brlan0 | grep -v $MAC | grep -v FAILED | cut -d' ' -f 1  > /tmp/cli46
-    else
-        ip nei show | grep brlan0 | grep -v $MAC | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
-    fi
+	ip nei show | grep brlan0 | grep -v $MAC | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
 fi
 sort -u /tmp/cli4 /tmp/cli46 /tmp/cli47 | tr '[a-z]' '[A-Z]' > /tmp/clilist
 diff /tmp/eblist /tmp/clilist | grep "^+" | grep -v "+++" | cut -d'+' -f2 > /tmp/nclilist
 for mac in $(cat /tmp/nclilist); do
   #ebtables -A INPUT -s $mac
   #ebtables -A OUTPUT -d $mac
-    if [ $BOX_TYPE = "HUB4" ]; then
-        traffic_count -I $mac
-    else
-        traffic_count -A $mac
-    fi
+  traffic_count -A $mac
 done
 
