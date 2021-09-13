@@ -103,7 +103,7 @@ BOOL g_is_pingtest_running = FALSE;
 char g_argument_speedtest[SPEEDTEST_ARG_SIZE + 1] ;
 char g_authentication_speedtest[SPEEDTEST_AUTH_SIZE + 1] = {0};
 char g_clientversion_speedtest[SPEEDTEST_VERSION_SIZE + 1] = {0};
-int g_clienttype_speedtest = 2;
+int g_clienttype_speedtest = 1;
 int g_status_speedtest = 0;
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
