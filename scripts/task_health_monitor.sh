@@ -3818,3 +3818,15 @@ if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
     fi
 fi
 
+if [ "$MODEL_NUM" = "CGM4981COM" ]; then
+        if [ "$MESH_ENABLE" = "true" ]; then
+                echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
+                vlantag_wl0=$( /usr/opensync/tools/ovsh s Port -w name==wl0 | egrep "tag" | egrep 100)
+                vlantag_wl1=$( /usr/opensync/tools/ovsh s Port -w name==wl1 | egrep "tag" | egrep 100)
+                if [[ ! -z "$vlantag_wl0" ]] || [[ ! -z "$vlantag_wl1" ]]; then
+                        echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
+                        ovs-vsctl remove port wl0 tag 100
+                        ovs-vsctl remove port wl1 tag 100
+                fi
+        fi
+fi
