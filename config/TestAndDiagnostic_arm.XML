@@ -300,7 +300,7 @@
                         </parameter>
                         <parameter>
                             <name>MaxHopCount</name>
-                            <type>unsignedInt[1:64]</type>
+                            <type>unsignedInt[1:255]</type>
                             <syntax>uint32</syntax>
                             <writable>true</writable>
                         </parameter>
