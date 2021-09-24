@@ -2525,6 +2525,33 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+numofRadios=0
+isnumofRadiosExec=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries |grep "Execution succeed")
+if [ "$isnumofRadiosExec" != "" ]; then
+    numofRadios=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries | grep value | awk '{ print $5 }')
+else
+    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"
+    echo "$isnumofRadiosExec"
+fi
+
+if [ $numofRadios -eq 3 ]; then
+    SSID_DISABLED_6G=0
+    ssidEnable_6=$(dmcli eRT getv Device.WiFi.SSID.17.Enable)
+    ssidExecution_6=$(echo "$ssidEnable_6" | grep "Execution succeed")
+
+    if [ "$ssidExecution_6" != "" ]; then
+        isEnabled_6=$(echo "$ssidEnable_6" | grep "false")
+        if [ "$isEnabled_6" != "" ]; then
+            SSID_DISABLED_6G=1
+            echo_t "[RDKB_SELFHEAL] : SSID 6GHZ is disabled"
+            t2CountNotify "WIFI_INFO_6G_DISABLED"
+        fi
+    else
+        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 6G Enable"
+        echo "$ssidEnable_6"
+    fi
+fi
+
 if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
@@ -2646,31 +2673,86 @@ if [ $BR_MODE -eq 1 ]; then
             echo "$RadioEnable_5"
         fi
 
-        if [ $RADIO_ENABLED_5G -eq 1 ] || [ $RADIO_ENABLED_2G -eq 1 ]; then
-            dmcli eRT setv Device.WiFi.Radio.1.Enable bool false
+        if [ $numofRadios -eq 3 ]; then
+            # Check the status if 6GHz Wifi Radio
+            RADIO_ENABLED_6G=0
+            RadioEnable_6=$(dmcli eRT getv Device.WiFi.Radio.3.Enable)
+            RadioExecution_6=$(echo "$RadioEnable_5" | grep "Execution succeed")
+
+            if [ "$RadioExecution_6" != "" ]; then
+                isEnabled_6=$(echo "$RadioEnable_6" | grep "true")
+                if [ "$isEnabled_6" != "" ]; then
+                    RADIO_ENABLED_6G=1
+                    echo_t "[RDKB_SELFHEAL] : Radio 6GHZ is Enabled"
+                fi
+            else
+                echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 6G radio Enable"
+                echo "$RadioEnable_6"
+            fi
+        fi
+        if [ $numofRadios -eq 3 ]; then
+            if [ $RADIO_ENABLED_5G -eq 1 ] || [ $RADIO_ENABLED_2G -eq 1 ] || [ $RADIO_ENABLED_6G -eq 1 ]; then
+                dmcli eRT setv Device.WiFi.Radio.1.Enable bool false
+                sleep 2
+                dmcli eRT setv Device.WiFi.Radio.2.Enable bool false
+                sleep 2
+                dmcli eRT setv Device.WiFi.Radio.3.Enable bool false
+                sleep 2
+                dmcli eRT setv Device.WiFi.SSID.3.Enable bool false
+                sleep 2
+                IsNeedtoDoApplySetting=1
+            fi
+        else
+            if [ $RADIO_ENABLED_5G -eq 1 ] || [ $RADIO_ENABLED_2G -eq 1 ]; then
+                dmcli eRT setv Device.WiFi.Radio.1.Enable bool false
+                sleep 2
+                dmcli eRT setv Device.WiFi.Radio.2.Enable bool false
+                sleep 2
+                dmcli eRT setv Device.WiFi.SSID.3.Enable bool false
+                sleep 2
+                IsNeedtoDoApplySetting=1
+            fi
+        fi
+    fi
+
+    if [ $numofRadios -eq 3 ]; then
+        if [ $SSID_DISABLED_2G -eq 0 ] || [ $SSID_DISABLED -eq 0 ] || [ $SSID_DISABLED_6G -eq 0 ]; then
+            dmcli eRT setv Device.WiFi.SSID.1.Enable bool false
             sleep 2
-            dmcli eRT setv Device.WiFi.Radio.2.Enable bool false
+            dmcli eRT setv Device.WiFi.SSID.2.Enable bool false
             sleep 2
-            dmcli eRT setv Device.WiFi.SSID.3.Enable bool false
+            dmcli eRT setv Device.WiFi.SSID.17.Enable bool false
+            sleep 2
+            IsNeedtoDoApplySetting=1
+        fi
+    else
+        if [ $SSID_DISABLED_2G -eq 0 ] || [ $SSID_DISABLED -eq 0 ]; then
+            dmcli eRT setv Device.WiFi.SSID.1.Enable bool false
+            sleep 2
+            dmcli eRT setv Device.WiFi.SSID.2.Enable bool false
             sleep 2
             IsNeedtoDoApplySetting=1
         fi
     fi
 
-    if [ $SSID_DISABLED_2G -eq 0 ] || [ $SSID_DISABLED -eq 0 ]; then
-        dmcli eRT setv Device.WiFi.SSID.1.Enable bool false
-        sleep 2
-        dmcli eRT setv Device.WiFi.SSID.2.Enable bool false
-        sleep 2
-        IsNeedtoDoApplySetting=1
-    fi
-
-    if [ "$IsNeedtoDoApplySetting" = "1" ]; then
-        dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
-        sleep 3
-        dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
-        sleep 3
-        dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+    if [ $numofRadios -eq 3 ]; then
+        if [ "$IsNeedtoDoApplySetting" = "1" ]; then
+            dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+            sleep 3
+            dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+            sleep 3
+            dmcli eRT setv Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting bool true
+            sleep 3
+            dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+        fi
+    else
+        if [ "$IsNeedtoDoApplySetting" = "1" ]; then
+            dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+            sleep 3
+            dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+            sleep 3
+            dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+        fi
     fi
 fi
 
