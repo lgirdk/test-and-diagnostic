@@ -899,7 +899,7 @@ case $SELFHEAL_TYPE in
             TR69_PID=$(busybox pidof CcspTr069PaSsp)
             enable_TR69_Binary=$(syscfg get EnableTR69Binary)
             if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
-                if [ "$TR69_PID" = "" ]; then
+                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
                     echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
                     t2CountNotify "SYS_SH_TR69Restart"
                     resetNeeded TR69 CcspTr069PaSsp
