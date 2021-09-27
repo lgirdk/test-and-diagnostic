@@ -982,6 +982,7 @@ case $SELFHEAL_TYPE in
 
         #   fi
 
+        if [ "$BR_MODE" -eq 0 ]; then
         # Checking TR69's PID
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
             echo_t "BWG doesn't support TR069Pa "
@@ -995,6 +996,7 @@ case $SELFHEAL_TYPE in
                     resetNeeded TR69 CcspTr069PaSsp
                 fi
             fi
+        fi
         fi
 
         # Checking Test adn Daignostic's PID
