@@ -494,13 +494,13 @@ then
                 check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 
                 # l2sd0.100 is an interface specific to intel platform. Not applicable for other soc vendors.
-                if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "MV2PLUS" ]
+                if [ "$BOX_TYPE" = "MV1" ]
                 then
-                    check_if_l2sd0_100_created="NotApplicable"
-                    check_if_l2sd0_100_up="NotApplicable"
-                else
                     check_if_l2sd0_100_created=`ifconfig | grep l2sd0.100`
                     check_if_l2sd0_100_up=`ifconfig l2sd0.100 | grep UP `
+                else
+                    check_if_l2sd0_100_created="NotApplicable"
+                    check_if_l2sd0_100_up="NotApplicable"
                 fi
 
                 if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ] || [ "$check_if_l2sd0_100_created" = "" ] || [ "$check_if_l2sd0_100_up" = "" ]
@@ -563,13 +563,13 @@ then
             check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
 
             # l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
-            if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "MV2PLUS" ]
+            if [ "$BOX_TYPE" = "MV1" ]
             then
-                check_if_l2sd0_101_created="NotApplicable"
-                check_if_l2sd0_101_up="NotApplicable"
-            else
                 check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
                 check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+            else
+                check_if_l2sd0_101_created="NotApplicable"
+                check_if_l2sd0_101_up="NotApplicable"
             fi
 
             if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]

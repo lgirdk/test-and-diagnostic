@@ -526,7 +526,7 @@ case $SELFHEAL_TYPE in
         fi
 
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
             atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
             dmesg -n 5
             if [ "x$atomOnlyReboot" = "x" ]; then
@@ -634,6 +634,83 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+BR_MODE=0
+bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+# RDKB-6895
+bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
+if [ "$bridgeSucceed" != "" ]; then
+    isBridging=$(echo "$bridgeMode" | grep "router")
+    if [ "$isBridging" = "" ]; then
+        BR_MODE=1
+        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+        Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
+        if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
+            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
+            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        fi
+    fi
+else
+    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+    t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
+    echo_t "LanMode dmcli called failed with error $bridgeMode"
+    isBridging=$(syscfg get bridge_mode)
+    if [ "$isBridging" != "0" ]; then
+        BR_MODE=1
+        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+        if [ "$isBridging" = "3" ]; then
+            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        elif [ "$isBridging" = "2" ]; then
+            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        fi
+    fi
+
+    case $SELFHEAL_TYPE in
+        "BASE"|"TCCBR")
+            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
+            pandm_notexist=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_EXIST")
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]; then
+                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
+                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
+                cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
+                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+                    t2CountNotify "SYS_SH_PAM_Restart"
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    if [ "$PANDM_PID" != "" ]; then
+                        kill -9 "$PANDM_PID"
+                    fi
+                    case $SELFHEAL_TYPE in
+                        "BASE"|"TCCBR")
+                            rm -rf /tmp/pam_initialized
+                            resetNeeded pam CcspPandMSsp
+                        ;;
+                        "SYSTEMD")
+                        ;;
+                    esac
+                fi  # [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
+            fi  # [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
+        ;;
+        "SYSTEMD")
+            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
+            if [ "$pandm_timeout" != "" ]; then
+                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter time out"
+                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
+                if [ "$cr_timeout" != "" ]; then
+                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+                    t2CountNotify "SYS_SH_PAM_Restart"
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    rm -rf /tmp/pam_initialized
+                    systemctl restart CcspPandMSsp.service
+                fi
+            else
+                echo "$bridgeMode"
+            fi
+        ;;
+    esac
+fi  # [ "$bridgeSucceed" != "" ]
 
 # Checking PSM's PID
 PSM_PID=$(busybox pidof PsmSsp)
@@ -748,7 +825,7 @@ case $SELFHEAL_TYPE in
             TR69_PID=$(busybox pidof CcspTr069PaSsp)
             enable_TR69_Binary=$(syscfg get EnableTR69Binary)
             if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
-                if [ "$TR69_PID" = "" ]; then
+                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
                     echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
                     t2CountNotify "SYS_SH_TR69Restart"
                     resetNeeded TR69 CcspTr069PaSsp
@@ -782,7 +859,7 @@ case $SELFHEAL_TYPE in
 
         # Checking XdnsSsp PID
         XDNS_PID=$(busybox pidof CcspXdnsSsp)
-        if [ "$XDNS_PID" = "" ] && [ "$BOX_TYPE" != "MV2PLUS" ] && [ "$BOX_TYPE" != "MV1" ]; then
+        if [ "$XDNS_PID" = "" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
         fi
@@ -819,7 +896,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Not needed for MV1 as wifi runs on ATOM side in MV1
-        if [ "$BOX_TYPE" = "MV2PLUS" ]; then
+        if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
             # Checking CcspWifiSsp PID
             WIFI_PID=$(busybox pidof CcspWifiSsp)
             if [ "$WIFI_PID" = "" ]; then
@@ -912,8 +989,8 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "" ] || [ "$BOX_TYPE" = MV2PLUS ] || [ "$BOX_TYPE" = MV1 ]; then
-    echo_t "[RDKB_SELFHEAL] : Disabling CcpsHomeSecurity and CcspAdvSecurity for MV1 and MV2PLUS "
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+    echo_t "[RDKB_SELFHEAL] : Disabling CcpsHomeSecurity and CcspAdvSecurity"
 else
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ]; then
 
@@ -1749,7 +1826,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$MODEL_NUM" = "" ] || [ "$BOX_TYPE" = MV2PLUS ] || [ "$BOX_TYPE" = MV1 ]; then
+if [ "$MODEL_NUM" = "" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
 	echo_t "[RDKB_SELFHEAL] : Disabling parodus"
 else
     # Checking for parodus connection stuck issue
@@ -2110,7 +2187,7 @@ then
 
                 #TODO: Need to revisit this after enabling CcspHomeSecurity
                 # Checking whether brlan1 and l2sd0.101 interface are created properly
-                if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+                if [ "$thisIS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     check_if_brlan1_created=$(ifconfig | grep "brlan1")
                     check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                     check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
@@ -2450,84 +2527,6 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-BR_MODE=0
-bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-# RDKB-6895
-bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
-if [ "$bridgeSucceed" != "" ]; then
-    isBridging=$(echo "$bridgeMode" | grep "router")
-    if [ "$isBridging" = "" ]; then
-        BR_MODE=1
-        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-        Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
-        if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
-        fi
-    fi
-else
-    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
-    t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
-    echo_t "LanMode dmcli called failed with error $bridgeMode"
-    isBridging=$(syscfg get bridge_mode)
-    if [ "$isBridging" != "0" ]; then
-        BR_MODE=1
-        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-        if [ "$isBridging" = "3" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        elif [ "$isBridging" = "2" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
-        fi
-    fi
-
-    case $SELFHEAL_TYPE in
-        "BASE"|"TCCBR")
-            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
-            pandm_notexist=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_EXIST")
-            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]; then
-                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-                cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
-                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_SH_PAM_Restart"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
-                    if [ "$PANDM_PID" != "" ]; then
-                        kill -9 "$PANDM_PID"
-                    fi
-                    case $SELFHEAL_TYPE in
-                        "BASE"|"TCCBR")
-                            rm -rf /tmp/pam_initialized
-                            resetNeeded pam CcspPandMSsp
-                        ;;
-                        "SYSTEMD")
-                        ;;
-                    esac
-                fi  # [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
-            fi  # [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
-        ;;
-        "SYSTEMD")
-            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
-            if [ "$pandm_timeout" != "" ]; then
-                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter time out"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-                if [ "$cr_timeout" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_SH_PAM_Restart"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
-                    rm -rf /tmp/pam_initialized
-                    systemctl restart CcspPandMSsp.service
-                fi
-            else
-                echo "$bridgeMode"
-            fi
-        ;;
-    esac
-fi  # [ "$bridgeSucceed" != "" ]
-
 case $SELFHEAL_TYPE in
     "BASE")
         #check for PandM response
@@ -2748,7 +2747,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             firewall_rules=$(iptables-save)
             check_if_brlan1=$(echo "$firewall_rules" | grep "brlan1")
             if [ "$check_if_brlan1" = "" ]; then
@@ -2913,7 +2912,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
                     IsAnyOneInfFailtoUp=1
                 fi
@@ -3346,7 +3345,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
                 else
-                    if [ "$BOX_TYPE" = "MV1" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
+                    if [ "$FIRMWARE_TYPE" = "OFW" ]; then
                         check_wan_dhcp_client_v4=$(ps aux | grep udhcpc | grep erouter)
                         check_wan_dhcp_client_v6=$(ps aux | grep dibbler-client | grep -v grep)
                     else
@@ -3424,7 +3423,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
     case $SELFHEAL_TYPE in
         "BASE")
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
-                if [ "$SOC_TYPE" = "Broadcom" ] && [ "$BOX_TYPE" != "XB3" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+                if [ "$SOC_TYPE" = "Broadcom" ] && [ "$BOX_TYPE" != "XB3" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ]; then
                     echo "Calling epon_utility.sh to restart udhcpc "
@@ -3438,7 +3437,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$WAN_STATUS" = 
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
                         fi
                     else
-			if [ "$BOX_TYPE" = "MV1" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
+			if [ "$FIRMWARE_TYPE" = "OFW" ]; then
                             sysevent set dhcp_client-restart
                         else
                             DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
@@ -3523,7 +3522,7 @@ case $SELFHEAL_TYPE in
             done
 
             # Fetch mesh tunnels from the brlan1 bridge if they exist
-            if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+            if [ "$thisIS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                 brctl1_ifaces=$(brctl show brlan1 | egrep "pgd")
                 br1_ifaces=$(ifconfig | egrep "^pgd" | egrep "\.101" | awk '{print $1}')
 
