@@ -659,6 +659,89 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+BR_MODE=0
+bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+# RDKB-6895
+bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
+if [ "$bridgeSucceed" != "" ]; then
+	isBridging=$(echo "$bridgeMode" | grep "router")
+        if [ "$isBridging" = "" ]; then
+        	BR_MODE=1
+                echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+                if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+        		Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
+        		if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
+            			echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        		elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
+            			echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        		fi
+		fi
+        fi
+else
+    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
+    t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
+    echo_t "LanMode dmcli called failed with error $bridgeMode"
+    isBridging=$(syscfg get bridge_mode)
+    if [ "$isBridging" != "0" ]; then
+        BR_MODE=1
+        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+        if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+        	if [ "$isBridging" = "3" ]; then
+            		echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        	elif [ "$isBridging" = "2" ]; then
+            		echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+       		fi
+        fi
+    fi
+
+    case $SELFHEAL_TYPE in
+        "BASE"|"TCCBR")
+            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
+            pandm_notexist=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_EXIST")
+            pandm_notconnect=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_CONNECT")
+            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
+                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
+                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
+                cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
+                cr_pam_notconnect=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_CONNECT")
+                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
+                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    if [ "$PANDM_PID" != "" ]; then
+                        kill -9 "$PANDM_PID"
+                    fi
+                    case $SELFHEAL_TYPE in
+                        "BASE"|"TCCBR")
+                            rm -rf /tmp/pam_initialized
+                            resetNeeded pam CcspPandMSsp
+                        ;;
+                        "SYSTEMD")
+                        ;;
+                    esac
+                fi  # [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
+            fi  # [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
+        ;;
+        "SYSTEMD")
+            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
+            if [ "$pandm_timeout" != "" ]; then
+                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter time out"
+                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
+                if [ "$cr_timeout" != "" ]; then
+                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
+                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    rm -rf /tmp/pam_initialized
+                    systemctl restart CcspPandMSsp.service
+                fi
+            else
+                echo "$bridgeMode"
+            fi
+        ;;
+    esac
+fi  # [ "$bridgeSucceed" != "" ]
 
 # Checking PSM's PID
 PSM_PID=$(busybox pidof PsmSsp)
@@ -778,7 +861,7 @@ case $SELFHEAL_TYPE in
             TR69_PID=$(busybox pidof CcspTr069PaSsp)
             enable_TR69_Binary=$(syscfg get EnableTR69Binary)
             if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
-                if [ "$TR69_PID" = "" ]; then
+                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
                     echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
                     t2CountNotify "SYS_SH_TR69Restart"
                     resetNeeded TR69 CcspTr069PaSsp
@@ -2519,90 +2602,6 @@ case $SELFHEAL_TYPE in
         fi
     ;;
 esac
-
-BR_MODE=0
-bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-# RDKB-6895
-bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
-if [ "$bridgeSucceed" != "" ]; then
-	isBridging=$(echo "$bridgeMode" | grep "router")
-        if [ "$isBridging" = "" ]; then
-        	BR_MODE=1
-                echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-                if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
-        		Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
-        		if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
-            			echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        		elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
-            			echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
-        		fi
-		fi
-        fi
-else
-    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
-    t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
-    echo_t "LanMode dmcli called failed with error $bridgeMode"
-    isBridging=$(syscfg get bridge_mode)
-    if [ "$isBridging" != "0" ]; then
-        BR_MODE=1
-        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-        if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
-        	if [ "$isBridging" = "3" ]; then
-            		echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        	elif [ "$isBridging" = "2" ]; then
-            		echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
-       		fi
-        fi
-    fi
-
-    case $SELFHEAL_TYPE in
-        "BASE"|"TCCBR")
-            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
-            pandm_notexist=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_EXIST")
-            pandm_notconnect=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_CONNECT")
-            if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
-                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-                cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
-                cr_pam_notconnect=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_CONNECT")
-                if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
-                    if [ "$PANDM_PID" != "" ]; then
-                        kill -9 "$PANDM_PID"
-                    fi
-                    case $SELFHEAL_TYPE in
-                        "BASE"|"TCCBR")
-                            rm -rf /tmp/pam_initialized
-                            resetNeeded pam CcspPandMSsp
-                        ;;
-                        "SYSTEMD")
-                        ;;
-                    esac
-                fi  # [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ]
-            fi  # [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ]
-        ;;
-        "SYSTEMD")
-            pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
-            if [ "$pandm_timeout" != "" ]; then
-                echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter time out"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-                if [ "$cr_timeout" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
-                    t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
-                    rm -rf /tmp/pam_initialized
-                    systemctl restart CcspPandMSsp.service
-                fi
-            else
-                echo "$bridgeMode"
-            fi
-        ;;
-    esac
-fi  # [ "$bridgeSucceed" != "" ]
 
 case $SELFHEAL_TYPE in
     "BASE")
