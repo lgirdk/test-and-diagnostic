@@ -1070,7 +1070,7 @@ case $SELFHEAL_TYPE in
                 wifi_name_timeout=$(echo "$wifi_name" | grep "$CCSP_ERR_TIMEOUT")
                 wifi_name_notexist=$(echo "$wifi_name" | grep "$CCSP_ERR_NOT_EXIST")
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is restarting"
+                    echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
                     t2CountNotify "WIFI_SH_CcspWifiHung_restart"
                     # Remove the wifi initialized flag
                     rm -rf /tmp/wifi_initialized
