@@ -471,10 +471,15 @@ rebootNeeded()
         echo_t "RDKB_SELFHEAL : Today's max reboot count already reached, please wait for reboot till next 24 hour window"
     else
 
+        if [ "$FIRMWARE_TYPE" = "OFW" ]; then
+            # Avoiding the call of function checkConditionsbeforeAction, as binary XconfHttpDl is not avialble.
+            return_value=0
+        else
         # Wait for Active Voice call,XHS client passing traffic,eCM registrations state completion.
         checkConditionsbeforeAction $1
 
         return_value=$?
+        fi
 
         if [ $return_value -eq 0 ]; then
             # Storing Information before corrective action
@@ -1016,7 +1021,7 @@ storeInformation()
       done
 
     # If the crashed process is MoCA, we cannot get MoCA parameters
-    if [ $isMOCA -eq 0 ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+    if [ $isMOCA -eq 0 ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
         # Need to capture MoCA stats
 
         PacketsSent=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsSent | grep "value" | awk '{print $5}')
@@ -1037,7 +1042,7 @@ storeInformation()
     else
         case $SELFHEAL_TYPE in
             "BASE")
-                if [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+                if [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     echo_t "RDKB_SELFHEAL : MoCA stats are not available due to MoCA crash"
                     isMOCA=0
                 fi
