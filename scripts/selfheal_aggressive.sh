@@ -573,7 +573,7 @@ self_heal_dibbler_server()
                         syscfg commit
                         sleep 2
                         #need to restart dhcp client to generate dibbler conf
-                        Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+                        Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
                     elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
@@ -680,7 +680,7 @@ self_heal_dhcp_clients()
                     ;;
             esac
             rm -rf $DHCPV6_ERROR_FILE
-	    Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+	    Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
         fi
     fi
     #Logic added in reference to RDKB-25714
@@ -946,7 +946,7 @@ self_heal_dhcp_clients()
                         echo_t "Calling dibbler_starter.sh to restart dibbler-client "
                         sh /usr/ccsp/dibbler_starter.sh
                     else
-			Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+			Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
                     fi
                     wan_dhcp_client_v6=1
                 fi
@@ -1045,7 +1045,7 @@ self_heal_dhcp_clients()
 			echo_t "Calling dibbler_starter.sh to restart dibbler-client "
 			sh /usr/ccsp/dibbler_starter.sh
                     else
-			Dhcpv6_Client_restart "ti_dhcp6" "Idle"
+			Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
                     fi
                     wan_dhcp_client_v6=1
 		fi
