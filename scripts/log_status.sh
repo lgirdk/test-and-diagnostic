@@ -21,11 +21,8 @@
 source /etc/utopia/service.d/log_capture_path.sh
 source /etc/device.properties
 
-MAPT_CONFIG=`sysevent get mapt_config_flag`
-dt=`date "+%m-%d-%y-%I-%M%p"`
-ps -l | grep '^Z' > /tmp/zombies.txt
+ps -eo stat,pid,ppid,cmd | grep '^Z' > /tmp/zombies.txt
 count=`wc -l < /tmp/zombies.txt`
-echo "************ ZOMBIE_COUNT $count at $dt ************"
 
 if [ $count -ne 0 ];then
     echo "*************** List of Zombies ***************"
@@ -34,7 +31,10 @@ if [ $count -ne 0 ];then
 fi
 rm /tmp/zombies.txt
 
+echo_t "Total_Zombie_count:$count"
+
 if [ "xstarted" == "x`sysevent get wan-status`" ];then
+    MAPT_CONFIG=`sysevent get mapt_config_flag`
     if [ "$MAPT_CONFIG" != "set" ]; then
         if [  "x`ip -4 route show table erouter | grep "default via" | grep erouter0 | cut -f3 -d' ' `" == "x" ]; then
             echo "ipv4 default gateway is missing" >> /rdklogs/logs/Consolelog.txt.0
