@@ -856,6 +856,12 @@ resetNeeded()
                 cd /usr/ccsp/moca
                 $BINPATH/CcspMoCA -subsys $Subsys
                 cd -
+				
+	     elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "notify_comp" ]; then
+                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                cd /usr/ccsp/$folderName
+                $BINPATH/$ProcessName -subsys $Subsys
+                cd -
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspTandDSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"

@@ -844,6 +844,13 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
         fi
+		
+	 #Checking notify_component PID
+	 NOTIFY_PID=$(busybox pidof notify_comp)
+	 if [ "$NOTIFY_PID" = "" ]; then
+		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
+		 resetNeeded notify-comp notify_comp
+	 fi
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
             # Checking mocadlfw PID
@@ -1163,6 +1170,13 @@ case $SELFHEAL_TYPE in
                 resetNeeded snmp snmp_subagent
             fi
         fi
+		
+	 #Checking notify_component PID
+	 NOTIFY_PID=$(busybox pidof notify_comp)
+	 if [ "$NOTIFY_PID" = "" ]; then
+		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
+		 resetNeeded notify-comp notify_comp
+	 fi
 
         # Checking harvester PID
         HARVESTER_PID=$(pidof harvester)
