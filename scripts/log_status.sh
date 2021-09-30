@@ -20,10 +20,8 @@
 
 source /etc/utopia/service.d/log_capture_path.sh
 
-dt=`date "+%m-%d-%y-%I-%M%p"`
-ps -l | grep '^Z' > /tmp/zombies.txt
+ps -eo stat,pid,ppid,cmd | grep '^Z' > /tmp/zombies.txt
 count=`wc -l < /tmp/zombies.txt`
-echo "************ ZOMBIE_COUNT $count at $dt ************"
 
 if [ $count -ne 0 ];then
 	echo "*************** List of Zombies ***************"
@@ -32,6 +30,7 @@ if [ $count -ne 0 ];then
 fi
 rm /tmp/zombies.txt
 
+echo_t "Total_Zombie_count:$count"
 
 if [ "xstarted" == "x`sysevent get wan-status`" ];then
 
