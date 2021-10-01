@@ -24,6 +24,7 @@ source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 PRIVATE_LAN="brlan0"
+CCSP_COMMON_FIFO="/tmp/ccsp_common_fifo"
 
 exec 5>&1 6>&2 >> /rdklogs/logs/SelfHealAggressive.txt 2>&1
 
@@ -577,6 +578,8 @@ self_heal_dibbler_server()
                     elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
+		    elif [ -s CCSP_COMMON_FIFO ]; then
+			echo_t "DHCP renewal taking place"
                     else
                         echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                         t2CountNotify "SYS_SH_Dibbler_restart"
