@@ -53,6 +53,7 @@ logTmpFs()
 
         if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
         then
+	        echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
             t2ValNotify "TMPFS_USAGE exceeded threshold limit, TMPFS_USAGE:" "$TMPFS_CUR_USAGE"
             t2CountNotify  "SYS_ERROR_TMPFS_ABOVE85"
         fi
