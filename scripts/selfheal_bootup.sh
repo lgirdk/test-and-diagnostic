@@ -576,7 +576,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
         fi
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
-	if [ "$IS_BCI" != "yes" ]; then
+	if [ "$IS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
 		check_if_brlan1_created=`ifconfig | grep brlan1`
 		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
 	        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
@@ -734,7 +734,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 			fi
 	  fi
 
-	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ]
+	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ] && [ "$FIRMWARE_TYPE" != "OFW" ]
 	  then
 	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
 			 IsAnyOneInfFailtoUp=1
