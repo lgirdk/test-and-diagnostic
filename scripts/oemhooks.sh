@@ -34,6 +34,7 @@ case $BOX_TYPE in
     "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
     "HUB4") SELFHEAL_TYPE="SYSTEMD";;
     "SR300") SELFHEAL_TYPE="SYSTEMD";;
+    "SE501") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
