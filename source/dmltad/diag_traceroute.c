@@ -306,6 +306,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         char query_ip[65], line_cpy[512];
         float *sum,val=0;
         int *counter,count=0;
+        size_t len;
         sum=&val;
         counter=&count;
 #endif
@@ -339,7 +340,11 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 #endif
             hops[nhop].icmperr = 0; // TODO: we can use output: '!H, !S, ...'
 #if !defined(_PLATFORM_RASPBERRYPI_)
-            strcpy(line_cpy,line);
+            len = strlen (line);
+            if (len >= sizeof(line_cpy))
+                len = sizeof(line_cpy) - 1;
+            memcpy (line_cpy, line, len);
+            line_cpy[len] = 0;
             char* savePtr;
             char* token = strtok_r(line_cpy, "(",&savePtr);
             while (token = strtok_r(savePtr, "(",&savePtr)) {
