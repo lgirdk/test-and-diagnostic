@@ -205,23 +205,37 @@ bbhmUdpechoStartUdpEchoTask
         {
             if ( pxskt_src_addrinfo->ai_family == AF_INET )
             {
-                _xskt_getaddrinfo
+                if ( _xskt_getaddrinfo
                     (
                         "0.0.0.0",
                         port,
                         &xskt_hints,
                         &pxskt_local_addrinfo
-                    );
+                    )
+		   )
+                {
+		   CcspTraceError(("getaddrinfo %s returns error!\n", port));
+                   if(pxskt_src_addrinfo)
+                      _xskt_freeaddrinfo(pxskt_src_addrinfo);
+		   return  ANSC_STATUS_FAILURE;
+	        }
             }
             else if ( pxskt_src_addrinfo->ai_family == AF_INET6 )
             {
-                _xskt_getaddrinfo
+               if ( _xskt_getaddrinfo
                     (
                         "::",
                         port,
                         &xskt_hints,
                         &pxskt_local_addrinfo
-                    );
+                    )
+		  )
+	       {
+		   CcspTraceError(("getaddrinfo %s returns error!\n", port));
+                   if(pxskt_src_addrinfo)
+                      _xskt_freeaddrinfo(pxskt_src_addrinfo);
+		   return  ANSC_STATUS_FAILURE;
+	        }
             }
         }
         else
@@ -236,16 +250,11 @@ bbhmUdpechoStartUdpEchoTask
                )
             {
                 CcspTraceError(("getaddrinfo %s returns error!\n", pUdpEchoInfo->IfAddrName));
+		if(pxskt_src_addrinfo)
+                   _xskt_freeaddrinfo(pxskt_src_addrinfo);
 
                 return  ANSC_STATUS_FAILURE;
             }
-        }
-
-        if ( !pxskt_local_addrinfo || !pxskt_src_addrinfo )
-        {
-            CcspTraceError(("pxskt_local_addrinfo or pxskt_src_addrinfo is NULL!\n"));
-
-            return  ANSC_STATUS_FAILURE;
         }
 
         AnscTrace("!!! after getaddrinfo !!!\n");
@@ -391,6 +400,11 @@ EXIT1:
 
     pMyObject->bIsServerOn      = FALSE;
     pMyObject->bStopServer      = FALSE;
+
+    if(pxskt_local_addrinfo)
+       _xskt_freeaddrinfo(pxskt_local_addrinfo); //CID: 73443 -Resource leak
+    if(pxskt_src_addrinfo)
+       _xskt_freeaddrinfo(pxskt_src_addrinfo); //CID: 64519 -Resource leak
 
     AnscTrace(("The UDP Echo Server stopped...\n"));
 

@@ -798,8 +798,8 @@ int COSAIP_pingtest_ProcessThread( void *arg )
 	diag_cfg_t		cfg;
 	diag_stat_t 	statis;
 	char 			pingtestresult[ 64 ] = { 0 },
-					tmp_hostname[ 257 ]  = { 0 },
-					*ptmp_hostname = NULL;
+					tmp_hostname[ 257 ]  = { 0 };
+	int i = 0, j = 0;
 
 	//Detach the thread from loop
     pthread_detach( pthread_self( ) );
@@ -893,22 +893,18 @@ int COSAIP_pingtest_ProcessThread( void *arg )
 	  */
 	sprintf( tmp_hostname, "%s", "NULL" );
 
-	if( cfg.host[ 0 ] != '\0' )
+        /* CID: 67228 Copy of overlapping memory */
+        if( cfg.host[ 0 ] != '\0' )
 	{
-		sprintf( tmp_hostname, "%s", cfg.host );
+            for(i= 0;i<strlen(cfg.host);i++)
+	    {
+                if (cfg.host[i] == '\'')
+                    continue;
 
-		ptmp_hostname = tmp_hostname;
-
-		//Remove first special charecter
-		if( tmp_hostname[ 0 ] == '\'' )
-		ptmp_hostname++;
-		
-		//Remove last special charecter
-		if ( tmp_hostname[ strlen( tmp_hostname ) - 1 ] == '\'' )
-		ptmp_hostname[ strlen( ptmp_hostname ) - 1 ] = '\0';
-
-		sprintf( tmp_hostname, "%s", ptmp_hostname );
-	}
+                tmp_hostname[j++] = cfg.host[i];
+            }
+            tmp_hostname[j++] = '\0';
+        }
 
 	AnscTraceFlow(( "DeviceId:%s;CmMac:%s;PartnerId:%s;DeviceModel:%s;Endpoint:%s;Attempts:%d;SuccessCount:%d;AvgRtt:%.2f\n",
 					( pingtest_devdet->DeviceID[ 0 ] != '\0' ) ? pingtest_devdet->DeviceID : "NULL",
@@ -6207,6 +6203,7 @@ SpeedTest_GetParamStringValue
             if (!strcmp(strClientVersionBuf, ""))
             {
                 AnscTraceWarning(("%s syscfg_get failed ClientVersion is set to Null \n",__FUNCTION__));
+		fclose(filePtr); //CID: 175400 Resource leak
                 return 1;
             }
             else
@@ -6227,13 +6224,18 @@ SpeedTest_GetParamStringValue
                 }
                 AnscCopyString(g_clientversion_speedtest, strClientVersionBuf);
                 AnscCopyString(pValue, g_clientversion_speedtest);
+		fclose(filePtr); //CID: 175400 Resource leak
                 return 0;
             }
         }
         else
         {
             AnscCopyString(pValue, g_clientversion_speedtest);
-            remove(SPEEDTEST_VERSION_LOG_FILE);
+	    /* CID 175410: Unchecked return value from library */
+            if (remove(SPEEDTEST_VERSION_LOG_FILE) !=0)
+	    {
+		AnscTraceWarning(("removing file is failed \n"));
+            }
             return 0;
         }
     }

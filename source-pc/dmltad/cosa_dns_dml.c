@@ -887,7 +887,8 @@ NSLookupDiagnostics_Validate
             return FALSE;
         }
 
-        CosaGetParamValueString
+	/* CID 61647 :  Unchecked return value */
+        if ( CosaGetParamValueString
             (
 #ifndef     DM_IGD
                 "Device.DHCPv4.Server.Pool.1.DomainName",
@@ -896,7 +897,10 @@ NSLookupDiagnostics_Validate
 #endif
                 pDomainName,
                 &ulDNLength
-            );
+            ) != 0)
+        {
+            AnscTraceWarning(("CosaGetParamValueString failure in NSLookupDiagnostics_Validate"));
+	}
 
         if ( !AnscSizeOfString(pDomainName) )
         {

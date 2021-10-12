@@ -1081,6 +1081,7 @@ BbhmDiagnsSetStopTime
 
                 if ( !pEchoEntry->IPAddresses )
                 {
+	            AnscReleaseLock(&pMyObject->EchoTableLock); //CID-135254 - Missing unlock
                     return ANSC_STATUS_RESOURCES;
                 }
 

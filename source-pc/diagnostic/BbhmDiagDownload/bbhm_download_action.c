@@ -549,6 +549,7 @@ bbhmDownloadStartDiagTask
     s_result    = _xskt_recv(aSocket, recv_buffer, recv_size, 0);
 
     AnscGetSystemTime(&pStats->BOMTime);
+    recv_buffer[recv_size] = '\0'; //CID -135416: String not null terminated
 
     /* check whether it succededd or not */
     if ( s_result <= 0 || _ansc_strstr(recv_buffer, "HTTP/1.1 2") != recv_buffer )

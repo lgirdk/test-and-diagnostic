@@ -93,6 +93,7 @@ ssp_TadMbi_MessageBusEngage
     if ( ! component_id || ! path )
     {
         CcspTraceError((" !!! ssp_TadMbi_MessageBusEngage: component_id or path is NULL !!!\n"));
+	return  ANSC_STATUS_FAILURE; //CID - 62833: Dereference after null check
     }
 
     /* Connect to message bus */

@@ -139,21 +139,21 @@ BbhmDiagitStart
 
         return  ANSC_STATUS_FAILURE;
     }
-    else if ( pDslhTracertObj )
+    /* CID 66014: Dereference after null check */
+    if ( !pDslhTracertObj )
     {
-        if ( pProperty->pDstAddrName == NULL )
-        {
-            pDslhTracertObj->DiagnosticState = DSLH_DIAG_STATE_TYPE_TRAC_Error_HostName;
+        pMyObject->Stop(hThisObject);
+        return  ANSC_STATUS_FAILURE;
+    }	    
+    if ( pProperty->pDstAddrName == NULL )
+    {
+         pDslhTracertObj->DiagnosticState = DSLH_DIAG_STATE_TYPE_TRAC_Error_HostName;
 
-            pMyObject->Stop(hThisObject);
+         pMyObject->Stop(hThisObject);
 
-            return  returnStatus;
-        }
-        else
-        {
-            pDslhTracertObj->DiagnosticState = DSLH_DIAG_STATE_TYPE_Requested;
-        }
+         return  returnStatus;
     }
+    pDslhTracertObj->DiagnosticState = DSLH_DIAG_STATE_TYPE_Requested;
 
     pMyObject->ResetPropertyCounter((ANSC_HANDLE)pMyObject);
 
@@ -1372,7 +1372,8 @@ BbhmDiagitUpdateEntry
                 {
                     CcspTraceInfo(("Return from getnameinfo: %s\n", gai_strerror(iReturn)));
                     /*when the name can't be resolved, obtain the numeric string*/
-                    _xskt_getnameinfo
+		    /*CID : 176164  Unchecked return value*/
+                   iReturn = _xskt_getnameinfo
                         (
                             (struct sockaddr *)pHopAddrInfo->ai_addr,
                             pHopAddrInfo->ai_addrlen,
@@ -1382,6 +1383,10 @@ BbhmDiagitUpdateEntry
                             NI_MAXSERV,
                             NI_NUMERICHOST
                         );
+                        if ( iReturn != 0 )
+                        {
+                             CcspTraceInfo(("Return from getnameinfo: %s\n", gai_strerror(iReturn)));
+                        }
                 }
 
                 iReturn = _xskt_getnameinfo

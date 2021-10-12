@@ -345,7 +345,10 @@ BbhmDiageoSetDiagState
     PBBHM_DIAG_EXEC_OBJECT          pMyObject    = (PBBHM_DIAG_EXEC_OBJECT)hThisObject;
     PDSLH_DIAG_INFO_BASE            pDiagInfo    = (PDSLH_DIAG_INFO_BASE  )pMyObject->hDslhDiagInfo;
 
+    /* CID: 135532 Data race condition */
+    AnscAcquireLock(&pMyObject->AccessLock);
     pDiagInfo->DiagnosticState = ulDiagState;
+    AnscReleaseLock(&pMyObject->AccessLock);
 
     return  ANSC_STATUS_SUCCESS;
 }

@@ -191,9 +191,9 @@ BbhmDownloadRemove
 {
     PBBHM_DOWNLOAD_DIAG_OBJECT      pMyObject    = (PBBHM_DOWNLOAD_DIAG_OBJECT)hThisObject;
 
-    pMyObject->Cancel((ANSC_HANDLE)pMyObject);
-
-    AnscCoRemove((ANSC_HANDLE)pMyObject);
+    /*CID - 70559 Use after free */
+    /* Removed "cancel and remove calls" as BbhmDiageoRemove() is internally using 
+       same calls to free the pMyObject */
     BbhmDiageoRemove((ANSC_HANDLE)pMyObject);
 
     return  ANSC_STATUS_SUCCESS;

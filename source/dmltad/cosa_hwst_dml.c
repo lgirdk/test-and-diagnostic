@@ -165,7 +165,11 @@ hwHealthTest_SetParamBoolValue
         {
             if(NULL != clientVer)
             {
-                fscanf(fp, "%s", clientVer);
+		/* CID 163494 :  Unchecked return value from library */
+                if ( fscanf(fp, "%s", clientVer) != 1 )
+		{
+	             AnscTraceFlow((" read error of client version"));
+		}
                 strcpy(version,clientVer);
                 free(clientVer);
                 clientVer = NULL;

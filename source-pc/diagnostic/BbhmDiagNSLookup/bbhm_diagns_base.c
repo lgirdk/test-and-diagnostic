@@ -209,13 +209,12 @@ BbhmDiagnsRemove
         pMyObject->hSendBuffer = NULL;
     }
 
-    pMyObject->Cancel((ANSC_HANDLE)pMyObject);
-    pMyObject->Reset ((ANSC_HANDLE)pMyObject);
-
     AnscFreeLock (&pMyObject->EchoTableLock);
     AnscFreeLock (&pMyObject->PqueryTableLock);
 
-    AnscCoRemove(pMyObject);
+    /*CID - 58154 Use after free*/
+    /* Removed "cancel and remove calls" as BbhmDiageoRemove() is internally using 
+       same calls to free the pMyObject */
     BbhmDiageoRemove((ANSC_HANDLE)pMyObject);
 
     return  ANSC_STATUS_SUCCESS;

@@ -297,15 +297,13 @@ CosaDiagInitialize
 	g_enable_speedtest = FALSE ;
     }
 
+     /* CID 175459: Dereference after null check */
     /*Executing Spped Test version script to acquire ClientVersion Object*/
-    FILE *pOpenPtr = NULL;
     AnscTraceFlow(("Executing Speedtest to acquire version\n"));
-    pOpenPtr = popen("/usr/ccsp/tad/speedtest_version.sh &", "r");
-    if (pOpenPtr == NULL)
+    if (system("/usr/ccsp/tad/speedtest_version.sh &") != 0)
     {
         AnscTraceWarning(("%s syscfg_get failed to acquire Speedtest ClientVersion\n",__FUNCTION__));
     }
-    pclose(pOpenPtr);
 
     /* initiate Speed Test Server Capability */
 	int retPsmGet = CCSP_SUCCESS;

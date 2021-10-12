@@ -168,7 +168,8 @@ CosaDmlDiagGetARPTablePriv
     if( UT_SUCCESS == _GetARPCacheEntries(&count, &host) && count != 0){
         if( NULL != (pTable = (PCOSA_DML_DIAG_ARP_TABLE)AnscAllocateMemory(count * sizeof(COSA_DML_DIAG_ARP_TABLE)))){
              while(i < count){
-                strncpy(pTable[i].IPAddress, host[i].ipaddr, sizeof(pTable[i].IPAddress));
+                strncpy(pTable[i].IPAddress, host[i].ipaddr, sizeof(pTable[i].IPAddress)-1);
+		pTable[i].IPAddress[sizeof(pTable[i].IPAddress)-1] = '\0'; //CID 163347: Buffer not null terminate
                 sscanf(host[i].macaddr, "%x:%x:%x:%x:%x:%x", &(mac[0]), &(mac[1]), &(mac[2]), &(mac[3]), &(mac[4]), &mac[5]); 
                 pTable[i].MACAddress[0] = (UCHAR)mac[0];
                 pTable[i].MACAddress[1] = (UCHAR)mac[1];

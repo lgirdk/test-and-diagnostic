@@ -2240,7 +2240,7 @@ BbhmDiagitSetDiagParams
 
     if ( pDiagInfo == NULL )
     {
-        pDiagInfo = (PDSLH_TRACEROUTE_INFO)AnscAllocateMemory(sizeof(PDSLH_TRACEROUTE_INFO));
+        pDiagInfo = (PDSLH_TRACEROUTE_INFO)AnscAllocateMemory(sizeof(DSLH_TRACEROUTE_INFO)); //CID: 56073 -Wrong sizeof argument
 
         if ( pDiagInfo == NULL )
         {

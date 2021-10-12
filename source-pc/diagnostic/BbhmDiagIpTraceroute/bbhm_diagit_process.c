@@ -343,6 +343,12 @@ BbhmDiagitRecv
     ULONG                           StopTime     = 0;
     ULONG                           ttl          = (ULONG)pMyObject->GetTtl((ANSC_HANDLE)pMyObject);
 
+    /* CID 61899: Dereference after null check */
+    if ( !pDslhTracertObj )
+    {
+        return  ANSC_STATUS_FAILURE;
+    }
+
     if ( pMyObject->IPProtocol == XSKT_SOCKET_AF_INET )
     {
         pIpv4Header = (PIPV4_HEADER)buffer;
@@ -510,7 +516,7 @@ BbhmDiagitRecv
         {
             pDslhTracertObj->DiagnosticState = DSLH_DIAG_STATE_TYPE_Complete;
         }
-        else if ( pDslhTracertObj && pDslhTracertObj->MaxHopCount > ttl )
+        else if ( pDslhTracertObj->MaxHopCount > ttl )
         {
             pMyObject->SetTtl( (ANSC_HANDLE)pMyObject, ++ttl );
         }

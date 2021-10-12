@@ -250,7 +250,7 @@ CosaDmlGetSelfHealMonitorCfg(
 {
     PCOSA_DML_RESOUCE_MONITOR     pRescTest            = (PCOSA_DML_RESOUCE_MONITOR)NULL;
 
-    pRescTest = (PCOSA_DML_RESOUCE_MONITOR)AnscAllocateMemory(sizeof(PCOSA_DML_RESOUCE_MONITOR));
+    pRescTest = (PCOSA_DML_RESOUCE_MONITOR)AnscAllocateMemory(sizeof(COSA_DML_RESOUCE_MONITOR)); //CID: 62759 -Wrong sizeof argument
     if(!pRescTest) {
         printf("\n %s Resource monitor allocation failed\n",__FUNCTION__);
         return NULL;
@@ -378,6 +378,7 @@ CosaDmlGetSelfHealCpuMemFragCfg(
 	if(!pCpuMemFrag->pCpuMemFragDma) 
 	{
 			CcspTraceWarning(("\n %s Cpu Mem Frag Dma allocation failed\n",__FUNCTION__));
+                        AnscFreeMemory(pCpuMemFrag); //CID :56931 Resource leak
 			return NULL;
 	}
 

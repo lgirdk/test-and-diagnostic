@@ -193,9 +193,9 @@ BbhmUdpechoRemove
     ANSC_STATUS           returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_UDP_ECHOSRV_OBJECT pMyObject = (PBBHM_UDP_ECHOSRV_OBJECT)hThisObject;
 
-    pMyObject->Cancel((ANSC_HANDLE)pMyObject);
-
-    AnscCoRemove((ANSC_HANDLE)pMyObject);
+    /* CID - 58154 Use after free */
+    /* Removed "cancel and remove calls" as BbhmDiageoRemove() is internally using 
+       same calls to free the pMyObject */
     BbhmDiageoRemove((ANSC_HANDLE)pMyObject);
 
     return  ANSC_STATUS_SUCCESS;
