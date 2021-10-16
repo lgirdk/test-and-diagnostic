@@ -1609,7 +1609,71 @@ case $SELFHEAL_TYPE in
                 fi
 
             # ----------------------------------------------------------------
-            else 
+            elif [ "$BOX_TYPE" = "MV2PLUS" ]; then 
+            # ----------------------------------------------------------------
+          
+                GRE_VLANID=`psmcli get dmsb.hotspot.tunnel.1.interface.1.VLANID`
+
+                if [ "0" = "$GRE_VLANID" ]; then
+                    GREIF="$grePrefix"
+                else
+                    GREIF="$grePrefix.$GRE_VLANID"
+                fi
+
+                if [ "$OPEN_24" = "true" ] || [ "$OPEN_5" = "true" ]; then
+                    #We need to make sure Community hotspot Vlan IDs are attached to the bridges
+                    #if found not attached , then add the device to bridges
+
+                    grePresent=$(ifconfig -a | grep "$GREIF")
+                    grePresentWithoutVlan=$(ifconfig -a | grep "$grePrefix")
+
+                    if [ -n "$grePresent" ]; then
+                        tunnelAdded=$(brctl show brlan2 | grep "$GREIF")
+                        if [ "$tunnelAdded" = "" ]; then
+                            tunnelAddedWithoutVlan=$(brctl show brlan2 | grep "$grePrefix")
+                            if [ -n "$tunnelAddedWithoutVlan" ] && [ -n "$GRE_VLANID" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : GRE tunnel is created without vlan"
+                                sysevent set update-vlanID 1
+                            else
+                                echo_t "[RDKB_PLATFORM_ERROR] : Vlan not added $GREIF"
+                                brctl addif brlan2 $GREIF
+                            fi
+                        fi
+                    elif [ -n "$grePresentWithoutVlan" ] && [ -n "$GRE_VLANID" ]; then
+                          echo_t "[RDKB_PLATFORM_ERROR] : GRE Tunnel is present without VLAN"
+                          sysevent set update-vlanID 1
+                    else
+                          HOTSPOT_PROCESS_ID=$(busybox pidof CcspHotspot)
+                          primary=$(sysevent get hotspotfd-primary)
+                          if [ -n "$HOTSPOT_PROCESS_ID" ] && [ -n "$primary" ] ; then
+                              echo_t " [RDKB_PLATFORM_ERROR] : Hotspot process is up but tunnel got destroyed " 
+                              sysevent set gre-forceRestart 1
+                          fi 
+                    fi		       
+                fi
+                if [ "$OPEN_24" = "true" ]; then
+                    wifiInterface24=$(dmcli eRT getv Device.WiFi.SSID.5.Name | grep string, | awk '{print $5}')
+                    if [ -n "$wifiInterface24" ]; then
+                        wl02Present=$(brctl show brlan2 | grep "$wifiInterface24")
+                        if [ "$wl02Present" = "" ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : WiFi interface not added to hotspot bridge $wifiInterface24 "
+                            brctl addif brlan2 $wifiInterface24
+                        fi
+                    fi
+                fi
+                if [ "$OPEN_5" = "true" ]; then
+                    wifiInterface5=$(dmcli eRT getv Device.WiFi.SSID.6.Name | grep string, | awk '{print $5}')
+                    if [ -n "$wifiInterface5" ]; then
+                        wl12Present=$(brctl show brlan2 | grep "$wifiInterface5")
+                        if [ "$wl12Present" = "" ]; then
+                            echo_t "[RDKB_PLATFORM_ERROR] : WiFi interface is not added to hotspot bridge $wifiInterface5"
+                            brctl addif brlan2 $wifiInterface5
+                        fi
+                    fi
+                fi
+                
+            # ----------------------------------------------------------------
+            else
             # ----------------------------------------------------------------
 
             #When Xfinitywifi is enabled, l2sd0.102 and l2sd0.103 should be present.
