@@ -30,6 +30,8 @@ Unit_Activated=$(syscfg get unit_activated)
 
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
+#calling storeinformation to generate the logs that display the CPU load
+storeInformation
 ovs_enable=`syscfg get mesh_ovs_enable`
 
 if [ "$BOX_TYPE" = "MV1" ]; then
