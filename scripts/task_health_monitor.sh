@@ -3947,3 +3947,13 @@ if [ "$MODEL_NUM" = "CGM4981COM" ]; then
                 fi
         fi
 fi
+
+# Run IGD process if not running
+upnp_enabled=`syscfg get upnp_igd_enabled`
+if [ "1" = "$upnp_enabled" ]; then
+  check_IGD_process=`ps | grep "IGD" | grep -v grep | wc -l`
+  if [ $check_IGD_process -eq 0 ]; then
+	  echo_t "[RDKB_SELFHEAL] : There is no IGD process running in this device"
+	  sysevent set igd-restart
+  fi
+fi
