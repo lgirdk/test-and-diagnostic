@@ -3557,7 +3557,7 @@ case $SELFHEAL_TYPE in
                   done
                 if [ "$brFound" = "false" ]; then
                     echo_t "[RDKB_SELFHEAL] : Mesh bridge $ifn missing, adding iface to brlan0"
-                    if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" f];then
+                    if [ "x$bridgeUtilEnable" = "xtrue" || "x$ovs_enable" = "xtrue" ];then
                     	/usr/bin/bridgeUtils add-port brlan0 $ifn
                     else
                     	brctl addif brlan0 $ifn;
