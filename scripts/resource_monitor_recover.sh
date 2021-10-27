@@ -31,7 +31,7 @@ exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 if [ "$SELFHEAL_ENABLE" == "true" ] && [ -f /tmp/.resource_monitor_started ]; then
-        SelfHealScript_PID=`pidof resource_monitor.sh`
+        SelfHealScript_PID=`busybox pidof resource_monitor.sh`
         if [ "$SelfHealScript_PID" == "" ]; then
 		echo_t "RDKB_PROCESS_CRASHED : resource_monitor.sh is not running, need restart"
                 echo_t "Restarting resource monitor script"
