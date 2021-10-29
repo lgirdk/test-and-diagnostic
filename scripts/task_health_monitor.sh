@@ -37,6 +37,8 @@ if [ -d "/sys/module/openvswitch/" ];then
 fi
 bridgeUtilEnable=`syscfg get bridge_util_enable`
 
+PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
+
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
@@ -670,8 +672,11 @@ if [ "$PSM_PID" = "" ]; then
             #       echo "[$(getDateTime)] RDKB_SELFHEAL : <$level>CABLEMODEM[$vendor]:<99000007><$timestamp><$CMMac><$modelName> RM PsmSsp process died,need reboot"
             #       touch $HAVECRASH
             #       rebootNeeded RM "PSM"
-            echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
-            resetNeeded psm PsmSsp
+
+            if [ ! -f "$PSM_SHUTDOWN" ];then
+                echo_t "RDKB_PROCESS_CRASHED : PSM_process is not running, need restart"
+                resetNeeded psm PsmSsp
+            fi
         ;;
         "SYSTEMD")
         ;;
