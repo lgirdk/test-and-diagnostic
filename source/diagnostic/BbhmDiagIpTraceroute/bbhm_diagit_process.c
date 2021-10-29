@@ -464,13 +464,13 @@ BbhmDiagitRecv
 
             SeqId = AnscIcmpv6EchoGetId(pOriIcmpHeaderIpv6);
 
-            CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_TIME_EXCEEDED SeqId = %d !!!!!!\n", SeqId));
+            CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_TIME_EXCEEDED SeqId = %lu !!!!!!\n", SeqId));
         }
         else if ( AnscIcmpv6EchoGetType(pIcmpHeaderIpv6) == ICMP6_TYPE_ECHO_REPLY )
         {
             SeqId = AnscIcmpv6EchoGetId(pIcmpHeaderIpv6);
 
-            CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_ECHO_REPLY SeqId = %d !!!!!!\n", SeqId));
+            CcspTraceInfo(("!!!!!! Recv ICMP6_TYPE_ECHO_REPLY SeqId = %lu !!!!!!\n", SeqId));
         }
 
         pMyObject->UpdateEntry

@@ -473,7 +473,7 @@ SelfHeal_SetParamUlongValue
 			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
 		}
-                CcspTraceWarning(("%s : %d \n",ParamName,uValue));
+                CcspTraceWarning(("%s : %lu \n",ParamName,uValue));
 		pMyObject->FreeMemThreshold = uValue;
 		return TRUE;
 	}
@@ -493,7 +493,7 @@ SelfHeal_SetParamUlongValue
 			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
 		}
-                CcspTraceWarning(("%s : %d \n",ParamName,uValue));
+                CcspTraceWarning(("%s : %lu \n",ParamName,uValue));
 		pMyObject->MemFragThreshold = uValue;
 		return TRUE;
 	}

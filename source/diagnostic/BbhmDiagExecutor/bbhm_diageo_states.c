@@ -169,7 +169,7 @@ BbhmDiageoSetDiagParams
     {
         AnscTrace
             (
-                "BbhmDiageoSetDiagParams -- invalid structure size, src/dst = %d/%d!!!\n",
+                "BbhmDiageoSetDiagParams -- invalid structure size, src/dst = %lu/%lu!!!\n",
                 pDiagInfo->StructSize,
                 pNewDiagInfo->StructSize
             );

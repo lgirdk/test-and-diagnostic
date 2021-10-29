@@ -1305,7 +1305,7 @@ BbhmDiagitUpdateEntry
 
     AnscAcquireLock(&pMyObject->EchoTableLock);
 
-    CcspTraceInfo(("SeqId in DiagitUpdateEntry: %d\n", SeqId));
+    CcspTraceInfo(("SeqId in DiagitUpdateEntry: %lu\n", SeqId));
 
     pSLinkEntry = AnscSListGetFirstEntry(&pMyObject->EchoTable[ulHashIndex]);
 

@@ -6189,12 +6189,12 @@ SpeedTest_GetParamStringValue
     {
         if (  *pUlSize > SPEEDTEST_ARG_SIZE )
         {
-		AnscTraceFlow(("SpeedTest Argument get : %s : len :%d: *pUlSize:%d: \n",g_argument_speedtest,len,*pUlSize));
+		AnscTraceFlow(("SpeedTest Argument get : %s : len :%d: *pUlSize:%lu: \n",g_argument_speedtest,len,*pUlSize));
 		AnscCopyString(pValue, g_argument_speedtest);
 		return 0;
         } else
 	{
-		AnscTraceWarning(("SpeedTest Argument get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_argument_speedtest,len, *pUlSize));
+		AnscTraceWarning(("SpeedTest Argument get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%lu: \n",g_argument_speedtest,len, *pUlSize));
 
                 *pUlSize = SPEEDTEST_ARG_SIZE+1;
 		return 1;
@@ -6205,12 +6205,12 @@ SpeedTest_GetParamStringValue
     {
         if (  *pUlSize > SPEEDTEST_AUTH_SIZE )
         {
-                AnscTraceFlow(("SpeedTest Authentication get : %s : len :%d: *pUlSize:%d: \n",g_authentication_speedtest,len,*pUlSize));
+                AnscTraceFlow(("SpeedTest Authentication get : %s : len :%d: *pUlSize:%lu: \n",g_authentication_speedtest,len,*pUlSize));
                 AnscCopyString(pValue, g_authentication_speedtest);
                 return 0;
         } else
         {
-                AnscTraceWarning(("SpeedTest Authentication get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%d: \n",g_authentication_speedtest,len, *pUlSize));
+                AnscTraceWarning(("SpeedTest Authentication get :  Incorrect size: %s: current_string_size:%d:  size of buffer :%lu: \n",g_authentication_speedtest,len, *pUlSize));
 
                 *pUlSize = SPEEDTEST_AUTH_SIZE+1;
                 return 1;
@@ -6445,13 +6445,13 @@ SpeedTest_SetParamUlongValue
     /* check the parameter name and set the corresponding value */
     if (strcmp(ParamName, "ClientType") == 0)
     {
-        AnscTraceFlow(("%s ClientType Speedtest : %d \n", __FUNCTION__, ulong));
+        AnscTraceFlow(("%s ClientType Speedtest : %lu \n", __FUNCTION__, ulong));
         g_clienttype_speedtest = ulong;
         return TRUE;
     }
     else if (strcmp(ParamName, "Status") == 0)
     {
-        AnscTraceFlow(("%s Status Speedtest : %d \n",__FUNCTION__, ulong));
+        AnscTraceFlow(("%s Status Speedtest : %lu \n",__FUNCTION__, ulong));
         g_status_speedtest = ulong;
         return TRUE;
     }

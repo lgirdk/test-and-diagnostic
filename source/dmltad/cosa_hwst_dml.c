@@ -201,7 +201,7 @@ hwHealthTest_SetParamBoolValue
         if(statvfs("/tmp", &sfs) != -1)
         {
             result = (unsigned long long)sfs.f_bsize * sfs.f_bavail;
-            AnscTraceWarning(("%lu space left in tmp\n", result));
+            AnscTraceWarning(("%llu space left in tmp\n", result));
         }
 
         char cmd[128] = {0};
