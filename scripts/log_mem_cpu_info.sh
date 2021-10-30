@@ -316,7 +316,7 @@ get_high_mem_processes() {
 						systemctl restart snmpSubAgent
 						sleep 2
 					else
-						SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+						SNMP_PID=`busybox ps ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
 						kill -9 $SNMP_PID
 						resetNeeded snmp snmp_subagent maintanance_window
 					fi
