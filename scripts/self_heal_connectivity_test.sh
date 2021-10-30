@@ -23,8 +23,6 @@ TAD_PATH="/usr/ccsp/tad/"
 source $TAD_PATH/corrective_action.sh
 source /etc/waninfo.sh
 
-exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
-
 WAN_INTERFACE=$(getWanInterfaceName)
 WAN_INTERFACE_IPV4=$(getWanInterfaceName)
 
