@@ -65,7 +65,7 @@ logTmpFs()
 }
 
 get_high_mem_processes() {
-    top -bn1 -m | head -n10 | tail -6 > /tmp/mem_info.txt
+    busybox top -mbn1 | head -n10 | tail -6 > /tmp/mem_info.txt
     sed -i '/top/d' /tmp/mem_info.txt
     sed -i -e 's/^/ /' /tmp/mem_info.txt
 
@@ -245,7 +245,7 @@ get_high_mem_processes() {
 	then
 		echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
 		echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
-		top -m -b n 1 >> /rdklogs/logs/CPUInfo.txt.0
+		busybox top -mbn1 >> /rdklogs/logs/CPUInfo.txt.0
                 
                 # Log tmpfs data
                 logTmpFs "log"                
@@ -259,7 +259,7 @@ get_high_mem_processes() {
 		if [ "$USER_CPU" -ge "25" ]; then
 			echo_t "RDKB_PROC_USAGE_LOG: Top 5 CPU USAGE Process at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
 			echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
-			top_cmd="top -bn1 | head -n10 | tail -6"
+			top_cmd="busybox top -mbn1 | head -n10 | tail -6"
 			eval $top_cmd >> /rdklogs/logs/CPUInfo.txt.0
 		fi
                 # Log tmpfs data
@@ -302,7 +302,7 @@ get_high_mem_processes() {
 						systemctl restart snmpSubAgent
 						sleep 2
 					else
-						SNMP_PID=`ps -ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
+						SNMP_PID=`busybox ps ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
 						kill -9 $SNMP_PID
 						resetNeeded snmp snmp_subagent maintanance_window
 					fi
