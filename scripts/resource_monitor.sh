@@ -34,8 +34,6 @@ source $TAD_PATH/corrective_action.sh
 source /etc/log_timestamp.sh
 Last_reboot_reason="`syscfg get X_RDKCENTRAL-COM_LastRebootReason`"
 
-exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
-
 touch /tmp/.resource_monitor_started
 
 DELAY=30
