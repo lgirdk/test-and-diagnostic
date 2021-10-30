@@ -19,15 +19,11 @@
 #######################################################################################
 
 TAD_PATH="/usr/ccsp/tad/"
-UTOPIA_PATH="/etc/utopia/service.d"
 
 source $TAD_PATH/corrective_action.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
-rand_num_old=""
 
-
-# Generate random time to start 
 WAN_INTERFACE="erouter0"
 
 calcRandom=1
