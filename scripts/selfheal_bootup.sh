@@ -226,7 +226,7 @@ setRebootreason()
 db_clean_up_required()
 {
 
-	if [ "$BOX_TYPE" = "XB3" ]
+	if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 	then
 		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
@@ -313,7 +313,7 @@ isIPv6=""
 		Check_WAN_Ip=1
 	 fi
 
-if [ "$BOX_TYPE" = "XB3" ]
+if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 then
 
 	#RDKB-21681 Need RDKlogging for All SQUASHFS errors
@@ -758,7 +758,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
     fi
 fi
 
-	if [ "$BOX_TYPE" = "XB3" ]
+	if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
 	then
 		GET_PID_FROM_PEER=`rpcclient2 "busybox pidof CcspWifiSsp"`
 		WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
