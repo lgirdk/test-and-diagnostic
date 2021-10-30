@@ -22,8 +22,6 @@ TAD_PATH="/usr/ccsp/tad/"
 
 source $TAD_PATH/corrective_action.sh
 
-exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
-
 WAN_INTERFACE="erouter0"
 
 calcRandom=1
