@@ -350,7 +350,7 @@ runPingTest()
                    echo_t "RDKB_SELFHEAL : No IPv4 Gateway Address detected"
                 fi
 
-                if [ "$BOX_TYPE" = "XB3" ]
+                if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
                 then
                       dhcpStatus=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | awk '{print $5}'`
                       wanIP=`ifconfig erouter0 | grep "inet addr" | head -n1 |cut -f2 -d: | cut -f1 -d" "`
