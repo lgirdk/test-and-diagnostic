@@ -33,8 +33,6 @@ source $TAD_PATH/corrective_action.sh
 #source /etc/device.properties
 source /etc/log_timestamp.sh
 
-exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
-
 touch /tmp/.resource_monitor_started
 
 DELAY=30
