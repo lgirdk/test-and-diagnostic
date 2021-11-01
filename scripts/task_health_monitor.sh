@@ -23,7 +23,7 @@ TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
 BR_MODE=0
-CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
+CONSOLE_LOG="/rdklogs/logs/ArmConsolelog.txt.0"
 
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
@@ -44,6 +44,7 @@ PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
 # use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
 case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
+    "MV1") SELFHEAL_TYPE="BASE";;
     "MV2PLUS") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
@@ -254,7 +255,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 case $SELFHEAL_TYPE in
     "BASE")
         ###########################################
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             wifi_check=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
             wifi_timeout=$(echo "$wifi_check" | grep "$CCSP_ERR_TIMEOUT")
             wifi_not_exist=$(echo "$wifi_check" | grep "$CCSP_ERR_NOT_EXIST")
@@ -492,7 +493,7 @@ case $SELFHEAL_TYPE in
                               echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                               echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 
-                              if [ "$BOX_TYPE" = "XB3" ]; then
+                              if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
                                  if [ -f /usr/bin/rpcclient2 ] ;then
                                  echo_t "Ping to peer failed check, whether ATOM is good through RPC"
                                     RPC_RES=`rpcclient2 pwd`
@@ -534,7 +535,7 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
         fi
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ] || [ "$BOX_TYPE" = "MV2PLUS" ]; then
             dmesg -n 8
             atomOnlyReboot=$(dmesg | grep -i "Atom only")
             dmesg -n 5
@@ -1209,7 +1210,7 @@ HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
 if [ x"$HOTSPOT_PSM" = x"1" ]; then
     HOTSPOT_ENABLE="true"
 else
-    HOTSPOT_ENABLE="flase"
+    HOTSPOT_ENABLE="false"
 fi
 
 if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
@@ -2095,7 +2096,7 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
-        if [ "$BOX_TYPE" = "XB3" ]; then
+        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
             SNMP_MASTER_PID=$(busybox pidof snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
@@ -3634,7 +3635,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE")
-            if [ "$BOX_TYPE" = "XB3" ]; then
+            if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
 
                 if [ "$check_wan_dhcp_client_v4" != "" ] && [ "$check_wan_dhcp_client_v6" != "" ]; then
                     if [ "$(cat /proc/net/dbrctl/mode)"  = "standbay" ]; then
