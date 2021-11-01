@@ -90,6 +90,11 @@
 #define ROUTEHOPS_HOST_STRING		"Host"
 #endif
 
+#if defined(_HUB4_PRODUCT_REQ_)
+#define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_WAN_MAC"
+#else
+#define DEVICE_MAC                   "Device.DeviceInfo.X_COMCAST-COM_CM_MAC"
+#endif
 
 #ifndef _COSA_SIM_
 BOOL CosaIpifGetSetSupported(char * pParamName);
@@ -941,9 +946,8 @@ void COSA_IP_diag_FillDeviceDetails( void )
 	{
 		memset( pingtest_devdet->ecmMAC, 0, sizeof( pingtest_devdet->ecmMAC ));
 
-		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.X_COMCAST-COM_CM_MAC", 
-									  pingtest_devdet->ecmMAC,
-									  sizeof( pingtest_devdet->ecmMAC ));
+		COSA_IP_diag_getGetParamValue(DEVICE_MAC, pingtest_devdet->ecmMAC,
+					      sizeof( pingtest_devdet->ecmMAC ));
 	}
 
 	/* Get Serial number if already having NULL */
