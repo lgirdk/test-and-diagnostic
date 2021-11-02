@@ -244,10 +244,6 @@ do
 		Curr_CPULoad_Avg=$(( $Curr_CPULoad / 10 ))
 
 		echo_t "RDKB_SELFHEAL : Avg CPU usage after 5 minutes of CPU Avg monitor window is $Curr_CPULoad_Avg"
-		if [ "$Curr_CPULoad_Avg" = "100" ]
-		then
-			t2CountNotify "SYS_ERROR_5min_avg_cpu_100"
-		fi
 
         if [ "$BOX_TYPE" = "XB3" ];then
             if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
@@ -304,6 +300,10 @@ do
 			fi
 		fi
 
+		if [ "$Curr_CPULoad_Avg" = "100" ]
+		then
+			t2CountNotify "SYS_ERROR_5min_avg_cpu_100"
+		fi
 
 		LOAD_AVG=`cat /proc/loadavg`
 		echo_t "RDKB_SELFHEAL : LOAD_AVG is : $LOAD_AVG"
