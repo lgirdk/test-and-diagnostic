@@ -657,7 +657,9 @@ case $SELFHEAL_TYPE in
         fi
         ########################################
         if [ "$BOX_TYPE" = "XB3" ]; then
-            atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
+            dmesg -n 8
+            atomOnlyReboot=$(dmesg | grep -i "Atom only")
+            dmesg -n 5
             if [ "x$atomOnlyReboot" = "x" ]; then
                 crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
                 isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
@@ -1272,8 +1274,9 @@ case $SELFHEAL_TYPE in
     "BASE")
     ;;
     "TCCBR")
-
-        atomOnlyReboot=$(dmesg -n 8 && dmesg | grep -i "Atom only")
+        dmesg -n 8
+        atomOnlyReboot=$(dmesg | grep -i "Atom only")
+        dmesg -n 5
         if [ "x$atomOnlyReboot" = "x" ]; then
             crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
             isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
