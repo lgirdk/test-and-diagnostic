@@ -38,7 +38,7 @@ Dhcpv6_Client_restart ()
 	fi
 	process_restart_need=0
 	if [ "$2" = "restart_for_dibbler-server" ];then
-        	PAM_UP="`pidof CcspPandMSsp`"
+        	PAM_UP="$(busybox pidof CcspPandMSsp)"
 		if [ "$PAM_UP" != "" ];then
                 	echo_t "PAM pid $PAM_UP & $1 pid $dibbler_client_type $ti_dhcpv6_type"
                         echo_t "RDKB_PROCESS_CRASHED : Restarting $1 to reconfigure server.conf"
@@ -65,7 +65,7 @@ Dhcpv6_Client_restart ()
 		return 2
 	elif [ ! -s  "$DIBBLER_SERVER_CONF" ];then
 		return 1
-        elif [ "`pidof dibbler-server`" = "" ];then
+        elif [ -z "$(busybox pidof dibbler-server)" ];then
         	dibbler-server stop
                 sleep 2
                 dibbler-server start
@@ -1095,8 +1095,8 @@ do
     fi
     
     #Find the DHCPv6 client type
-    ti_dhcpv6_type="`pidof ti_dhcp6c`"
-    dibbler_client_type="`pidof dibbler-client`"
+    ti_dhcpv6_type="$(busybox pidof ti_dhcp6c)"
+    dibbler_client_type="$(busybox pidof dibbler-client)"
     if [ "$ti_dhcpv6_type" = "" ] && [ "$dibbler_client_type" = "" ];then
     	DHCPv6_TYPE=""
     elif [ "$DHCPv6_TYPE" = "" ];then 

@@ -200,8 +200,8 @@ case $SELFHEAL_TYPE in
 esac
 
 #Find the DHCPv6 client type 
-ti_dhcpv6_type="`pidof ti_dhcp6c`"
-dibbler_client_type="`pidof dibbler-client`"
+ti_dhcpv6_type="$(busybox pidof ti_dhcp6c)"
+dibbler_client_type="$(busybox pidof dibbler-client)"
 if [ "$ti_dhcpv6_type" = "" ] && [ ! -z "$dibbler_client_type" ];then
 	DHCPv6_TYPE="dibbler-client"
 elif [ ! -z "$ti_dhcpv6_type" ] && [ "$dibbler_client_type" = "" ];then
@@ -219,7 +219,7 @@ Dhcpv6_Client_restart ()
 	fi
 	process_restart_need=0
 	if [ "$2" = "restart_for_dibbler-server" ];then
-        	PAM_UP="`pidof CcspPandMSsp`"
+        	PAM_UP="$(busybox pidof CcspPandMSsp)"
 		if [ "$PAM_UP" != "" ];then
                 	echo_t "PAM pid $PAM_UP & $1 pid $dibbler_client_type $ti_dhcpv6_type"
                         echo_t "RDKB_PROCESS_CRASHED : Restarting $1 to reconfigure server.conf"
@@ -246,7 +246,7 @@ Dhcpv6_Client_restart ()
 		return 2
 	elif [ ! -s  "$DIBBLER_SERVER_CONF" ];then
 		return 1
-        elif [ "`pidof dibbler-server`" = "" ];then
+        elif [ -z "$(busybox pidof dibbler-server)" ];then
         	dibbler-server stop
                 sleep 2
                 dibbler-server start
@@ -444,7 +444,7 @@ case $SELFHEAL_TYPE in
               fi
             else
               if [ -f $PING_PATH/ping_peer ]; then
-                  SYSEVENTD_PID=$(pidof syseventd)
+                  SYSEVENTD_PID=$(busybox pidof syseventd)
                   if [ "$SYSEVENTD_PID" != "" ]; then
                       ## Check Peer ip is accessible
                       loop=1
@@ -957,7 +957,7 @@ case $SELFHEAL_TYPE in
 	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
 	    staticIp_check=$(psmcli get dmsb.truestaticip.Enable)
             if [ "$staticIp_check" = "1" ]; then
-		ripdPid=`pidof ripd`
+		ripdPid=$(busybox pidof ripd)
 		if [ -z "$ripdPid" ]; then
                     echo_t "RDKB_SELFHEAL : ripd process is not running, need restart"
                     /usr/sbin/ripd -d -f /var/ripd.conf -u root -g root -i /var/ripd.pid &
@@ -1264,7 +1264,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking harvester PID
-        HARVESTER_PID=$(pidof harvester)
+        HARVESTER_PID=$(busybox pidof harvester)
         if [ "$HARVESTER_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : harvester is not running, need restart"
             resetNeeded harvester harvester
@@ -2055,7 +2055,7 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
 	# Checking Aker PID
-	AKER_PID=$(pidof aker)
+	AKER_PID=$(busybox pidof aker)
 	if [ -f "/etc/AKER_ENABLE" ] &&  [ "$AKER_PID" = "" ]; then
 		echo_t "[RDKB_PROCESS_CRASHED] : aker process is not running need restart"
 		t2CountNotify "SYS_SH_akerCrash"
