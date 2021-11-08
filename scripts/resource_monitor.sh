@@ -432,7 +432,6 @@ fi
 	    else
 		    IsAlreadyCountReseted=0
 	    fi
-	    sh $TAD_PATH/task_health_monitor.sh
 	fi
 
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
