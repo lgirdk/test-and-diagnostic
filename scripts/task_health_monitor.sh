@@ -18,6 +18,8 @@
 # limitations under the License.
 #######################################################################################
 
+[ "$(syscfg get selfheal_enable)" = "true" ] || exit 0
+
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
@@ -27,6 +29,16 @@ BR_MODE=0
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
+
+# ----------------------------------------------------------------------------
+while true
+do
+# ----------------------------------------------------------------------------
+
+monitor_interval=$(syscfg get process_monitor_interval)
+[ -z "$monitor_interval" ] && monitor_interval="5"
+sleep ${monitor_interval}m
+
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
@@ -4219,3 +4231,7 @@ if [ "1" = "$upnp_enabled" ]; then
 	  sysevent set igd-restart
   fi
 fi
+
+# ----------------------------------------------------------------------------
+done
+# ----------------------------------------------------------------------------
