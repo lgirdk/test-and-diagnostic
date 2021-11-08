@@ -82,6 +82,13 @@ if [ $? != 0 ]; then
 				t2CountNotify "SYS_SH_ResourceMonitor_restart"
 				$TAD_PATH/resource_monitor.sh & 
 			fi
+
+			SelfHealScript_PID=$(busybox pidof task_health_monitor.sh)
+			if [ "$SelfHealScript_PID" == "" ]; then
+				echo_t "Restarting process monitor script"
+				t2CountNotify "SYS_SH_ProcessMonitor_restart"
+				$TAD_PATH/task_health_monitor.sh &
+			fi
 		fi
 	else
 	   echo_t "RDKB_SELFHEAL : syscfg DB creation failed"		
