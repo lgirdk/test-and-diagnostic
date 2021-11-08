@@ -187,6 +187,7 @@ BOOL SelfHeal_SetParamBoolValue
             v_secure_system("/usr/ccsp/tad/self_heal_connectivity_test.sh &");
             v_secure_system("/usr/ccsp/tad/resource_monitor.sh &");
             v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
+            v_secure_system("/usr/ccsp/tad/task_health_monitor.sh &");
         }
         else
         {
@@ -213,6 +214,14 @@ BOOL SelfHeal_SetParamBoolValue
                 CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
             } else {
                 CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
+                v_secure_system("kill -9 %s", buf);
+            }
+
+            copy_command_output2("busybox pidof task_health_monitor.sh", buf, sizeof(buf));
+            if (strlen(buf) == 0) {
+                CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
+            } else {
+                CcspTraceWarning(("%s: Process Monitor script\n", __FUNCTION__));
                 v_secure_system("kill -9 %s", buf);
             }
         }
@@ -1551,6 +1560,12 @@ ResourceMonitor_GetParamUlongValue
         *puLong = pRescMonitor->AvgMemThreshold;
         return TRUE;
     }
+
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_ProcessMonitorInterval") == 0)
+    {
+        *puLong = pRescMonitor->ProcessMonIntervalTime;
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -1661,6 +1676,21 @@ ResourceMonitor_SetParamUlongValue
 	return TRUE;
     }
 
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_ProcessMonitorInterval") == 0)
+    {
+        if ( pRescMonitor->ProcessMonIntervalTime == uValue )
+        {
+            return TRUE;
+        }
+
+        if (syscfg_set_u_commit(NULL, "process_monitor_interval", uValue) != 0)
+        {
+            CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        pRescMonitor->ProcessMonIntervalTime = uValue;
+        return TRUE;
+    }
     return FALSE;
 }
 
