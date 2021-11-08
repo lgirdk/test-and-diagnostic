@@ -137,6 +137,7 @@ _COSA_DML_RESOUCE_MONITOR
     ULONG                  MonIntervalTime;
     ULONG                  AvgCpuThreshold;
     ULONG                  AvgMemThreshold;
+    ULONG                  ProcessMonIntervalTime;
 }
 COSA_DML_RESOUCE_MONITOR, *PCOSA_DML_RESOUCE_MONITOR;
 
