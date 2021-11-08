@@ -250,6 +250,10 @@ CosaDmlGetSelfHealMonitorCfg(
     syscfg_get(NULL, "avg_memory_threshold", buf, sizeof(buf));
     pRescTest->AvgMemThreshold = atoi(buf);
 
+    memset(buf, 0, sizeof(buf));
+    syscfg_get(NULL, "process_monitor_interval", buf, sizeof(buf));
+    pRescTest->ProcessMonIntervalTime = atoi(buf);
+
     return pRescTest;
 }
 
@@ -408,6 +412,7 @@ CosaDmlGetSelfHealCfg(
 #endif
 	    system("/usr/ccsp/tad/resource_monitor.sh &");
             system("/usr/ccsp/tad/selfheal_aggressive.sh &");
+            system("/usr/ccsp/tad/task_health_monitor.sh &");
 	}  
 
 	memset(buf,0,sizeof(buf));
