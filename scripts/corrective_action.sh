@@ -862,6 +862,11 @@ resetNeeded()
                     kill -9 "$SelfHealScript_PID"
                 fi
 
+                SelfHealScript_PID=$(busybox pidof task_health_monitor.sh)
+                if [ "$SelfHealScript_PID" != "" ]; then
+                    kill -9 "$SelfHealScript_PID"
+                fi
+
                 cd /usr/ccsp/tad
                 $BINPATH/CcspTandDSsp -subsys $Subsys
                 cd -
