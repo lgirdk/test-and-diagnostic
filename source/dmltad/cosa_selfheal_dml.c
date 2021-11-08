@@ -191,6 +191,10 @@ BOOL SelfHeal_SetParamBoolValue
                 memset(cmd, 0, sizeof(cmd));
                 AnscCopyString(cmd, "/usr/ccsp/tad/selfheal_aggressive.sh &");
                 system(cmd);
+
+                memset(cmd, 0, sizeof(cmd));
+                AnscCopyString(cmd, "/usr/ccsp/tad/task_health_monitor.sh &");
+                system(cmd);
 	    }
             else
 	    {
@@ -222,6 +226,20 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }   
        
+                memset(cmd, 0, sizeof(cmd));
+                memset(buf, 0, sizeof(buf));
+                sprintf(cmd, "busybox pidof task_health_monitor.sh");
+                copy_command_output(cmd, buf, sizeof(buf));
+                buf[strlen(buf)] = '\0';
+
+                if (!strcmp(buf, "")) {
+                    CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
+                } else {
+                    CcspTraceWarning(("%s: Process Monitor script\n", __FUNCTION__));
+                    sprintf(cmd, "kill -9 %s", buf);
+                    system(cmd);
+                }
+
                 memset(cmd, 0, sizeof(cmd));
                 memset(buf, 0, sizeof(buf));
                 sprintf(cmd, "busybox pidof selfheal_aggressive.sh");
@@ -1705,6 +1723,12 @@ ResourceMonitor_GetParamUlongValue
         *puLong = pRescMonitor->AvgMemThreshold;
         return TRUE;
     }
+
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_ProcessMonitorInterval") == 0)
+    {
+        *puLong = pRescMonitor->ProcessMonIntervalTime;
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -1831,6 +1855,26 @@ ResourceMonitor_SetParamUlongValue
 	return TRUE;
     }
 
+    if (strcmp(ParamName, "X_RDKCENTRAL-COM_ProcessMonitorInterval") == 0)
+    {
+        if ( pRescMonitor->ProcessMonIntervalTime == uValue )
+        {
+            return TRUE;
+        }
+
+        if (syscfg_set_u(NULL, "process_monitor_interval", uValue) != 0)
+        {
+            CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        if (syscfg_commit() != 0)
+        {
+            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
+            return FALSE;
+        }
+        pRescMonitor->ProcessMonIntervalTime = uValue;
+        return TRUE;
+    }
     return FALSE;
 }
 
