@@ -249,6 +249,40 @@ do
 			t2CountNotify "SYS_ERROR_5min_avg_cpu_100"
 		fi
 
+        if [ "$BOX_TYPE" = "XB3" ];then
+            if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
+                checkMaintenanceWindow
+                if [ $reb_window -eq 1 ];then
+                    top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+                    sed -i '/top/d' /tmp/Process_info.txt
+                    Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
+                    Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
+                    Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
+                    Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
+                    Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
+                    Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+                    echo_t "RDKB_SELFHEAL : CPU load at 100 on ARM side in XB3, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
+
+                    if [ `echo $Process1|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process2|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process3|grep -c "snmp_agent_cm"` -gt 0 ]
+                    then
+                        snmp_cm_agent_count=$((snmp_cm_agent_count+1))
+                    else
+                        snmp_cm_agent_count=0
+                    fi
+                    if [ $snmp_cm_agent_count -ge 4 ]
+                    then
+                        #In maintenance window, add telemetry and reboot
+                        t2CountNotify "SYS_ERROR_SnmpCMHighCPU_reboot"
+                        reason="SNMP_AGENT_CM_HIGH_CPU"
+                        rebootCount=1
+                        rebootNeeded RM SNMP_AGENT_CM_HIGH_CPU $reason $rebootCount
+                    fi
+
+                    rm -rf /tmp/Process_info.txt
+                fi
+            fi
+        fi
+
 		if [ ! -f /tmp/CPU5MinsUsageReachedMAXThreshold ]
 		then
 			if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
@@ -265,27 +299,6 @@ do
 				Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
 				echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 				t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
-                                if [ "$BOX_TYPE" = "XB3" ]
-				then
-               			     if [ `echo $Process1|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process2|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process3|grep -c "snmp_agent_cm"` -gt 0 ]
-                                     then
-                                         snmp_cm_agent_count=$((snmp_cm_agent_count+1))
-                                     else
-                                         snmp_cm_agent_count=0
-                                     fi
-                                     if [ $snmp_cm_agent_count -ge 4 ]
-                                     then
-                                         checkMaintenanceWindow
-                                         if [ $reb_window -eq 1 ]
-                                         then
-                                             #In maintenance window, add telemetry and reboot
-                                             t2CountNotify "SYS_ERROR_SnmpCMHighCPU_reboot"
-                                             reason="SNMP_AGENT_CM_HIGH_CPU"
-                                             rebootCount=1
-                                             rebootNeeded RM SNMP_AGENT_CM_HIGH_CPU $reason $rebootCount
-                                         fi
-                                     fi
-                                fi
 				rm -rf /tmp/Process_info.txt
 				touch /tmp/CPU5MinsUsageReachedMAXThreshold
 			fi
