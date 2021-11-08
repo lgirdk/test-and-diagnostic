@@ -18,6 +18,8 @@
 # limitations under the License.
 #######################################################################################
 
+[ "$(syscfg get selfheal_enable)" = "true" ] || exit 0
+
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
@@ -55,6 +57,16 @@ fi
     DHCPV6C_STATUS=true
 
 Unit_Activated=$(syscfg get unit_activated)
+
+# ----------------------------------------------------------------------------
+while true
+do
+# ----------------------------------------------------------------------------
+
+monitor_interval=$(syscfg get process_monitor_interval)
+[ -z "$monitor_interval" ] && monitor_interval="5"
+sleep ${monitor_interval}m
+
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 source /etc/waninfo.sh
@@ -4820,3 +4832,7 @@ fi
 
 # Clean up the temporary file
 rm -f /tmp/check_promsc_mode.txt
+
+# ----------------------------------------------------------------------------
+done
+# ----------------------------------------------------------------------------
