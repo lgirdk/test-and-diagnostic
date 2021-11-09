@@ -43,6 +43,7 @@
 #include <string.h>
 #include <assert.h>
 #include "diag_inter.h"
+#include "ansc_platform.h"
 
 #define TRACERT_DEF_CNT     3
 #define TRACERT_DEF_TIMO    5
@@ -133,9 +134,11 @@ static void convert_rtts(char *rtts, size_t size
             continue;
 #endif
         }   
-    }   
+    }
 
-    snprintf(rtts, size, "%s", buf);
+    if(snprintf(rtts, size, "%s", buf) >= size){
+        AnscTraceWarning(("%s: String overflow while copying rtts=%s, buf=%s\n", __FUNCTION__, rtts, buf));
+    }
 }
 
 diag_obj_t *diag_tracert_load(void)

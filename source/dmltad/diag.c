@@ -112,7 +112,7 @@ static int inet_is_same_net(uint32_t addr1, uint32_t addr2, uint32_t mask)
 
 static int inet_is_onlink(const struct in_addr *addr)
 {
-    char cmd[1024];
+    char cmd[1024+50];
     char table[1024];
     char entry[1024];
     FILE *rule_fp;
@@ -294,7 +294,7 @@ static bool inet6_nexthop_not_def(const struct in6_addr *addr)
 {
     /* look up all tables */
     FILE *rule_fp = NULL, *tbl_fp = NULL;
-    char cmd[128], table[512], entry[512];
+    char cmd[128+407], table[512], entry[512];
     char *dest, *delim = " \t\r\n", *sp, *preflen;
     struct in6_addr daddr;
 

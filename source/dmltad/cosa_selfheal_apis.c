@@ -159,7 +159,7 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 		}
 
 	}
-		char buf[8];
+		char buf[11];
 		memset(buf,0,sizeof(buf));
 		snprintf(buf,sizeof(buf),"%d",i);
 		if(type == PingServerType_IPv4)
