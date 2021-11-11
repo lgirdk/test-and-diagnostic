@@ -79,28 +79,6 @@ static char *Ipv6_Server ="Ipv6_PingServer_%d";
 
 //static int count=0; /*RDKB-24432 : Memory usage and fragmentation selfheal*/
 
-void copy_command_output(char * cmd, char * out, int len)
-{
-    FILE * fp;
-    char   buf[256];
-    char * p;
-    memset (buf, 0, sizeof(buf));
-    fp = popen(cmd, "r");
-
-    if (fp)
-    {
-        fgets(buf, sizeof(buf), fp);
-
-        /*we need to remove the \n char in buf*/
-        if ((p = strchr(buf, '\n'))) *p = 0;
-
-        strncpy(out, buf, len-1);
-
-        pclose(fp);
-    }
-
-}
-
 int SyncServerlistInDb(PingServerType type, int EntryCount)
 {
 	int urlIndex =0;
@@ -252,20 +230,17 @@ CosaDmlGetSelfHealMonitorCfg(
         printf("\n %s Resource monitor allocation failed\n",__FUNCTION__);
         return NULL;
     }
+
     char buf[8];
-    memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "resource_monitor_interval", buf, sizeof(buf));
     pRescTest->MonIntervalTime = atoi(buf);
 
-    memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "avg_cpu_threshold", buf, sizeof(buf));
     pRescTest->AvgCpuThreshold = atoi(buf);
 
-    memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "avg_memory_threshold", buf, sizeof(buf));
     pRescTest->AvgMemThreshold = atoi(buf);
 
-    memset(buf, 0, sizeof(buf));
     syscfg_get(NULL, "process_monitor_interval", buf, sizeof(buf));
     pRescTest->ProcessMonIntervalTime = atoi(buf);
 
@@ -276,7 +251,8 @@ CosaDmlGetSelfHealMonitorCfg(
 
 void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
 {
-     char command[256] = {0};
+     char command[256];
+
      if(bCollectnow == TRUE) 
      {
        if((uinterval >= 1 ) && ( uinterval <= 120 ))
@@ -298,7 +274,8 @@ void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
 
 void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma )
 {
-        char buf[128]={0};
+        char buf[128];
+
         /* RDKB-24432 : Memory usage and fragmentation selfheal
   	if (count > 1){   
             system("sh /usr/ccsp/tad/log_buddyinfo.sh ");
@@ -306,53 +283,43 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
         count++;*/
 	if(pCpuMemFragDma->index == COSA_DML_HOST)
 	{
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Host_Dma", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->dma ,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Host_Dma32", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->dma32 ,buf );
 			
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Host_Normal", buf, sizeof(buf));
                 if(buf != NULL)
 	          strcpy(pCpuMemFragDma->normal,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Host_Highmem", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->highmem,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Host_Percentage", buf, sizeof(buf));
 		pCpuMemFragDma->FragPercentage = atoi(buf);
 	}
 	else if(pCpuMemFragDma->index == COSA_DML_PEER)
 	{
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Peer_Dma", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->dma ,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Peer_Dma32", buf, sizeof(buf));
                 if(buf != NULL)
 		   strcpy(pCpuMemFragDma->dma32 ,buf );
 			
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Peer_Normal", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->normal,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Peer_Highmem", buf, sizeof(buf));
                 if(buf != NULL)
 		  strcpy(pCpuMemFragDma->highmem,buf );
 
-		memset(buf ,0 ,sizeof(buf));
 		syscfg_get( NULL, "CpuMemFrag_Peer_Percentage", buf, sizeof(buf));
 		pCpuMemFragDma->FragPercentage = atoi(buf);
 	}
@@ -415,7 +382,6 @@ CosaDmlGetSelfHealCfg(
 	get_logbackupcfg();
 	pConnTest = (PCOSA_DML_CONNECTIVITY_TEST)AnscAllocateMemory(sizeof(COSA_DML_CONNECTIVITY_TEST));
 	pMyObject->pConnTest = pConnTest;
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "selfheal_enable", buf, sizeof(buf));
 	pMyObject->Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
         if ( pMyObject->Enable == TRUE )
@@ -429,40 +395,31 @@ CosaDmlGetSelfHealCfg(
             system("/usr/ccsp/tad/task_health_monitor.sh &");
 	}  
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "max_reboot_count", buf, sizeof(buf));
 	pMyObject->MaxRebootCnt = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Free_Mem_Threshold", buf, sizeof(buf));
 	pMyObject->FreeMemThreshold= atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Mem_Frag_Threshold", buf, sizeof(buf));
 	pMyObject->MemFragThreshold = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "CpuMemFrag_Interval", buf, sizeof(buf));
 	pMyObject->CpuMemFragInterval = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "max_reset_count", buf, sizeof(buf));
 	/* RDKB-13228 */
 	pMyObject->MaxResetCnt = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Selfheal_DiagnosticMode", buf, sizeof(buf));
 	pMyObject->DiagnosticMode = (!strcmp(buf, "true")) ? TRUE : FALSE;
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "diagMode_LogUploadFrequency", buf, sizeof(buf));
 	pMyObject->DiagModeLogUploadFrequency = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "selfheal_dns_pingtest_enable", buf, sizeof(buf));
 	pMyObject->DNSPingTest_Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
 
-	memset(dnsURL,0,sizeof(dnsURL));
 	syscfg_get( NULL, "selfheal_dns_pingtest_url", dnsURL, sizeof(dnsURL));
 	if( '\0' != dnsURL[ 0 ] )
 	{
@@ -473,28 +430,24 @@ CosaDmlGetSelfHealCfg(
 		pMyObject->DNSPingTest_URL[ 0 ] = '\0';
 	}
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "ConnTest_PingInterval", buf, sizeof(buf));
 	pConnTest->PingInterval = atoi(buf);
-	memset(buf,0,sizeof(buf));
+
 	syscfg_get( NULL, "ConnTest_NumPingsPerServer", buf, sizeof(buf));
 	pConnTest->PingCount = atoi(buf);
-	memset(buf,0,sizeof(buf));
+
 	syscfg_get( NULL, "ConnTest_MinNumPingServer", buf, sizeof(buf));
 	pConnTest->MinPingServer = atoi(buf);
-	memset(buf,0,sizeof(buf));
+
 	syscfg_get( NULL, "ConnTest_PingRespWaitTime", buf, sizeof(buf));
 	pConnTest->WaitTime = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "ConnTest_CorrectiveAction", buf, sizeof(buf));
 	pConnTest->CorrectiveAction = (!strcmp(buf, "true")) ? TRUE : FALSE;
 
-    memset(buf,0,sizeof(buf));
     syscfg_get( NULL, "router_reboot_Interval", buf, sizeof(buf));
     pConnTest->RouterRebootInterval = atoi(buf);
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Ipv4PingServer_Count", buf, sizeof(buf));
 	pConnTest->IPv4EntryCount = atoi(buf);
 	entryCountIPv4 = AnscSListQueryDepth(&pMyObject->IPV4PingServerList);
@@ -507,8 +460,6 @@ CosaDmlGetSelfHealCfg(
 	for(urlIndex=1; urlIndex <= pConnTest->IPv4EntryCount; urlIndex++ )
 	{
 		char uri[256];
-		memset(uri,0,sizeof(uri));
-		memset(recName,0,sizeof(recName));
 		sprintf(recName, Ipv4_Server, urlIndex);
 		syscfg_get( NULL, recName, uri, sizeof(uri));
 		if(strcmp(uri,""))
@@ -519,7 +470,6 @@ CosaDmlGetSelfHealCfg(
 		/* Push entery in the IPv4 queue */
 		FillEntryInList(pMyObject,pSelfHealCxtLink,PingServerType_IPv4);
 	}
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Ipv6PingServer_Count", buf, sizeof(buf));
 	pConnTest->IPv6EntryCount = atoi(buf);
 	entryCountIPv6 = AnscSListQueryDepth(&pMyObject->IPV6PingServerList);
@@ -532,8 +482,6 @@ CosaDmlGetSelfHealCfg(
 	for(urlIndex=1; urlIndex <= pConnTest->IPv6EntryCount; urlIndex++ )
 	{
 		char uri[256];
-		memset(uri,0,sizeof(uri));
-		memset(recName,0,sizeof(recName));
 		sprintf(recName, Ipv6_Server, urlIndex);
 		syscfg_get( NULL, recName, uri, sizeof(uri));
 		if(strcmp(uri,""))
@@ -632,7 +580,7 @@ CosaSelfHealInitialize
     ANSC_STATUS                     returnStatus         = ANSC_STATUS_SUCCESS;
     PCOSA_DATAMODEL_SELFHEAL            pMyObject            = (PCOSA_DATAMODEL_SELFHEAL )hThisObject;
 	PCOSA_DML_CONNECTIVITY_TEST    pConnTest            = (PCOSA_DML_CONNECTIVITY_TEST)NULL;
-    char buf[8] = {0};
+    char buf[8];
 	
     /* Initiation all functions */
     AnscSListInitializeHeader( &pMyObject->IPV4PingServerList );
@@ -648,21 +596,13 @@ CosaSelfHealInitialize
 
     if (syscfg_get(NULL, "log_backup_enable", buf, sizeof(buf)) == 0)
     {
-        if (buf != NULL)
-        {
             pMyObject->NoWaitLogSync = (strcmp(buf,"true") ? FALSE : TRUE);
-        }
     }
 
-    memset(buf, 0, sizeof(buf));
     if (syscfg_get( NULL, "log_backup_threshold", buf, sizeof(buf)) == 0)
     {
-        if (buf != NULL)
-        {
             pMyObject->LogBackupThreshold =  atoi(buf);
-        }
     }
-
 	
     pMyObject->pConnTest = CosaDmlGetSelfHealCfg((ANSC_HANDLE)pMyObject);
     pMyObject->pResMonitor = CosaDmlGetSelfHealMonitorCfg((ANSC_HANDLE)pMyObject);
@@ -738,7 +678,6 @@ void SavePingServerURI(PingServerType type, char *URL, int InstNum)
 {
 		char recName[256];
 
-		memset(recName,0,sizeof(recName));
 		if(type == PingServerType_IPv4)
 		{
 			sprintf(recName, Ipv4_Server, InstNum);
@@ -764,7 +703,7 @@ ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum)
 {
 		ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
 		char recName[256];
-		memset(recName,0,sizeof(recName));
+
 		if(type == PingServerType_IPv4)
 		{
 			sprintf(recName, Ipv4_Server, InstNum);
@@ -947,7 +886,6 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun )
 {
 	char buf[10];
 
-	memset(buf,0,sizeof(buf));
 	syscfg_get( NULL, "Selfheal_DiagnosticMode", buf, sizeof(buf));
 
 	if( ( 0 == strcmp(buf, "true") ) || \

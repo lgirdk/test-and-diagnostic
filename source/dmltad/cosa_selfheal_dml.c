@@ -28,7 +28,25 @@
 #define DEFAULT_CPU_THRESHOLD       100 /* in percentage */
 #define DEFAULT_MEMORY_THRESHOLD    100 /* in percentage */
 
-/***********************************************************************
+static void copy_command_output (char *cmd, char *out, int len)
+{
+    FILE *fp;
+
+    out[0] = 0;
+
+    fp = popen (cmd, "r");
+    if (fp)
+    {
+        if (fgets (out, len, fp) != NULL)
+        {
+            size_t len = strlen (out);
+            if ((len > 0) && (out[len - 1] == '\n'))
+                out[len - 1] = 0;
+        }
+
+        pclose (fp);
+    }
+}
 
 /***********************************************************************
 
@@ -176,34 +194,18 @@ BOOL SelfHeal_SetParamBoolValue
 		return FALSE;
 	    }
 
-	    char cmd[128];
             if ( bValue == TRUE )
             {
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-                system(cmd); 
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/resource_monitor.sh &");
-                system(cmd); 
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/selfheal_aggressive.sh &");
-                system(cmd);
-
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/task_health_monitor.sh &");
-                system(cmd);
+                system("/usr/ccsp/tad/self_heal_connectivity_test.sh &"); 
+                system("/usr/ccsp/tad/resource_monitor.sh &"); 
+                system("/usr/ccsp/tad/selfheal_aggressive.sh &");
+                system("/usr/ccsp/tad/task_health_monitor.sh &");
 	    }
             else
 	    {
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof self_heal_connectivity_test.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
+                char cmd[128];
 
+                copy_command_output("busybox pidof self_heal_connectivity_test.sh", buf, sizeof(buf));
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
                 } else {    
@@ -212,12 +214,7 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }
     
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof resource_monitor.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
+                copy_command_output("busybox pidof resource_monitor.sh", buf, sizeof(buf));
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
                 } else {    
@@ -226,12 +223,7 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }   
        
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof task_health_monitor.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
+                copy_command_output("busybox pidof task_health_monitor.sh", buf, sizeof(buf));
                 if (!strcmp(buf, "")) {
                     CcspTraceWarning(("%s: Process Monitor script is not running\n", __FUNCTION__));
                 } else {
@@ -240,12 +232,7 @@ BOOL SelfHeal_SetParamBoolValue
                     system(cmd);
                 }
 
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof selfheal_aggressive.sh");
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
-
+                copy_command_output("busybox pidof selfheal_aggressive.sh", buf, sizeof(buf));
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
                 } else {
@@ -263,14 +250,7 @@ BOOL SelfHeal_SetParamBoolValue
     {
         if (bValue) 
         {
-            char cmd[128] = "\0";
-
-            memset (cmd, 0, sizeof(cmd));
-            memset (buf, 0, sizeof(buf));
-            sprintf (cmd, "busybox pidof cpuprocanalyzer");
-            copy_command_output(cmd, buf, sizeof(buf));
-            buf[strlen(buf)] = '\0';
-            CcspTraceWarning(("Value of cmd: %s and Value of buf: %s and Check for strcmp: %d \n", cmd, buf, strcmp(buf, "")));
+            copy_command_output("busybox pidof cpuprocanalyzer", buf, sizeof(buf));
             if (strcmp(buf, "")) 
             {
                 CcspTraceWarning(("%s: CPUProcAnalyzer is already running!\n", __FUNCTION__));
@@ -922,7 +902,7 @@ ConnectivityTest_GetParamUlongValue
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_LastReboot") == 0)
     {
         /* collect value */
-        char buf[64]={0};
+        char buf[64];
         syscfg_get( NULL, "last_router_reboot_time", buf, sizeof(buf));
     	if( buf[0] != '\0' )
     	{
@@ -954,7 +934,8 @@ ConnectivityTest_GetParamIntValue
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_CurrentCount") == 0)
     {
         /* collect value */
-        char buf[16]={0};
+        char buf[16];
+
         syscfg_get( NULL, "todays_reset_count", buf, sizeof(buf));
         if( buf[0] != '\0' )
         {
@@ -1784,7 +1765,6 @@ ResourceMonitor_SetParamUlongValue
 (defined(_XB6_PRODUCT_REQ_) && defined(_COSA_BCM_ARM_))
         char buf[8];
 	ULONG aggressive_interval;
-        memset(buf, 0, sizeof(buf));
 
 	if (syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf)) != 0)
 	{

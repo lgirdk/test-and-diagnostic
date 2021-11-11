@@ -300,7 +300,6 @@ DcmDownloadStatus_GetParamStringValue
     if (strcmp(ParamName, "HTTPStatusString") == 0)
     {
         char buff[256];
-        memset(buff, 0, sizeof(buff));
         syscfg_get(NULL, "dcm_httpStatusString", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pDcmStatus->HTTPStatusString, buff);
@@ -311,7 +310,6 @@ DcmDownloadStatus_GetParamStringValue
     if (strcmp(ParamName, "LastSuccessTimestamp") == 0)
     {
         char buff[30];
-        memset(buff, 0, sizeof(buff));
         syscfg_get(NULL, "dcm_lastSuccessTimestamp", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pDcmStatus->LastSuccessTimestamp, buff);
@@ -322,7 +320,6 @@ DcmDownloadStatus_GetParamStringValue
     else if (strcmp(ParamName, "LastAttemptTimestamp") == 0)
     {
         char buff[30];
-        memset(buff, 0, sizeof(buff));
         syscfg_get(NULL, "dcm_lastAttemptTimestamp", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pDcmStatus->LastAttemptTimestamp, buff);
@@ -348,7 +345,6 @@ DcmDownloadStatus_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "dcm_httpStatus", buff, sizeof(buff));
 
         pMyObject->pDcmStatus->HTTPStatus = strtol(buff, NULL, 10);
@@ -361,7 +357,6 @@ DcmDownloadStatus_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "dcm_attemptCount", buff, sizeof(buff));
 
         pMyObject->pDcmStatus->AttemptCount = strtol(buff, NULL, 10);
@@ -431,7 +426,6 @@ UploadStatus_GetParamStringValue
     {
         /* collect value */
         char buff[256];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "upload_httpStatusString", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pUploadStatus->HTTPStatusString, buff);
@@ -443,7 +437,6 @@ UploadStatus_GetParamStringValue
     {
         /* collect value */
         char buff[30];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "upload_lastSuccessTimestamp", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pUploadStatus->LastSuccessTimestamp, buff);
@@ -454,7 +447,6 @@ UploadStatus_GetParamStringValue
     else if (strcmp(ParamName, "LastAttemptTimestamp") == 0)
     {
         char buff[30];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "upload_lastAttemptTimestamp", buff, sizeof(buff));
 
         AnscCopyString(pMyObject->pUploadStatus->LastAttemptTimestamp, buff);
@@ -480,7 +472,6 @@ UploadStatus_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "upload_httpStatus", buff, sizeof(buff));
 
         pMyObject->pUploadStatus->HTTPStatus = strtol(buff, NULL, 10);
@@ -492,7 +483,6 @@ UploadStatus_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "upload_attemptCount", buff, sizeof(buff));
 
         pMyObject->pUploadStatus->AttemptCount = strtol(buff, NULL, 10);
@@ -562,7 +552,6 @@ DcmRetryConfig_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get( NULL, "dcm_retry_attemptInterval", buff, sizeof(buff));
 
         pMyObject->pRetryConfig->AttemptInterval = strtol(buff, NULL, 10);
@@ -574,7 +563,6 @@ DcmRetryConfig_GetParamUlongValue
     {
         /* collect value */
         char buff[12];
-        memset(buff, 0, sizeof(buff));
         syscfg_get(NULL, "dcm_retry_maxAttempts", buff, sizeof(buff));
 
         pMyObject->pRetryConfig->MaxAttempts = strtol(buff, NULL, 10);

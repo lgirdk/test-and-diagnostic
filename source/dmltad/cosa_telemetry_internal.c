@@ -78,26 +78,14 @@ PDML_DCM_DOWNLOAD_STATUS DmlGetDcmStatus(ANSC_HANDLE hThisObject)
         return NULL;
     }
 
-    char timestamp[30]; // Max size that a timestamp can have
-    memset(timestamp, 0, sizeof(timestamp));
-    syscfg_get(NULL, "dcm_lastSuccessTimestamp", timestamp, sizeof(timestamp));
-    AnscCopyString(pDcmStatus->LastSuccessTimestamp, timestamp);
-
-    memset(timestamp, 0, sizeof(timestamp));
-    syscfg_get(NULL, "dcm_lastAttemptTimestamp", timestamp, sizeof(timestamp));
-    AnscCopyString(pDcmStatus->LastAttemptTimestamp, timestamp);
-
-    char buf[256];
-    memset(buf, 0, sizeof(buf));
-    syscfg_get(NULL, "dcm_httpStatusString", buf, sizeof(buf));
-    AnscCopyString(pDcmStatus->HTTPStatusString, buf);
+    syscfg_get(NULL, "dcm_lastSuccessTimestamp", pDcmStatus->LastSuccessTimestamp, sizeof(pDcmStatus->LastSuccessTimestamp));
+    syscfg_get(NULL, "dcm_lastAttemptTimestamp", pDcmStatus->LastAttemptTimestamp, sizeof(pDcmStatus->LastAttemptTimestamp));
+    syscfg_get(NULL, "dcm_httpStatusString", pDcmStatus->HTTPStatusString, sizeof(pDcmStatus->HTTPStatusString));
 
     char intBuf[12];
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get(NULL, "dcm_httpStatus", intBuf, sizeof(intBuf));
     pDcmStatus->HTTPStatus = strtol(intBuf, NULL, 10);
 
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get(NULL, "dcm_attemptCount", intBuf, sizeof(intBuf));
     pDcmStatus->AttemptCount = strtol(intBuf, NULL, 10);
 
@@ -118,26 +106,14 @@ PDML_ODH_UPLOAD_STATUS DmlGetUploadStatus(ANSC_HANDLE hThisObject)
         return NULL;
     }
 
-    char timestamp[30]; // Max size that a timestamp can have
-    memset(timestamp, 0, sizeof(timestamp));
-    syscfg_get(NULL, "upload_lastSuccessTimestamp", timestamp, sizeof(timestamp));
-    AnscCopyString(pUploadStatus->LastSuccessTimestamp, timestamp);
-
-    memset(timestamp, 0, sizeof(timestamp));
-    syscfg_get(NULL, "upload_lastAttemptTimestamp", timestamp, sizeof(timestamp));
-    AnscCopyString(pUploadStatus->LastAttemptTimestamp, timestamp);
-
-    char buf[256];
-    memset(buf, 0, sizeof(buf));
-    syscfg_get(NULL, "upload_httpStatusString", buf, sizeof(buf));
-    AnscCopyString(pUploadStatus->HTTPStatusString, buf);
+    syscfg_get(NULL, "upload_lastSuccessTimestamp", pUploadStatus->LastSuccessTimestamp, sizeof(pUploadStatus->LastSuccessTimestamp));
+    syscfg_get(NULL, "upload_lastAttemptTimestamp", pUploadStatus->LastAttemptTimestamp, sizeof(pUploadStatus->LastAttemptTimestamp));
+    syscfg_get(NULL, "upload_httpStatusString", pUploadStatus->HTTPStatusString, sizeof(pUploadStatus->HTTPStatusString));
 
     char intBuf[12];
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get( NULL, "upload_httpStatus", intBuf, sizeof(intBuf));
     pUploadStatus->HTTPStatus = strtol(intBuf, NULL, 10);
 
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get(NULL, "upload_attemptCount", intBuf, sizeof(intBuf));
     pUploadStatus->AttemptCount = strtol(intBuf, NULL, 10);
 
@@ -159,11 +135,9 @@ PDML_DCM_RETRY_CONFIG DmlGetRetryCfg(ANSC_HANDLE hThisObject)
     }
 
     char intBuf[12];
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get(NULL, "dcm_retry_attemptInterval", intBuf, sizeof(intBuf));
     pRetryConfig->AttemptInterval = strtol(intBuf, NULL, 10);
 
-    memset(intBuf, 0, sizeof(intBuf));
     syscfg_get( NULL, "dcm_retry_maxAttempts", intBuf, sizeof(intBuf));
     pRetryConfig->MaxAttempts = strtol(intBuf, NULL, 10);
 
@@ -255,14 +229,12 @@ ANSC_STATUS
 CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
 {
     char buf[10];
-    char configURL[256];
-    char uploadURL[256];
     PCOSA_DATAMODEL_TELEMETRY pMyObject = (PCOSA_DATAMODEL_TELEMETRY)hThisObject;
 
     CcspTraceDebug(("%s Entered\n", __FUNCTION__));
 
     syscfg_get(NULL, "telemetry_enable", buf, sizeof(buf));
-    pMyObject->Enable = (!strncmp(buf, "true", 4)) ? TRUE : FALSE;
+    pMyObject->Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
 
 #ifdef _PUMA6_ARM_
     if (pMyObject->Enable == TRUE)
@@ -274,13 +246,8 @@ CosaDmlTelemetryInit(ANSC_HANDLE hThisObject)
 
     pMyObject->DCMConfigForceDownload = FALSE;
 
-    memset(uploadURL, 0, sizeof(uploadURL));
-    syscfg_get(NULL, "UploadRepositoryURL", uploadURL, sizeof(uploadURL));
-    AnscCopyString(pMyObject->UploadRepositoryURL, uploadURL);
-
-    memset(configURL, 0, sizeof(configURL));
-    syscfg_get(NULL, "T2ConfigURL", configURL, sizeof(configURL));
-    AnscCopyString(pMyObject->DCMConfigFileURL, configURL);
+    syscfg_get(NULL, "UploadRepositoryURL", pMyObject->UploadRepositoryURL, sizeof(pMyObject->UploadRepositoryURL));
+    syscfg_get(NULL, "T2ConfigURL", pMyObject->DCMConfigFileURL, sizeof(pMyObject->DCMConfigFileURL));
 
     return ANSC_STATUS_SUCCESS;
 }
