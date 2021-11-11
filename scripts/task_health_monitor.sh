@@ -854,7 +854,7 @@ case $SELFHEAL_TYPE in
                 #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
                 resetNeeded mta CcspMtaAgentSsp
-
+                t2CountNotify "SYS_SH_MTA_restart"
             fi
         fi
 
@@ -1225,7 +1225,7 @@ case $SELFHEAL_TYPE in
         if [ "$MTA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
             resetNeeded mta CcspMtaAgentSsp
-
+            t2CountNotify "SYS_SH_MTA_restart"
         fi
 
         WiFi_Flag=false
