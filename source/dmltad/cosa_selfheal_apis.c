@@ -247,7 +247,7 @@ CosaDmlGetSelfHealMonitorCfg(
     PCOSA_DATAMODEL_SELFHEAL      pMyObject            = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
     PCOSA_DML_RESOUCE_MONITOR     pRescTest            = (PCOSA_DML_CONNECTIVITY_TEST)NULL;
 
-    pRescTest = (PCOSA_DATAMODEL_SELFHEAL)AnscAllocateMemory(sizeof(COSA_DATAMODEL_SELFHEAL));
+    pRescTest = (PCOSA_DML_RESOUCE_MONITOR)AnscAllocateMemory(sizeof(COSA_DML_RESOUCE_MONITOR));
     if(!pRescTest) {
         printf("\n %s Resource monitor allocation failed\n",__FUNCTION__);
         return NULL;
