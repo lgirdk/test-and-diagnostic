@@ -1807,16 +1807,10 @@ IPPing_SetParamUlongValue
     else if (strcmp(ParamName, "Timeout") == 0)
         cfg.timo = uValue / 1000;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
-    	{
-    		char buf[256];
-		memset(buf,0,sizeof(buf));
-		cfg.size = uValue;
-		sprintf(buf, "%d",cfg.size);
-        	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
-		{
-			syscfg_commit();
-		}
-	}
+    {
+        cfg.size = uValue;
+        syscfg_set_u_commit (NULL, "selfheal_ping_DataBlockSize", cfg.size);
+    }
    else if (strcmp(ParamName, "DSCP") == 0)
        cfg.tos = uValue;
     else 
@@ -6063,9 +6057,7 @@ SpeedTest_Commit
 
     if( g_enable_speedtest != speedtest_setting )
     {
-        char buf[8]={0};
-        snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
-        if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
+        if (syscfg_set(NULL, "enable_speedtest", (g_enable_speedtest ? "true" : "false")) != 0)
         {
             AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
             return 1;
