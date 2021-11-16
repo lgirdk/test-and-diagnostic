@@ -3934,9 +3934,10 @@ if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
     fi
 fi
 
-if [ "$MODEL_NUM" = "CGM4981COM" ]; then
+if [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
         MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-        if [ "$MESH_ENABLE" = "true" ]; then
+        OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
                 vlantag_wl0=$( /usr/opensync/tools/ovsh s Port -w name==wl0 | egrep "tag" | egrep 100)
                 vlantag_wl1=$( /usr/opensync/tools/ovsh s Port -w name==wl1 | egrep "tag" | egrep 100)
@@ -3956,4 +3957,19 @@ if [ "1" = "$upnp_enabled" ]; then
 	  echo_t "[RDKB_SELFHEAL] : There is no IGD process running in this device"
 	  sysevent set igd-restart
   fi
+fi
+
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGM4140COM" ]; then
+        MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
+                echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
+                vlantag_ath0=$( /usr/opensync/tools/ovsh s Port -w name==ath0 | egrep "tag" | egrep 100)
+                vlantag_ath1=$( /usr/opensync/tools/ovsh s Port -w name==ath1 | egrep "tag" | egrep 100)
+                if [[ ! -z "$vlantag_ath0" ]] || [[ ! -z "$vlantag_ath1" ]]; then
+                        echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
+                        ovs-vsctl remove port ath0 tag 100
+                        ovs-vsctl remove port ath1 tag 100
+                fi
+        fi
 fi
