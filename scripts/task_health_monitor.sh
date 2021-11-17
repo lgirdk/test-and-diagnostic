@@ -3078,6 +3078,7 @@ if [ "$DIBBLER_PID" = "" ]; then
 
     if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
         Sizeof_ServerConf=`stat -c %s $DIBBLER_SERVER_CONF`
+        DHCPv6_ServerType="`syscfg get dhcpv6s00::servertype`"
         case $SELFHEAL_TYPE in
             "BASE"|"TCCBR")
                 DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
@@ -3087,8 +3088,10 @@ if [ "$DIBBLER_PID" = "" ]; then
                         #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                         echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
                 else
-                    echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-                    t2CountNotify "SYS_SH_Dibbler_restart"
+                    if [ "$DHCPv6_ServerType" -ne 2 ];then
+                        echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                        t2CountNotify "SYS_SH_Dibbler_restart"
+                    fi
                     if [ -f "/etc/dibbler/server.conf" ]; then
                         BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
@@ -3111,6 +3114,9 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
+                        elif [ "$DHCPv6_ServerType" -eq 2 ];then
+                            #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
+                            echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
                             dibbler-server stop
                             sleep 2
@@ -3140,8 +3146,10 @@ if [ "$DIBBLER_PID" = "" ]; then
                     #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                     echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
                 else
-                    echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
-                    t2CountNotify "SYS_SH_Dibbler_restart"
+                    if [ "$DHCPv6_ServerType" -ne 2 ];then
+                        echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
+                        t2CountNotify "SYS_SH_Dibbler_restart"
+                    fi
                     if [ -f "/etc/dibbler/server.conf" ]; then
                         BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link tentative dadfailed")
                         if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
@@ -3186,6 +3194,9 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
+                        elif [ "$DHCPv6_ServerType" -eq 2 ];then
+                            #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
+                            echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
                             dibbler-server stop
                             sleep 2
