@@ -41,7 +41,7 @@ then
    then
     # C speedtest client
     echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Executing speedtest-client-c for XB6/XB7/XB8" >> $LOG_FILE
-    /usr/bin/speedtest-client
+    nice -n -20 /usr/bin/speedtest-client
    elif [ "$BOX_TYPE" = TCCBR ]
    then
     # C speedtest client
