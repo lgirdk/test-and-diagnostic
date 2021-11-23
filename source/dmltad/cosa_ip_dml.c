@@ -75,6 +75,12 @@
 #include "diag.h"
 #include "ansc_string_util.h"
 #include <syscfg/syscfg.h>
+#include "ccsp_trace.h"
+
+#ifdef EMMC_DIAG_SUPPORT
+#include "platform_hal.h"
+#include "ccsp_hal_emmc.h"
+#endif
 
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 4096
@@ -6585,3 +6591,169 @@ return FALSE;
 
 }
 
+#ifdef EMMC_DIAG_SUPPORT
+ULONG
+eMMCFlashDiag_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    int ret = 0;
+    eSTMGRDeviceInfo DeviceInfo ;
+    eSTMGRHealthInfo HealthInfo ;
+    memset(&DeviceInfo, 0, sizeof(DeviceInfo));
+    memset(&HealthInfo, 0, sizeof(HealthInfo));
+
+    ret = CcspHalEmmcGetHealthInfo (&HealthInfo);
+    if (ret != 0)
+    {
+        CcspTraceError(("CcspHalEmmcGetHealthInfo returned with error %d\n", ret));
+        return 1;
+    }
+
+    ret = CcspHalEmmcGetDeviceInfo (&DeviceInfo);
+    if (ret != 0)
+    {
+        CcspTraceError(("CcspHalEmmcGetDeviceInfo returned with error %d\n", ret));
+        return 1;
+    }
+
+    if (strcmp(ParamName, "Manufacturer") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_manufacturer );
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_manufacturer);
+    }
+
+    else if (strcmp(ParamName, "FirmwareVersion") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_firmwareVersion);
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_firmwareVersion );
+    }
+
+    else if (strcmp(ParamName, "DeviceID") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_deviceID);
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_deviceID );
+    }
+
+    else if (strcmp(ParamName, "SerialNumber") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_serialNumber);
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_serialNumber );
+    }
+
+    else if (strcmp(ParamName, "Model") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_model);
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_model );
+    }
+
+    else if (strcmp(ParamName, "HwVersion") == 0)
+    {
+        AnscCopyString( pValue, DeviceInfo.m_hwVersion);
+        *pUlSize = AnscSizeOfString( DeviceInfo.m_hwVersion );
+    }
+
+    else if (strcmp(ParamName, "Capacity") == 0)
+    {
+        if (DeviceInfo.m_capacity == 0)
+        {
+            pValue = NULL;
+        }
+        else
+        {
+            snprintf(pValue, 128,"%llu",DeviceInfo.m_capacity);
+        }
+    }
+
+    else if (strcmp(ParamName, "LifeElapsedA") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_lifetimesList.m_diagnostics[0].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_lifetimesList.m_diagnostics[0].m_value );
+    }
+
+    else if (strcmp(ParamName, "LifeElapsedB") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_lifetimesList.m_diagnostics[1].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_lifetimesList.m_diagnostics[1].m_value );
+    }
+
+    else if (strcmp(ParamName, "PreEOLStateEUDA") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_healthStatesList.m_diagnostics[1].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_healthStatesList.m_diagnostics[1].m_value );
+    }
+
+    else if (strcmp(ParamName, "PreEOLStateSystem") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_healthStatesList.m_diagnostics[0].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_healthStatesList.m_diagnostics[0].m_value );
+    }
+
+    else if (strcmp(ParamName, "PreEOLStateMLC") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_healthStatesList.m_diagnostics[2].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_healthStatesList.m_diagnostics[2].m_value );
+    }
+
+    else if (strcmp(ParamName, "DeviceTemperature") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_healthStatesList.m_diagnostics[3].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_healthStatesList.m_diagnostics[3].m_value );
+    }
+
+    else if (strcmp(ParamName, "UncorrectableECC") == 0)
+    {
+        AnscCopyString( pValue, HealthInfo.m_healthStatesList.m_diagnostics[4].m_value );
+        *pUlSize = AnscSizeOfString( HealthInfo.m_healthStatesList.m_diagnostics[4].m_value );
+    }
+
+    else
+    {
+        CcspTraceError(("Requested parameter not available as part of emmc diag\n"));
+        return -1;
+    }
+
+    return 0;
+}
+
+BOOL
+eMMCFlashDiag_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       pBool
+    )
+{
+    int ret = 0;
+
+    eSTMGRHealthInfo HealthInfo ;
+    memset(&HealthInfo, 0, sizeof(HealthInfo));
+
+    ret = CcspHalEmmcGetHealthInfo(&HealthInfo);
+    if (ret != 0)
+    {
+        CcspTraceError(("CcspHalEmmcGetHealthInfo returned with error %d\n", ret));
+        return FALSE;
+    }
+
+    if (strcmp(ParamName, "Operational") == 0)
+    {
+        *pBool    =  HealthInfo.m_isOperational;
+
+        return TRUE;
+    }
+
+    else if (strcmp(ParamName, "Healthy") == 0)
+    {
+        *pBool    =  HealthInfo.m_isHealthy;
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+#endif
