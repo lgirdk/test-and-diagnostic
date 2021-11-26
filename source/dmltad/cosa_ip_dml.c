@@ -81,6 +81,7 @@
 #include "platform_hal.h"
 #include "ccsp_hal_emmc.h"
 #endif
+#include "safec_lib_common.h"
 
 #define REFRESH_INTERVAL 120
 #define SPEEDTEST_ARG_SIZE 4096
@@ -745,13 +746,16 @@ ARPTable_GetParamStringValue
     )
 {
     PCOSA_DML_DIAG_ARP_TABLE        pArpTable           = (PCOSA_DML_DIAG_ARP_TABLE)hInsContext;
+    errno_t rc = -1;
+
 
     /* check the parameter name and return the corresponding value */
 
     if (strcmp(ParamName, "IPAddress") == 0)
     {
         /* collect value */
-        AnscCopyString(pValue, pArpTable->IPAddress);
+        rc = strcpy_s(pValue, *pUlSize ,pArpTable->IPAddress);
+        ERR_CHK(rc);
 
         return 0;
     }
@@ -761,9 +765,9 @@ ARPTable_GetParamStringValue
         /* collect value */
         if ( sizeof(pArpTable->MACAddress) <= *pUlSize)
         {
-            _ansc_sprintf
+            rc = sprintf_s
                 (
-                    pValue,
+                    pValue, *pUlSize ,
                     "%02x:%02x:%02x:%02x:%02x:%02x",
                     pArpTable->MACAddress[0],
                     pArpTable->MACAddress[1],
@@ -772,7 +776,10 @@ ARPTable_GetParamStringValue
                     pArpTable->MACAddress[4],
                     pArpTable->MACAddress[5]
                 );
-
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             return 0;
         }
         else
@@ -816,6 +823,7 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 	diag_stat_t 	statis;
 	char 			tmp_hostname[ 257 ]  = { 0 };
 	int i = 0,j = 0;
+	errno_t rc = -1;
 
 	//Detach the thread from loop
     pthread_detach( pthread_self( ) );
@@ -909,7 +917,11 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 	  * if host name is 'www.google.com' then we have to display like 
 	  * www.google.com
 	  */
-	sprintf( tmp_hostname, "%s", "NULL" );
+	rc = sprintf_s( tmp_hostname, sizeof(tmp_hostname) , "%s", "NULL" );
+	if(rc < EOK)
+	{
+		ERR_CHK(rc);
+	}
 
 	/* CID: 67228 Copy of overlapping memory */
         if( cfg.host[ 0 ] != '\0' )
@@ -942,11 +954,13 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 void COSA_IP_diag_FillDeviceDetails( void )
 {
 	diag_pingtest_device_details_t *pingtest_devdet = diag_pingtest_getdevicedetails( );
+	errno_t rc = -1;
 
 	/* Get CM MAC if already having NULL */
 	if( '\0' == pingtest_devdet->ecmMAC[ 0 ] )
 	{
-		memset( pingtest_devdet->ecmMAC, 0, sizeof( pingtest_devdet->ecmMAC ));
+		rc = memset_s( pingtest_devdet->ecmMAC, sizeof( pingtest_devdet->ecmMAC ) , 0, sizeof( pingtest_devdet->ecmMAC ));
+		ERR_CHK(rc);
 
 		COSA_IP_diag_getGetParamValue(DEVICE_MAC, pingtest_devdet->ecmMAC,
 					      sizeof( pingtest_devdet->ecmMAC ));
@@ -955,7 +969,8 @@ void COSA_IP_diag_FillDeviceDetails( void )
 	/* Get Serial number if already having NULL */
 	if( '\0' == pingtest_devdet->DeviceID[ 0 ] )
 	{
-		memset( pingtest_devdet->DeviceID, 0, sizeof( pingtest_devdet->DeviceID ));
+		rc = memset_s( pingtest_devdet->DeviceID, sizeof( pingtest_devdet->DeviceID ) , 0, sizeof( pingtest_devdet->DeviceID ));
+		ERR_CHK(rc);
 
 		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.SerialNumber", 
 									  pingtest_devdet->DeviceID,
@@ -965,7 +980,8 @@ void COSA_IP_diag_FillDeviceDetails( void )
 	/* Get ModelName if already having NULL */
 	if( '\0' == pingtest_devdet->DeviceModel[ 0 ] )
 	{
-		memset( pingtest_devdet->DeviceModel, 0, sizeof( pingtest_devdet->DeviceModel ));
+		rc = memset_s( pingtest_devdet->DeviceModel, sizeof( pingtest_devdet->DeviceModel ), 0, sizeof( pingtest_devdet->DeviceModel ));
+		ERR_CHK(rc);
 
 		COSA_IP_diag_getGetParamValue( "Device.DeviceInfo.ModelName", 
 									  pingtest_devdet->DeviceModel,
@@ -1190,6 +1206,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
     )
 {
     diag_pingtest_device_details_t	*devdetails = diag_pingtest_getdevicedetails( );
+    errno_t rc = -1;
 
 	//Fill Device Details it's already not filled case
 	COSA_IP_diag_FillDeviceDetails( );
@@ -1202,7 +1219,8 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 			return 1;
 		}
 
-		AnscCopyString( pValue, devdetails->PartnerID );
+		rc = strcpy_s( pValue, *pUlSize ,devdetails->PartnerID );
+		ERR_CHK(rc);
 		*pUlSize = AnscSizeOfString( devdetails->PartnerID );
 		
 		return 0;
@@ -1216,7 +1234,8 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 			return 1;
 		}
 
-		AnscCopyString( pValue, devdetails->ecmMAC );
+		rc = strcpy_s( pValue, *pUlSize ,devdetails->ecmMAC );
+		ERR_CHK(rc);
 		*pUlSize = AnscSizeOfString( devdetails->ecmMAC );
 		
 		return 0;
@@ -1230,7 +1249,8 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 			return 1;
 		}
 
-		AnscCopyString( pValue, devdetails->DeviceID );
+		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceID );
+		ERR_CHK(rc);
 		*pUlSize = AnscSizeOfString( devdetails->DeviceID );
 		
 		return 0;
@@ -1244,7 +1264,8 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 			return 1;
 		}
 
-		AnscCopyString( pValue, devdetails->DeviceModel );
+		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceModel );
+		ERR_CHK(rc);
 		*pUlSize = AnscSizeOfString( devdetails->DeviceModel );
 		
 		return 0;
@@ -1618,6 +1639,7 @@ IPPing_GetParamStringValue
     )
 {
     diag_cfg_t                      cfg;
+    errno_t rc = -1;
 
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return -1;
@@ -1642,7 +1664,8 @@ IPPing_GetParamStringValue
         }
         else
         {
-            _ansc_strncpy(pValue, cfg.Interface, *pUlSize);
+            rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
+            ERR_CHK(rc);
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
     }
@@ -1654,7 +1677,8 @@ IPPing_GetParamStringValue
             return 1;
         }
 
-        strncpy(pValue, cfg.host, *pUlSize);
+        rc = strcpy_s(pValue, *pUlSize , cfg.host);
+        ERR_CHK(rc);
     }
     else
         return -1;
@@ -1814,10 +1838,14 @@ IPPing_SetParamUlongValue
         cfg.timo = uValue / 1000;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
     	{
-    		char buf[256];
-		memset(buf,0,sizeof(buf));
+    		char buf[256] = {0} ;
+    		errno_t rc = -1;
 		cfg.size = uValue;
-		sprintf(buf, "%d",cfg.size);
+		rc = sprintf_s(buf, sizeof(buf) ,"%d",cfg.size);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
         	if (syscfg_set(NULL, "selfheal_ping_DataBlockSize",buf) == 0) 
 		{
 			syscfg_commit();
@@ -1873,6 +1901,7 @@ IPPing_SetParamStringValue
     )
 {
     diag_cfg_t cfg;
+    errno_t rc = -1;
 
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
         return FALSE;
@@ -1888,7 +1917,11 @@ IPPing_SetParamStringValue
          *
         snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", pString);
          */
-        _ansc_snprintf(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
+        rc = sprintf_s(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 
         /*
          *  Fill in cfg.ifname based on Interface - Device.IP.Interface.<n>
@@ -1899,7 +1932,11 @@ IPPing_SetParamStringValue
             parameterValStruct_t    ParamVal;
             int                     size = sizeof(cfg.ifname);
 
-            _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            rc = sprintf_s(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
             ParamVal.parameterName  = IfNameParamName;
             ParamVal.parameterValue = cfg.ifname;
@@ -1926,7 +1963,12 @@ IPPing_SetParamStringValue
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
 		
-        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+
     }
     else
         return FALSE;
@@ -2300,6 +2342,7 @@ TraceRoute_GetParamStringValue
     )
 {
     diag_cfg_t                      cfg;
+    errno_t rc = -1;
 
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return -1;
@@ -2325,7 +2368,8 @@ TraceRoute_GetParamStringValue
         }
         else
         {
-            _ansc_strncpy(pValue, cfg.Interface, *pUlSize);
+            rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
+            ERR_CHK(rc);
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
         }
     }
@@ -2337,7 +2381,12 @@ TraceRoute_GetParamStringValue
             return 1;
         }
 
-        snprintf(pValue, *pUlSize, "%s", cfg.host);
+        rc = sprintf_s(pValue, *pUlSize , "%s", cfg.host);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+
     }
 
     return 0;
@@ -2540,6 +2589,7 @@ TraceRoute_SetParamStringValue
     )
 {
     diag_cfg_t                      cfg;
+    errno_t rc = -1;
 
     if (diag_getcfg(DIAG_MD_TRACERT, &cfg) != DIAG_ERR_OK)
         return FALSE;
@@ -2556,7 +2606,11 @@ TraceRoute_SetParamStringValue
          *
         snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", pString);
          */
-        _ansc_snprintf(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
+        rc = sprintf_s(cfg.Interface, sizeof(cfg.Interface), "%s", pString);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 
         /*
          *  Fill in cfg.ifname based on Interface - Device.IP.Interface.<n>
@@ -2567,7 +2621,11 @@ TraceRoute_SetParamStringValue
             parameterValStruct_t    ParamVal;
             int                     size = sizeof(cfg.ifname);
 
-            _ansc_snprintf(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            rc = sprintf_s(IfNameParamName, sizeof(IfNameParamName), "%s.Name", cfg.Interface);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
             ParamVal.parameterName  = IfNameParamName;
             ParamVal.parameterValue = cfg.ifname;
@@ -2594,7 +2652,11 @@ TraceRoute_SetParamStringValue
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
 
-        snprintf(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
     }
     else
         return FALSE;
@@ -3058,6 +3120,7 @@ RouteHops_GetParamStringValue
     )
 {
     tracert_hop_t                   *hop = (tracert_hop_t *)hInsContext;
+    errno_t rc = -1;
 
     if (!hop)
         return FALSE;
@@ -3069,7 +3132,11 @@ RouteHops_GetParamStringValue
             return 1;
         }
 
-        snprintf(pValue, *pUlSize, "%s", hop->host);
+        rc = sprintf_s(pValue, *pUlSize , "%s", hop->host);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         return 0;
     }
     if (strcmp(ParamName, "HostAddress") == 0)
@@ -3079,7 +3146,11 @@ RouteHops_GetParamStringValue
             return 1;
         }
 
-        snprintf(pValue, *pUlSize, "%s", hop->addr);
+        rc = sprintf_s(pValue, *pUlSize , "%s", hop->addr);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         return 0;
     }
     if (strcmp(ParamName, "RTTimes") == 0)
@@ -3089,7 +3160,11 @@ RouteHops_GetParamStringValue
             return 1;
         }
 
-        snprintf(pValue, *pUlSize, "%s", hop->rtts);
+        rc = sprintf_s(pValue, *pUlSize , "%s", hop->rtts);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         return 0;
     }
 
@@ -3403,6 +3478,7 @@ DownloadDiagnostics_GetParamStringValue
     PDSLH_TR143_DOWNLOAD_DIAG_STATS pDownloadDiagStats = NULL;
     PANSC_UNIVERSAL_TIME            pTime              = NULL;
     char                            pBuf[128]          = { 0 };
+    errno_t                         rc                 = -1;
 
 
     /* check the parameter name and return the corresponding value */
@@ -3410,7 +3486,8 @@ DownloadDiagnostics_GetParamStringValue
     {
         if ( pDownloadInfo )
         {
-            AnscCopyString(pValue, pDownloadInfo->Interface);
+            rc = strcpy_s(pValue, *pUlSize , pDownloadInfo->Interface);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3425,7 +3502,8 @@ DownloadDiagnostics_GetParamStringValue
     {
         if ( pDownloadInfo )
         {
-            AnscCopyString(pValue, pDownloadInfo->DownloadURL);
+            rc = strcpy_s(pValue, *pUlSize ,pDownloadInfo->DownloadURL);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3447,9 +3525,9 @@ DownloadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pDownloadDiagStats->ROMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -3459,8 +3537,13 @@ DownloadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize, pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3483,9 +3566,9 @@ DownloadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pDownloadDiagStats->BOMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -3495,8 +3578,13 @@ DownloadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize ,pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3519,9 +3607,9 @@ DownloadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pDownloadDiagStats->EOMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -3531,8 +3619,13 @@ DownloadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize, pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3555,9 +3648,9 @@ DownloadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pDownloadDiagStats->TCPOpenRequestTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -3567,8 +3660,13 @@ DownloadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize, pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3590,9 +3688,9 @@ DownloadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pDownloadDiagStats->TCPOpenResponseTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -3602,8 +3700,13 @@ DownloadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize, pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -3626,7 +3729,8 @@ DownloadDiagnostics_GetParamStringValue
 			return 1;
 		}
 
-		AnscCopyString(pValue, "HTTP");
+		rc = strcpy_s(pValue, *pUlSize, "HTTP");
+		ERR_CHK(rc);
 		return 0;
 	}
 
@@ -3841,11 +3945,13 @@ DownloadDiagnostics_SetParamStringValue
 	/* according to TR-181, set writable params other than DiagnosticsState,
 	 * must set DiagnosticsState to "NONE". */
 	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
+	errno_t rc = -1;
 
     /* check the parameter name and set the corresponding value */
     if ( AnscEqualString(ParamName, "Interface", TRUE))
     {
-        AnscCopyString(pDownloadInfo->Interface, pString);
+        rc = strcpy_s(pDownloadInfo->Interface, sizeof(pDownloadInfo->Interface) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -3856,7 +3962,8 @@ DownloadDiagnostics_SetParamStringValue
             return FALSE;
         }
 
-        AnscCopyString(pDownloadInfo->DownloadURL, pString);
+        rc = strcpy_s(pDownloadInfo->DownloadURL, sizeof(pDownloadInfo->DownloadURL) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -3908,7 +4015,9 @@ DownloadDiagnostics_Validate
     if ( pDownloadInfo->DiagnosticsState == DSLH_TR143_DIAGNOSTIC_Requested
       && !AnscSizeOfString(pDownloadInfo->DownloadURL) )
     {
-        AnscCopyString(pReturnParamName, "DownloadURL");
+        errno_t rc = -1;
+        rc = strcpy_s(pReturnParamName, *puLength ,"DownloadURL");
+        ERR_CHK(rc);
         return FALSE;
     }
 
@@ -3946,6 +4055,7 @@ DownloadDiagnostics_Commit
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo      = pMyObject->hDiagDownloadInfo;
 	char*							pAddrName			= NULL;
+    errno_t rc = -1;
 
     if ( pDownloadInfo->DiagnosticsState != DSLH_TR143_DIAGNOSTIC_Requested )
     {
@@ -3955,11 +4065,12 @@ DownloadDiagnostics_Commit
 	if ((pAddrName = CosaGetInterfaceAddrByName(pDownloadInfo->Interface)) != NULL
 			&& _ansc_strcmp(pAddrName, "::") != 0)
 	{
-		AnscCopyString(pDownloadInfo->IfAddrName, pAddrName);
+		rc = strcpy_s(pDownloadInfo->IfAddrName, sizeof(pDownloadInfo->IfAddrName) ,pAddrName);
+		ERR_CHK(rc);
 	}
 	else
 	{
-		AnscCopyString(pDownloadInfo->IfAddrName, "");
+		pDownloadInfo->IfAddrName[0] = '\0';
 	}
 	if (pAddrName)
 		AnscFreeMemory(pAddrName);
@@ -4021,8 +4132,11 @@ DownloadDiagnostics_Rollback
 
     if ( pDownloadPreInfo )
     {
-        AnscCopyString(pDownloadInfo->Interface, pDownloadPreInfo->Interface);
-        AnscCopyString(pDownloadInfo->DownloadURL, pDownloadPreInfo->DownloadURL);
+        errno_t rc = -1;
+        rc = strcpy_s(pDownloadInfo->Interface, sizeof(pDownloadInfo->Interface) , pDownloadPreInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDownloadInfo->DownloadURL, sizeof(pDownloadInfo->DownloadURL) ,pDownloadPreInfo->DownloadURL);
+        ERR_CHK(rc);
         pDownloadInfo->DSCP             = pDownloadPreInfo->DSCP;
         pDownloadInfo->EthernetPriority = pDownloadPreInfo->EthernetPriority;
         pDownloadInfo->DiagnosticsState = pDownloadPreInfo->DiagnosticsState;
@@ -4336,6 +4450,7 @@ UploadDiagnostics_GetParamStringValue
     PDSLH_TR143_UPLOAD_DIAG_STATS   pUploadDiagStats = NULL;
     PANSC_UNIVERSAL_TIME            pTime            = NULL;
     char                            pBuf[128]        = { 0 };
+    errno_t                         rc               = -1;
 
 
     /* check the parameter name and return the corresponding value */
@@ -4343,7 +4458,8 @@ UploadDiagnostics_GetParamStringValue
     {
         if ( pUploadInfo )
         {
-            AnscCopyString(pValue, pUploadInfo->Interface);
+            rc = strcpy_s(pValue, *pUlSize ,pUploadInfo->Interface);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4358,7 +4474,8 @@ UploadDiagnostics_GetParamStringValue
     {
         if ( pUploadInfo )
         {
-            AnscCopyString(pValue, pUploadInfo->UploadURL);
+            rc = strcpy_s(pValue, *pUlSize , pUploadInfo->UploadURL);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4380,9 +4497,9 @@ UploadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUploadDiagStats->ROMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -4392,8 +4509,12 @@ UploadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
-
-           AnscCopyString(pValue, pBuf);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+           rc = strcpy_s(pValue, *pUlSize , pBuf);
+           ERR_CHK(rc);
         }
        else
        {
@@ -4416,9 +4537,9 @@ UploadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUploadDiagStats->BOMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -4428,8 +4549,12 @@ UploadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
-
-            AnscCopyString(pValue, pBuf);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            rc = strcpy_s(pValue, *pUlSize ,pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4452,9 +4577,9 @@ UploadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUploadDiagStats->EOMTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -4464,8 +4589,13 @@ UploadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize , pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4488,9 +4618,9 @@ UploadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUploadDiagStats->TCPOpenRequestTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -4500,8 +4630,12 @@ UploadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
-
-            AnscCopyString(pValue, pBuf);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            rc = strcpy_s(pValue, *pUlSize , pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4524,9 +4658,9 @@ UploadDiagnostics_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUploadDiagStats->TCPOpenResponseTime;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -4536,8 +4670,12 @@ UploadDiagnostics_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
-
-            AnscCopyString(pValue, pBuf);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            rc = strcpy_s(pValue, *pUlSize ,pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -4767,6 +4905,7 @@ UploadDiagnostics_SetParamStringValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject        = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
+    errno_t rc = -1;
 
 	/* according to TR-181, set writable params other than DiagnosticsState,
 	 * must set DiagnosticsState to "NONE". */
@@ -4775,7 +4914,8 @@ UploadDiagnostics_SetParamStringValue
     /* check the parameter name and set the corresponding value */
     if (strcmp(ParamName, "Interface") == 0)
     {
-        AnscCopyString(pUploadInfo->Interface, pString);
+        rc = strcpy_s(pUploadInfo->Interface, sizeof(pUploadInfo->Interface) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -4786,7 +4926,8 @@ UploadDiagnostics_SetParamStringValue
             return FALSE;
         }
 
-        AnscCopyString(pUploadInfo->UploadURL, pString);
+        rc = strcpy_s(pUploadInfo->UploadURL, sizeof(pUploadInfo->UploadURL) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -4839,7 +4980,9 @@ UploadDiagnostics_Validate
     if ( pUploadInfo->DiagnosticsState == DSLH_TR143_DIAGNOSTIC_Requested
        && !AnscSizeOfString(pUploadInfo->UploadURL) )
     {
-        AnscCopyString(pReturnParamName, "UploadURL");
+        errno_t rc = -1;
+        rc = strcpy_s(pReturnParamName, *puLength , "UploadURL");
+        ERR_CHK(rc);
         return FALSE;
     }
     return  TRUE;
@@ -4877,6 +5020,7 @@ UploadDiagnostics_Commit
     PCOSA_DATAMODEL_DIAG            pMyObject    = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo  = pMyObject->hDiagUploadInfo;
 	char*							pAddrName			= NULL;
+	errno_t                         rc           = -1;
 
     if ( pUploadInfo->DiagnosticsState != DSLH_TR143_DIAGNOSTIC_Requested )
     {
@@ -4886,11 +5030,12 @@ UploadDiagnostics_Commit
 	if ((pAddrName = CosaGetInterfaceAddrByName(pUploadInfo->Interface)) != NULL
 			&& _ansc_strcmp(pAddrName, "::") != 0)
 	{
-		AnscCopyString(pUploadInfo->IfAddrName, pAddrName);
+		rc = strcpy_s(pUploadInfo->IfAddrName, sizeof(pUploadInfo->IfAddrName) , pAddrName);
+		ERR_CHK(rc);
 	}
 	else
 	{
-		AnscCopyString(pUploadInfo->IfAddrName, "");
+		pUploadInfo->IfAddrName[0] = '\0' ;
 	}
 	if (pAddrName)
 		AnscFreeMemory(pAddrName);
@@ -4937,6 +5082,7 @@ UploadDiagnostics_Rollback
     PCOSA_DATAMODEL_DIAG            pMyObject        = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo      = pMyObject->hDiagUploadInfo;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadPreInfo   = NULL;
+    errno_t rc = -1;
 
     if ( !pUploadInfo )
     {
@@ -4952,8 +5098,10 @@ UploadDiagnostics_Rollback
 
     if ( pUploadPreInfo )
     {
-        AnscCopyString(pUploadInfo->Interface, pUploadPreInfo->Interface);
-        AnscCopyString(pUploadInfo->UploadURL, pUploadPreInfo->UploadURL);
+        rc = strcpy_s(pUploadInfo->Interface, sizeof(pUploadInfo->Interface) , pUploadPreInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pUploadInfo->UploadURL, sizeof(pUploadInfo->UploadURL) , pUploadPreInfo->UploadURL);
+        ERR_CHK(rc);
         pUploadInfo->DSCP                 = pUploadPreInfo->DSCP;
         pUploadInfo->EthernetPriority     = pUploadPreInfo->EthernetPriority;
         pUploadInfo->TestFileLength       = pUploadPreInfo->TestFileLength;
@@ -5336,6 +5484,7 @@ UDPEchoConfig_GetParamStringValue
     PDSLH_UDP_ECHO_SERVER_STATS     pUdpEchoStats = NULL;
     PANSC_UNIVERSAL_TIME            pTime         = NULL;
     char                            pBuf[128]     = { 0 };
+    errno_t                         rc            = -1;
 
 
     /* check the parameter name and return the corresponding value */
@@ -5343,7 +5492,8 @@ UDPEchoConfig_GetParamStringValue
     {
         if ( pUdpEchoInfo )
         {
-            AnscCopyString(pValue, pUdpEchoInfo->Interface);
+            rc = strcpy_s(pValue, *pUlSize , pUdpEchoInfo->Interface);
+            ERR_CHK(rc);
         }
         else
         {
@@ -5358,7 +5508,8 @@ UDPEchoConfig_GetParamStringValue
     {
         if ( pUdpEchoInfo )
         {
-            AnscCopyString(pValue, pUdpEchoInfo->SourceIPName);
+            rc = strcpy_s(pValue, *pUlSize , pUdpEchoInfo->SourceIPName);
+            ERR_CHK(rc);
         }
         else
         {
@@ -5380,9 +5531,9 @@ UDPEchoConfig_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUdpEchoStats->TimeFirstPacketReceived;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -5392,8 +5543,12 @@ UDPEchoConfig_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
-
-            AnscCopyString(pValue, pBuf);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
+            rc = strcpy_s(pValue, *pUlSize , pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -5416,9 +5571,9 @@ UDPEchoConfig_GetParamStringValue
         {
             pTime = (PANSC_UNIVERSAL_TIME)&pUdpEchoStats->TimeLastPacketReceived;
 
-            _ansc_sprintf
+            rc = sprintf_s
             (
-                pBuf,
+                pBuf, sizeof(pBuf),
                 "%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%.3d000",
                 pTime->Year,
                 pTime->Month,
@@ -5428,8 +5583,13 @@ UDPEchoConfig_GetParamStringValue
                 pTime->Second,
                 pTime->MilliSecond
             );
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
-            AnscCopyString(pValue, pBuf);
+            rc = strcpy_s(pValue, *pUlSize , pBuf);
+            ERR_CHK(rc);
         }
         else
         {
@@ -5647,18 +5807,21 @@ UDPEchoConfig_SetParamStringValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
+    errno_t rc = -1;
 
 
     /* check the parameter name and set the corresponding value */
     if (strcmp(ParamName, "Interface") == 0)
     {
-        AnscCopyString(pUdpEchoInfo->Interface, pString);
+        rc = strcpy_s(pUdpEchoInfo->Interface, sizeof(pUdpEchoInfo->Interface) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
     if (strcmp(ParamName, "SourceIPAddress") == 0)
     {
-        AnscCopyString(pUdpEchoInfo->SourceIPName, pString);
+        rc = strcpy_s(pUdpEchoInfo->SourceIPName, sizeof(pUdpEchoInfo->SourceIPName) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -5708,43 +5871,50 @@ UDPEchoConfig_Validate
     PCOSA_DATAMODEL_DIAG            pMyObject     = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo  = pMyObject->hDiagUdpechoSrvInfo;
     char*                           pAddrName     = NULL;
+    errno_t rc = -1;
 
     if (AnscSizeOfString(pUdpEchoInfo->Interface))    
     {
         pAddrName = CosaGetInterfaceAddrByName(pUdpEchoInfo->Interface);
         if (_ansc_strcmp(pAddrName, "::"))
         {
-            AnscCopyString(pUdpEchoInfo->IfAddrName, pAddrName);
+            rc = strcpy_s(pUdpEchoInfo->IfAddrName, sizeof(pUdpEchoInfo->IfAddrName) ,pAddrName);
+            ERR_CHK(rc);
             AnscFreeMemory(pAddrName);
         }
         else
         {
-            AnscCopyString(pReturnParamName, "Interface");
+            rc = strcpy_s(pReturnParamName, *puLength ,"Interface");
+            ERR_CHK(rc);
             AnscFreeMemory(pAddrName);
             return FALSE;  
         }
     }
     else
     {
-        AnscCopyString(pUdpEchoInfo->IfAddrName, "::");
+        rc = strcpy_s(pUdpEchoInfo->IfAddrName, sizeof(pUdpEchoInfo->IfAddrName) ,"::");
+        ERR_CHK(rc);
     }
 
 
     if ( pUdpEchoInfo->EchoPlusEnabled && !pUdpEchoInfo->EchoPlusSupported )
     {
-        AnscCopyString(pReturnParamName, "EchoPlusEnabled");
+        rc = strcpy_s(pReturnParamName, *puLength , "EchoPlusEnabled");
+        ERR_CHK(rc);
         return FALSE;
     }
 
     if ( pUdpEchoInfo->Enable && (!pUdpEchoInfo->SourceIPName) )
     {
-        AnscCopyString(pReturnParamName, "SourceIPAddress");
+        rc = strcpy_s(pReturnParamName, *puLength , "SourceIPAddress");
+        ERR_CHK(rc);
         return FALSE;
     }
 
     if ( pUdpEchoInfo->Enable && (pUdpEchoInfo->UDPPort == 0) )
     {
-        AnscCopyString(pReturnParamName, "UDPPort");
+        rc = strcpy_s(pReturnParamName, *puLength , "UDPPort");
+        ERR_CHK(rc);
         return FALSE;
     }
 
@@ -5838,9 +6008,12 @@ UDPEchoConfig_Rollback
 
     if ( pUdpEchoPreInfo )
     {
-        AnscCopyString(pUdpEchoInfo->Interface, pUdpEchoPreInfo->Interface);
+        errno_t rc = -1;
+        rc = strcpy_s(pUdpEchoInfo->Interface, sizeof(pUdpEchoInfo->Interface) ,pUdpEchoPreInfo->Interface);
+        ERR_CHK(rc);
         pUdpEchoInfo->Enable               = pUdpEchoPreInfo->Enable;
-        AnscCopyString(pUdpEchoInfo->SourceIPName, pUdpEchoPreInfo->SourceIPName);
+        rc = strcpy_s(pUdpEchoInfo->SourceIPName, sizeof(pUdpEchoInfo->SourceIPName) ,pUdpEchoPreInfo->SourceIPName);
+        ERR_CHK(rc);
         pUdpEchoInfo->UDPPort              = pUdpEchoPreInfo->UDPPort;
         pUdpEchoInfo->EchoPlusEnabled      = pUdpEchoPreInfo->EchoPlusEnabled;
         pUdpEchoInfo->EchoPlusSupported    = pUdpEchoPreInfo->EchoPlusSupported;
@@ -6020,7 +6193,9 @@ SpeedTest_Validate
 {
     if ( g_enable_speedtest == FALSE && g_run_speedtest == TRUE )
     {
-        AnscCopyString(pReturnParamName, "Run");
+        errno_t rc = -1;
+        rc = strcpy_s(pReturnParamName,  *puLength ,"Run");
+        ERR_CHK(rc);
         g_run_speedtest = FALSE;
         return FALSE; 
     }
@@ -6060,8 +6235,8 @@ SpeedTest_Commit
 
     char buf[128] = {0};
     char cmd[128] = {0};
+    errno_t rc = -1;
 
-    memset(buf,0,sizeof(buf));
     if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
     {
             speedtest_setting = (!strcmp(buf, "true")) ? TRUE : FALSE;
@@ -6070,7 +6245,9 @@ SpeedTest_Commit
     if( g_enable_speedtest != speedtest_setting )
     {
         char buf[8]={0};
-        snprintf(buf,sizeof(buf),"%s",g_enable_speedtest ? "true" : "false");
+        rc = strcpy_s(buf,sizeof(buf), (g_enable_speedtest ? "true" : "false"));
+        ERR_CHK(rc);
+
         if (syscfg_set(NULL, "enable_speedtest", buf) != 0)
         {
             AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
@@ -6085,8 +6262,8 @@ SpeedTest_Commit
 
     if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
     {
-        memset(cmd, 0, sizeof(cmd));
-        AnscCopyString(cmd, "/usr/ccsp/tad/speedtest.sh &");
+        rc = strcpy_s(cmd, sizeof(cmd) , "/usr/ccsp/tad/speedtest.sh &");
+        ERR_CHK(rc);
         AnscTraceFlow(("Executing Speedtest..\n"));
         system(cmd);
         g_run_speedtest = FALSE;
@@ -6124,9 +6301,8 @@ SpeedTest_Rollback
         ANSC_HANDLE                 hInsContext
     )
 {
-    char buf[128];
+    char buf[128] = {0} ;
 
-    memset(buf,0,sizeof(buf));
     if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
     {
             g_enable_speedtest = (!strcmp(buf, "true")) ? TRUE : FALSE;
@@ -6187,15 +6363,17 @@ SpeedTest_GetParamStringValue
 {
     int len = strlen(g_argument_speedtest);
     FILE *filePtr = NULL;
-    char strClientVersionBuf[512];
+    char strClientVersionBuf[512] = {0};
     int  byteCount = 0;
-    memset(strClientVersionBuf, 0, sizeof(strClientVersionBuf));
+    errno_t rc = -1;
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "Argument") == 0)
     {
         if (  *pUlSize > SPEEDTEST_ARG_SIZE )
         {
 		AnscTraceFlow(("SpeedTest Argument get : %s : len :%d: *pUlSize:%lu: \n",g_argument_speedtest,len,*pUlSize));
+		/******   SafeC has a limitation of changes not more than 4k. 
+		 * Here size of g_argument_speedtest is approx 4k. So no changes has  been done******/
 		AnscCopyString(pValue, g_argument_speedtest);
 		return 0;
         } else
@@ -6212,6 +6390,8 @@ SpeedTest_GetParamStringValue
         if (  *pUlSize > SPEEDTEST_AUTH_SIZE )
         {
                 AnscTraceFlow(("SpeedTest Authentication get : %s : len :%d: *pUlSize:%lu: \n",g_authentication_speedtest,len,*pUlSize));
+                /******   SafeC has a limitation of changes not more than 4k. 
+                * Here size of g_authentication_speedtest is approx 4k. So no changes has  been done******/
                 AnscCopyString(pValue, g_authentication_speedtest);
                 return 0;
         } else
@@ -6251,7 +6431,8 @@ SpeedTest_GetParamStringValue
                 {
                     if(!strcmp(token,"version:"))
                     {
-                        AnscCopyString(strClientVersionBuf, token+9);
+                        rc = strcpy_s(strClientVersionBuf, sizeof(strClientVersionBuf) ,token+9);
+                        ERR_CHK(rc);
                         if( strClientVersionBuf[strlen(strClientVersionBuf)-1] == '\n' )
                         {
                             strClientVersionBuf[strlen(strClientVersionBuf)-1] = '\0';
@@ -6260,15 +6441,18 @@ SpeedTest_GetParamStringValue
                     }
                     token = strtok(NULL, " \n");
                 }
-                AnscCopyString(g_clientversion_speedtest, strClientVersionBuf);
-                AnscCopyString(pValue, g_clientversion_speedtest);
+                rc = strcpy_s(g_clientversion_speedtest, sizeof(g_clientversion_speedtest) ,strClientVersionBuf);
+                ERR_CHK(rc);
+                rc = strcpy_s(pValue, *pUlSize , g_clientversion_speedtest);
+                ERR_CHK(rc);
 		fclose(filePtr); //CID: 175400 Resource leak
                 return 0;
             }
         }
         else
         {
-            AnscCopyString(pValue, g_clientversion_speedtest);
+            rc = strcpy_s(pValue, *pUlSize , g_clientversion_speedtest);
+            ERR_CHK(rc);
 	    /* CID 175410: Unchecked return value from library */
             if (remove(SPEEDTEST_VERSION_LOG_FILE) !=0)
 	    {
@@ -6328,6 +6512,9 @@ SpeedTest_SetParamStringValue
     {
 	if ( len <= (SPEEDTEST_ARG_SIZE ) ){
 		AnscTraceFlow(("SpeedTest Argument set : %s : string len : %d: \n",pString,len));
+		/******   SafeC has a limitation of changes not more than 4k. 
+		 * Here size of both  g_argument_speedtest &  g_authentication_speedtest are of approx 4k.
+		  So no changes has  been done******/
 		AnscCopyString(g_argument_speedtest, pString);
 		return TRUE;
 	} else
@@ -6503,24 +6690,28 @@ SpeedTestServer_GetParamStringValue
 {
 	PCOSA_DATAMODEL_DIAG		pMyObject 	= (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
+	errno_t rc = -1;
 
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "Key") == 0)
     {    
-		AnscCopyString(pValue, pSpeedTestServer->Key);
+		rc = strcpy_s(pValue, *pUlSize ,pSpeedTestServer->Key);
+		ERR_CHK(rc);
 		return 0;
 	}
 
 	if (strcmp(ParamName, "Username") == 0)
 	{
-		AnscCopyString(pValue, pSpeedTestServer->Username);
+		rc = strcpy_s(pValue, *pUlSize , pSpeedTestServer->Username);
+		ERR_CHK(rc);
 		return 0;
 	}
 
 
 	if (strcmp(ParamName, "Password") == 0)
 	{
-		AnscCopyString(pValue, pSpeedTestServer->Password);
+		rc = strcpy_s(pValue, *pUlSize ,pSpeedTestServer->Password);
+		ERR_CHK(rc);
 		return 0;
 	}
 
@@ -6540,13 +6731,15 @@ SpeedTestServer_SetParamStringValue
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 	pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)pMyObject->pSpeedTestServer;
 
 	int len = strlen(pString);
+	errno_t rc = -1;
 
   /* check the parameter name and set the corresponding value */
 	if (strcmp(ParamName, "Key") == 0)
 	{
 		if(len < SPEEDTEST_SERVER_KEY_SIZE)
 		{
-			AnscCopyString(pSpeedTestServer->Key, pString);
+			rc = strcpy_s(pSpeedTestServer->Key, sizeof(pSpeedTestServer->Key) , pString);
+			ERR_CHK(rc);
 			return TRUE;
 		}
 		else
@@ -6560,7 +6753,8 @@ SpeedTestServer_SetParamStringValue
 	{	
 		if(len <= SPEEDTEST_SERVER_USERNAME_PASS_SIZE)
 		{
-			AnscCopyString(pSpeedTestServer->Username, pString);
+			rc = strcpy_s(pSpeedTestServer->Username, sizeof(pSpeedTestServer->Username) , pString);
+			ERR_CHK(rc);
 			pSpeedTestServer->Username[len] = '\0'; //CID 74640: Out-of-bounds write
 			return TRUE;
 		}		
@@ -6576,7 +6770,8 @@ SpeedTestServer_SetParamStringValue
 	{		
 		if(len <= SPEEDTEST_SERVER_USERNAME_PASS_SIZE)
 		{
-			AnscCopyString(pSpeedTestServer->Password, pString);
+			rc = strcpy_s(pSpeedTestServer->Password, sizeof(pSpeedTestServer->Password) ,pString);
+			ERR_CHK(rc);
 			pSpeedTestServer->Password[len] = '\0'; //CID 59296: Out-of-bounds write
 			return TRUE;
 		}		

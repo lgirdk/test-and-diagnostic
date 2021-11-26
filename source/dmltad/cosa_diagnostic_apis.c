@@ -74,6 +74,7 @@
 #include "cosa_diagnostic_apis.h"
 #include <syscfg/syscfg.h>
 #include <ccsp_psm_helper.h>
+#include "safec_lib_common.h"
 
 static char * SpeedTestServerCapability= "eRT.com.cisco.spvtg.ccsp.tr181pa.Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.Server.Capability";
 
@@ -746,7 +747,14 @@ CosaDmlInputValidation
         returnStatus = ANSC_STATUS_FAILURE;
 
     if(ANSC_STATUS_SUCCESS == returnStatus)
-	sprintf(wrapped_host,"'%s'",host);
+    {
+        errno_t rc = -1;
+        rc = sprintf_s(wrapped_host, sizeof_wrapped_host ,"'%s'",host);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
 
     return returnStatus;
 

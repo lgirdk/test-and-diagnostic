@@ -68,6 +68,7 @@
 
 #include "ansc_platform.h"
 #include "cosa_apis_vendorlogfile.h"
+#include "safec_lib_common.h"
 
 /***********************************************************************
  IMPORTANT NOTE:
@@ -390,11 +391,13 @@ VendorLogFile_GetParamStringValue
         ULONG*                      pUlSize
     )
 {
+    errno_t rc = -1;
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "Alias") == 0)
     {
         /* collect value */
-	    AnscCopyString(pValue, "Syslogs");
+	    rc = strcpy_s(pValue, *pUlSize , "Syslogs");
+	    ERR_CHK(rc);
 	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }
@@ -402,7 +405,8 @@ VendorLogFile_GetParamStringValue
     if (strcmp(ParamName, "Name") == 0)
     {
         /* collect value */
-	    AnscCopyString(pValue, "/var/log/messages");
+	    rc = strcpy_s(pValue, *pUlSize , "/var/log/messages");
+	    ERR_CHK(rc);
 	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }

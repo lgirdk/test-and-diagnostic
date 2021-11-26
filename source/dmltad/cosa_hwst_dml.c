@@ -22,6 +22,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_hwst_dml.h"
 #include "platform_hal.h"
+#include "safec_lib_common.h"
 
 #define HWSELFTEST_RESULTS_SIZE 2048
 #define HWSELFTEST_RESULTS_FILE "/tmp/hwselftest.results"
@@ -239,8 +240,13 @@ hwHealthTest_SetParamBoolValue
                 AnscCopyString(hwExecInfo,info);
                 return TRUE;
             }
-            memset(cmd, 0, sizeof(cmd));
-            AnscCopyString(cmd, "/usr/bin/hwselftest_run.sh 0001 &");
+            errno_t rc = -1;
+            rc = sprintf_s(cmd, sizeof(cmd) , "/usr/bin/hwselftest %lu &", 0001 );
+            if(rc < EOK)
+            {
+                 ERR_CHK(rc);
+            }
+            AnscTraceWarning(("Command to execute HWST: %s\n", cmd));
             AnscTraceFlow(("Executing Hwselftest..\n"));
             system(cmd);
         }
@@ -300,6 +306,7 @@ hwHealthTest_GetParamStringValue
     {
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Results get\n", __FUNCTION__));
+        errno_t rc = -1;
 
         FILE *p = fopen(HWSELFTEST_RESULTS_FILE, "r");
         if (p == NULL)
@@ -312,7 +319,8 @@ hwHealthTest_GetParamStringValue
                 //If both primary and backup files are not present, maybe the test did not run. Check if the struc hw
                 if(NULL != hwExecInfo)
                 {
-                    AnscCopyString(pValue, hwExecInfo);
+                    rc = strcpy_s(pValue, 1024 , hwExecInfo);
+                    ERR_CHK(rc);
                     hwst_runTest = FALSE;
                 }
                 else
@@ -326,12 +334,14 @@ hwHealthTest_GetParamStringValue
         int offset = 0;
         while(fgets(results_data, HWSELFTEST_RESULTS_SIZE, p) != NULL && results_data[0] != '\n')
         {
-            strcpy(hwst_result_string + offset, results_data); /* copy input at offset into output */
+            rc = strcpy_s(hwst_result_string + offset, sizeof(hwst_result_string)-offset ,results_data); /* copy input at offset into output */
+            ERR_CHK(rc);
             offset += strlen(results_data);               /* advance the offset by the length of the string */
             AnscTraceFlow(("%s Results output string after copying a new line: %s\n", __FUNCTION__, hwst_result_string));
         }
         hwst_runTest = FALSE;
-        AnscCopyString(pValue, hwst_result_string);
+        rc = strcpy_s(pValue, 1024 , hwst_result_string);
+        ERR_CHK(rc);
         AnscTraceFlow(("%s Results - Overall result: %s\n", __FUNCTION__, pValue));
         fclose(p);
         return 0;

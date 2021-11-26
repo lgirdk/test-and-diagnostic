@@ -72,6 +72,7 @@
 #include "plugin_main_apis.h"
 #include "bbhm_diagns_interface.h"
 #include "ccsp_psm_helper.h"
+#include "safec_lib_common.h"
 
 /*#include "cosa_dns_internal.h"*/
 
@@ -411,6 +412,7 @@ NSLookupDiagnostics_GetParamStringValue
 {
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo   = pMyObject->hDiagNSLookInfo;
+    errno_t rc = -1;
 
     if ( !pNSLookupDiagInfo )
     {
@@ -422,7 +424,8 @@ NSLookupDiagnostics_GetParamStringValue
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->Interface) < *pUlSize )
         {
-            AnscCopyString(pValue, pNSLookupDiagInfo->Interface);
+            rc = strcpy_s(pValue, *pUlSize ,pNSLookupDiagInfo->Interface);
+            ERR_CHK(rc);
         }
         else
         {
@@ -438,7 +441,8 @@ NSLookupDiagnostics_GetParamStringValue
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->HostName) < *pUlSize )
         {
-            AnscCopyString(pValue, pNSLookupDiagInfo->HostName);
+            rc = strcpy_s(pValue, *pUlSize , pNSLookupDiagInfo->HostName);
+            ERR_CHK(rc);
         }
         else
         {
@@ -454,7 +458,8 @@ NSLookupDiagnostics_GetParamStringValue
     {
         if ( AnscSizeOfString(pNSLookupDiagInfo->DNSServer) < *pUlSize )
         {
-            AnscCopyString(pValue, pNSLookupDiagInfo->DNSServer);
+            rc = strcpy_s(pValue, *pUlSize , pNSLookupDiagInfo->DNSServer);
+            ERR_CHK(rc);
         }
         else
         {
@@ -699,6 +704,7 @@ NSLookupDiagnostics_SetParamStringValue
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo   = pMyObject->hDiagNSLookInfo;
     PDSLH_NSLOOKUP_INFO             pDiagInfo           = NULL;
+    errno_t                         rc                  = -1;
 
     if ( !pNSLookupDiagInfo )
     {
@@ -717,7 +723,8 @@ NSLookupDiagnostics_SetParamStringValue
         }
 
         pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-        AnscCopyString(pNSLookupDiagInfo->Interface, pString);
+        rc = strcpy_s(pNSLookupDiagInfo->Interface, sizeof(pNSLookupDiagInfo->Interface) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -732,7 +739,8 @@ NSLookupDiagnostics_SetParamStringValue
         }
 
         pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-        AnscCopyString(pNSLookupDiagInfo->HostName, pString);
+        rc = strcpy_s(pNSLookupDiagInfo->HostName, sizeof(pNSLookupDiagInfo->HostName) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -747,7 +755,8 @@ NSLookupDiagnostics_SetParamStringValue
         }
 
         pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
-        AnscCopyString(pNSLookupDiagInfo->DNSServer, pString);
+        rc = strcpy_s(pNSLookupDiagInfo->DNSServer, sizeof(pNSLookupDiagInfo->DNSServer) , pString);
+        ERR_CHK(rc);
         return TRUE;
     }
 
@@ -800,6 +809,7 @@ NSLookupDiagnostics_Validate
     PCOSA_DATAMODEL_DIAG            pMyObject          = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_NSLOOKUP_INFO             pNSLookupDiagInfo  = pMyObject->hDiagNSLookInfo;
     char*                           pAddrName          = NULL;
+    errno_t                         rc                 = -1;
 
     if ( !pNSLookupDiagInfo )
     {
@@ -818,13 +828,15 @@ NSLookupDiagnostics_Validate
 
         if(strcmp(pAddrName,"::") && (isValidIPv4Address(pAddrName) || isValidIPv6Address(pAddrName)))
         {
-            AnscCopyString(pNSLookupDiagInfo->IfAddr, pAddrName);
+            rc = strcpy_s(pNSLookupDiagInfo->IfAddr, sizeof(pNSLookupDiagInfo->IfAddr) ,pAddrName);
+            ERR_CHK(rc);
             AnscFreeMemory(pAddrName);
         }
         else
         {
             AnscFreeMemory(pAddrName);
-            AnscCopyString(pReturnParamName, "Interface");
+            rc = strcpy_s(pReturnParamName, *puLength ,"Interface");
+            ERR_CHK(rc);
             pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
             return FALSE;
         }
@@ -858,7 +870,8 @@ NSLookupDiagnostics_Validate
             }
             else
             {
-                AnscCopyString(pReturnParamName, "HostName");
+                rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                ERR_CHK(rc);
                 pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                 return FALSE;
             }
@@ -874,7 +887,8 @@ NSLookupDiagnostics_Validate
                 {
                     if ( *p != '.' )
                     {
-                        AnscCopyString(pReturnParamName, "HostName");
+                        rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                        ERR_CHK(rc);
                         pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                         return FALSE;
                     }
@@ -883,7 +897,8 @@ NSLookupDiagnostics_Validate
         }
         else
         {
-            AnscCopyString(pReturnParamName, "HostName");
+            rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+            ERR_CHK(rc);
             pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
             return FALSE;
         }
@@ -892,7 +907,8 @@ NSLookupDiagnostics_Validate
 
         if ( !pDomainName )
         {
-            AnscCopyString(pReturnParamName, "HostName");
+            rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+            ERR_CHK(rc);
             pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
             return FALSE;
         }
@@ -920,20 +936,23 @@ NSLookupDiagnostics_Validate
 
                 if ( !p )
                 {
-                    AnscCopyString(pReturnParamName, "HostName");
+                    rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                    ERR_CHK(rc);
                     pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                     return FALSE;
                 }
                 else if ( p[1] == '0' || p[1] == '.' )
                 {
-                    AnscCopyString(pReturnParamName, "HostName");
+                    rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                    ERR_CHK(rc);
                     pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                     return FALSE;
                 }
             }
             else
             {
-                AnscCopyString(pReturnParamName, "HostName");
+                rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                ERR_CHK(rc);
                 pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                 return FALSE;
             }
@@ -942,7 +961,8 @@ NSLookupDiagnostics_Validate
         {
             if ( pNSLookupDiagInfo->HostName[0] == '.')
             {
-                AnscCopyString(pReturnParamName, "HostName");
+                rc = strcpy_s(pReturnParamName, *puLength , "HostName");
+                ERR_CHK(rc);
                 pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                 return FALSE;
             }
@@ -969,7 +989,8 @@ NSLookupDiagnostics_Validate
 																	   (ULONG *)&ulEntryNameLen ) 
 				)
 			{
-				AnscCopyString( pNSLookupDiagInfo->DNSServer, varStruct.parameterValue );
+				rc = strcpy_s( pNSLookupDiagInfo->DNSServer, sizeof(pNSLookupDiagInfo->DNSServer) ,varStruct.parameterValue );
+				ERR_CHK(rc);
 			}
 		}
 
@@ -977,7 +998,8 @@ NSLookupDiagnostics_Validate
         // we are only validating if the server ip is v4/v6
         if(!isValidIPv4Address(pNSLookupDiagInfo->DNSServer) && !isValidIPv6Address(pNSLookupDiagInfo->DNSServer))
             {
-                AnscCopyString(pReturnParamName, "DNSServer");
+                rc = strcpy_s(pReturnParamName, *puLength , "DNSServer");
+                ERR_CHK(rc);
                 pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                 return FALSE;
             }
@@ -987,7 +1009,8 @@ NSLookupDiagnostics_Validate
     {
         if ( pNSLookupDiagInfo->Timeout < DSLH_NS_MIN_Timeout )
         {
-            AnscCopyString(pReturnParamName, "Timeout");
+            rc = strcpy_s(pReturnParamName, *puLength , "Timeout");
+            ERR_CHK(rc);
             pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
             return FALSE;
         }
@@ -997,7 +1020,8 @@ NSLookupDiagnostics_Validate
     {
         if ( pNSLookupDiagInfo->NumberOfRepetitions < DSLH_NS_MIN_NumberOfRepetitions )
         {
-            AnscCopyString(pReturnParamName, "NumberOfRepetitions");
+            rc = strcpy_s(pReturnParamName, *puLength , "NumberOfRepetitions");
+            ERR_CHK(rc);
             pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
             return FALSE;
         }
@@ -1101,10 +1125,14 @@ NSLookupDiagnostics_Rollback
         DslhInitNSLookupInfo(pNSLookupInfo);
 
         pNSLookupInfo->StructSize    = sizeof(DSLH_NSLOOKUP_INFO);
+        errno_t rc = -1;
 
-        AnscCopyString(pNSLookupInfo->HostName,  pNSLookupDiagInfo->HostName);
-        AnscCopyString(pNSLookupInfo->Interface, pNSLookupDiagInfo->Interface);
-        AnscCopyString(pNSLookupInfo->DNSServer, pNSLookupDiagInfo->DNSServer);
+        rc = strcpy_s(pNSLookupInfo->HostName, sizeof(pNSLookupInfo->HostName) , pNSLookupDiagInfo->HostName);
+        ERR_CHK(rc);
+        rc = strcpy_s(pNSLookupInfo->Interface, sizeof(pNSLookupInfo->Interface) , pNSLookupDiagInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pNSLookupInfo->DNSServer, sizeof(pNSLookupInfo->DNSServer) , pNSLookupDiagInfo->DNSServer);
+        ERR_CHK(rc);
 
         pNSLookupInfo->bForced = FALSE;
         pNSLookupInfo->Timeout = pNSLookupDiagInfo->Timeout;
@@ -1546,6 +1574,7 @@ Result_GetParamStringValue
     )
 {
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pEchoInfo          = (PBBHM_NS_LOOKUP_ECHO_ENTRY)hInsContext;
+    errno_t rc = -1;
 
     if ( !pEchoInfo )
     {
@@ -1561,7 +1590,8 @@ Result_GetParamStringValue
         {
             if ( AnscSizeOfString(pEchoInfo->HostNameReturned) < *pUlSize )
             {
-                AnscCopyString(pValue, pEchoInfo->HostNameReturned);
+                rc = strcpy_s(pValue, *pUlSize , pEchoInfo->HostNameReturned);
+                ERR_CHK(rc);
 
                 return 0;
             }
@@ -1582,7 +1612,8 @@ Result_GetParamStringValue
         {
             if ( AnscSizeOfString(pEchoInfo->IPAddresses) < *pUlSize )
             {
-                AnscCopyString(pValue, pEchoInfo->IPAddresses);
+                rc = strcpy_s(pValue, *pUlSize , pEchoInfo->IPAddresses);
+                ERR_CHK(rc);
 
                 return 0;
             }
@@ -1599,7 +1630,8 @@ Result_GetParamStringValue
 
     if (strcmp(ParamName, "DNSServerIP") == 0)
     {
-        AnscCopyString(pValue, pEchoInfo->DNSServerIPName);
+        rc = strcpy_s(pValue, *pUlSize , pEchoInfo->DNSServerIPName);
+        ERR_CHK(rc);
 
         return 0;
     }
