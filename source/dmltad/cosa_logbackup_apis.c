@@ -19,11 +19,14 @@
 
 #include "plugin_main_apis.h"
 #include "cosa_logbackup_dml.h"
+#include "safec_lib_common.h"
 
 void SyncAndUploadLogs()
 {
 		char  str[100] = {0};
-	sprintf(str,"/rdklogger/backupLogs.sh false \"\" Atom_Max_Log_Size_Reached upload &");
+        errno_t rc = -1;
+	rc = strcpy_s(str, sizeof(str), "/rdklogger/backupLogs.sh false \"\" Atom_Max_Log_Size_Reached upload &");
+    ERR_CHK(rc);
         system(str);
 
 }

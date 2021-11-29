@@ -52,6 +52,7 @@
 
 #include "diag_inter.h"
 #include "ccsp_base_api.h"
+#include "safec_lib_common.h"
 
 /* XXX: if there are more instances, we may use a dynamic list to 
  * handle these instances, or with dynamic load. */
@@ -120,6 +121,7 @@ static int inet_is_onlink(const struct in_addr *addr)
     char *pref;
     struct in_addr net;
     uint32_t mask;
+    errno_t rc = -1;
 
     if (!addr)
         return 0;
@@ -128,7 +130,8 @@ static int inet_is_onlink(const struct in_addr *addr)
      * let's just lookup the duplicated table,
      * btw, if we "sort | uniq" it the priory is changed
      */
-    snprintf(cmd, sizeof(cmd), "ip rule show | sed -n 's/.*\\<lookup\\> \\(.*\\)/\\1/p'");
+    rc = strcpy_s(cmd, sizeof(cmd), "ip rule show | sed -n 's/.*\\<lookup\\> \\(.*\\)/\\1/p'");
+    ERR_CHK(rc);
     if ((rule_fp = popen(cmd, "r")) == NULL)
         return 0;
 
@@ -137,7 +140,11 @@ static int inet_is_onlink(const struct in_addr *addr)
         if (is_empty(table) || strcmp(table, "local") == 0)
             continue;
 
-        snprintf(cmd, sizeof(cmd), "ip route show table %s | awk '/\\<link\\>/ {print $1}'", table);
+        rc = sprintf_s(cmd, sizeof(cmd), "ip route show table %s | awk '/\\<link\\>/ {print $1}'", table);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if ((tbl_fp = popen(cmd, "r")) == NULL) {
             pclose(rule_fp);
             return 0;
@@ -179,6 +186,7 @@ static int inet_is_local(const struct in_addr *addr)
     char *tok, *delim = " \t\r\n", *sp;
     char *dest, *preflen;
     struct in_addr inaddr;
+    errno_t rc = -1;
 
     if (!addr)
         return 0;
@@ -189,7 +197,8 @@ static int inet_is_local(const struct in_addr *addr)
      * 2. unicast to address of local device, 'local xxx.xxx.xxx.xxx'
      * 3. unicast to address in same network e.g,. "xxx.xxx.xxx.xxx/xx" 
      */
-     snprintf(cmd, sizeof(cmd), "ip route show table local");
+     rc = strcpy_s(cmd, sizeof(cmd), "ip route show table local");
+     ERR_CHK(rc);
 #if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
 /*
 rb mode is not supported to create pipe
@@ -297,6 +306,7 @@ static bool inet6_nexthop_not_def(const struct in6_addr *addr)
     char cmd[128+407], table[512], entry[512];
     char *dest, *delim = " \t\r\n", *sp, *preflen;
     struct in6_addr daddr;
+    errno_t rc = -1;
 
     rule_fp = popen("ip -6 rule show | sed -n 's/.*\\<lookup\\> \\(.*\\)/\\1/p'", "r");
     if (!rule_fp)
@@ -307,7 +317,11 @@ static bool inet6_nexthop_not_def(const struct in6_addr *addr)
         if (is_empty(table))
             continue;
 
-        snprintf(cmd, sizeof(cmd), "ip -6 route show table %s", table);
+        rc = sprintf_s(cmd, sizeof(cmd), "ip -6 route show table %s", table);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if ((tbl_fp = popen(cmd, "r")) == NULL)
             break;
 
@@ -356,6 +370,7 @@ static const char *assign_iface(const char *host, char *buf, size_t size)
 {
     struct in_addr inaddr;
     struct in6_addr in6addr;
+    errno_t rc = -1;
 
     if (inet_pton(AF_INET, host, &inaddr) > 0) {
         if (inet_is_local(&inaddr))
@@ -367,7 +382,8 @@ static const char *assign_iface(const char *host, char *buf, size_t size)
             return NULL;
     }
 
-    snprintf(buf, size, "%s", "erouter0");
+    rc = strcpy_s(buf, size, "erouter0");
+    ERR_CHK(rc);
     return buf;
 }
 
@@ -423,6 +439,7 @@ static void *diag_task(void *arg)
     char        buf[IFNAMSIZ];
     diag_cfg_t  cfgtemp;
     int retrycount = 0;
+    errno_t rc = -1;
 
     if (!diag)
         return NULL;
@@ -454,7 +471,8 @@ static void *diag_task(void *arg)
      * but not for localout traffic (ping).
      */
     if (!strlen(cfg.ifname) && assign_iface(cfg.host, buf, sizeof(buf))) {
-        snprintf(cfg.ifname, sizeof(cfg.ifname), "%s", buf);
+        rc = strcpy_s(cfg.ifname, sizeof(cfg.ifname), buf);
+        ERR_CHK(rc);
         fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, buf);
     }
 
@@ -463,7 +481,8 @@ static void *diag_task(void *arg)
 
     if(is_MAPT() == TRUE && is_IPv6(cfg.host) == FALSE)
     {
-        snprintf(cfg.ifname, sizeof(cfg.ifname), MAPT_INTERFACE);
+        rc = strcpy_s(cfg.ifname, sizeof(cfg.ifname), MAPT_INTERFACE);
+        ERR_CHK(rc);
         fprintf(stderr, "%s: Changing ifname to %s !!!!\n", __FUNCTION__, cfg.ifname);
     }
 
@@ -541,6 +560,7 @@ diag_err_t diag_term(void)
 diag_err_t diag_start(diag_mode_t mode)
 {
     diag_obj_t *diag = get_diag_by_mode(mode);
+    errno_t rc = -1;
 
     if (!diag)
         return DIAG_ERR_PARAM;
@@ -557,7 +577,8 @@ diag_err_t diag_start(diag_mode_t mode)
 
     if (diag->op_clearstatis)
         diag->op_clearstatis(diag);
-    memset(&diag->stat, 0, sizeof(diag->stat));
+    rc = memset_s(&diag->stat, sizeof(diag->stat), 0, sizeof(diag->stat));
+    ERR_CHK(rc);
 
     if (pthread_create(&diag->task, NULL, diag_task, diag) != 0) {
         diag->state = DIAG_ST_ERROR;
@@ -595,6 +616,7 @@ diag_err_t diag_stop(diag_mode_t mode)
 diag_err_t diag_setcfg(diag_mode_t mode, const diag_cfg_t *cfg)
 {
     diag_obj_t *diag = get_diag_by_mode(mode);
+    errno_t rc = -1;
 
     if (!diag)
         return DIAG_ERR_PARAM;
@@ -618,7 +640,8 @@ Mamidi:If we stop the diag test here that is causing the actual test to stop  an
 
     if (diag->op_clearstatis)
         diag->op_clearstatis(diag);
-    memset(&diag->stat, 0, sizeof(diag->stat));
+    rc = memset_s(&diag->stat, sizeof(diag->stat), 0, sizeof(diag->stat));
+    ERR_CHK(rc);
     diag->state = DIAG_ST_NONE;
     pthread_mutex_unlock(&diag->mutex);
 
@@ -684,12 +707,14 @@ diag_err_t diag_init_blocksize(void)
 {
   diag_cfg_t                      cfg;
 	char buf[10];
+    errno_t rc = -1;
     if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK) {
         return DIAG_ERR_PARAM;
     }
         
 	syscfg_init();
-	memset(buf,0,sizeof(buf));
+	rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
+    ERR_CHK(rc);
 	syscfg_get( NULL, "selfheal_ping_DataBlockSize", buf, sizeof(buf));
 	cfg.size = atoi(buf);
 

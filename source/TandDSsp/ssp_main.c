@@ -44,6 +44,7 @@
 #include "breakpad_wrapper.h"
 #endif
 #include "stdlib.h"
+#include "safec_lib_common.h"
 
 PDSLH_CPE_CONTROLLER_OBJECT     pDslhCpeController      = NULL;
 PCOMPONENT_COMMON_DM            g_pComponent_Common_Dm  = NULL;
@@ -69,14 +70,12 @@ int  cmd_dispatch(int  command)
 
             {
                 char                            CName[256];
+                errno_t                         rc = -1;
 
-                if ( g_Subsystem[0] != 0 )
+                rc = sprintf_s(CName, sizeof(CName), "%s%s", g_Subsystem, CCSP_COMPONENT_ID_TAD);
+                if(rc < EOK)
                 {
-                    _ansc_sprintf(CName, "%s%s", g_Subsystem, CCSP_COMPONENT_ID_TAD);
-                }
-                else
-                {
-                    _ansc_sprintf(CName, "%s", CCSP_COMPONENT_ID_TAD);
+                    ERR_CHK(rc);
                 }
 
                 ssp_TadMbi_MessageBusEngage
@@ -293,6 +292,7 @@ int main(int argc, char* argv[])
     int                             cmdChar            = 0;
     BOOL                            bRunAsDaemon       = TRUE;
     int                             idx                = 0;
+    errno_t                         rc                 = -1;
 
     // Buffer characters till newline for stdout and stderr
     setlinebuf(stdout);
@@ -306,7 +306,16 @@ int main(int argc, char* argv[])
     {
         if ( (strcmp(argv[idx], "-subsys") == 0) )
         {
-            AnscCopyString(g_Subsystem, argv[idx+1]);
+            if ((idx+1) < argc)
+            {
+                rc = strcpy_s(g_Subsystem, sizeof(g_Subsystem), argv[idx+1]);
+                ERR_CHK(rc);
+                CcspTraceWarning(("\nSubsystem is %s\n", g_Subsystem));
+            }
+            else
+            {
+                CcspTraceError(("Argument missing after -subsys\n"));
+            }
         }
         else if ( strcmp(argv[idx], "-c") == 0 )
         {

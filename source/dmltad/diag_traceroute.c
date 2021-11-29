@@ -44,6 +44,7 @@
 #include <assert.h>
 #include "diag_inter.h"
 #include "ansc_platform.h"
+#include "safec_lib_common.h"
 
 #define TRACERT_DEF_CNT     3
 #define TRACERT_DEF_TIMO    5
@@ -90,6 +91,7 @@ static void convert_rtts(char *rtts, size_t size
     char *tok1, *tok2, *delim = " \t\r\n", *sp;
     char *start, buf[1024];
     float f;
+    errno_t rc = -1;
 
     buf[0] = '\0';
 #if defined(_PLATFORM_RASPBERRYPI_)
@@ -99,9 +101,21 @@ static void convert_rtts(char *rtts, size_t size
         if (strcmp(tok2, "ms") == 0) {
             sscanf(tok1, "%f", &f);
             if (start)
-                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d", (int)f);
+            {
+                rc = sprintf_s(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d", (int)f);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+            }
             else
-                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), ",%d", (int)f);
+            {
+                rc = sprintf_s(buf + strlen(buf), sizeof(buf) - strlen(buf), ",%d", (int)f);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+            }
         } else if (tok2[0] == '(') {
             continue;
         } else {
@@ -120,9 +134,21 @@ static void convert_rtts(char *rtts, size_t size
 			*sum = *sum+f;
 			*counter=*counter+1;
             if (start)
-                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d", (int)f);
+            {
+                rc = sprintf_s(buf + strlen(buf), sizeof(buf) - strlen(buf), "%d", (int)f);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+            }
             else
-                snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), ",%d", (int)f);
+            {
+                rc = sprintf_s(buf + strlen(buf), sizeof(buf) - strlen(buf), ",%d", (int)f);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
+            }
         }
         else if (strcmp(tok2, "*") == 0 || strcmp(tok1, "*") == 0)
         {
@@ -136,7 +162,13 @@ static void convert_rtts(char *rtts, size_t size
         }   
     }
 
-    if(snprintf(rtts, size, "%s", buf) >= size){
+    rc = sprintf_s(rtts, size, "%s", buf);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+
+    if(rc >= size){
         AnscTraceWarning(("%s: String overflow while copying rtts=%s, buf=%s\n", __FUNCTION__, rtts, buf));
     }
 }
@@ -152,6 +184,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     char line[512];
     size_t left;
     FILE *fp;
+    errno_t rc = -1;
 #if !defined(_PLATFORM_RASPBERRYPI_)
     int timeout;
     float avgresptime=0;
@@ -163,23 +196,72 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
 #if !defined(_PLATFORM_RASPBERRYPI_)
     timeout=cfg->timo;
     timeout=timeout*1000;
-    left -= snprintf(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+    if(left < EOK)
+    {
+        ERR_CHK(left);
+    }
 #else
-    left -= snprintf(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
+    if(left < EOK)
+    {
+        ERR_CHK(left);
+    }
+
 #endif
     if (strlen(cfg->ifname))
-        left -= snprintf(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
     if (cfg->cnt)
-        left -= snprintf(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
     if (cfg->timo)
-        left -= snprintf(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
     if (cfg->tos)
-        left -= snprintf(cmd + strlen(cmd), left, "-t %u ", cfg->tos);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-t %u ", cfg->tos);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
     if (cfg->maxhop)
-        left -= snprintf(cmd + strlen(cmd), left, "-m %u ", cfg->maxhop);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-m %u ", cfg->maxhop);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
     if (cfg->size)
-        left -= snprintf(cmd + strlen(cmd), left, "%u ", cfg->size);
-    left -= snprintf(cmd + strlen(cmd), left, "2>&1 ");
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "%u ", cfg->size);
+        if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
+    }
+    left -= sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    if(left < EOK)
+        {
+            ERR_CHK(left);
+        }
 
     fprintf(stderr, "%s: %s\n", __FUNCTION__, cmd);
 
@@ -192,7 +274,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
         return DIAG_ERR_OTHER;
     }
 
-    memset (stat, 0, sizeof(diag_stat_t));
+    rc = memset_s(stat, sizeof(diag_stat_t), 0, sizeof(diag_stat_t));
+    ERR_CHK(rc);
 
     if (strncmp(line, "traceroute to", strlen("traceroute to")) != 0) {
         if (strstr(line, "Name or service not known") != NULL
@@ -229,7 +312,8 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             hops = ptr;
 
             /* 9  xxx.cisco.com (10.112.0.118)  40.469 ms  40.092 ms  40.528 ms */
-            memset(&hops[nhop], 0, sizeof(tracert_hop_t));
+            rc = memset_s(&hops[nhop], sizeof(tracert_hop_t), 0, sizeof(tracert_hop_t));
+            ERR_CHK(rc);
             sscanf(line, "%d %s (%[^)]) %[^\n]",
                     &idx, hops[nhop].host, hops[nhop].addr, hops[nhop].rtts);
             /* TR-181 doesn't like the format, let's convert it */

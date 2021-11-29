@@ -23,6 +23,7 @@
 #include "cosa_selfheal_apis.h"
 #include "cosa_selfheal_dml.h"
 #include "plugin_main_apis.h"
+#include "safec_lib_common.h"
 #include <syscfg/syscfg.h>
 
 #define DEFAULT_MONITOR_INTERVAL    15 /* in minute */ 
@@ -153,7 +154,8 @@ BOOL SelfHeal_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    char buf[128];
+    char buf[128] = {0};
+    errno_t rc = -1;
 
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
@@ -162,8 +164,8 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
 	}
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
+        rc = strcpy_s(buf,sizeof(buf),(bValue ? "true" : "false"));
+        ERR_CHK(rc);
         if (syscfg_set(NULL, "selfheal_enable", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -181,23 +183,32 @@ BOOL SelfHeal_SetParamBoolValue
             if ( bValue == TRUE )
             {
 
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+                ERR_CHK(rc);
                 system(cmd); 
 
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/resource_monitor.sh &");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/resource_monitor.sh &");
+                ERR_CHK(rc);
                 system(cmd); 
 
-                memset(cmd, 0, sizeof(cmd));
-                AnscCopyString(cmd, "/usr/ccsp/tad/selfheal_aggressive.sh &");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/selfheal_aggressive.sh &");
+                ERR_CHK(rc);
                 system(cmd);
 	    }
             else
 	    {
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof self_heal_connectivity_test.sh");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof self_heal_connectivity_test.sh");
+                ERR_CHK(rc);
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -205,13 +216,20 @@ BOOL SelfHeal_SetParamBoolValue
 	            CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
                 } else {    
 	            CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
+                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                    }
                     system(cmd);
                 }
     
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof resource_monitor.sh");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof resource_monitor.sh");
+                ERR_CHK(rc);
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -219,13 +237,20 @@ BOOL SelfHeal_SetParamBoolValue
 	            CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
                 } else {    
 	            CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
+                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                    }
                     system(cmd);
                 }   
        
-                memset(cmd, 0, sizeof(cmd));
-                memset(buf, 0, sizeof(buf));
-                sprintf(cmd, "busybox pidof selfheal_aggressive.sh");
+                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
+                ERR_CHK(rc);
+                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+                ERR_CHK(rc);
+                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof selfheal_aggressive.sh");
+                ERR_CHK(rc);
                 copy_command_output(cmd, buf, sizeof(buf));
                 buf[strlen(buf)] = '\0';
 
@@ -233,7 +258,11 @@ BOOL SelfHeal_SetParamBoolValue
 	            CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
                 } else {
 	            CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
-                    sprintf(cmd, "kill -9 %s", buf);
+                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
+                    if(rc < EOK)
+                    {
+                        ERR_CHK(rc);
+                    }
                     system(cmd);
                 }
 	    }
@@ -248,9 +277,12 @@ BOOL SelfHeal_SetParamBoolValue
         {
             char cmd[128] = "\0";
 
-            memset (cmd, 0, sizeof(cmd));
-            memset (buf, 0, sizeof(buf));
-            sprintf (cmd, "busybox pidof cpuprocanalyzer");
+            rc = memset_s (cmd, sizeof(cmd), 0, sizeof(cmd));
+            ERR_CHK(rc);
+            rc = memset_s (buf, sizeof(buf), 0, sizeof(buf));
+            ERR_CHK(rc);
+            rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof cpuprocanalyzer");
+            ERR_CHK(rc);
             copy_command_output(cmd, buf, sizeof(buf));
             buf[strlen(buf)] = '\0';
             CcspTraceWarning(("Value of cmd: %s and Value of buf: %s and Check for strcmp: %d \n", cmd, buf, strcmp(buf, "")));
@@ -303,11 +335,10 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));	
-        if(bValue)
-            strcpy(buf,"true");
-        else
-            strcpy(buf,"false");
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));	
+        ERR_CHK(rc);
+        rc = strcpy_s(buf, sizeof(buf), (bValue?"true":"false"));
+        ERR_CHK(rc);
 
         if (syscfg_set(NULL, "log_backup_enable", buf) != 0)
         {
@@ -457,11 +488,17 @@ SelfHeal_SetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[8];
+    errno_t rc = -1;
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold") == 0)
 	{
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%lu",uValue);
+		rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+		rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 
 		if (syscfg_set(NULL, "Free_Mem_Threshold", buf) != 0)
 		{
@@ -480,8 +517,13 @@ SelfHeal_SetParamUlongValue
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold") == 0)
 	{
-		memset(buf, 0, sizeof(buf));
-		snprintf(buf,sizeof(buf),"%lu",uValue);
+		rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+		rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 
 		if (syscfg_set(NULL, "Mem_Frag_Threshold", buf) != 0)
 		{
@@ -502,8 +544,13 @@ SelfHeal_SetParamUlongValue
 	{
 		if((uValue >= 1) && (uValue <= 120))
 		{
-			memset(buf, 0, sizeof(buf));
-			snprintf(buf,sizeof(buf),"%lu",uValue);
+			rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+            ERR_CHK(rc);
+			rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
 
 			if (syscfg_set(NULL, "CpuMemFrag_Interval", buf) != 0)
 			{
@@ -534,8 +581,13 @@ SelfHeal_SetParamUlongValue
             return TRUE;
 	}
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "max_reboot_count", buf) != 0)
         {
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -557,8 +609,13 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "max_reset_count", buf) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -580,8 +637,13 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "diagMode_LogUploadFrequency", buf) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -607,8 +669,13 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-	memset(buf, 0, sizeof(buf));
-        sprintf(buf, "%lu", uValue);
+	rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+    ERR_CHK(rc);
+        rc = sprintf_s(buf, sizeof(buf), "%lu", uValue);
+        if(rc < EOK)
+        {
+             ERR_CHK(rc);
+        }
 
         if (syscfg_set(NULL, "log_backup_threshold", buf) != 0)
         {
@@ -643,6 +710,7 @@ SelfHeal_GetParamStringValue
 
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+    errno_t rc = -1;
 
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_URL") == 0)
@@ -650,7 +718,8 @@ SelfHeal_GetParamStringValue
         /* collect value */
         if ( AnscSizeOfString(pMyObject->DNSPingTest_URL) < *pUlSize)
         {
-            AnscCopyString(pValue, pMyObject->DNSPingTest_URL);
+            rc = strcpy_s(pValue, *pUlSize, pMyObject->DNSPingTest_URL);
+            ERR_CHK(rc);
 		    return 0;
         }
         else
@@ -863,6 +932,7 @@ BOOL ConnectivityTest_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
+    errno_t rc = -1;
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_CorrectiveAction") == 0)
     {
         if ( pMyObject->pConnTest->CorrectiveAction == bValue )
@@ -871,9 +941,10 @@ BOOL ConnectivityTest_SetParamBoolValue
         }
 	CcspTraceWarning(("%s Changing X_RDKCENTRAL-COM_CorrectiveAction state to %d \n",__FUNCTION__,bValue));
         /* save update to backup */
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
+        char buf[128] = {0};
+        rc = strcpy_s(buf,sizeof(buf),(bValue ? "true" : "false"));
+        ERR_CHK(rc);
+
 		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", buf) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
@@ -985,6 +1056,7 @@ ConnectivityTest_SetParamUlongValue
 
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+    errno_t rc = -1;
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_PingInterval") == 0)
     {
         if ( pMyObject->pConnTest->PingInterval == uValue )
@@ -999,7 +1071,11 @@ ConnectivityTest_SetParamUlongValue
 		}
         /* save update to backup */
 		char value[10];
-		snprintf(value, sizeof(value), "%lu", uValue);
+		rc = sprintf_s(value, sizeof(value), "%lu", uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 		if (syscfg_set(NULL, "ConnTest_PingInterval", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingInterval\n",__FUNCTION__));
@@ -1022,7 +1098,11 @@ ConnectivityTest_SetParamUlongValue
         }
          
 		char value[10];
-		snprintf(value, sizeof(value), "%lu", uValue);
+		rc = sprintf_s(value, sizeof(value), "%lu", uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 		if (syscfg_set(NULL, "ConnTest_NumPingsPerServer", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
@@ -1046,7 +1126,11 @@ ConnectivityTest_SetParamUlongValue
         }
    
 		char value[10];
-		snprintf(value, sizeof(value), "%lu", uValue);
+		rc = sprintf_s(value, sizeof(value), "%lu", uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 		if (syscfg_set(NULL, "ConnTest_MinNumPingServer", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
@@ -1069,7 +1153,11 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
 		char value[10];
-        snprintf(value, sizeof(value), "%lu", uValue);
+        rc = sprintf_s(value, sizeof(value), "%lu", uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 		if (syscfg_set(NULL, "ConnTest_PingRespWaitTime", value) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
@@ -1097,6 +1185,7 @@ ConnectivityTest_SetParamIntValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject           = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
+    errno_t rc = -1;
 
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_RebootInterval") == 0)
     {
@@ -1105,8 +1194,13 @@ ConnectivityTest_SetParamIntValue
             return  TRUE;
         }
         char cValue[10];
-        memset(cValue, 0, sizeof(cValue));
-        snprintf(cValue, sizeof(cValue), "%d", pInt);
+        rc = memset_s(cValue, sizeof(cValue), 0, sizeof(cValue));
+        ERR_CHK(rc);
+        rc = sprintf_s(cValue, sizeof(cValue), "%d", pInt);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "router_reboot_Interval", cValue) != 0)
         {
 		CcspTraceWarning(("%s syscfg set failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
@@ -1236,6 +1330,7 @@ IPv4PingServerTable_AddEntry
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4 = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink  = NULL;
     CHAR 								 buf[8];
+    errno_t                              rc = -1;
     int Qdepth = 0;
 	
     pServerIpv4 = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv4_SERVER_TABLE));
@@ -1264,7 +1359,11 @@ IPv4PingServerTable_AddEntry
 
 	pSelfHeal->pConnTest->IPv4EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
-	snprintf(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv4EntryCount);
+	rc = sprintf_s(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv4EntryCount);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
 	if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
@@ -1328,6 +1427,7 @@ IPv4PingServerTable_GetParamStringValue
 {
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4  = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)pSelfHealCxtLink->hContext;
+    errno_t rc = -1;
 
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI") == 0)
@@ -1335,7 +1435,8 @@ IPv4PingServerTable_GetParamStringValue
         /* collect value */
         if ( AnscSizeOfString(pServerIpv4->Ipv4PingServerURI) < *pUlSize)
         {
-            AnscCopyString(pValue, pServerIpv4->Ipv4PingServerURI);
+            rc = strcpy_s(pValue, *pUlSize, pServerIpv4->Ipv4PingServerURI);
+            ERR_CHK(rc);
             return 0;
         }
         else
@@ -1358,9 +1459,11 @@ IPv4PingServerTable_SetParamStringValue
 {
 	PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE pServerIpv4  = (PCOSA_DML_SELFHEAL_IPv4_SERVER_TABLE)pSelfHealCxtLink->hContext;
+    errno_t rc = -1;
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv4PingServerURI") == 0)
     {
-		 AnscCopyString(pServerIpv4->Ipv4PingServerURI,strValue);
+		 rc = strcpy_s(pServerIpv4->Ipv4PingServerURI,sizeof(pServerIpv4->Ipv4PingServerURI),strValue);
+         ERR_CHK(rc);
 		 /* Add entery in the database */
 		 SavePingServerURI(PingServerType_IPv4, strValue, pServerIpv4->InstanceNumber);
 		 return TRUE;
@@ -1486,6 +1589,7 @@ IPv6PingServerTable_AddEntry
     PCOSA_DATAMODEL_SELFHEAL             pSelfHeal              = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6 = NULL;
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink  = NULL;
+    errno_t                              rc = -1;
     int Qdepth = 0;
     
 	pServerIpv6 = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)AnscAllocateMemory(sizeof(COSA_DML_SELFHEAL_IPv6_SERVER_TABLE));
@@ -1516,7 +1620,11 @@ IPv6PingServerTable_AddEntry
 	char buf[8];
 	pSelfHeal->pConnTest->IPv6EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
-	snprintf(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv6EntryCount);
+	rc = sprintf_s(buf,sizeof(buf),"%lu",pSelfHeal->pConnTest->IPv6EntryCount);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
 	if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
@@ -1577,6 +1685,7 @@ IPv6PingServerTable_GetParamStringValue
 {
     PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6  = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)pSelfHealCxtLink->hContext;
+    errno_t rc = -1;
 	
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI") == 0)
@@ -1584,7 +1693,8 @@ IPv6PingServerTable_GetParamStringValue
         /* collect value */
         if ( AnscSizeOfString(pServerIpv6->Ipv6PingServerURI) < *pUlSize)
         {
-            AnscCopyString(pValue, pServerIpv6->Ipv6PingServerURI);
+            rc = strcpy_s(pValue, *pUlSize, pServerIpv6->Ipv6PingServerURI);
+            ERR_CHK(rc);
             return 0;
         }
         else
@@ -1606,9 +1716,11 @@ IPv6PingServerTable_SetParamStringValue
 {
 	PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT   pSelfHealCxtLink     = (PCOSA_CONTEXT_SELFHEAL_LINK_OBJECT)hInsContext;
     PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE pServerIpv6  = (PCOSA_DML_SELFHEAL_IPv6_SERVER_TABLE)pSelfHealCxtLink->hContext;
+    errno_t rc = -1;
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_Ipv6PingServerURI") == 0)
     {
-		 AnscCopyString(pServerIpv6->Ipv6PingServerURI,strValue);
+		 rc = strcpy_s(pServerIpv6->Ipv6PingServerURI,sizeof(pServerIpv6->Ipv6PingServerURI),strValue);
+         ERR_CHK(rc);
 		 /* Add entery in the database */
 		 SavePingServerURI(PingServerType_IPv6, strValue,pServerIpv6->InstanceNumber);
 		 return TRUE;
@@ -1758,6 +1870,7 @@ ResourceMonitor_SetParamUlongValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal; 
     PCOSA_DML_RESOUCE_MONITOR           pRescMonitor = pMyObject->pResMonitor;
+    errno_t rc = -1;
 
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_UsageComputeWindow") == 0)
     {
@@ -1770,7 +1883,8 @@ ResourceMonitor_SetParamUlongValue
 #if defined(_ARRIS_XB6_PRODUCT_REQ_) || defined(_CBR_PRODUCT_REQ_) || \
 (defined(_XB6_PRODUCT_REQ_) && defined(_COSA_BCM_ARM_))
 	ULONG aggressive_interval;
-        memset(buf, 0, sizeof(buf));
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
 
 	syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf));
 	if( buf == NULL )
@@ -1785,8 +1899,13 @@ ResourceMonitor_SetParamUlongValue
 	    return FALSE;
 	}
 #endif
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "resource_monitor_interval", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -1809,8 +1928,13 @@ ResourceMonitor_SetParamUlongValue
         }
 
         char buf[8];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "avg_cpu_threshold", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -1833,8 +1957,13 @@ ResourceMonitor_SetParamUlongValue
         }
 
         char buf[8];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
+        ERR_CHK(rc);
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "avg_memory_threshold", buf) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -2018,6 +2147,7 @@ CpuMemFrag_GetParamStringValue
 		)
 {
 	PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma = (PCOSA_DML_CPU_MEM_FRAG_DMA)hInsContext;
+    errno_t rc = -1;
 
 	/*Get data of Host/Peer from syscfg 	*/
 	CosaDmlGetSelfHealCpuMemFragData(pCpuMemFragDma);
@@ -2025,25 +2155,29 @@ CpuMemFrag_GetParamStringValue
 	/* check the parameter name and return the corresponding value */
 	if (strcmp(ParamName, "DMA") == 0)
 	{
-		AnscCopyString( pValue, pCpuMemFragDma->dma);
+		rc = strcpy_s( pValue, *pUlSize, pCpuMemFragDma->dma);
+        ERR_CHK(rc);
 		return 0;
 	}
 
 	if (strcmp(ParamName, "DMA32") == 0)
 	{
-		AnscCopyString( pValue, pCpuMemFragDma->dma32);
+		rc = strcpy_s( pValue, *pUlSize, pCpuMemFragDma->dma32);
+        ERR_CHK(rc);
 		return 0;
 	}
 
 	if (strcmp(ParamName, "Normal") == 0)
 	{
-		AnscCopyString( pValue, pCpuMemFragDma->normal);
+		rc = strcpy_s( pValue, *pUlSize, pCpuMemFragDma->normal);
+        ERR_CHK(rc);
 		return 0;
 	}
 
 	if (strcmp(ParamName, "Highmem") == 0)
 	{
-		AnscCopyString( pValue, pCpuMemFragDma->highmem);
+		rc = strcpy_s( pValue, *pUlSize, pCpuMemFragDma->highmem);
+        ERR_CHK(rc);
 		return 0;
 	}
 

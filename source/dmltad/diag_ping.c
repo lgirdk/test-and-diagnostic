@@ -43,6 +43,7 @@
 #include <string.h>
 #include <assert.h>
 #include "diag_inter.h"
+#include "safec_lib_common.h"
 
 #define PING_DEF_CNT        1
 #define PING_DEF_TIMO       10
@@ -91,6 +92,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     unsigned int    sent;
     int             copy;
     unsigned        cnt;
+    errno_t         rc = -1;
     const char      *awkcmd = 
         " | awk -F'[ /]+' '/transmitted/ {SEND=$1; RECV=$4; }; "
         " /^ping:/ { print; exit } " /* capture ping error message */
@@ -109,31 +111,81 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     else
         cnt = cfg->cnt;
 #if defined(_PLATFORM_TURRIS_)
-    left -= snprintf(cmd + strlen(cmd), left, "ping ");
+    left -= sprintf_s(cmd + strlen(cmd), left, "ping ");
+    if(left < EOK)
+    {
+        ERR_CHK(rc);
+    }
 #else
-    left -= snprintf(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    if(left < EOK)
+    {
+        ERR_CHK(rc);
+    }
 #endif
     if (strlen(cfg->ifname))
-        left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
     if (cnt)
-        left -= snprintf(cmd + strlen(cmd), left, "-c %u ", cnt);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-c %u ", cnt);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
     if (cfg->size)
-        left -= snprintf(cmd + strlen(cmd), left, "-s %u ", cfg->size);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-s %u ", cfg->size);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
     if (cfg->timo)
-        left -= snprintf(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
 #ifdef PING_HAS_QOS
     if (cfg->tos)
-        left -= snprintf(cmd + strlen(cmd), left, "-Q %u ", cfg->tos);
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-Q %u ", cfg->tos);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
+    }
 #endif
 
 #if defined(_PLATFORM_TURRIS_)
-    left -= snprintf(cmd + strlen(cmd), left, "%s ", cfg->host);
+    left -= sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
+    if(left < EOK)
+    {
+        ERR_CHK(rc);
+    }
 #endif
-    left -= snprintf(cmd + strlen(cmd), left, "2>&1 ");
+    left -= sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    if(left < EOK)
+    {
+        ERR_CHK(rc);
+    }
 
     if (left <= strlen(awkcmd) + 1)
         return DIAG_ERR_NOMEM;
-    snprintf(cmd + strlen(cmd), left, "%s ", awkcmd);
+    rc = sprintf_s(cmd + strlen(cmd), left, "%s ", awkcmd);
+    if(rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
 
     fprintf(stderr, "%s: %s\n", __FUNCTION__, cmd);
 
@@ -147,7 +199,8 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 
     fprintf(stderr, "%s: result: %s\n", __FUNCTION__, result);
 
-    memset(st, 0, sizeof(*st));
+    rc = memset_s(st, sizeof(*st), 0, sizeof(*st));
+    ERR_CHK(rc);
     copy = sscanf(result, "%u %u %f %f %f", 
             &sent, &st->u.ping.success, &st->u.ping.rtt_min, 
             &st->u.ping.rtt_avg, &st->u.ping.rtt_max);

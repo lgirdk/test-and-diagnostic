@@ -22,6 +22,7 @@
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_logbackup_dml.h"
+#include "safec_lib_common.h"
 #include <syscfg/syscfg.h>
 
 BOOL g_logbackup_enable = TRUE;
@@ -139,10 +140,8 @@ BOOL LogBackup_SetParamBoolValue
             return TRUE;
 	}
         
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%s",bValue ? "true" : "false");
-        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
+        char *str = bValue ? "true" : "false";
+        if (syscfg_set(NULL, "logbackup_enable", str) != 0)
         {
 	    	CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	   	return FALSE;
@@ -258,9 +257,13 @@ LogBackup_SetParamUlongValue
             return TRUE;
 	}
         
-        char buf[128];
-        memset(buf, 0, sizeof(buf));
-        snprintf(buf,sizeof(buf),"%lu",uValue);
+        char buf[128] = {0};
+        errno_t rc = -1;
+        rc = sprintf_s(buf,sizeof(buf),"%lu",uValue);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
         if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
         {
 		CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
@@ -387,22 +390,19 @@ void
 get_logbackupcfg()
 {
 
-	char buf[128];
-	
-	memset(buf,0,sizeof(buf));
+	char buf[128] = {0};
+    errno_t rc = -1;
+
 	if((syscfg_get( NULL, "logbackup_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
 	{
 			g_logbackup_enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
 	}
 	else
 	{
-	        memset(buf, 0, sizeof(buf));
-	        snprintf(buf,sizeof(buf),"true");
-	        if (syscfg_set(NULL, "logbackup_enable", buf) != 0)
-	        {
-		    	CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
-		   	
-	        }
+	    if (syscfg_set(NULL, "logbackup_enable", "true") != 0)
+	    {
+            CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
+        }
 		else
 		{
 			if (syscfg_commit() != 0)
@@ -413,27 +413,26 @@ get_logbackupcfg()
 		}
 	}
 
-	memset(buf,0,sizeof(buf));
+	rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
+    ERR_CHK(rc);
 	if((syscfg_get( NULL, "logbackup_interval", buf, sizeof(buf)) == 0) && (buf[0] != '\0'))
 	{
 		g_logbackup_interval = atoi(buf);
 	}
 	else
 	{
-	        memset(buf, 0, sizeof(buf));
-	        snprintf(buf,sizeof(buf),"30");
-	        if (syscfg_set(NULL, "logbackup_interval", buf) != 0)
-	        {
-			CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
-	        }
-	        else
-	        {
-			if (syscfg_commit() != 0)
-			{
-		        	CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
-			}
-	        }
-	
+        if (syscfg_set(NULL, "logbackup_interval", "30") != 0)
+        {
+		CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
+        }
+        else
+        {
+		   if (syscfg_commit() != 0)
+		   {
+                CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
+		   }
+        }
+
 	}
 
 }

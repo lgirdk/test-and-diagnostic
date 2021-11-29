@@ -72,6 +72,7 @@
 /*#include "cosa_ip_apis.h"*/
 #include "cosa_ip_dml.h"
 /*#include "cosa_ip_internal.h"*/
+#include "safec_lib_common.h"
 
 void
 CosaGetInferfaceAddrByNamePriv
@@ -82,9 +83,11 @@ CosaGetInferfaceAddrByNamePriv
     PCOSA_DATAMODEL_DIAG            pMyObject           = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PDSLH_PING_INFO                 pDiagPingInfo       = pMyObject->hDiagPingInfo;
     char*                           pAddrName           = NULL;
+    errno_t                         rc                  = -1;
 
     pAddrName = CosaGetInterfaceAddrByName(pDiagPingInfo->Interface);
-    AnscCopyString(pDiagPingInfo->IfAddrName, pAddrName);
+    rc = strcpy_s(pDiagPingInfo->IfAddrName, sizeof(pDiagPingInfo->IfAddrName), pAddrName);
+    ERR_CHK(rc);
     AnscFreeMemory(pAddrName);
 }
 

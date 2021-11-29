@@ -58,6 +58,7 @@
 #include "cosa_plugin_api.h"
 #include "plugin_main.h"
 #include "diag.h"
+#include "safec_lib_common.h"
 /*
 #include "cosa_deviceinfo_dml.h"
 #include "cosa_softwaremodules_dml.h"
@@ -382,10 +383,12 @@ COSA_Init
     if ( g_GetSubsystemPrefix != NULL )
     {
         char*  tmpSubsystemPrefix;
+        errno_t rc = -1;
 
         if (( tmpSubsystemPrefix = (g_GetSubsystemPrefix(g_pDslhDmlAgent)) ))
         {
-            AnscCopyString(g_SubSysPrefix_Irep, tmpSubsystemPrefix);
+            rc = strcpy_s(g_SubSysPrefix_Irep, sizeof(g_SubSysPrefix_Irep), tmpSubsystemPrefix);
+            ERR_CHK(rc);
         }
     }
 
