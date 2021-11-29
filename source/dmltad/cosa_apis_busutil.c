@@ -80,6 +80,7 @@
 #include "plugin_main_apis.h"
 #include "cosa_apis_busutil.h"
 #include "ansc_platform.h"
+#include "safec_lib_common.h"
 
 extern void * g_pDslhDmlAgent;
 /**********************************************************************
@@ -216,14 +217,12 @@ CosaGetInterfaceAddrByName
     char * parameterNames[1];
     parameterValStruct_t ** parameterVal = NULL;
     char* pReturnName = NULL;
+    errno_t rc = -1;
 
-    if ( g_Subsystem[0] != 0 )
+    rc = sprintf_s(dst_pathname_cr, sizeof(dst_pathname_cr) , "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
+    if(rc < EOK)
     {
-        _ansc_sprintf(dst_pathname_cr, "%s%s", g_Subsystem, CCSP_DBUS_INTERFACE_CR);
-    }
-    else
-    {
-        _ansc_sprintf(dst_pathname_cr, "%s", CCSP_DBUS_INTERFACE_CR);
+        ERR_CHK(rc);
     }
 
     if ( !pInterfaceName || AnscSizeOfString(pInterfaceName) == 0 )

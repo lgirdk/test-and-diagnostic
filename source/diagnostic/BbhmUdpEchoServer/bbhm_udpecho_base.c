@@ -75,6 +75,7 @@
 
 
 #include "bbhm_udpecho_global.h"
+#include "safec_lib_common.h"
 PBBHM_UDP_ECHOSRV_OBJECT        g_UdpechoObj = NULL;
 
 
@@ -140,7 +141,9 @@ BbhmUdpechoCreate
     /*
      * Initialize the common variables and functions for a container object.
      */
-    AnscCopyString(pBaseObject->Name, BBHM_DIAG_UDPECHO_SERVER_NAME);
+    errno_t rc = -1;
+    rc = strcpy_s(pBaseObject->Name, sizeof(pBaseObject->Name) , BBHM_DIAG_UDPECHO_SERVER_NAME);
+    ERR_CHK(rc);
 
     pBaseObject->hContainerContext = hContainerContext;
     pBaseObject->hOwnerContext     = hOwnerContext;

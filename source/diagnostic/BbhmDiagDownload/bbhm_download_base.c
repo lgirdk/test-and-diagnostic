@@ -75,6 +75,7 @@
 
 
 #include "bbhm_download_global.h"
+#include "safec_lib_common.h"
 PBBHM_DOWNLOAD_DIAG_OBJECT      g_DiagDownloadObj = NULL;
 
 
@@ -140,7 +141,9 @@ BbhmDownloadCreate
     /*
      * Initialize the common variables and functions for a container object.
      */
-    AnscCopyString(pBaseObject->Name, BBHM_DIAG_DOWNLOAD_NAME);
+    errno_t rc = -1;
+    rc = strcpy_s(pBaseObject->Name, sizeof(pBaseObject->Name) , BBHM_DIAG_DOWNLOAD_NAME);
+    ERR_CHK(rc);
 
     pBaseObject->hContainerContext = hContainerContext;
     pBaseObject->hOwnerContext     = hOwnerContext;

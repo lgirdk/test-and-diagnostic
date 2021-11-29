@@ -81,6 +81,7 @@
 
 
 #include "bbhm_diagit_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -1192,10 +1193,12 @@ BbhmDiagitCalculateResult
 
             ulHashIndex = pEchoEntry->TimeToLive - 1;
             pDslhHopObj = (PDSLH_ROUTEHOPS_INFO)&pDslhTracertObj->hDiagRouteHops[ulHashIndex];
+            errno_t rc = -1;
 
             if ( pEchoEntry->StopTime == BBHM_TRACERT_ICMP_TIMEOUT )
             {
-                _ansc_snprintf(Temp, 8, "*");
+                rc = strcpy_s(Temp, 8, "*");
+                ERR_CHK(rc);
 
                 pDslhTracertObj->ResponseTime = 0;
             }
@@ -1203,7 +1206,11 @@ BbhmDiagitCalculateResult
             {
                 duration    = pEchoEntry->StopTime-pEchoEntry->StartTime;
                 duration    = duration > 0 ? duration : 1;
-                _ansc_snprintf(Temp, sizeof(Temp), "%lu", duration);
+                rc = sprintf_s(Temp, sizeof(Temp), "%lu", duration);
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
 
                 pDslhTracertObj->ResponseTime = duration;
             }
@@ -1212,7 +1219,8 @@ BbhmDiagitCalculateResult
             {
                 pDslhHopObj->HopErrorCode = pEchoEntry->ErrorCode;
 
-                AnscCopyString(pDslhHopObj->HopRTTimes, Temp);
+                rc = strcpy_s(pDslhHopObj->HopRTTimes, sizeof(pDslhHopObj->HopRTTimes) ,Temp);
+                ERR_CHK(rc);
             }
             else
             {

@@ -82,6 +82,8 @@
 #include <ctype.h>
 #include "bbhm_upload_global.h"
 #include "ansc_xsocket_external_api.h"
+#include "safec_lib_common.h"
+
 
 #define  UPLOAD_PORT_FROM_                            5801
 #define  UPLOAD_PORT_TO_                              5808
@@ -140,7 +142,12 @@ GetAddressByDmlPath(const char *path, char *address, ULONG size)
 		return -1;
 	}
 
-	_ansc_snprintf(address, size, "%s", addrBuf);
+	errno_t rc = -1;
+	rc = sprintf_s(address, size, "%s", addrBuf);
+	if(rc < EOK)
+	{
+		ERR_CHK(rc);
+	}
 	AnscFreeMemory(addrBuf);
 #endif
     return 0;
@@ -179,6 +186,7 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 {
 	char scheme[16], *ptr;
 	int rc, maxlen;
+	errno_t safe_rc = -1;
 
 	if (!url || !host || !serv || !path)
 		return -1;
@@ -205,7 +213,10 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 	}
 
 	if (rc == 2)
-		snprintf(*path, maxlen, "/"); /* default value for PATH */
+	{
+		safe_rc = strcpy_s(*path, maxlen, "/"); /* default value for PATH */
+		ERR_CHK(safe_rc);
+	}
 
 	/* check if service or port number is in URL */
 
@@ -238,7 +249,11 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 	else
 		ptr = "80";
 
-	snprintf(*serv, maxlen, "%s", ptr);
+	safe_rc = sprintf_s(*serv, maxlen, "%s", ptr);
+	if(safe_rc < EOK)
+	{
+		ERR_CHK(safe_rc);
+	}
 
 	return 0;
 
@@ -349,6 +364,7 @@ bbhmUploadStartDiagTask
 	xskt_addrinfo					*cliInfo		   = NULL;
 	int								tos				   = 0;
 	char							ipv6ref[64]		   = {0};
+	errno_t							rc 				   = -1;
 
     if ( !pMyObject->bActive )
     {
@@ -515,14 +531,26 @@ bbhmUploadStartDiagTask
 	 */
 	if (IsIPv6Address(pHost))
 	{
-		_ansc_snprintf(ipv6ref, sizeof(ipv6ref), "[%s]", pHost);
-		_ansc_snprintf(buffer, sizeof(buffer), http_put_request2, 
+		rc = sprintf_s(ipv6ref, sizeof(ipv6ref), "[%s]", pHost);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
+		rc = sprintf_s(buffer, sizeof(buffer), http_put_request2, 
 				pPath, ipv6ref, pServ, ipv6ref, pServ, uTotalMsgSize);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 	}
 	else
 	{
-		_ansc_snprintf(buffer, sizeof(buffer), http_put_request2, 
+		rc = sprintf_s(buffer, sizeof(buffer), http_put_request2, 
 				pPath, pHost, pServ, pHost, pServ, uTotalMsgSize);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 	}
 
 	/* send the HTTP request */
@@ -567,7 +595,8 @@ bbhmUploadStartDiagTask
         goto done;
     }
 
-    AnscCopyString(send_buffer, http_sample_upload_text);
+    rc = strcpy_s(send_buffer, UPLOAD_SINGLE_BUFFER_SIZE + 1 , http_sample_upload_text);
+    ERR_CHK(rc);
 
     /* continue to upload the file */
     uBytesSent = pMyObject->UploadDiagInfo.TestFileLength;
@@ -859,9 +888,12 @@ BbhmUploadGetConfig
     if ( pHandle != NULL )
     {
         DslhInitUploadDiagInfo(pHandle);
+        errno_t rc = -1;
 
-        AnscCopyString(pHandle->Interface, pUploadInfo->Interface);
-        AnscCopyString(pHandle->UploadURL, pUploadInfo->UploadURL);
+        rc = strcpy_s(pHandle->Interface, sizeof(pHandle->Interface) , pUploadInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pHandle->UploadURL, sizeof(pHandle->UploadURL) , pUploadInfo->UploadURL);
+        ERR_CHK(rc);
         pHandle->DSCP             = pUploadInfo->DSCP;
         pHandle->EthernetPriority = pUploadInfo->EthernetPriority;
         pHandle->TestFileLength   = pUploadInfo->TestFileLength;
@@ -915,13 +947,17 @@ BbhmUploadSetConfig
 
     pMyObject->StopDiag(pMyObject);
 
-    AnscCopyString(pUploadInfo->Interface, pHandle->Interface);
-    AnscCopyString(pUploadInfo->UploadURL, pHandle->UploadURL);
+    errno_t rc = -1;
+    rc = strcpy_s(pUploadInfo->Interface, sizeof(pUploadInfo->Interface) , pHandle->Interface);
+    ERR_CHK(rc);
+    rc = strcpy_s(pUploadInfo->UploadURL, sizeof(pUploadInfo->UploadURL) , pHandle->UploadURL);
+    ERR_CHK(rc);
     pUploadInfo->DSCP             = pHandle->DSCP;
     pUploadInfo->EthernetPriority = pHandle->EthernetPriority;
     pUploadInfo->TestFileLength   = pHandle->TestFileLength;
     pUploadInfo->DiagnosticsState = pHandle->DiagnosticsState;
-	AnscCopyString(pUploadInfo->IfAddrName, pHandle->IfAddrName);
+    rc = strcpy_s(pUploadInfo->IfAddrName, sizeof(pUploadInfo->IfAddrName) , pHandle->IfAddrName);
+    ERR_CHK(rc);
 
     return returnStatus;
 }

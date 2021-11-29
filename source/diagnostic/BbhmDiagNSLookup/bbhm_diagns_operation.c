@@ -85,6 +85,7 @@
 
 
 #include "bbhm_diagns_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -244,7 +245,9 @@ BbhmDiagnsStart
         return ANSC_STATUS_RESOURCES;
     }
 
-    AnscCopyString(query_name, pDiagInfo->HostName);
+    errno_t rc = -1;
+    rc = strcpy_s(query_name, AnscSizeOfString(pDiagInfo->HostName) + 4 , pDiagInfo->HostName);
+    ERR_CHK(rc);
 
     if ( query_name[AnscSizeOfString(query_name) - 1] != '.' )
     {

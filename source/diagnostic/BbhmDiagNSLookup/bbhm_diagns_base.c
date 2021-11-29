@@ -75,6 +75,7 @@
 
 
 #include "bbhm_diagns_global.h"
+#include "safec_lib_common.h"
 
 PBBHM_DIAG_NS_LOOKUP_OBJECT g_DiagNSLookupObj = NULL;
 
@@ -140,7 +141,9 @@ BbhmDiagnsCreate
     /*
      * Initialize the common variables and functions for a container object.
      */
-    AnscCopyString(pBaseObject->Name, BBHM_DIAG_NS_LOOKUP_NAME);
+    errno_t rc = -1;
+    rc = strcpy_s(pBaseObject->Name, sizeof(pBaseObject->Name) , BBHM_DIAG_NS_LOOKUP_NAME);
+    ERR_CHK(rc);
 
     pBaseObject->hContainerContext = hContainerContext;
     pBaseObject->hOwnerContext     = hOwnerContext;

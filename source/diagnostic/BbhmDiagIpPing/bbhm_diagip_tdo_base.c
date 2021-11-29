@@ -75,6 +75,7 @@
 
 
 #include "bbhm_diagip_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -139,7 +140,9 @@ BbhmDiagipTdoCreate
     /*
      * Initialize the common variables and functions for a container object.
      */
-    AnscCopyString(pBaseObject->Name, BBHM_IP_PING_TDO_NAME);
+    errno_t rc = -1;
+    rc = strcpy_s(pBaseObject->Name, sizeof(pBaseObject->Name) , BBHM_IP_PING_TDO_NAME);
+    ERR_CHK(rc);
 
     pBaseObject->hContainerContext = hContainerContext;
     pBaseObject->hOwnerContext     = hOwnerContext;

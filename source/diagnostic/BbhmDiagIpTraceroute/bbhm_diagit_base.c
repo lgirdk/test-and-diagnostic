@@ -75,6 +75,7 @@
 
 
 #include "bbhm_diagit_global.h"
+#include "safec_lib_common.h"
 
 PBBHM_DIAG_IP_TRACEROUTE_OBJECT g_DiagIpTracerouteObj = NULL;
 
@@ -140,7 +141,9 @@ BbhmDiagitCreate
     /*
      * Initialize the common variables and functions for a container object.
      */
-    AnscCopyString(pBaseObject->Name, BBHM_DIAG_IP_TRACEROUTE_NAME);
+    errno_t rc = -1;
+    rc = strcpy_s(pBaseObject->Name, sizeof(pBaseObject->Name) , BBHM_DIAG_IP_TRACEROUTE_NAME);
+    ERR_CHK(rc);
 
     pBaseObject->hContainerContext = hContainerContext;
     pBaseObject->hOwnerContext     = hOwnerContext;

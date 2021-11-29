@@ -114,6 +114,7 @@
 
 
 #include "bbhm_diagip_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -151,7 +152,9 @@ BbhmDiagipCopyDiagParams
 {
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT)hThisObject;
 
-    _ansc_memcpy(pMyObject->hDslhDiagInfo, hDslhDiagInfo, sizeof(DSLH_PING_INFO));
+    errno_t rc = -1;
+    rc = memcpy_s(pMyObject->hDslhDiagInfo, sizeof(pMyObject->hDslhDiagInfo) , hDslhDiagInfo, sizeof(DSLH_PING_INFO));
+    ERR_CHK(rc);
 
     return  ANSC_STATUS_SUCCESS;
 }
@@ -2021,6 +2024,7 @@ BbhmDiagipGetResult
     {
         pEchoEntry = (PBBHM_IP_PING_ECHO_ENTRY)ACCESS_BBHM_IP_PING_ECHO_ENTRY(pSLinkEntry);
         pResult = (CHAR*)AnscAllocateMemory(128);
+        errno_t rc = -1;
         switch ( pEchoEntry->ICMPType )
         {
         case ICMP_TYPE_ECHO_REPLY:
@@ -2058,22 +2062,34 @@ BbhmDiagipGetResult
             pMyObject->SetMinRTT((ANSC_HANDLE)pMyObject, MinRTT);
             pMyObject->SetAvgRTT((ANSC_HANDLE)pMyObject, AvgRTT);
             pMyObject->SetSumRTT((ANSC_HANDLE)pMyObject, SumRTT);
-            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            rc = sprintf_s(pResult, 128 ,"Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             break;
         case ICMP_TYPE_DESTINATION_UNREACHABLE:
-            _ansc_strcpy(pResult, "Destination Unreachable!");
+            rc = strcpy_s(pResult, 128 ,"Destination Unreachable!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_SOURCE_QUENCH:
-            _ansc_strcpy(pResult, "Source Quench!");
+            rc = strcpy_s(pResult, 128 , "Source Quench!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_PARAMETER_PROBLEM:
-            _ansc_strcpy(pResult, "Parameter Problem!");
+            rc = strcpy_s(pResult, 128 ,"Parameter Problem!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_REDIRECT:
-            _ansc_strcpy(pResult, "Redirect!");
+            rc = strcpy_s(pResult, 128 , "Redirect!");
+            ERR_CHK(rc);
             break;
         default:
-            _ansc_sprintf(pResult, "Error Code %d!", pEchoEntry->ICMPType);
+            rc = sprintf_s(pResult, 128 , "Error Code %d!", pEchoEntry->ICMPType);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
         }
         AnscFreeMemory(pEchoEntry);
         pEchoEntry = NULL;
@@ -2138,6 +2154,7 @@ BbhmDiagipGetMiddleResult
     {
         pEchoEntry = (PBBHM_IP_PING_ECHO_ENTRY)ACCESS_BBHM_IP_PING_ECHO_ENTRY(pSLinkEntry);
         pResult = (CHAR*)AnscAllocateMemory(128);
+        errno_t rc = -1;
         switch ( pEchoEntry->ICMPType )
         {
         case ICMP_TYPE_ECHO_REPLY:
@@ -2175,22 +2192,34 @@ BbhmDiagipGetMiddleResult
             pMyObject->SetMinRTT((ANSC_HANDLE)pMyObject, MinRTT);
             pMyObject->SetAvgRTT((ANSC_HANDLE)pMyObject, AvgRTT);
             pMyObject->SetSumRTT((ANSC_HANDLE)pMyObject, SumRTT);
-            _ansc_sprintf(pResult, "Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            rc = sprintf_s(pResult, 128 , "Reply from %s: icmp_seq=%d ttl=%d time=%lu ms", ipAddress, pEchoEntry->SeqId, pEchoEntry->TTL, RTT);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             break;
         case ICMP_TYPE_DESTINATION_UNREACHABLE:
-            _ansc_strcpy(pResult, "Destination Unreachable!");
+            rc = strcpy_s(pResult, 128 , "Destination Unreachable!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_SOURCE_QUENCH:
-            _ansc_strcpy(pResult, "Source Quench!");
+            rc = strcpy_s(pResult, 128 ,"Source Quench!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_PARAMETER_PROBLEM:
-            _ansc_strcpy(pResult, "Parameter Problem!");
+            rc = strcpy_s(pResult, 128 , "Parameter Problem!");
+            ERR_CHK(rc);
             break;
         case ICMP_TYPE_REDIRECT:
-            _ansc_strcpy(pResult, "Redirect!");
+            rc = strcpy_s(pResult, 128 ,"Redirect!");
+            ERR_CHK(rc);
             break;
         default:
-            _ansc_sprintf(pResult, "Error Code %d!", pEchoEntry->ICMPType);
+            rc = sprintf_s(pResult, 128 , "Error Code %d!", pEchoEntry->ICMPType);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
         }
         AnscFreeMemory(pEchoEntry);
         pEchoEntry = NULL;
@@ -2239,6 +2268,7 @@ BbhmDiagipSetDiagParams
     PBBHM_DIAG_IP_PING_OBJECT       pMyObject    = (PBBHM_DIAG_IP_PING_OBJECT     )hThisObject;
     PDSLH_PING_INFO                 pDiagInfo    = (PDSLH_PING_INFO               )pMyObject->hDslhDiagInfo;
     PDSLH_PING_INFO                 pNewDiagInfo = (PDSLH_PING_INFO               )hDslhDiagInfo;
+    errno_t                         rc           = -1;
 
     AnscAcquireLock(&pMyObject->AccessLock);
 
@@ -2259,9 +2289,12 @@ BbhmDiagipSetDiagParams
             DslhInitPingInfo(pDiagInfo);
             pMyObject->hDslhDiagInfo = (ANSC_HANDLE)pDiagInfo;
             pDiagInfo->StructSize    = sizeof(DSLH_PING_INFO);
-            AnscCopyString(pDiagInfo->Host, pNewDiagInfo->Host);
-            AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-            AnscCopyString(pDiagInfo->IfAddrName, pNewDiagInfo->IfAddrName);
+            rc = strcpy_s(pDiagInfo->Host, sizeof(pDiagInfo->Host) ,pNewDiagInfo->Host);
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->IfAddrName, sizeof(pDiagInfo->IfAddrName) , pNewDiagInfo->IfAddrName);
+            ERR_CHK(rc);
             pDiagInfo->DSCP                 = pNewDiagInfo->DSCP;
             pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
             pDiagInfo->NumberOfRepetitions  = pNewDiagInfo->NumberOfRepetitions;
@@ -2272,9 +2305,12 @@ BbhmDiagipSetDiagParams
     {
         DslhInitPingInfo(pDiagInfo);
         pDiagInfo->StructSize    = sizeof(DSLH_PING_INFO);
-        AnscCopyString(pDiagInfo->Host, pNewDiagInfo->Host);
-        AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-        AnscCopyString(pDiagInfo->IfAddrName, pNewDiagInfo->IfAddrName);
+        rc = strcpy_s(pDiagInfo->Host, sizeof(pDiagInfo->Host) ,pNewDiagInfo->Host);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->IfAddrName, sizeof(pDiagInfo->IfAddrName), pNewDiagInfo->IfAddrName);
+        ERR_CHK(rc);
         pDiagInfo->DSCP                 = pNewDiagInfo->DSCP;
         pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
         pDiagInfo->NumberOfRepetitions  = pNewDiagInfo->NumberOfRepetitions;

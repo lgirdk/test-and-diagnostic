@@ -70,6 +70,7 @@
 
 #include "cosa_apis.h"
 #include "plugin_main_apis.h"
+#include "safec_lib_common.h"
 
 #ifdef _ANSC_LINUX
 #include <stdio.h>
@@ -117,19 +118,25 @@ CosaUtilGetIfAddr
     )
 {
     ANSC_IPV4_ADDRESS       ip4_addr;
-    memset(&ip4_addr, 0, sizeof(ANSC_IPV4_ADDRESS));
+    errno_t rc = -1;
+    rc = memset_s(&ip4_addr, sizeof(ANSC_IPV4_ADDRESS), 0, sizeof(ANSC_IPV4_ADDRESS));
+    ERR_CHK(rc);
 
 #ifdef _ANSC_LINUX
 
     struct ifreq            ifr;
     int                     fd = 0;
 
-    strcpy(ifr.ifr_name, netdev);
+    rc = strcpy_s(ifr.ifr_name, sizeof(ifr.ifr_name) , netdev);
+    ERR_CHK(rc);
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) >= 0)
     {
         if (!ioctl(fd, SIOCGIFADDR, &ifr))
-           memcpy(&ip4_addr.Value, ifr.ifr_ifru.ifru_addr.sa_data + 2,4);
+        {
+           rc = memcpy_s(&ip4_addr.Value, sizeof(ip4_addr.Value) , ifr.ifr_ifru.ifru_addr.sa_data + 2,4);
+           ERR_CHK(rc);
+        }
         else
            perror("CosaUtilGetIfAddr IOCTL failure.");
 
@@ -242,6 +249,7 @@ CosaUtilGetLowerLayers
     PUCHAR                          pMatchedLowerLayer          = NULL;
     PANSC_TOKEN_CHAIN               pTableListTokenChain        = (PANSC_TOKEN_CHAIN)NULL;
     PANSC_STRING_TOKEN              pTableStringToken           = (PANSC_STRING_TOKEN)NULL;
+    errno_t                         rc                          = -1;
 
     if ( !pTableName || AnscSizeOfString(pTableName) == 0 ||
          !pKeyword   || AnscSizeOfString(pKeyword) == 0
@@ -271,9 +279,18 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Ethernet.Interface.", ulEntryInstanceNum);
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) , "Device.Ethernet.Interface.%lu", ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
 
-                        _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
+
+                        rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) , "%s.Name", ucEntryFullPath);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
                              AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
@@ -294,9 +311,17 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.IP.Interface.", ulEntryInstanceNum);
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) , "Device.IP.Interface.%lu", ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
 
-                        _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
+                        rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) , "%s.Name", ucEntryFullPath);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
 
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
                              AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
@@ -327,9 +352,17 @@ CosaUtilGetLowerLayers
                     
                     if (ulEntryInstanceNum)
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.WiFi.Radio.", ulEntryInstanceNum);
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) , "Device.WiFi.Radio.%lu", ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                         
-                        _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
+                        rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) , "%s.Name", ucEntryFullPath);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                         
                         if (( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
                             AnscEqualString(ucEntryNameValue, pKeyword, TRUE) )
@@ -366,9 +399,17 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Ethernet.Link.", ulEntryInstanceNum);
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) , "Device.Ethernet.Link.%lu", ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
 
-                        _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, ".Name");
+                        rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) ,"%s.Name", ucEntryFullPath);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
                              AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
@@ -397,15 +438,31 @@ CosaUtilGetLowerLayers
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu", "Device.Bridging.Bridge.", ulEntryInstanceNum);
-                        _ansc_sprintf(ucLowerEntryPath, "%s%s", ucEntryFullPath, ".PortNumberOfEntries"); 
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) ,"Device.Bridging.Bridge.%lu", ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
+                        rc = sprintf_s(ucLowerEntryPath, sizeof(ucLowerEntryPath) , "%s.PortNumberOfEntries", ucEntryFullPath); 
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                         
                         ulEntryPortNum = CosaGetParamValueUlong(ucLowerEntryPath);  
                         AnscTraceFlow(("----------CosaUtilGetLowerLayers, Param:%s,port num:%lu\n",ucLowerEntryPath, ulEntryPortNum));
 
                         for ( j = 1; j<= ulEntryPortNum; j++) {
-                            _ansc_sprintf(ucLowerEntryName, "%s%s%lu", ucEntryFullPath, ".Port.", j);
-                            _ansc_sprintf(ucEntryParamName, "%s%s%lu%s", ucEntryFullPath, ".Port.", j, ".Name");
+                            rc = sprintf_s(ucLowerEntryName, sizeof(ucLowerEntryName) , "%s.Port.%lu", ucEntryFullPath, j);
+                            if(rc < EOK)
+                            {
+                                ERR_CHK(rc);
+                            }
+                            rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) ,"%s.Port.%lu.Name", ucEntryFullPath, j);
+                            if(rc < EOK)
+                            {
+                                ERR_CHK(rc);
+                            }
                             AnscTraceFlow(("----------CosaUtilGetLowerLayers, Param:%s,Param2:%s\n", ucLowerEntryName, ucEntryParamName));
                         
                             if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
@@ -495,6 +552,7 @@ CosaUtilGetFullPathNameByKeyword
     PANSC_STRING_TOKEN              pTableStringToken           = (PANSC_STRING_TOKEN)NULL;
     PUCHAR                          pString                     = NULL;
     PUCHAR                          pString2                    = NULL;
+    errno_t                         rc                          = -1;
 
     if ( !pTableName || AnscSizeOfString(pTableName) == 0 ||
          !pKeyword   || AnscSizeOfString(pKeyword) == 0   ||
@@ -529,7 +587,11 @@ CosaUtilGetFullPathNameByKeyword
 
             pString--;
             pString[0] = '\0';
-            _ansc_sprintf(ucTmp2, "%s%s", pString2, "NumberOfEntries");                
+            rc = sprintf_s(ucTmp2, sizeof(ucTmp2) , "%sNumberOfEntries", pString2); 
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+            }
             pString[0] = '.';
 
             /* Enumerate the entry in this table */
@@ -537,7 +599,11 @@ CosaUtilGetFullPathNameByKeyword
             {
                 pString2--;
                 pString2[0]='\0';
-                _ansc_sprintf(ucTmp, "%s.%s", pTableStringToken->Name, ucTmp2);                
+                rc = sprintf_s(ucTmp, sizeof(ucTmp) , "%s.%s", pTableStringToken->Name, ucTmp2); 
+                if(rc < EOK)
+                {
+                    ERR_CHK(rc);
+                }
                 pString2[0]='.';
                 ulNumOfEntries =       CosaGetParamValueUlong(ucTmp);
 
@@ -547,9 +613,17 @@ CosaUtilGetFullPathNameByKeyword
 
                     if ( ulEntryInstanceNum )
                     {
-                        _ansc_sprintf(ucEntryFullPath, "%s%lu%s", pTableStringToken->Name, ulEntryInstanceNum, ".");
+                        rc = sprintf_s(ucEntryFullPath, sizeof(ucEntryFullPath) , "%s%lu.", pTableStringToken->Name, ulEntryInstanceNum);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
 
-                        _ansc_sprintf(ucEntryParamName, "%s%s", ucEntryFullPath, pParameterName);
+                        rc = sprintf_s(ucEntryParamName, sizeof(ucEntryParamName) , "%s%s", ucEntryFullPath, pParameterName);
+                        if(rc < EOK)
+                        {
+                            ERR_CHK(rc);
+                        }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
                              AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )

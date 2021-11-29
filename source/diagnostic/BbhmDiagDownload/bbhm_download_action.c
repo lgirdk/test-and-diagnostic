@@ -82,6 +82,8 @@
 #include <ctype.h>
 #include "bbhm_download_global.h"
 #include "ansc_xsocket_external_api.h"
+#include "safec_lib_common.h"
+
 
 #define  DOWNLOAD_PORT_FROM_                            5701
 #define  DOWNLOAD_PORT_TO_                              5708
@@ -178,6 +180,7 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 {
 	char scheme[16], *ptr;
 	int rc, maxlen;
+	errno_t safe_rc = -1;
 
 	if (!url || !host || !serv || !path)
 		return -1;
@@ -204,7 +207,10 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 	}
 
 	if (rc == 2)
-		snprintf(*path, maxlen, "/"); /* default value for PATH */
+	{
+		safe_rc = strcpy_s(*path, maxlen, "/"); /* default value for PATH */
+		ERR_CHK(safe_rc);
+	}
 
 	/* check if service or port number is in URL */
 
@@ -237,7 +243,11 @@ ParseHttpURL(const char *url, char **host, char **serv, char **path)
 	else
 		ptr = "80";
 
-	snprintf(*serv, maxlen, "%s", ptr);
+	safe_rc = sprintf_s(*serv, maxlen, "%s", ptr);
+	if(safe_rc < EOK)
+	{
+		ERR_CHK(safe_rc);
+	}
 
 	return 0;
 
@@ -339,6 +349,7 @@ bbhmDownloadStartDiagTask
     xskt_addrinfo                   hints;
     xskt_addrinfo                   *servInfo   	   = NULL;
     xskt_addrinfo                   *cliInfo    	   = NULL;
+    errno_t                         rc                 = -1;
 
     if ( !pMyObject->bActive )
     {
@@ -502,12 +513,24 @@ bbhmDownloadStartDiagTask
 	 */
 	if (IsIPv6Address(pHost))
 	{
-		snprintf(ipv6ref, sizeof(ipv6ref), "[%s]", pHost);
-		_ansc_sprintf(buffer, http_get_request2, pPath, ipv6ref, pServ);
+		rc = sprintf_s(ipv6ref, sizeof(ipv6ref), "[%s]", pHost);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
+		rc = sprintf_s(buffer, sizeof(buffer) ,http_get_request2, pPath, ipv6ref, pServ);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 	}
 	else
 	{
-		_ansc_sprintf(buffer, http_get_request2, pPath, pHost, pServ);
+		rc = sprintf_s(buffer, sizeof(buffer) , http_get_request2, pPath, pHost, pServ);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 	}
 
 	/* send the HTTP request */
@@ -840,9 +863,12 @@ BbhmDownloadGetConfig
     if ( pHandle != NULL )
     {
         DslhInitDownloadDiagInfo(pHandle);
+        errno_t rc = -1;
 
-        AnscCopyString(pHandle->Interface, pDownloadInfo->Interface);
-        AnscCopyString(pHandle->DownloadURL, pDownloadInfo->DownloadURL);
+        rc = strcpy_s(pHandle->Interface, sizeof(pHandle->Interface) , pDownloadInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pHandle->DownloadURL, sizeof(pHandle->DownloadURL) , pDownloadInfo->DownloadURL);
+        ERR_CHK(rc);
         pHandle->DSCP                 = pDownloadInfo->DSCP;
         pHandle->EthernetPriority     = pDownloadInfo->EthernetPriority;
         pHandle->DiagnosticsState     = pDownloadInfo->DiagnosticsState;
@@ -906,12 +932,16 @@ BbhmDownloadSetConfig
         AnscFreeMemory(pDownloadInfo->DownloadURL);
     }
 */
-    AnscCopyString(pDownloadInfo->Interface, pHandle->Interface);
-    AnscCopyString(pDownloadInfo->DownloadURL, pHandle->DownloadURL);
+    errno_t rc = -1;
+    rc = strcpy_s(pDownloadInfo->Interface, sizeof(pDownloadInfo->Interface) ,pHandle->Interface);
+    ERR_CHK(rc);
+    rc = strcpy_s(pDownloadInfo->DownloadURL, sizeof(pDownloadInfo->DownloadURL) , pHandle->DownloadURL);
+    ERR_CHK(rc);
     pDownloadInfo->DSCP             = pHandle->DSCP;
     pDownloadInfo->EthernetPriority = pHandle->EthernetPriority;
     pDownloadInfo->DiagnosticsState = pHandle->DiagnosticsState;
-	AnscCopyString(pDownloadInfo->IfAddrName, pHandle->IfAddrName);
+    rc = strcpy_s(pDownloadInfo->IfAddrName, sizeof(pDownloadInfo->IfAddrName) , pHandle->IfAddrName);
+    ERR_CHK(rc);
 
     return returnStatus;
 }

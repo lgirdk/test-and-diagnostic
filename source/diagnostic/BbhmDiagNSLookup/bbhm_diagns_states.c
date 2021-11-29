@@ -89,6 +89,7 @@
 
 
 #include "bbhm_diagns_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -355,7 +356,9 @@ BbhmDiagnsSetDstIp
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
 
-    AnscCopyString(pProperty->DstAddrName, Dst);
+    errno_t rc = -1;
+    rc = strcpy_s(pProperty->DstAddrName, sizeof(pProperty->DstAddrName) , Dst);
+    ERR_CHK(rc);
 
     return  returnStatus;
 }
@@ -645,8 +648,10 @@ BbhmDiagnsSetSrcIp
     ANSC_STATUS                     returnStatus = ANSC_STATUS_SUCCESS;
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pMyObject    = (PBBHM_DIAG_NS_LOOKUP_OBJECT   )hThisObject;
     PBBHM_NS_LOOKUP_PROPERTY        pProperty    = (PBBHM_NS_LOOKUP_PROPERTY      )&pMyObject->Property;
+    errno_t                         rc           = -1;
 
-    AnscCopyString(pProperty->SrcAddrName, Interface);
+    rc = strcpy_s(pProperty->SrcAddrName, sizeof(pProperty->SrcAddrName) , Interface);
+    ERR_CHK(rc);
 
     return  returnStatus;
 }
@@ -866,6 +871,7 @@ BbhmDiagnsSetDiagParams
     PDSLH_NSLOOKUP_INFO             pNewDiagInfo = (PDSLH_NSLOOKUP_INFO           )hDslhDiagInfo;
     PBBHM_NS_LOOKUP_ECHO_ENTRY      pDiagnsEntry = (PBBHM_NS_LOOKUP_ECHO_ENTRY    )NULL;
     ULONG                           i;
+    errno_t                         rc           = -1;
 
     if ( pNewDiagInfo->bForced != TRUE )
     {
@@ -896,13 +902,17 @@ BbhmDiagnsSetDiagParams
             DslhInitNSLookupInfo(pDiagInfo);
             pMyObject->hDslhDiagInfo = (ANSC_HANDLE)pDiagInfo;
             pDiagInfo->StructSize    = sizeof(DSLH_NSLOOKUP_INFO);
-            AnscCopyString(pDiagInfo->HostName, pNewDiagInfo->HostName);
+            rc = strcpy_s(pDiagInfo->HostName, sizeof(pDiagInfo->HostName) , pNewDiagInfo->HostName);
+            ERR_CHK(rc);
             /*AnscCopyMemory(pDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1,
                            pNewDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1,
                            AnscSizeOfString(pNewDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1));*/
-            AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-            AnscCopyString(pDiagInfo->IfAddr,    pNewDiagInfo->IfAddr   );
-            AnscCopyString(pDiagInfo->DNSServer, pNewDiagInfo->DNSServer);
+            rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->IfAddr, sizeof(pDiagInfo->IfAddr)   , pNewDiagInfo->IfAddr   );
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->DNSServer,sizeof(pDiagInfo->DNSServer) ,pNewDiagInfo->DNSServer);
+            ERR_CHK(rc);
             pDiagInfo->bForced = pNewDiagInfo->bForced;
             pDiagInfo->Timeout = pNewDiagInfo->Timeout;
             pDiagInfo->NumberOfRepetitions = pNewDiagInfo->NumberOfRepetitions;
@@ -926,13 +936,17 @@ BbhmDiagnsSetDiagParams
 
         DslhInitNSLookupInfo(pDiagInfo);
         pDiagInfo->StructSize    = sizeof(DSLH_NSLOOKUP_INFO);
-        AnscCopyString(pDiagInfo->HostName, pNewDiagInfo->HostName);
+        rc = strcpy_s(pDiagInfo->HostName, sizeof(pDiagInfo->HostName) , pNewDiagInfo->HostName);
+        ERR_CHK(rc);
         /*AnscCopyMemory(pDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1,
                            pNewDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1,
                            AnscSizeOfString(pNewDiagInfo->HostName + AnscSizeOfString(pDiagInfo->HostName) + 1));*/
-        AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-        AnscCopyString(pDiagInfo->IfAddr,    pNewDiagInfo->IfAddr   );
-        AnscCopyString(pDiagInfo->DNSServer, pNewDiagInfo->DNSServer);
+        rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->IfAddr, sizeof(pDiagInfo->IfAddr) ,   pNewDiagInfo->IfAddr   );
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->DNSServer, sizeof(pDiagInfo->DNSServer) , pNewDiagInfo->DNSServer);
+        ERR_CHK(rc);
         pDiagInfo->bForced = pNewDiagInfo->bForced;
         pDiagInfo->Timeout = pNewDiagInfo->Timeout;
         pDiagInfo->NumberOfRepetitions = pNewDiagInfo->NumberOfRepetitions;

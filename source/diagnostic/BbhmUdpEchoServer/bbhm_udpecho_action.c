@@ -80,7 +80,7 @@
 
 #include "bbhm_udpecho_global.h"
 #include "ansc_xsocket_external_api.h"
-
+#include "safec_lib_common.h"
 
 #define  ECHO_MAX_MESSAGE                               255     /* Longest string to echo */
 #define  UDP_ECHO_POLL_INTERVAL_MS                      5000    /* 5 seconds */
@@ -179,7 +179,12 @@ bbhmUdpechoStartUdpEchoTask
         xskt_hints.ai_flags    = AI_CANONNAME;
 
         usPort = pUdpEchoInfo->UDPPort;
-        _ansc_sprintf(port, "%d", usPort);
+        errno_t rc = -1;
+        rc = sprintf_s(port, sizeof(port) , "%d", usPort);
+        if(rc < EOK)
+        {
+            ERR_CHK(rc);
+        }
 
         CcspTraceInfo(("!!! Host Port: %s !!!\n", port));
         CcspTraceInfo(("!!! Host Name: %s !!!\n", pUdpEchoInfo->IfAddrName));
@@ -636,11 +641,15 @@ BbhmUdpechoGetConfig
     if ( pHandle != NULL )
     {
         DslhInitUDPEchoConfig(pHandle);
+        errno_t rc = -1;
 
-        AnscCopyString(pHandle->Interface,  pUdpEchoInfo->Interface );
-        AnscCopyString(pHandle->IfAddrName, pUdpEchoInfo->IfAddrName);
+        rc = strcpy_s(pHandle->Interface, sizeof(pHandle->Interface) , pUdpEchoInfo->Interface );
+        ERR_CHK(rc);
+        rc = strcpy_s(pHandle->IfAddrName, sizeof(pHandle->IfAddrName) , pUdpEchoInfo->IfAddrName);
+        ERR_CHK(rc);
         pHandle->Enable               = pUdpEchoInfo->Enable;
-        AnscCopyString(pHandle->SourceIPName, pUdpEchoInfo->SourceIPName);
+        rc = strcpy_s(pHandle->SourceIPName, sizeof(pHandle->SourceIPName) , pUdpEchoInfo->SourceIPName);
+        ERR_CHK(rc);
         pHandle->UDPPort              = pUdpEchoInfo->UDPPort;
         pHandle->EchoPlusEnabled      = pUdpEchoInfo->EchoPlusEnabled;
         pHandle->EchoPlusSupported    = pUdpEchoInfo->EchoPlusSupported;
@@ -689,16 +698,20 @@ BbhmUdpechoSetConfig
     PBBHM_UDP_ECHOSRV_OBJECT        pMyObject    = (PBBHM_UDP_ECHOSRV_OBJECT  )hThisObject;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo = (PDSLH_TR143_UDP_ECHO_CONFIG)&pMyObject->UDPEchoConfig;
     PDSLH_TR143_UDP_ECHO_CONFIG     pHandle      = (PDSLH_TR143_UDP_ECHO_CONFIG)hDslhDiagInfo;
+    errno_t                         rc           = -1;
 
     if ( pUdpEchoInfo->Enable && pMyObject->bIsServerOn )
     {
         pMyObject->StopDiag(pMyObject);
     }
 
-    AnscCopyString(pUdpEchoInfo->Interface,  pHandle->Interface );
-    AnscCopyString(pUdpEchoInfo->IfAddrName, pHandle->IfAddrName);
+    rc = strcpy_s(pUdpEchoInfo->Interface, sizeof(pUdpEchoInfo->Interface) , pHandle->Interface );
+    ERR_CHK(rc);
+    rc = strcpy_s(pUdpEchoInfo->IfAddrName, sizeof(pUdpEchoInfo->IfAddrName) , pHandle->IfAddrName);
+    ERR_CHK(rc);
     pUdpEchoInfo->Enable                     = pHandle->Enable;
-    AnscCopyString(pUdpEchoInfo->SourceIPName, pHandle->SourceIPName);
+    rc = strcpy_s(pUdpEchoInfo->SourceIPName, sizeof(pUdpEchoInfo->SourceIPName) , pHandle->SourceIPName);
+    ERR_CHK(rc);
     pUdpEchoInfo->UDPPort                    = pHandle->UDPPort;
 
 #ifdef _ANSC_UDP_ECHO_SERVER_PLUS_SUPPORTED_

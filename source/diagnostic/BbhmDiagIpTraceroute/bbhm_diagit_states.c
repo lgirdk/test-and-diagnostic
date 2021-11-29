@@ -111,6 +111,7 @@
 
 
 #include "bbhm_diagit_global.h"
+#include "safec_lib_common.h"
 
 
 /**********************************************************************
@@ -2205,6 +2206,7 @@ BbhmDiagitSetDiagParams
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pMyObject    = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)hThisObject;
     PDSLH_TRACEROUTE_INFO           pDiagInfo    = (PDSLH_TRACEROUTE_INFO          )pMyObject->hDslhDiagInfo;
     PDSLH_TRACEROUTE_INFO           pNewDiagInfo = (PDSLH_TRACEROUTE_INFO          )hDslhDiagInfo;
+    errno_t                         rc           = -1;
 
     AnscAcquireLock(&pMyObject->AccessLock);
 
@@ -2225,9 +2227,12 @@ BbhmDiagitSetDiagParams
             DslhInitTracerouteInfo(pDiagInfo);
             pMyObject->hDslhDiagInfo = (ANSC_HANDLE)pDiagInfo;
             pDiagInfo->StructSize    = sizeof(DSLH_TRACEROUTE_INFO);
-            AnscCopyString(pDiagInfo->Host, pNewDiagInfo->Host);
-            AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-            AnscCopyString(pDiagInfo->IfAddrName, pNewDiagInfo->IfAddrName);
+            rc = strcpy_s(pDiagInfo->Host, sizeof(pDiagInfo->Host) , pNewDiagInfo->Host);
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+            ERR_CHK(rc);
+            rc = strcpy_s(pDiagInfo->IfAddrName, sizeof(pDiagInfo->IfAddrName) , pNewDiagInfo->IfAddrName);
+            ERR_CHK(rc);
             pDiagInfo->DSCP                 = pNewDiagInfo->DSCP;
             pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
             pDiagInfo->MaxHopCount          = pNewDiagInfo->MaxHopCount;
@@ -2240,9 +2245,12 @@ BbhmDiagitSetDiagParams
     {
         DslhInitTracerouteInfo(pDiagInfo);
         pDiagInfo->StructSize    = sizeof(DSLH_TRACEROUTE_INFO);
-        AnscCopyString(pDiagInfo->Host, pNewDiagInfo->Host);
-        AnscCopyString(pDiagInfo->Interface, pNewDiagInfo->Interface);
-        AnscCopyString(pDiagInfo->IfAddrName, pNewDiagInfo->IfAddrName);
+        rc = strcpy_s(pDiagInfo->Host, sizeof(pDiagInfo->Host) , pNewDiagInfo->Host);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->Interface, sizeof(pDiagInfo->Interface) , pNewDiagInfo->Interface);
+        ERR_CHK(rc);
+        rc = strcpy_s(pDiagInfo->IfAddrName, sizeof(pDiagInfo->IfAddrName) , pNewDiagInfo->IfAddrName);
+        ERR_CHK(rc);
         pDiagInfo->DSCP                 = pNewDiagInfo->DSCP;
         pDiagInfo->Timeout              = pNewDiagInfo->Timeout;
         pDiagInfo->MaxHopCount          = pNewDiagInfo->MaxHopCount;
