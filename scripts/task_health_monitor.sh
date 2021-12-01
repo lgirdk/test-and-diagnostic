@@ -18,7 +18,107 @@
 # limitations under the License.
 #######################################################################################
 
-[ "$(syscfg get selfheal_enable)" = "true" ] || exit 0
+if [ "$(syscfg get selfheal_enable)" !=  "true" ]; then
+   if [ -e "/tmp/deadlock_warning" ]; then
+      rm "/tmp/deadlock_warning"
+   fi
+   exit 0
+fi
+
+check_component_status(){
+
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+            echo_t "BWG doesn't support voice"
+        else
+            MTA_PID=$(busybox pidof CcspMtaAgentSsp)
+            if [ "$MTA_PID" = "" ]; then
+                #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
+                echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
+                resetNeeded mta CcspMtaAgentSsp
+
+            fi
+        fi
+
+        # Checking CM's PID
+        if [ "$WAN_TYPE" != "EPON" ]; then
+            CM_PID=$(busybox pidof CcspCMAgentSsp)
+            if [ "$CM_PID" = "" ]; then
+                #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
+                echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
+                resetNeeded cm CcspCMAgentSsp
+            fi
+        fi
+
+        # Checking TR69's PID
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+            echo_t "BWG doesn't support TR069Pa "
+        else
+            TR69_PID=$(busybox pidof CcspTr069PaSsp)
+            enable_TR69_Binary=$(syscfg get EnableTR69Binary)
+            if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
+                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
+                    t2CountNotify "SYS_SH_TR69Restart"
+                    resetNeeded TR69 CcspTr069PaSsp
+                fi
+            fi
+        fi
+
+        # Checking Test and Diagnostic's PID
+        TandD_PID=$(busybox pidof CcspTandDSsp)
+        if [ "$TandD_PID" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
+            resetNeeded tad CcspTandDSsp
+        fi
+
+        # Checking Lan Manager PID
+        LM_PID=$(busybox pidof CcspLMLite)
+        if [ "$LM_PID" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
+            t2CountNotify "SYS_SH_LM_restart"
+            resetNeeded lm CcspLMLite
+        fi
+
+        # Checking CcspEthAgent PID
+        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
+        if [ "$ETHAGENT_PID" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
+            resetNeeded ethagent CcspEthAgent
+        fi
+
+        # Not needed for MV1 as wifi runs on ATOM side in MV1
+        if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
+            # Checking CcspWifiSsp PID
+            WIFI_PID=$(busybox pidof CcspWifiSsp)
+            if [ "$WIFI_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : CcspWifiSsp process is not running, need restart"
+                resetNeeded wifi CcspWifiSsp
+            fi
+        fi
+
+        # Checking notify_comp's PID
+        notify_comp=$(busybox pidof notify_comp)
+        if [ "$notify_comp" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED :notify_comp is not running, need restart"
+            resetNeeded notifycomponent notify_comp
+        fi
+
+        # Checking ssamagent's PID
+        ssamagent_pid=$(busybox pidof ssamagent)
+        if [ "$ssamagent_pid" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : ssamagent is not running, need restart"
+            resetNeeded ssam_agent ssamagent
+        fi
+
+        PAM_PID=$(busybox pidof CcspPandMSsp)
+        if [ "$PAM_PID" = "" ]; then
+            # Remove the P&M initialized flag
+            rm -rf /tmp/pam_initialized
+            echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
+            t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
+            resetNeeded pam CcspPandMSsp
+        fi
+}
 
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
@@ -30,6 +130,10 @@ DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
 
+if [ -e /tmp/deadlock_warning ]; then
+   dead_lock_recovery_needed=true
+fi
+
 # ----------------------------------------------------------------------------
 while true
 do
@@ -37,7 +141,6 @@ do
 
 monitor_interval=$(syscfg get process_monitor_interval)
 [ -z "$monitor_interval" ] && monitor_interval="5"
-sleep ${monitor_interval}m
 
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
@@ -72,6 +175,59 @@ case $BOX_TYPE in
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
 esac
+
+CCSP_ERR_NOT_CONNECT=190
+CCSP_ERR_TIMEOUT=191
+CCSP_ERR_NOT_EXIST=192
+
+if [ -n "$dead_lock_recovery_needed" ]; then
+
+   echo_t "RDKB_SELFHEAL : DEAD LOCK WARNING RECEIVED Checking for component health"
+
+   #Always keep the array1 & array2 Aligned
+   declare -a array1=("cm" "lmlite" "tr069pa" "ethagent" "wifi"  "mta" "notifycomponent" "ssamagent" "tdm" )
+   declare -a array2=("CcspCMAgentSsp" "CcspLMLite" "CcspTr069PaSsp" "CcspEthAgent" "CcspWifiSsp" "CcspMtaAgentSsp" "notify_comp" "ssam_agent" "CcspTandDSsp" )
+
+   if [ "$BOX_TYPE" = "MV1" ]; then
+      wait_time=10
+   else
+      wait_time=5
+   fi
+
+   for i in "${!array1[@]}"; do
+       dmcli eRT getv com.cisco.spvtg.ccsp.${array1[i]}.Health &
+       BACK_PID=$!
+       time_out=0
+
+       #Checking component health with time out value wait_time sec
+       while kill -0 $BACK_PID ; do
+          sleep 1
+          time_out=$time_out+1
+          if [[ $time_out -gt $wait_time ]] ; then
+             echo "pid is $BACK_PID"
+             kill -9 $BACK_PID
+             BACK_PID=0
+             break;
+          fi
+       done
+       time_out=0
+       if [ "$BACK_PID" = "0" ] ; then
+          echo_t "RDKB_SELFHEAL : DEAD LOCK WARNING RECEIVED Need to restart ${array2[i]}"
+          if [ "$BOX_TYPE" = "MV1" ] && [ "${array2[i]}" = "CcspWifiSsp" ]; then
+             rpcclient2 "kill -9 $(busybox pidof ${array2[i]})"
+             #Process monitor script at ATOM console will reset CcspWifiSsp
+          else
+             kill -9 $(busybox pidof ${array2[i]})
+             resetNeeded ${array1[i]} ${array2[i]}
+          fi
+       fi
+   done
+   dead_lock_recovery_needed=""
+   check_component_status
+   rm "/tmp/deadlock_warning"
+else
+   sleep ${monitor_interval}m
+fi
 
 case $SELFHEAL_TYPE in
     "BASE")
@@ -130,13 +286,7 @@ case $SELFHEAL_TYPE in
 esac
 
 
-CCSP_ERR_NOT_CONNECT=190
-CCSP_ERR_TIMEOUT=191
-CCSP_ERR_NOT_EXIST=192
-
 exec 3>&1 4>&2 >> $SELFHEALFILE 2>&1
-
-
 
 # set thisREADYFILE for several tests below:
 case $SELFHEAL_TYPE in
@@ -810,37 +960,10 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE")
-        PAM_PID=$(busybox pidof CcspPandMSsp)
-        if [ "$PAM_PID" = "" ]; then
-            # Remove the P&M initialized flag
-            rm -rf /tmp/pam_initialized
-            echo_t "RDKB_PROCESS_CRASHED : PAM_process is not running, need restart"
-            t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
-            resetNeeded pam CcspPandMSsp
-        fi
 
-        # Checking MTA's PID
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-            echo_t "BWG doesn't support voice"
-        else
-            MTA_PID=$(busybox pidof CcspMtaAgentSsp)
-            if [ "$MTA_PID" = "" ]; then
-                #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
-                echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
-                resetNeeded mta CcspMtaAgentSsp
-                t2CountNotify "SYS_SH_MTA_restart"
-            fi
-        fi
+        check_component_status
 
-        # Checking CM's PID
-        if [ "$WAN_TYPE" != "EPON" ]; then
-            CM_PID=$(busybox pidof CcspCMAgentSsp)
-            if [ "$CM_PID" = "" ]; then
-                #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
-                echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
-                resetNeeded cm CcspCMAgentSsp
-            fi
-        else
+        if [ "$WAN_TYPE" = "EPON" ]; then
             #Checking EPONAgent is running.
             EPON_AGENT_PID=$(busybox pidof CcspEPONAgentSsp)
             if [ "$EPON_AGENT_PID" = "" ]; then
@@ -849,52 +972,8 @@ case $SELFHEAL_TYPE in
             fi
         fi
 
-        # Checking WEBController's PID
-        #   WEBC_PID=$(busybox pidof CcspWecbController)
-        #   if [ "$WEBC_PID" = "" ]; then
-        #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : WECBController_process is not running, restarting it"
-        #       echo_t "RDKB_PROCESS_CRASHED : WECBController_process is not running, need restart"
-        #       resetNeeded wecb CcspWecbController
-        #   fi
-
-        # Checking RebootManager's PID
-        #   Rm_PID=$(busybox pidof CcspRmSsp)
-        #   if [ "$Rm_PID" = "" ]; then
-        #   echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, restarting it"
-        #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : RebootManager_process is not running, need restart"
-        #       resetNeeded "rm" CcspRmSsp
-
-        #   fi
-
-        # Checking TR69's PID
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-            echo_t "BWG doesn't support TR069Pa "
-        else
-            TR69_PID=$(busybox pidof CcspTr069PaSsp)
-            enable_TR69_Binary=$(syscfg get EnableTR69Binary)
-            if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
-                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
-                    t2CountNotify "SYS_SH_TR69Restart"
-                    resetNeeded TR69 CcspTr069PaSsp
-                fi
-            fi
-        fi
-
-        # Checking Test adn Daignostic's PID
-        TandD_PID=$(busybox pidof CcspTandDSsp)
-        if [ "$TandD_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
-            resetNeeded tad CcspTandDSsp
-        fi
-
-        # Checking Lan Manager PID
         LM_PID=$(busybox pidof CcspLMLite)
-        if [ "$LM_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
-            t2CountNotify "SYS_SH_LM_restart"
-            resetNeeded lm CcspLMLite
-        else
+        if [ "$LM_PID" != "" ]; then
             cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.lmlite.Name)
             cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
             cr_lmlite_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
@@ -910,14 +989,6 @@ case $SELFHEAL_TYPE in
         if [ "$XDNS_PID" = "" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
-
-        fi
-
-        # Checking CcspEthAgent PID
-        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
-        if [ "$ETHAGENT_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
-            resetNeeded ethagent CcspEthAgent
 
         fi
 
@@ -943,23 +1014,6 @@ case $SELFHEAL_TYPE in
         if [ "$MOCA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
-        fi
-		
-	 #Checking notify_component PID
-	 NOTIFY_PID=$(busybox pidof notify_comp)
-	 if [ "$NOTIFY_PID" = "" ]; then
-		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
-		 resetNeeded notify-comp notify_comp
-	 fi
-
-        # Not needed for MV1 as wifi runs on ATOM side in MV1
-        if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
-            # Checking CcspWifiSsp PID
-            WIFI_PID=$(busybox pidof CcspWifiSsp)
-            if [ "$WIFI_PID" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : CcspWifiSsp process is not running, need restart"
-                resetNeeded wifi CcspWifiSsp
-            fi
         fi
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
@@ -1281,13 +1335,6 @@ case $SELFHEAL_TYPE in
                 resetNeeded snmp snmp_subagent
             fi
         fi
-		
-	 #Checking notify_component PID
-	 NOTIFY_PID=$(busybox pidof notify_comp)
-	 if [ "$NOTIFY_PID" = "" ]; then
-		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
-		 resetNeeded notify-comp notify_comp
-	 fi
 
         # Checking harvester PID
         HARVESTER_PID=$(busybox pidof harvester)
