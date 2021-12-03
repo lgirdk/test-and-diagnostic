@@ -21,15 +21,7 @@ AM_CFLAGS += -D_ANSC_USER
 
 ACLOCAL_AMFLAGS = -I m4
 
-if CCSP_ARCH_ARM
 EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/dmltad/libdmlarm.la
-endif
-if CCSP_ARCH_PC
-EXTRA_DEPENDENCIES = $(top_builddir)/libdmlpc.la
-endif
-if CCSP_ARCH_MIPS
-EXTRA_DEPENDENCIES = $(top_builddir)/source-mips/dmltad/libdmlarm.la
-endif
 
 lib_LTLIBRARIES = libdmltad.la
 
