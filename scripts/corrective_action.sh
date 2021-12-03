@@ -44,10 +44,10 @@ esac
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
+VERSION_FILE="/version.txt"
 
 case $SELFHEAL_TYPE in
     "BASE")
-        VERSION_FILE="/version.txt"
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
 
@@ -62,12 +62,10 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "TCCBR")
-        VERSION_FILE="/version.txt"
         source $UTOPIA_PATH/log_env_var.sh
         CM_INTERFACE=wan0
     ;;
     "SYSTEMD")
-        VERSION_FILE="/version.txt"
         ADVSEC_PATH="/usr/ccsp/advsec/advsec.sh"
 
         if [ -f $ADVSEC_PATH ]; then
