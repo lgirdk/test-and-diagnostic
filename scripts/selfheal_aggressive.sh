@@ -26,6 +26,21 @@ DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 PRIVATE_LAN="brlan0"
 CCSP_COMMON_FIFO="/tmp/ccsp_common_fifo"
 
+ETHWAN_ENABLED=$(syscfg get eth_wan_enabled)
+SYSCFG_SEL_WANMODE=$(syscfg get selected_wan_mode)
+WAN_AUTO_SEL_MODE="0"
+WAN_ETH_SEL_MODE="1"
+WAN_DOCSIS_SEL_MODE="2"
+
+#Legacy Non WAN Manager Ethernet WAN Interface Prefixes/Names
+if [ "$MANUFACTURE" = "Technicolor" ]; then
+ETHWAN_INTF_PREFIX1="eth"
+ETHWAN_INTF_PREFIX2=""
+elif [ "$MANUFACTURE" = "Arris" ]; then
+ETHWAN_INTF_PREFIX1="nsgmii"
+ETHWAN_INTF_PREFIX2="macsec"
+fi
+
 exec 5>&1 6>&2 >> /rdklogs/logs/SelfHealAggressive.txt 2>&1
 
 Unit_Activated=$(syscfg get unit_activated)
@@ -498,6 +513,29 @@ self_heal_interfaces()
         rebootNeeded RM "" $reason $rebootCount
     fi
 
+    if [ "$ETHWAN_ENABLED" = "true" ] ; then
+        # Do Not interfere with Auto WAN Hunting for first 15 Minutes of Uptime
+        if [ "$SYSCFG_SEL_WANMODE" != "$WAN_AUTO_SEL_MODE" ] || [ $BOOTUP_TIME_SEC -gt 900 ] ; then
+           check_if_wan_hasip=$(ip address show "$WAN_INTERFACE" | grep "inet" | grep "scope global")
+           if [ "$check_if_wan_hasip" = "" ]; then
+              ethWan_if=$(ls /sys/class/net/$WAN_INTERFACE/brif | grep "$ETHWAN_INTF_PREFIX1")
+              if [ "$ethWan_if" = "" ]; then
+                 echo_t "[RDKB_AGG_SELFHEAL] : Eth Wan Interface Prefix1:$ETHWAN_INTF_PREFIX1 returned empty. Trying Prefix2"
+                 ethWan_if=$(ls /sys/class/net/$WAN_INTERFACE/brif | grep "$ETHWAN_INTF_PREFIX2")
+              fi
+
+              if [ "$ethWan_if" != "" ]; then
+                 echo_t "[RDKB_AGG_SELFHEAL] : $WAN_INTERFACE has no ip address, bring down and up Eth WAN port interface:$ethWan_if"
+                 ip link set dev $ethWan_if down
+                 sleep 5
+                 ip link set dev $ethWan_if up
+              else
+                 echo_t "[RDKB_AGG_SELFHEAL] : Eth Wan Interface returned empty skipping recovery."
+              fi
+           fi #"$check_if_wan_hasip" = ""
+       fi #[ "$SYSCFG_SEL_WANMODE" != "$WAN_AUTO_SEL_MODE" ] || [ $BOOTUP_TIME_SEC -gt 900 ]
+    fi #"$ETHWAN_ENABLED" = "true"
+
 }
 
 self_heal_dibbler_server()
@@ -781,8 +819,12 @@ self_heal_dhcp_clients()
                     fi
                     ;;
             esac
-        else
+        elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
+        else
+                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
+                   echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 not present or WAN Status Not Started: $WAN_STATUS"
+                fi
         fi
     #Logic ends here for RDKB-25714
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$WAN_STATUS" = "started" ]; then
@@ -1094,7 +1136,8 @@ do
     sleep ${INTERVAL}m
 
     BOOTUP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
-    if [ ! -f /tmp/selfheal_bootup_completed ] && [ $BOOTUP_TIME_SEC -lt 900 ] ; then
+    # This Feature is only enabled on devices that have Comcast Product Requirement to be up[ WEB PA Up] within 3:00
+    if [ ! -f /tmp/selfheal_bootup_completed ] && [ $BOOTUP_TIME_SEC -lt 180 ] ; then
         continue
     fi
     
