@@ -985,14 +985,14 @@ else
                 if [ "$advsec_bridge_mode" != "2" ]; then
                     if [ -f $ADVSEC_PATH ]; then
                         if [ $isADVPID -eq 0 ] && [ "$DF_ENABLED" = "1" ]; then
-                            if [ "x$(advsec_is_rabid_installed)" == "xYES" ]; then
+                            if [ "x$(advsec_is_agent_installed)" == "xYES" ]; then
                                 if [ ! -f $ADVSEC_INITIALIZING ]; then
-                                    ADV_RABID_PID=$(advsec_is_alive rabid)
-                                    if [ "$ADV_RABID_PID" = "" ] ; then
+                                    ADV_AGENT_PID=$(advsec_is_alive ${CUJO_AGENT})
+                                    if [ "${ADV_AGENT_PID}" = "" ] ; then
                                         if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
-                                            echo_t "RDKB_PROCESS_CRASHED : AdvSecurity Rabid process is not running, need restart"
+                                            echo_t "RDKB_PROCESS_CRASHED : AdvSecurity ${CUJO_AGENT_LOG} process is not running, need restart"
                                         fi
-                                        resetNeeded advsec_bin AdvSecurityRabid
+                                        resetNeeded advsec_bin AdvSecurityAgent
                                     fi
                                 fi
                             fi
