@@ -853,6 +853,13 @@ NSLookupDiagnostics_Validate
         */
     }
 
+    if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested && AnscSizeOfString(pNSLookupDiagInfo->HostName) == 0 )
+    {
+        AnscCopyString(pReturnParamName, "DiagnosticsState");
+        pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
+        return FALSE;
+    }
+
     if ( pNSLookupDiagInfo->DiagnosticState == DSLH_DIAG_STATE_TYPE_Requested || AnscSizeOfString(pNSLookupDiagInfo->HostName) > 0 )
     {
         p = pNSLookupDiagInfo->HostName;
