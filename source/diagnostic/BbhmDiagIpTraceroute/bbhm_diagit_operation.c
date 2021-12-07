@@ -1161,7 +1161,7 @@ BbhmDiagitCalculateResult
 
     ULONG                           i              = 0;
     ULONG                           ulHashIndex    = 0;
-    UCHAR                           Temp[8]        = { 0 };
+    UCHAR                           Temp[11]      = { 0 };
     ULONG                           duration       = 0;
 
     if ( !pDslhTracertObj )
@@ -1203,7 +1203,7 @@ BbhmDiagitCalculateResult
             {
                 duration    = pEchoEntry->StopTime-pEchoEntry->StartTime;
                 duration    = duration > 0 ? duration : 1;
-                _ansc_snprintf(Temp, 8, "%lu", duration);
+                _ansc_snprintf(Temp, sizeof(Temp), "%lu", duration);
 
                 pDslhTracertObj->ResponseTime = duration;
             }

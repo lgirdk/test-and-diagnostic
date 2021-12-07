@@ -177,7 +177,7 @@ BOOL SelfHeal_SetParamBoolValue
 		return FALSE;
 	    }
 
-	    char cmd[128];
+	    char cmd[128+8];
             if ( bValue == TRUE )
             {
 
