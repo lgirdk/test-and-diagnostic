@@ -17,9 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-if [ -f /lib/rdk/utils.sh ];then
-     . /lib/rdk/utils.sh
-fi
+
 UPTIME=$(cut -d. -f1 /proc/uptime)
 
 if [ "$UPTIME" -lt 900 ]
@@ -27,7 +25,7 @@ then
     exit 0
 fi
 
-removeCron "/usr/ccsp/tad/start_gw_heath.sh"
+rm -rf /etc/cron/cron.every10minute/start_gw_heath.sh
 
 sh /usr/ccsp/tad/check_gw_health.sh bootup-check
 
