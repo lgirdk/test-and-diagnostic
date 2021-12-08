@@ -17,9 +17,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #######################################################################################
-if [ -f /lib/rdk/utils.sh ];then
-     . /lib/rdk/utils.sh
-fi
+
 UPTIME=$(cut -d. -f1 /proc/uptime)
 
 if [ "$UPTIME" -lt 600 ]
@@ -91,7 +89,7 @@ then
 fi
 
 #Remove script from cron execution
-removeCron "selfheal_bootup.sh"
+rm -rf /etc/cron/cron.everyminute/selfheal_bootup.sh
 
 # This function will check if captive portal needs to be enabled or not.
 checkCaptivePortal()
