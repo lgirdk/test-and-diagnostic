@@ -251,7 +251,7 @@ Telemetry_Commit
 	    case TELE_ST_RELOAD :
             {
                 CcspTraceInfo(("%s: Reloading Telemetry service with new configuration file \n", __FUNCTION__));
-                system("killall -15 telemetry2_0");
+                system("killall -12 telemetry2_0");
                 break;
             }
        }
