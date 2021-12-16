@@ -368,11 +368,26 @@ get_high_mem_processes() {
                         free_memory_threshold=`syscfg get Free_Mem_Threshold`
                         free_memory_threshold=`expr $free_memory_threshold \* 1024`
                         if [ $free_memory_threshold -ne 0 ]; then
-                        	echo_t "[RDKB_SELFHEAL] : Free memory = $freeMemSys, Memory Threshold = $free_memory_threshold"
-                                if [ $freeMemSys -le $free_memory_threshold ]; then
-                                        free_memory_reach=1
-                                        echo_t "Free memory threshold reached..."
+                            echo_t "[RDKB_SELFHEAL] : Free memory = $freeMemSys, Memory Threshold = $free_memory_threshold"
+
+                            if [ "$BOX_TYPE" = "XB3" ]; then
+                                Committed_AS=`cat /proc/meminfo | grep Committed_AS | sed 's/[^0-9]*//g'`
+                                CommitLimit=`cat /proc/meminfo | grep CommitLimit | sed 's/[^0-9]*//g'`
+                                free_mem_avail=$(($CommitLimit - $Committed_AS))
+                                echo_t "[RDKB_SELFHEAL] : Committed_AS = $Committed_AS, CommitLimit = $CommitLimit, free_mem_avail = $free_mem_avail"
+
+                                if [ $free_mem_avail -le $free_memory_threshold ]; then
+                                    free_memory_reach=1
+                                    echo_t "Free Memory available is less than Threshold , reboot required"
+                                    t2CountNotify "SYS_ERROR_LOW_FREE_MEMORY"
                                 fi
+
+                            fi
+
+                            if [ $freeMemSys -le $free_memory_threshold ]; then
+                                    free_memory_reach=1
+                                    echo_t "Free memory threshold reached..."
+                            fi
                         fi
 
                         memory_frag_threshold=`syscfg get Mem_Frag_Threshold`
