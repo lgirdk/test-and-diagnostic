@@ -17,8 +17,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #######################################################################################
-
+if [ -f /lib/rdk/utils.sh ];then
+     . /lib/rdk/utils.sh
+fi
 source /etc/utopia/service.d/log_capture_path.sh
+
 
 DhcpServDetectEnableStatus=`syscfg get DhcpServDetectEnable`
 
@@ -28,14 +31,7 @@ DhcpServDetectEnableStatus=`syscfg get DhcpServDetectEnable`
 if [ "$DhcpServDetectEnableStatus" = "true" ]
 then
 	#Gateway sends out DHCP discover message on the MoCA interface every 60 minutes.
-      	echo "#! /bin/sh" > /etc/cron/cron.hourly/dhcp_rouge_server_detection.sh
-        echo "/usr/ccsp/tad/dhcp_rouge_server_detection.sh" >> /etc/cron/cron.hourly/dhcp_rouge_server_detection.sh
-        chmod 700 /etc/cron/cron.hourly/dhcp_rouge_server_detection.sh
+        addCron "48 * * * *  /usr/ccsp/tad/dhcp_rouge_server_detection.sh"
 else
-	if [ -f "/etc/cron/cron.hourly/dhcp_rouge_server_detection.sh" ] 
-	then
-		rm -rf /etc/cron/cron.hourly/dhcp_rouge_server_detection.sh
-	fi
+        removeCron "/usr/ccsp/tad/dhcp_rouge_server_detection.sh"
 fi
-
-
