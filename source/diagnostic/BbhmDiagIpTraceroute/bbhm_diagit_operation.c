@@ -1162,7 +1162,7 @@ BbhmDiagitCalculateResult
 
     ULONG                           i              = 0;
     ULONG                           ulHashIndex    = 0;
-    UCHAR                           Temp[11]      = { 0 };
+    UCHAR                           Temp[32]      = { 0 };
     ULONG                           duration       = 0;
 
     if ( !pDslhTracertObj )
