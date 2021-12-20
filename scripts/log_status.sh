@@ -20,25 +20,17 @@
 
 source /etc/utopia/service.d/log_capture_path.sh
 
-zombie_count=0
+ps -eo stat,pid,ppid,cmd | grep '^Z' > /tmp/zombies.txt
+count=`wc -l < /tmp/zombies.txt`
 
-for file in /proc/*/stat
-do
-	[ -f $file ] || continue
+if [ $count -ne 0 ];then
+	echo "*************** List of Zombies ***************"
+	cat /tmp/zombies.txt
+	echo "***********************************************"
+fi
+rm /tmp/zombies.txt
 
-	process_status=$(cat $file | awk '{ print $3 }')
-
-	if [ "$process_status" = "Z" ]
-	then
-		process_pid=$(cat $file | awk '{ print $1 }')
-		process_name=$(cat $file | awk '{ print $2 }' | cut -d '(' -f2 | cut -d ')' -f1)
-		parent_id=$(cat $file | awk '{ print $4 }')
-		echo_t "zombie_pid:$process_pid, zombie_pname: $process_name, zombie_parent_pid:$parent_id"
-		zombie_count=$((zombie_count+1))
-	fi
-done
-
-echo_t "Total_Zombie_count:$zombie_count"
+echo_t "Total_Zombie_count:$count"
 
 if [ "xstarted" == "x`sysevent get wan-status`" ];then
 
