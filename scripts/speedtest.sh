@@ -56,6 +56,11 @@ then
     # C speedtest client
     echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Downloading and/or executing speedtest-client-c for XB3C" >> $LOG_FILE
     rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+   elif [ "$BOX_TYPE" = SR213 ]
+   then
+    # C speedtest client
+    echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Executing speedtest-client-c for SR213" >> $LOG_FILE
+    /usr/bin/speedtest-client
    else
     # Unsupported speedtest client
     echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Unsupported device model" >> $LOG_FILE

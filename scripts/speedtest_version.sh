@@ -38,6 +38,10 @@ elif [ "$BOX_TYPE" = XB3 ] && ( [ "$MODEL_NUM" = DPC3941 ] || [ "$MODEL_NUM" = D
 then
  # C speedtest client
  rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+elif [ "$BOX_TYPE" = SR213 ]
+then
+# C speedtest client
+/usr/bin/speedtest-client -v > $VERSION_LOG_FILE
 else
  # Unsupported speedtest client
  echo "Unsupported device model" > $VERSION_LOG_FILE
