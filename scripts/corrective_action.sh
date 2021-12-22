@@ -677,19 +677,6 @@ resetNeeded()
     else
         #touch $RESETNEEDED
 
-        case $SELFHEAL_TYPE in
-            "BASE"|"TCCBR")
-                #checkConditionsbeforeAction
-                #return_value=$?
-                return_value=0  # HACK, to execute next 'if'
-            ;;
-            "SYSTEMD")
-                checkConditionsbeforeAction
-                return_value=$?
-            ;;
-        esac
-
-        if [ $return_value -eq 0 ]; then
             # RDKB-6012: No need to validate today's reset count
             #TODAYS_RESET_COUNT=$((TODAYS_RESET_COUNT+1))
 
@@ -924,7 +911,6 @@ resetNeeded()
                 ./$ProcessName -subsys $Subsys
                 cd -
             fi
-        fi  # $return_value
 
     fi  # [ $TODAYS_RESET_COUNT -ge "$MAX_RESET_COUNT" ] && [ "$ProcessName" = "PING" ]
 
