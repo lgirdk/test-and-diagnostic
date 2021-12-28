@@ -301,41 +301,6 @@ get_high_mem_processes() {
 		echo_t "[RDKB_SELFHEAL] : NVRAM2 IS READ-ONLY"
 	fi
 
-	if [ "$BOX_TYPE" = "XB3" ]  || [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-		if [ "$UTC_ENABLE" == "true" ]
-		then
-			cur_hr=`LTime H`
-			cur_min=`LTime M`
-		else
-			cur_hr=`date +"%H"`
-			cur_min=`date +"%M"`
-		fi
-
-		SNMPv2_RDKB_MIBS_SUPPORT=`syscfg get V2Support`
-		SNMP_RESTART_ENABLE=`syscfg get SNMP_RestartMaintenanceEnable`
-		if [ "$cur_hr" -ge 02 ] && [ "$cur_hr" -le 05 ] && [[ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" || "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]] && [ "$SNMP_RESTART_ENABLE" = "true" ]
-		then
-				if [ ! -f "/tmp/snmp_agent_restarted" ]; then
-					echo_t  "RDKB_SELFHEAL : Restarting snmp subagent in maintanance window" 
-					touch /tmp/.snmp_agent_restarting
-					if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
-						systemctl restart snmpSubAgent
-						sleep 2
-					else
-						SNMP_PID=`busybox ps ww | grep snmp_subagent | grep -v cm_snmp_ma_2 | grep -v grep | awk '{print $1}'`
-						kill -9 $SNMP_PID
-						resetNeeded snmp snmp_subagent maintanance_window
-					fi
-					rm -rf /tmp/.snmp_agent_restarting
-					touch /tmp/snmp_agent_restarted
-				fi
-		else 
-			if [ -f "/tmp/snmp_agent_restarted" ]; then
-				rm "/tmp/snmp_agent_restarted"
-			fi
-		fi
-	fi	
-	
 	# swap usage information
         # vmInfoHeader: swpd,free,buff,cache,si,so
         # vmInfoValues: <int>,<int>,<int>,<int>,<int>,<int>
