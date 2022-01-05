@@ -444,32 +444,6 @@ fi
     	fi	fi
      	fi
 
-  	if [ $batteryMode = 0 ]
-  	then
-	    checkMaintenanceWindow
-	    if [ $reb_window -eq 1 ]
-	    then
-                if [ ! -f "/nvram/syscfg_clean" ]; then
-                    echo_t "Calling syscfg cleanup during maintenance window..."
-                    sh /usr/ccsp/tad/syscfg_cleanup.sh
-                fi
-	        if [ $IsAlreadyCountReseted -eq 0 ]
-			then
-			    syscfg set todays_reset_count 0
-			    syscfg commit
-			    IsAlreadyCountReseted=1
-			    RES_COUNT=`syscfg get todays_reset_count`
-	  	        echo_t "RDKB_SELFHEAL : Resetted todays_reset_count during maintenance Window"
-	  	        echo_t "RDKB_SELFHEAL : Current Reset Count is $RES_COUNT"	  	        
-
-			sysevent set firewall_selfheal_count 0
-			echo_t "RDKB_SELFHEAL : Resetted firewall_selfheal_count during maintenance Window"
-		    fi
-	    else
-		    IsAlreadyCountReseted=0
-	    fi
-	fi
-
 	SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 	COUNT=$((COUNT+1))
     if [ "$COUNT" -eq 4 ]
