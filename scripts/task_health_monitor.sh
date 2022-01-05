@@ -4660,23 +4660,12 @@ if [ $rebootDeviceNeeded -eq 1 ]; then
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
             inMaintWindow=1
-            checkMaintenanceWindow
-            if [ $reb_window -eq 0 ]; then
-                doMaintReboot=0
-            fi
         ;;
         "TCCBR")
             inMaintWindow=1
-            checkMaintenanceWindow
-            if [ $reb_window -eq 0 ]; then
-                doMaintReboot=0
-            fi
         ;;
     esac
     if [ $inMaintWindow -eq 1 ]; then
-        if [ $doMaintReboot -eq 0 ]; then
-            echo_t "Maintanance window for the current day is over , unit will be rebooted in next Maintanance window "
-        else
             #Check if we have already flagged reboot is needed
             if [ ! -e $FLAG_REBOOT ]; then
                 if [ "$SELFHEAL_TYPE" = "BASE" ] && [ $reboot_needed_atom_ro -eq 1 ]; then
@@ -4707,7 +4696,6 @@ if [ $rebootDeviceNeeded -eq 1 ]; then
             else
                 echo_t "Already waiting for reboot"
             fi
-        fi  # [ $doMaintReboot -eq 0 ]
     fi  # [ $inMaintWindow -eq 1 ]
 fi  # [ $rebootDeviceNeeded -eq 1 ]
 
