@@ -183,14 +183,14 @@ do
 
 		if [ ! -f /tmp/CPUUsageReachedMAXThreshold ]
 		then
-			top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+			top -bn1 | head -n11 | tail -6 > /tmp/Process_info.txt
 			sed -i '/top/d' /tmp/Process_info.txt
-			Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
-			Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
-			Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
-			Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
-			Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
-			Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+			Process1=`awk 'FNR == 3 {print $12}' /tmp/Process_info.txt`
+			Process2=`awk 'FNR == 4 {print $12}' /tmp/Process_info.txt`
+			Process3=`awk 'FNR == 5 {print $12}' /tmp/Process_info.txt`
+			Process1_cpu_usage=`awk 'FNR == 3 {print $9}' /tmp/Process_info.txt`
+			Process2_cpu_usage=`awk 'FNR == 4 {print $9}' /tmp/Process_info.txt`
+			Process3_cpu_usage=`awk 'FNR == 5 {print $9}' /tmp/Process_info.txt`
 			echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 			t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"            
 			rm -rf /tmp/Process_info.txt
@@ -262,14 +262,14 @@ do
             if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
                 checkMaintenanceWindow
                 if [ $reb_window -eq 1 ];then
-                    top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+                    top -bn1 | head -n11 | tail -6 > /tmp/Process_info.txt
                     sed -i '/top/d' /tmp/Process_info.txt
-                    Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
-                    Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
-                    Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
-                    Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
-                    Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
-                    Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+                    Process1=`awk 'FNR == 3 {print $12}' /tmp/Process_info.txt`
+                    Process2=`awk 'FNR == 4 {print $12}' /tmp/Process_info.txt`
+                    Process3=`awk 'FNR == 5 {print $12}' /tmp/Process_info.txt`
+                    Process1_cpu_usage=`awk 'FNR == 3 {print $9}' /tmp/Process_info.txt`
+                    Process2_cpu_usage=`awk 'FNR == 4 {print $9}' /tmp/Process_info.txt`
+                    Process3_cpu_usage=`awk 'FNR == 5 {print $9}' /tmp/Process_info.txt`
                     echo_t "RDKB_SELFHEAL : CPU load at 100 on ARM side in XB3, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 
                     if [ `echo $Process1|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process2|grep -c "snmp_agent_cm"` -gt 0 ] || [ `echo $Process3|grep -c "snmp_agent_cm"` -gt 0 ]
@@ -297,15 +297,15 @@ do
 			if [ "$Curr_CPULoad_Avg" -ge "$CPU_THRESHOLD" ];then
 				echo_t "RDKB_SELFHEAL : CPU load is $Curr_CPULoad_Avg"
 				echo_t "RDKB_SELFHEAL : Top 5 tasks running on device"
-				top -bn1 | head -n10 | tail -6 > /tmp/Process_info.txt
+				top -bn1 | head -n11 | tail -6 > /tmp/Process_info.txt
 				sed -i '/top/d' /tmp/Process_info.txt
 				cat /tmp/Process_info.txt
-				Process1=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n1`
-				Process2=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n2 | tail -1`
-				Process3=`cut -d "%" -f 3 /tmp/Process_info.txt | head -n3 | tail -1`
-				Process1_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n1`
-				Process2_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n2 | tail -1`
-				Process3_cpu_usage=`cut -d "%" -f 2 /tmp/Process_info.txt | tr -d [:blank:] | head -n3 | tail -1`
+				Process1=`awk 'FNR == 3 {print $12}' /tmp/Process_info.txt`
+				Process2=`awk 'FNR == 4 {print $12}' /tmp/Process_info.txt`
+				Process3=`awk 'FNR == 5 {print $12}' /tmp/Process_info.txt`
+				Process1_cpu_usage=`awk 'FNR == 3 {print $9}' /tmp/Process_info.txt`
+				Process2_cpu_usage=`awk 'FNR == 4 {print $9}' /tmp/Process_info.txt`
+				Process3_cpu_usage=`awk 'FNR == 5 {print $9}' /tmp/Process_info.txt`
 				echo_t "RDKB_SELFHEAL : CPU load at 100, top process:$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 				t2ValNotify "TopCPU_split" "$Process1, $Process1_cpu_usage%,$Process2, $Process2_cpu_usage%,$Process3, $Process3_cpu_usage%"
 				rm -rf /tmp/Process_info.txt
