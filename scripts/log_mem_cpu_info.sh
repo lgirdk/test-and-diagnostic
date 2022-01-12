@@ -46,6 +46,14 @@ logTmpFs()
       echo_t ""
       disk_usage="df"
       eval $disk_usage
+
+      nvram2_avail=`eval $disk_usage | grep nvram2`
+      if [ "$nvram2_avail" = "" ]
+      then
+         echo_t "RDKB_DISK_USAGE: nvram2 not available"
+         t2CountNotify "SYS_ERROR_NVRAM2_NOT_AVAILABLE"
+      fi
+
       if [ "$1" = "log" ]
       then
         echo_t "RDKB_TMPFS_USAGE_PERIODIC:$TMPFS_CUR_USAGE"
