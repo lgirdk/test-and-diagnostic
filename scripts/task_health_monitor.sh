@@ -30,9 +30,6 @@ Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 
-#calling storeinformation to generate the logs that display the CPU load
-storeInformation
-
 ovs_enable=false
 
 if [ -d "/sys/module/openvswitch/" ];then
