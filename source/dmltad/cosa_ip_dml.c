@@ -1826,7 +1826,7 @@ IPPing_SetParamUlongValue
         syscfg_set_u_commit (NULL, "selfheal_ping_DataBlockSize", cfg.size);
     }
    else if (strcmp(ParamName, "DSCP") == 0)
-       cfg.tos = uValue;
+       cfg.tos = uValue << 2;
    else if (strcmp(ParamName, "Interval") == 0)
        cfg.interval = uValue / 1000;
    else if (strcmp(ParamName, "PingDNSQueryIPType") == 0)
