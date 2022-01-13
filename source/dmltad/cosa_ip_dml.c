@@ -1841,9 +1841,9 @@ IPPing_SetParamUlongValue
         cfg.size = uValue;
         syscfg_set_u_commit (NULL, "selfheal_ping_DataBlockSize", cfg.size);
     }
-   else if (strcmp(ParamName, "DSCP") == 0)
-       cfg.tos = uValue;
-    else 
+    else if (strcmp(ParamName, "DSCP") == 0)
+        cfg.tos = uValue << 2;
+    else
         return FALSE;
 
     if (diag_setcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
