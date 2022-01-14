@@ -25,12 +25,114 @@ if [ "$(syscfg get selfheal_enable)" !=  "true" ]; then
    exit 0
 fi
 
+fast_dmcli ()
+{
+    if [ "$BOX_TYPE" = "MV1" ]; then
+        rpcclient2 "dmcli $1 $2 $3"
+    else
+        dmcli $1 $2 $3
+    fi
+}
+
+fast_psmcli ()
+{
+    if [ "$BOX_TYPE" = "MV1" ]; then
+        rpcclient2 "dmcli eRT psmget $2" | sed -ne 's/[[:blank:]]*$//; s/.*value: //p'
+    else
+        psmcli $1 $2
+    fi
+}
+
+get_pid() {
+    #populate ps cache
+    if [ ! -f "$PROCESSES_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        busybox ps ww > $PROCESSES_CACHE
+    fi
+
+    awk -v word="$1" 'gensub(/.*\//, "", "g", $5) == word{print $1}' $PROCESSES_CACHE
+}
+
+get_ssid_enable() {
+    #populate SSID data model cache
+    if [ ! -f "$SSIDS_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        dmcli eRT getv Device.WiFi.SSID. > $SSIDS_CACHE
+    fi
+
+    awk -v ssid_path=Device.WiFi.SSID.$1.Enable 'found==1{print $5; exit;} $NF==ssid_path{ found=1; }' $SSIDS_CACHE
+}
+
+get_ssid_status() {
+    #populate SSID data model cache
+    if [ ! -f "$SSIDS_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        dmcli eRT getv Device.WiFi.SSID. > $SSIDS_CACHE
+    fi
+
+    awk -v ssid_path=Device.WiFi.SSID.$1.Status 'found==1{print $5; exit;} $NF==ssid_path{ found=1; }' $SSIDS_CACHE
+}
+
+get_ssid_name() {
+    #populate SSID data model cache
+    if [ ! -f "$SSIDS_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        dmcli eRT getv Device.WiFi.SSID. > $SSIDS_CACHE
+    fi
+
+    awk -v ssid_path=Device.WiFi.SSID.$1.Name 'found==1{print $5; exit;} $NF==ssid_path{ found=1; }' $SSIDS_CACHE
+}
+
+get_from_ssid_cache() {
+    #populate SSID data model cache
+    if [ ! -f "$SSIDS_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        dmcli eRT getv Device.WiFi.SSID. > $SSIDS_CACHE
+    fi
+
+    grep "$1" $SSIDS_CACHE
+}
+
+is_ssid_execution_succeed() {
+    #populate SSID data model cache
+    if [ ! -f "$SSIDS_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        dmcli eRT getv Device.WiFi.SSID. > $SSIDS_CACHE
+    fi
+
+    grep "Execution succeed" $SSIDS_CACHE > /dev/null
+}
+
+get_from_syscfg_cache() {
+    #populate syscfg cache
+    if [ ! -f "$SYSCFG_CACHE" ]; then
+        if [ ! -d "$CACHE_PATH" ]; then
+            mkdir "$CACHE_PATH"
+        fi
+        syscfg show > $SYSCFG_CACHE
+    fi
+
+    awk -F "=" -v word=$1 ' $1==word{print $2; exit;} ' $SYSCFG_CACHE
+}
+
 check_component_status(){
 
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
             echo_t "BWG doesn't support voice"
         else
-            MTA_PID=$(busybox pidof CcspMtaAgentSsp)
+            MTA_PID=$(get_pid CcspMtaAgentSsp)
             if [ "$MTA_PID" = "" ]; then
                 #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
@@ -41,7 +143,7 @@ check_component_status(){
 
         # Checking CM's PID
         if [ "$WAN_TYPE" != "EPON" ]; then
-            CM_PID=$(busybox pidof CcspCMAgentSsp)
+            CM_PID=$(get_pid CcspCMAgentSsp)
             if [ "$CM_PID" = "" ]; then
                 #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
@@ -53,10 +155,10 @@ check_component_status(){
         if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
             echo_t "BWG doesn't support TR069Pa "
         else
-            TR69_PID=$(busybox pidof CcspTr069PaSsp)
-            enable_TR69_Binary=$(syscfg get EnableTR69Binary)
-            if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
-                if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
+            TR69_PID=$(get_pid CcspTr069PaSsp)
+            if [ "$TR69_PID" = "" ] && [ "$BR_MODE" -eq 0 ]; then
+                enable_TR69_Binary=$(get_from_syscfg_cache EnableTR69Binary)
+                if [ "" = "$enable_TR69_Binary" ] || [ "true" = "$enable_TR69_Binary" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : TR69_process is not running, need restart"
                     t2CountNotify "SYS_SH_TR69Restart"
                     resetNeeded TR69 CcspTr069PaSsp
@@ -65,14 +167,14 @@ check_component_status(){
         fi
 
         # Checking Test and Diagnostic's PID
-        TandD_PID=$(busybox pidof CcspTandDSsp)
+        TandD_PID=$(get_pid CcspTandDSsp)
         if [ "$TandD_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
             resetNeeded tad CcspTandDSsp
         fi
 
         # Checking Lan Manager PID
-        LM_PID=$(busybox pidof CcspLMLite)
+        LM_PID=$(get_pid CcspLMLite)
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
@@ -80,7 +182,7 @@ check_component_status(){
         fi
 
         # Checking CcspEthAgent PID
-        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
+        ETHAGENT_PID=$(get_pid CcspEthAgent)
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
@@ -89,7 +191,7 @@ check_component_status(){
         # Not needed for MV1 as wifi runs on ATOM side in MV1
         if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
             # Checking CcspWifiSsp PID
-            WIFI_PID=$(busybox pidof CcspWifiSsp)
+            WIFI_PID=$(get_pid CcspWifiSsp)
             if [ "$WIFI_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : CcspWifiSsp process is not running, need restart"
                 resetNeeded wifi CcspWifiSsp
@@ -97,20 +199,20 @@ check_component_status(){
         fi
 
         # Checking notify_comp's PID
-        notify_comp=$(busybox pidof notify_comp)
+        notify_comp=$(get_pid notify_comp)
         if [ "$notify_comp" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED :notify_comp is not running, need restart"
             resetNeeded notifycomponent notify_comp
         fi
 
         # Checking ssamagent's PID
-        ssamagent_pid=$(busybox pidof ssamagent)
-        if [ "$ssamagent_pid" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : ssamagent is not running, need restart"
-            resetNeeded ssam_agent ssamagent
+        ssam_agent_pid=$(get_pid ssam_agent)
+        if [ "$ssam_agent_pid" = "" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : ssam_agent is not running, need restart"
+            resetNeeded ssamagent ssam_agent
         fi
 
-        PAM_PID=$(busybox pidof CcspPandMSsp)
+        PAM_PID=$(get_pid CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -120,37 +222,48 @@ check_component_status(){
         fi
 }
 
+CACHE_PATH="/tmp/.thmCache/"
+SSIDS_CACHE=$CACHE_PATH"SSIDs"
+PROCESSES_CACHE=$CACHE_PATH"processes"
+SYSCFG_CACHE=$CACHE_PATH"syscfg"
 UTOPIA_PATH="/etc/utopia/service.d"
 TAD_PATH="/usr/ccsp/tad"
 RDKLOGGER_PATH="/rdklogger"
 PRIVATE_LAN="brlan0"
 BR_MODE=0
+RADIO_COUNT=0
+
+# Clear cache
+if [ -d $CACHE_PATH ]; then
+    rm -rf $CACHE_PATH
+fi
 
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
-Unit_Activated=$(syscfg get unit_activated)
+Unit_Activated=$(get_from_syscfg_cache unit_activated)
 
 if [ -e /tmp/deadlock_warning ]; then
    dead_lock_recovery_needed=true
 fi
+
+source $TAD_PATH/corrective_action.sh
+source /etc/utopia/service.d/event_handler_functions.sh
 
 # ----------------------------------------------------------------------------
 while true
 do
 # ----------------------------------------------------------------------------
 
-monitor_interval=$(syscfg get process_monitor_interval)
+monitor_interval=$(get_from_syscfg_cache process_monitor_interval)
 [ -z "$monitor_interval" ] && monitor_interval="5"
 
-source $TAD_PATH/corrective_action.sh
-source /etc/utopia/service.d/event_handler_functions.sh
 source /etc/waninfo.sh
 ovs_enable=false
 
 if [ -d "/sys/module/openvswitch/" ];then
    ovs_enable=true
 fi
-bridgeUtilEnable=`syscfg get bridge_util_enable`
+bridgeUtilEnable=`get_from_syscfg_cache bridge_util_enable`
 MAPT_CONFIG=`sysevent get mapt_config_flag`
 
 PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
@@ -217,10 +330,10 @@ if [ -n "$dead_lock_recovery_needed" ]; then
        if [ "$BACK_PID" = "0" ] ; then
           echo_t "RDKB_SELFHEAL : DEAD LOCK WARNING RECEIVED Need to restart ${array2[i]}"
           if [ "$BOX_TYPE" = "MV1" ] && [ "${array2[i]}" = "CcspWifiSsp" ]; then
-             rpcclient2 "kill -9 $(busybox pidof ${array2[i]})"
+             rpcclient2 "kill -9 $(get_pid ${array2[i]})"
              #Process monitor script at ATOM console will reset CcspWifiSsp
           else
-             kill -9 $(busybox pidof ${array2[i]})
+             kill -9 $(get_pid ${array2[i]})
              resetNeeded ${array1[i]} ${array2[i]}
           fi
        fi
@@ -230,6 +343,11 @@ if [ -n "$dead_lock_recovery_needed" ]; then
    rm "/tmp/deadlock_warning"
 else
    sleep ${monitor_interval}m
+fi
+
+# Clear cache after sleep for the new cycle
+if [ -d $CACHE_PATH ]; then
+    rm -rf $CACHE_PATH
 fi
 
 case $SELFHEAL_TYPE in
@@ -363,8 +481,8 @@ case $SELFHEAL_TYPE in
 esac
 
 #Find the DHCPv6 client type 
-ti_dhcpv6_type="$(busybox pidof ti_dhcp6c)"
-dibbler_client_type="$(busybox pidof dibbler-client)"
+ti_dhcpv6_type="$(get_pid ti_dhcp6c)"
+dibbler_client_type="$(get_pid dibbler-client)"
 if [ "$ti_dhcpv6_type" = "" ] && [ ! -z "$dibbler_client_type" ];then
 	DHCPv6_TYPE="dibbler-client"
 elif [ ! -z "$ti_dhcpv6_type" ] && [ "$dibbler_client_type" = "" ];then
@@ -382,7 +500,7 @@ Dhcpv6_Client_restart ()
 	fi
 	process_restart_need=0
 	if [ "$2" = "restart_for_dibbler-server" ];then
-        	PAM_UP="$(busybox pidof CcspPandMSsp)"
+		PAM_UP="$(get_pid CcspPandMSsp)"
 		if [ "$PAM_UP" != "" ];then
                 	echo_t "PAM pid $PAM_UP & $1 pid $dibbler_client_type $ti_dhcpv6_type"
                         echo_t "RDKB_PROCESS_CRASHED : Restarting $1 to reconfigure server.conf"
@@ -409,7 +527,7 @@ Dhcpv6_Client_restart ()
 		return 2
 	elif [ ! -s  "$DIBBLER_SERVER_CONF" ];then
 		return 1
-        elif [ -z "$(busybox pidof dibbler-server)" ];then
+        elif [ -z "$(get_pid dibbler-server)" ];then
         	dibbler-server stop
                 sleep 2
                 dibbler-server start
@@ -424,14 +542,13 @@ case $SELFHEAL_TYPE in
     "BASE")
         ###########################################
         if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
-            wifi_check=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
-            wifi_timeout=$(echo "$wifi_check" | grep "$CCSP_ERR_TIMEOUT")
-            wifi_not_exist=$(echo "$wifi_check" | grep "$CCSP_ERR_NOT_EXIST")
+            wifi_timeout=$(get_from_ssid_cache "CCSP_ERR_TIMEOUT")
+            wifi_not_exist=$(get_from_ssid_cache "CCSP_ERR_NOT_EXIST")
             WIFI_QUERY_ERROR=0
             if [ "$wifi_timeout" != "" ] || [ "$wifi_not_exist" != "" ]; then
                 echo_t "[RDKB_SELFHEAL] : Wifi query timeout"
                 t2CountNotify "WIFI_ERROR_Wifi_query_timeout"
-                echo_t "WIFI_QUERY : $wifi_check"
+                echo_t "WIFI_QUERY : " `cat SSIDS_CACHE`
                 WIFI_QUERY_ERROR=1
             fi
 
@@ -455,7 +572,7 @@ case $SELFHEAL_TYPE in
                 echo_t "[RDKB_SELFHEAL] : Atom is not responding. Count $atom_hang_count"
                 if [ $atom_hang_count -ge 2 ]; then
                     CheckRebootCretiriaForAtomHang
-                    atom_hang_reboot_count=$(syscfg get todays_atom_reboot_count)
+                    atom_hang_reboot_count=$(get_from_syscfg_cache todays_atom_reboot_count)
                     if [ $atom_hang_reboot_count -eq 0 ]; then
                         echo_t "[RDKB_PLATFORM_ERROR] : Atom is not responding. Rebooting box.."
                         reason="ATOM_HANG"
@@ -475,14 +592,14 @@ case $SELFHEAL_TYPE in
 
             ### SNMPv3 master agent self-heal ####
             if [ -f "/etc/SNMP_PA_ENABLE" ]; then
-                SNMPv3_PID=$(busybox pidof snmpd)
+                SNMPv3_PID=$(get_pid snmpd)
                 if [ "$SNMPv3_PID" = "" ] && [ "$ENABLE_SNMPv3" = "true" ]; then
                     # Restart disconnected master and agent
-                    v3AgentPid=$(ps -aux | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
+                    v3AgentPid=$(grep -i "snmp_subagent" $PROCESSES_CACHE | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
                     if [ "$v3AgentPid" != "" ]; then
                         kill -9 "$v3AgentPid"
                     fi
-                    pidOfListener=$(ps -aux | grep -i "inotify" | grep 'run_snmpv3_agent.sh' | awk '{print $1}')
+                    pidOfListener=$(grep -i "inotify" $PROCESSES_CACHE | grep 'run_snmpv3_agent.sh' | awk '{print $1}')
                     if [ "$pidOfListener" != "" ]; then
                         kill -9 "$pidOfListener"
                     fi
@@ -494,7 +611,7 @@ case $SELFHEAL_TYPE in
                     fi
                 else
                     ### SNMPv3 sub agent self-heal ####
-                    v3AgentPid=$(ps -aux | grep -i "snmp_subagent" | grep -v "grep" | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
+                    v3AgentPid=$(grep -i "[s]nmp_subagent" $PROCESSES_CACHE | grep -i "cm_snmp_ma_2"  | awk '{print $1}')
                     if [ "$v3AgentPid" = "" ] && [ "$ENABLE_SNMPv3" = "true" ]; then
                         # Restart failed sub agent
                         if [ -f /lib/rdk/run_snmpv3_agent.sh ]; then
@@ -509,11 +626,13 @@ case $SELFHEAL_TYPE in
 
         if [ "$MULTI_CORE" = "yes" ]; then
             if [ "$CORE_TYPE" = "arm" ]; then
-                # Checking logbackup PID
-                LOGBACKUP_PID=$(busybox pidof logbackup)
-                if [ "$LOGBACKUP_PID" = "" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : logbackup process is not running, need restart"
-                    /usr/bin/logbackup &
+                if [ -f /usr/bin/logbackup ]; then
+                    # Checking logbackup PID
+                    LOGBACKUP_PID=$(get_pid logbackup)
+                    if [ "$LOGBACKUP_PID" = "" ]; then
+                        echo_t "RDKB_PROCESS_CRASHED : logbackup process is not running, need restart"
+                        /usr/bin/logbackup &
+                    fi
                 fi
             fi
             if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
@@ -523,7 +642,7 @@ case $SELFHEAL_TYPE in
                   if [ "$WAN_STATUS" = "started" ]; then
                       ## Check Peer ip is accessible
                       loop=1
-                      ping_peer_rbt_thresh=$(syscfg get ping_peer_reboot_threshold)
+                      ping_peer_rbt_thresh=$(get_from_syscfg_cache ping_peer_reboot_threshold)
                       if [ -z "$ping_peer_rbt_thresh" ]; then
                           echo "RDKB_SELFHEAL : syscfg ping_peer_reboot_threshold unavail. Set older value 3" >> $CONSOLE_LOG
                           ping_peer_rbt_thresh=3
@@ -607,7 +726,7 @@ case $SELFHEAL_TYPE in
               fi
             else
               if [ -f $PING_PATH/ping_peer ]; then
-                  SYSEVENTD_PID=$(busybox pidof syseventd)
+                  SYSEVENTD_PID=$(get_pid syseventd)
                   if [ "$SYSEVENTD_PID" != "" ]; then
                       ## Check Peer ip is accessible
                       loop=1
@@ -708,13 +827,14 @@ case $SELFHEAL_TYPE in
             atomOnlyReboot=$(dmesg | grep -i "Atom only")
             dmesg -n 5
             if [ "x$atomOnlyReboot" = "x" ]; then
-                crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
-                isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
-                isCRHung=$(echo "$crTestop" | grep "$CCSP_ERR_TIMEOUT")
+                cr_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
+
+                isCRAlive=$(echo "$cr_name" | grep "Can't find destination compo")
+                isCRHung=$(echo "$cr_name" | grep "$CCSP_ERR_TIMEOUT")
 
                 if [ "$isCRAlive" != "" ]; then
                     # Retest by querying some other parameter
-                    crReTestop=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
+                    crReTestop=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
                     isCRAlive=$(echo "$crReTestop" | grep "Can't find destination compo")
                     RBUS_STATUS=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable | grep value | awk '{print $NF}'`
                     if [ "$isCRAlive" != "" ] || [ "$RBUS_STATUS" == "true" ]; then
@@ -736,7 +856,7 @@ case $SELFHEAL_TYPE in
 
                 if [ "$isCRHung" != "" ]; then
                     # Retest by querying some other parameter
-                    crReTestop=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
+                    crReTestop=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
                     isCRHung=$(echo "$crReTestop" | grep "$CCSP_ERR_TIMEOUT")
                     if [ "$isCRHung" != "" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not responding, need to reboot the unit"
@@ -759,7 +879,7 @@ case $SELFHEAL_TYPE in
                 echo_t "[RDKB_SELFHEAL] : Atom only reboot is triggered"
             fi
         elif [ "$WAN_TYPE" = "EPON" ]; then
-            CR_PID=$(busybox pidof CcspCrSsp)
+            CR_PID=$(get_pid CcspCrSsp)
             if [ "$CR_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
                 vendor=$(getVendorName)
@@ -799,7 +919,7 @@ case $SELFHEAL_TYPE in
         fi
 	
         if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
-          HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+          HOME_LAN_ISOLATION=`fast_psmcli get dmsb.l2net.HomeNetworkIsolation`
           if [ "$HOME_LAN_ISOLATION" = "0" ];then
               #ARRISXB6-9443 temp fix. Need to generalize and improve.
                   if [ "x$ovs_enable" = "xtrue" ];then
@@ -830,7 +950,7 @@ case $SELFHEAL_TYPE in
 esac
 
 BR_MODE=0
-bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+bridgeMode=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
 # RDKB-6895
 bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
 if [ "$bridgeSucceed" != "" ]; then
@@ -849,7 +969,7 @@ else
     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
     t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
     echo_t "LanMode dmcli called failed with error $bridgeMode"
-    isBridging=$(syscfg get bridge_mode)
+    isBridging=$(get_from_syscfg_cache bridge_mode)
     if [ "$isBridging" != "0" ]; then
         BR_MODE=1
         echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
@@ -867,14 +987,15 @@ else
             pandm_notconnect=$(echo "$bridgeMode" | grep "$CCSP_ERR_NOT_CONNECT")
             if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-                cr_pam_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
-                cr_pam_notconnect=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_CONNECT")
+
+                pam_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$pam_name" | grep "$CCSP_ERR_TIMEOUT")
+                cr_pam_notexist=$(echo "$pam_name" | grep "$CCSP_ERR_NOT_EXIST")
+                cr_pam_notconnect=$(echo "$pam_name" | grep "$CCSP_ERR_NOT_CONNECT")
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    PANDM_PID=$(get_pid CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
@@ -893,12 +1014,13 @@ else
             pandm_timeout=$(echo "$bridgeMode" | grep "$CCSP_ERR_TIMEOUT")
             if [ "$pandm_timeout" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter time out"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
+
+                pam_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$pam_name" | grep "$CCSP_ERR_TIMEOUT")
                 if [ "$cr_timeout" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    PANDM_PID=$(get_pid CcspPandMSsp)
                     rm -rf /tmp/pam_initialized
                     systemctl restart CcspPandMSsp.service
                 fi
@@ -910,7 +1032,7 @@ else
 fi  # [ "$bridgeSucceed" != "" ]
 
 # Checking PSM's PID
-PSM_PID=$(busybox pidof PsmSsp)
+PSM_PID=$(get_pid PsmSsp)
 if [ "$PSM_PID" = "" ]; then
     case $SELFHEAL_TYPE in
         "BASE"|"TCCBR")
@@ -937,12 +1059,12 @@ if [ "$PSM_PID" = "" ]; then
         ;;
     esac
 else
-    psm_name=$(dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name)
+    psm_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.psm.Name)
     psm_name_timeout=$(echo "$psm_name" | grep "$CCSP_ERR_TIMEOUT")
     psm_name_notexist=$(echo "$psm_name" | grep "$CCSP_ERR_NOT_EXIST")
     psm_name_notconnect=$(echo "$psm_name" | grep "$CCSP_ERR_NOT_CONNECT")
     if [ "$psm_name_timeout" != "" ] || [ "$psm_name_notexist" != "" ] || [ "$psm_name_notconnect" != "" ]; then
-        psm_health=$(dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health)
+        psm_health=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.psm.Health)
         psm_health_timeout=$(echo "$psm_health" | grep "$CCSP_ERR_TIMEOUT")
         psm_health_notexist=$(echo "$psm_health" | grep "$CCSP_ERR_NOT_EXIST")
         psm_health_notconnect=$(echo "$psm_health" | grep "$CCSP_ERR_NOT_CONNECT")
@@ -951,7 +1073,7 @@ else
             t2CountNotify "SYS_SH_PSMHung"
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
-                    kill -9 "$(busybox pidof PsmSsp)"
+                    kill -9 "$(get_pid PsmSsp)"
                     resetNeeded psm PsmSsp
                 ;;
                 "SYSTEMD")
@@ -969,41 +1091,40 @@ case $SELFHEAL_TYPE in
 
         if [ "$WAN_TYPE" = "EPON" ]; then
             #Checking EPONAgent is running.
-            EPON_AGENT_PID=$(busybox pidof CcspEPONAgentSsp)
+            EPON_AGENT_PID=$(get_pid CcspEPONAgentSsp)
             if [ "$EPON_AGENT_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : EPON_process is not running, need restart"
                 resetNeeded epon CcspEPONAgentSsp
             fi
         fi
 
-        LM_PID=$(busybox pidof CcspLMLite)
+        LM_PID=$(get_pid CcspLMLite)
         if [ "$LM_PID" != "" ]; then
-            cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.lmlite.Name)
-            cr_timeout=$(echo "$cr_query" | grep "$CCSP_ERR_TIMEOUT")
-            cr_lmlite_notexist=$(echo "$cr_query" | grep "$CCSP_ERR_NOT_EXIST")
+            lmlite_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.lmlite.Name)
+            cr_timeout=$(echo "$lmlite_name" | grep "$CCSP_ERR_TIMEOUT")
+            cr_lmlite_notexist=$(echo "$lmlite_name" | grep "$CCSP_ERR_NOT_EXIST")
             if [ "$cr_timeout" != "" ] || [ "$cr_lmlite_notexist" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : LMlite process is not responding. Restarting it"
-                kill -9 "$(busybox pidof CcspLMLite)"
+                kill -9 "$LM_PID"
                 resetNeeded lm CcspLMLite
             fi
         fi
 
         # Checking XdnsSsp PID
-        XDNS_PID=$(busybox pidof CcspXdnsSsp)
+        XDNS_PID=$(get_pid CcspXdnsSsp)
         if [ "$XDNS_PID" = "" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
-
         fi
 
         # Checking snmp v2 subagent PID
         if [ -f "/etc/SNMP_PA_ENABLE" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
-            SNMP_PID=$(ps -aux | grep "snmp_subagent" | grep -v "cm_snmp_ma_2" | grep -v "grep" | awk '{print $2}')
+            SNMP_PID=$(grep "snmp_subagent" $PROCESSES_CACHE | grep -v "cm_snmp_ma_2" | grep -v "grep" | awk '{print $2}')
             if [ "$SNMP_PID" = "" ]; then
                 if [ -f /tmp/.snmp_agent_restarting ]; then
                     echo_t "[RDKB_SELFHEAL] : snmp process is restarted through maintanance window"
                 else
-                    SNMPv2_RDKB_MIBS_SUPPORT=$(syscfg get V2Support)
+                    SNMPv2_RDKB_MIBS_SUPPORT=$(get_from_syscfg_cache V2Support)
                     if [ "$SNMPv2_RDKB_MIBS_SUPPORT" = "true" ] || [ "$SNMPv2_RDKB_MIBS_SUPPORT" = "" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
                         t2CountNotify "SYS_SH_SNMP_NotRunning"
@@ -1014,7 +1135,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspMoCA PID
-        MOCA_PID=$(busybox pidof CcspMoCA)
+        MOCA_PID=$(get_pid CcspMoCA)
         if [ "$MOCA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
             resetNeeded moca CcspMoCA
@@ -1022,7 +1143,7 @@ case $SELFHEAL_TYPE in
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
             # Checking mocadlfw PID
-            MOCADLFW_PID=$(busybox pidof mocadlfw)
+            MOCADLFW_PID=$(get_pid mocadlfw)
             if [ "$MOCADLFW_PID" = "" ]; then
                 echo_t "OEM_PROCESS_MOCADLFW_CRASHED : mocadlfw process is not running, need restart"
                 /usr/sbin/mocadlfw > /dev/null 2>&1 &
@@ -1031,9 +1152,9 @@ case $SELFHEAL_TYPE in
 
 	# BWGRDK-1384: Selfheal mechanism for ripd process
 	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-	    staticIp_check=$(psmcli get dmsb.truestaticip.Enable)
+	    staticIp_check=$(fast_psmcli get dmsb.truestaticip.Enable)
             if [ "$staticIp_check" = "1" ]; then
-		ripdPid=$(busybox pidof ripd)
+		ripdPid=$(get_pid ripd)
 		if [ -z "$ripdPid" ]; then
                     echo_t "RDKB_SELFHEAL : ripd process is not running, need restart"
                     /usr/sbin/ripd -d -f /var/ripd.conf -u root -g root -i /var/ripd.pid &
@@ -1055,7 +1176,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         case $BOX_TYPE in
             "HUB4"|"SR300"|"SE501"|"SR213")
-                Harvester_PID=$(busybox pidof harvester)
+                Harvester_PID=$(get_pid harvester)
                 if [ "$Harvester_PID" != "" ]; then
                     Harvester_CPU=$(top -bn1 | grep "harvester" | grep -v "grep" | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//' | awk '{$1=$1};1')
                     if [ "$Harvester_CPU" != "" ] && [ $Harvester_CPU -ge 30 ]; then
@@ -1101,13 +1222,13 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         WiFi_Flag=false
-        WiFi_PID=$(busybox pidof CcspWifiSsp)
+        WiFi_PID=$(get_pid CcspWifiSsp)
         if [ "$WiFi_PID" != "" ]; then
-            radioenable=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
+            radioenable=$(fast_dmcli eRT getv Device.WiFi.Radio.1.Enable)
             radioenable_timeout=$(echo "$radioenable" | grep "$CCSP_ERR_TIMEOUT")
             radioenable_notexist=$(echo "$radioenable" | grep "$CCSP_ERR_NOT_EXIST")
             if [ "$radioenable_timeout" != "" ] || [ "$radioenable_notexist" != "" ]; then
-                wifi_name=$(dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Name)
+                wifi_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Name)
                 wifi_name_timeout=$(echo "$wifi_name" | grep "$CCSP_ERR_TIMEOUT")
                 wifi_name_notexist=$(echo "$wifi_name" | grep "$CCSP_ERR_NOT_EXIST")
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
@@ -1138,7 +1259,7 @@ else
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
 
-                HOMESEC_PID=$(busybox pidof CcspHomeSecurity)
+                HOMESEC_PID=$(get_pid CcspHomeSecurity)
                 if [ "$HOMESEC_PID" = "" ]; then
                     case $SELFHEAL_TYPE in
                         "BASE")
@@ -1162,7 +1283,7 @@ else
                 case $SELFHEAL_TYPE in
                     "BASE")
                         # CcspAdvSecurity
-                        ADV_PID=$(busybox pidof CcspAdvSecuritySsp)
+                        ADV_PID=$(get_pid CcspAdvSecuritySsp)
                         if [ "$ADV_PID" = "" ] ; then
                             echo_t "RDKB_PROCESS_CRASHED : CcspAdvSecurity_process is not running, need restart"
                             resetNeeded advsec CcspAdvSecuritySsp
@@ -1174,8 +1295,8 @@ else
                     "SYSTEMD")
                     ;;
                 esac
-                advsec_bridge_mode=$(syscfg get bridge_mode)
-                DF_ENABLED=$(syscfg get Advsecurity_DeviceFingerPrint)
+                advsec_bridge_mode=$(get_from_syscfg_cache bridge_mode)
+                DF_ENABLED=$(get_from_syscfg_cache Advsecurity_DeviceFingerPrint)
                 if [ "$advsec_bridge_mode" != "2" ]; then
                     if [ -f $ADVSEC_PATH ]; then
                         if [ $isADVPID -eq 0 ] && [ "$DF_ENABLED" = "1" ]; then
@@ -1214,11 +1335,11 @@ case $SELFHEAL_TYPE in
         atomOnlyReboot=$(dmesg | grep -i "Atom only")
         dmesg -n 5
         if [ "x$atomOnlyReboot" = "x" ]; then
-            crTestop=$(dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
-            isCRAlive=$(echo "$crTestop" | grep "Can't find destination compo")
+            cr_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.CR.Name)
+            isCRAlive=$(echo "$cr_name" | grep "Can't find destination compo")
             if [ "$isCRAlive" != "" ]; then
                 # Retest by querying some other parameter
-                crReTestop=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
+                crReTestop=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
                 isCRAlive=$(echo "$crReTestop" | grep "Can't find destination compo")
                 if [ "$isCRAlive" != "" ]; then
                     #echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
@@ -1244,7 +1365,7 @@ case $SELFHEAL_TYPE in
         ###########################################
 
 
-        PAM_PID=$(busybox pidof CcspPandMSsp)
+        PAM_PID=$(get_pid CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -1254,7 +1375,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking MTA's PID
-        MTA_PID=$(busybox pidof CcspMtaAgentSsp)
+        MTA_PID=$(get_pid CcspMtaAgentSsp)
         if [ "$MTA_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
             resetNeeded mta CcspMtaAgentSsp
@@ -1263,18 +1384,18 @@ case $SELFHEAL_TYPE in
 
         WiFi_Flag=false
         # Checking Wifi's PID
-        WIFI_PID=$(busybox pidof CcspWifiSsp)
+        WIFI_PID=$(get_pid CcspWifiSsp)
         if [ "$WIFI_PID" = "" ]; then
             # Remove the wifi initialized flag
             rm -rf /tmp/wifi_initialized
             echo_t "RDKB_PROCESS_CRASHED : WIFI_process is not running, need restart"
             resetNeeded wifi CcspWifiSsp
         else
-            radioenable=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
+            radioenable=$(fast_dmcli eRT getv Device.WiFi.Radio.1.Enable)
             radioenable_timeout=$(echo "$radioenable" | grep "$CCSP_ERR_TIMEOUT")
             radioenable_notexist=$(echo "$radioenable" | grep "$CCSP_ERR_NOT_EXIST")
             if [ "$radioenable_timeout" != "" ] || [ "$radioenable_notexist" != "" ]; then
-                wifi_name=$(dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Name)
+                wifi_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Name)
                 wifi_name_timeout=$(echo "$wifi_name" | grep "$CCSP_ERR_TIMEOUT")
                 wifi_name_notexist=$(echo "$wifi_name" | grep "$CCSP_ERR_NOT_EXIST")
                 if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
@@ -1301,7 +1422,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CM's PID
-        CM_PID=$(busybox pidof CcspCMAgentSsp)
+        CM_PID=$(get_pid CcspCMAgentSsp)
         if [ "$CM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
             resetNeeded cm CcspCMAgentSsp
@@ -1325,14 +1446,14 @@ case $SELFHEAL_TYPE in
         #   fi
 
         # Checking Test adn Daignostic's PID
-        TandD_PID=$(busybox pidof CcspTandDSsp)
+        TandD_PID=$(get_pid CcspTandDSsp)
         if [ "$TandD_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : TandD_process is not running, need restart"
             resetNeeded tad CcspTandDSsp
         fi
 
         # Checking Lan Manager PID
-        LM_PID=$(busybox pidof CcspLMLite)
+        LM_PID=$(get_pid CcspLMLite)
         if [ "$LM_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : LanManager_process is not running, need restart"
             t2CountNotify "SYS_SH_LM_restart"
@@ -1341,7 +1462,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking XdnsSsp PID
-        XDNS_PID=$(busybox pidof CcspXdnsSsp)
+        XDNS_PID=$(get_pid CcspXdnsSsp)
         if [ "$XDNS_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspXdnsSsp_process is not running, need restart"
             resetNeeded xdns CcspXdnsSsp
@@ -1349,7 +1470,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspEthAgent PID
-        ETHAGENT_PID=$(busybox pidof CcspEthAgent)
+        ETHAGENT_PID=$(get_pid CcspEthAgent)
         if [ "$ETHAGENT_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : CcspEthAgent_process is not running, need restart"
             resetNeeded ethagent CcspEthAgent
@@ -1358,7 +1479,7 @@ case $SELFHEAL_TYPE in
 
         # Checking snmp subagent PID
         if [ -f "/etc/SNMP_PA_ENABLE" ]; then
-            SNMP_PID=$(busybox pidof snmp_subagent)
+            SNMP_PID=$(get_pid snmp_subagent)
             if [ "$SNMP_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : snmp process is not running, need restart"
                 t2CountNotify "SYS_SH_SNMP_NotRunning"
@@ -1367,7 +1488,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking harvester PID
-        HARVESTER_PID=$(busybox pidof harvester)
+        HARVESTER_PID=$(get_pid harvester)
         if [ "$HARVESTER_PID" = "" ]; then
             echo_t "RDKB_PROCESS_CRASHED : harvester is not running, need restart"
             resetNeeded harvester harvester
@@ -1377,7 +1498,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-HOTSPOT_PSM=`psmcli get dmsb.hotspot.enable`
+HOTSPOT_PSM=`fast_psmcli get dmsb.hotspot.enable`
 if [ x"$HOTSPOT_PSM" = x"1" ]; then
     HOTSPOT_ENABLE="true"
 else
@@ -1388,7 +1509,7 @@ if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     count=0
     set '5 6'
     for i in $@; do
-        APENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        APENABLE=$(get_ssid_enable $i)
         if [ x"$APENABLE" = x"true" ]; then
             count=`expr $count + 1`
         fi
@@ -1396,7 +1517,7 @@ if [ "$BOX_TYPE" = "MV1" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
     # Accounting is enabled always hence, double the expected relay process count
     count=`expr $count \* 2`
 
-    RELAYPID=$(busybox pidof radius_relay)
+    RELAYPID=$(get_pid radius_relay)
     relay_count=0
     for j in $RELAYPID; do
         relay_count=`expr $relay_count + 1`
@@ -1413,21 +1534,21 @@ fi
 
 
 if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
-    DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
+    DHCP_ARP_PID=$(get_pid hotspot_arpd)
     if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ] && [ ! -f /tmp/tunnel_destroy_flag ] ; then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
         t2CountNotify "SYS_SH_DhcpArpProcess_restart"
         resetNeeded "" hotspot_arpd
     fi
 
-    HOTSPOT_PID=$(busybox pidof CcspHotspot)
+    HOTSPOT_PID=$(get_pid CcspHotspot)
     if [ "$HOTSPOT_PID" = "" ]; then
         if [ ! -f /tmp/tunnel_destroy_flag ] ; then
 
             primary=$(sysevent get hotspotfd-primary)
             secondary=$(sysevent get hotspotfd-secondary)
-            PRIMARY_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            SECOND_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            PRIMARY_EP=$(fast_dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
+            SECOND_EP=$(fast_dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
             if [ "$primary" = "" ] ; then
                echo_t "Primary endpoint is empty. Restoring it"
                sysevent set hotspotfd-primary $PRIMARY_EP
@@ -1446,18 +1567,18 @@ case $SELFHEAL_TYPE in
     "BASE")
         if [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
             rcount=0
-            OPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            OPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            OPEN_24=$(get_ssid_enable 5)
+            OPEN_5=$(get_ssid_enable 6)
 
             # ----------------------------------------------------------------
             if [ "$BOX_TYPE" = "MV1" ]; then
             # ----------------------------------------------------------------
 
-                l2net_24_VLANID=`psmcli get dmsb.l2net.3.Port.2.Pvid`
-                l2net_5_VLANID=`psmcli get dmsb.l2net.3.Port.3.Pvid`
-                GRE_VLANID=`psmcli get dmsb.l2net.3.Port.4.Pvid`
+                l2net_24_VLANID=`fast_psmcli get dmsb.l2net.3.Port.2.Pvid`
+                l2net_5_VLANID=`fast_psmcli get dmsb.l2net.3.Port.3.Pvid`
+                GRE_VLANID=`fast_psmcli get dmsb.l2net.3.Port.4.Pvid`
 
-                Interface=`psmcli get dmsb.l2net.3.Members.WiFi`
+                Interface=`fast_psmcli get dmsb.l2net.3.Members.WiFi`
                 if [ "$Interface" = "" ]; then
                     echo_t "PSM value(wifi if) is missing for $l2sd0Prefix.$l2net_24_VLANID and $l2sd0Prefix.$l2net_24_VLANID"
                     psmcli set dmsb.l2net.3.Members.WiFi "cei02 wdev0ap2"
@@ -1563,7 +1684,7 @@ case $SELFHEAL_TYPE in
             elif [ "$BOX_TYPE" = "MV2PLUS" ]; then 
             # ----------------------------------------------------------------
           
-                GRE_VLANID=`psmcli get dmsb.hotspot.tunnel.1.interface.1.VLANID`
+                GRE_VLANID=`fast_psmcli get dmsb.hotspot.tunnel.1.interface.1.VLANID`
 
                 if [ "0" = "$GRE_VLANID" ]; then
                     GREIF="$grePrefix"
@@ -1594,7 +1715,7 @@ case $SELFHEAL_TYPE in
                           echo_t "[RDKB_PLATFORM_ERROR] : GRE Tunnel is present without VLAN"
                           sysevent set update-vlanID 1
                     else
-                          HOTSPOT_PROCESS_ID=$(busybox pidof CcspHotspot)
+                          HOTSPOT_PROCESS_ID=$(get_pid CcspHotspot)
                           primary=$(sysevent get hotspotfd-primary)
                           if [ -n "$HOTSPOT_PROCESS_ID" ] && [ -n "$primary" ] ; then
                               echo_t " [RDKB_PLATFORM_ERROR] : Hotspot process is up but tunnel got destroyed " 
@@ -1603,7 +1724,7 @@ case $SELFHEAL_TYPE in
                     fi		       
                 fi
                 if [ "$OPEN_24" = "true" ]; then
-                    wifiInterface24=$(dmcli eRT getv Device.WiFi.SSID.5.Name | grep string, | awk '{print $5}')
+                    wifiInterface24=$(get_ssid_name 5)
                     if [ -n "$wifiInterface24" ]; then
                         wl02Present=$(brctl show brlan2 | grep "$wifiInterface24")
                         if [ "$wl02Present" = "" ]; then
@@ -1613,7 +1734,7 @@ case $SELFHEAL_TYPE in
                     fi
                 fi
                 if [ "$OPEN_5" = "true" ]; then
-                    wifiInterface5=$(dmcli eRT getv Device.WiFi.SSID.6.Name | grep string, | awk '{print $5}')
+                    wifiInterface5=$(get_ssid_name 6)
                     if [ -n "$wifiInterface5" ]; then
                         wl12Present=$(brctl show brlan2 | grep "$wifiInterface5")
                         if [ "$wl12Present" = "" ]; then
@@ -1663,7 +1784,7 @@ case $SELFHEAL_TYPE in
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_24_VLANID interface is not created try creating it"
 
-                    Interface=$(psmcli get dmsb.l2net.3.Members.WiFi)
+                    Interface=$(fast_psmcli get dmsb.l2net.3.Members.WiFi)
                     if [ "$Interface" = "" ]; then
                         echo_t "PSM value(ath4) is missing for $l2sd0Prefix.$Xfinity_Open_24_VLANID"
                         psmcli set dmsb.l2net.3.Members.WiFi ath4
@@ -1708,7 +1829,7 @@ case $SELFHEAL_TYPE in
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Open_5_VLANID interface is not created try creatig it"
 
-                    Interface=$(psmcli get dmsb.l2net.4.Members.WiFi)
+                    Interface=$(fast_psmcli get dmsb.l2net.4.Members.WiFi)
                     if [ "$Interface" = "" ]; then
                         echo_t "PSM value(ath5) is missing for $l2sd0Prefix.$Xfinity_Open_5_VLANID"
                         psmcli set dmsb.l2net.4.Members.WiFi ath5
@@ -1760,8 +1881,8 @@ case $SELFHEAL_TYPE in
                 fi
               done
 
-            SECURED_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            SECURED_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            SECURED_24=$(get_ssid_enable 9)
+            SECURED_5=$(get_ssid_enable 10)
 
             #Check for Secured Xfinity hotspot briges and associate them properly if
             #not proper
@@ -1846,7 +1967,7 @@ case $SELFHEAL_TYPE in
             fi
 
             #New Public hotspot
-            PUBLIC_5=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            PUBLIC_5=$(get_ssid_enable 16)
             if [ "$PUBLIC_5" = "true" ]; then
             grePresent=$(ifconfig -a | grep "$grePrefix\.$Xfinity_Public_5_VLANID")
 			if [ "x$ovs_enable" = "xtrue" ];then
@@ -1860,7 +1981,7 @@ case $SELFHEAL_TYPE in
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
 
-                    Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
+                    Interface=$(fast_psmcli get dmsb.l2net.11.Members.WiFi)
                     if [ "$Interface" = "" ]; then
                         echo_t "PSM value(ath15) is missing for $l2sd0Prefix.$Xfinity_Public_5_VLANID"
                         psmcli set dmsb.l2net.11.Members.WiFi ath15
@@ -1902,11 +2023,11 @@ case $SELFHEAL_TYPE in
     ;;
     "TCCBR")
           if [ "$HOTSPOT_ENABLE" = "true" ]; then                                                                                      
-                XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                XOPEN_24=$(get_ssid_enable 5)
+                XOPEN_5=$(get_ssid_enable 6)
+                XSEC_24=$(get_ssid_enable 9)
+                XSEC_5=$(get_ssid_enable 10)
+                XOPEN_16=$(get_ssid_enable 16)
                 
                 open2=`wlctl -i wl0.2 bss`
                 open5=`wlctl -i wl1.2 bss`
@@ -1972,7 +2093,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
         #Check dropbear is alive to do rsync/scp to/fro ATOM
         if [ "$ARM_INTERFACE_IP" != "" ]; then
-            DROPBEAR_ENABLE=$(ps -ww | grep "dropbear" | grep "$ARM_INTERFACE_IP")
+            DROPBEAR_ENABLE=$(grep "dropbear" $PROCESSES_CACHE | grep "$ARM_INTERFACE_IP")
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                 t2CountNotify "SYS_SH_Dropbear_restart"
@@ -1983,7 +2104,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
             #Checking dropbear PID
-            DROPBEAR_PID=$(busybox pidof dropbear)
+            DROPBEAR_PID=$(get_pid dropbear)
             if [ "$DROPBEAR_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
                 t2CountNotify "SYS_SH_Dropbear_restart"
@@ -2010,8 +2131,8 @@ case $SELFHEAL_TYPE in
             : # Do nothing
         else
             # Checking lighttpd PID
-            LIGHTTPD_PID=$(busybox pidof lighttpd)
-            WEBGUI_PID=$(ps -aux | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
+            LIGHTTPD_PID=$(get_pid lighttpd)
+            WEBGUI_PID=$(get_pid webgui.sh)
             if [ "$LIGHTTPD_PID" = "" ]; then
                 if [ "$WEBGUI_PID" != "" ]; then
                     if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
@@ -2086,10 +2207,10 @@ if [ "$MODEL_NUM" = "" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
 else
 # Checking for parodus connection stuck issue
 # Checking parodus PID
-PARODUS_PID=$(busybox pidof parodus)
+PARODUS_PID=$(get_pid parodus)
 case $SELFHEAL_TYPE in
     "BASE")
-        PARODUSSTART_PID=$(busybox pidof parodusStart)
+        PARODUSSTART_PID=$(get_pid parodusStart)
         if [ "$PARODUS_PID" = "" ] && [ "$PARODUSSTART_PID" = "" ]; then
             _start_parodus_
             thisPARODUS_PID=""    # avoid executing 'already-running' code below
@@ -2133,7 +2254,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
     if [ "$kill_parodus_msg" != "" ]; then
         case $SELFHEAL_TYPE in
             "BASE")
-                ppid=$(busybox pidof parodus)
+                ppid=$(get_pid parodus)
                 if [ "$ppid" != "" ]; then
                     echo_t "$kill_parodus_msg Killing parodus process."
                     t2CountNotify "SYS_SH_Parodus_Killed"
@@ -2144,7 +2265,7 @@ if [ "$thisPARODUS_PID" != "" ]; then
                 _start_parodus_
             ;;
             "TCCBR"|"SYSTEMD")
-                ppid=$(busybox pidof parodus)
+                ppid=$(get_pid parodus)
                 if [ "$ppid" != "" ]; then
                     echo "[$(getDateTime)] $kill_parodus_msg Killing parodus process."
                     t2CountNotify "SYS_SH_Parodus_Killed"
@@ -2161,7 +2282,7 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
 	# Checking Aker PID
-	AKER_PID=$(busybox pidof aker)
+	AKER_PID=$(get_pid aker)
 	if [ -f "/etc/AKER_ENABLE" ] &&  [ "$AKER_PID" = "" ]; then
 		echo_t "[RDKB_PROCESS_CRASHED] : aker process is not running need restart"
 		t2CountNotify "SYS_SH_akerCrash"
@@ -2184,7 +2305,7 @@ case $SELFHEAL_TYPE in
         # TODO: move DROPBEAR BASE code with TCCBR,SYSTEMD code!
         #Check dropbear is alive to do rsync/scp to/fro ATOM
         if [ "$ARM_INTERFACE_IP" != "" ]; then
-            DROPBEAR_ENABLE=$(ps -aux | grep "dropbear" | grep "$ARM_INTERFACE_IP")
+            DROPBEAR_ENABLE=$(grep "dropbear" $PROCESSES_CACHE | grep "$ARM_INTERFACE_IP")
             if [ "$DROPBEAR_ENABLE" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
                 t2CountNotify "SYS_SH_Dropbear_restart"	
@@ -2213,8 +2334,8 @@ case $SELFHEAL_TYPE in
     "BASE")
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
         # Checking lighttpd PID
-        LIGHTTPD_PID=$(busybox pidof lighttpd)
-        WEBGUI_PID=$(ps -aux | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
+        LIGHTTPD_PID=$(get_pid lighttpd)
+        WEBGUI_PID=$(get_pid webgui.sh)
         if [ "$LIGHTTPD_PID" = "" ]; then
             if [ "$WEBGUI_PID" != "" ]; then
                 if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
@@ -2262,7 +2383,7 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
     #Checking if acsd is running and whether acsd core is generated or not
     #Check the status if 2.4GHz Wifi Radio
     RADIO_DISBLD_2G=-1
-    Radio_1=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
+    Radio_1=$(fast_dmcli eRT getv Device.WiFi.Radio.1.Enable)
     RadioExecution_1=$(echo "$Radio_1" | grep "Execution succeed")
     if [ "$RadioExecution_1" != "" ]; then
         isDisabled_1=$(echo "$Radio_1" | grep "false")
@@ -2271,7 +2392,7 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
         fi
     fi
     RADIO_DISBLD_5G=-1
-    Radio_2=$(dmcli eRT getv Device.WiFi.Radio.2.Enable)
+    Radio_2=$(fast_dmcli eRT getv Device.WiFi.Radio.2.Enable)
     RadioExecution_2=$(echo "$Radio_2" | grep "Execution succeed")
     if [ "$RadioExecution_2" != "" ]; then
         isDisabled_2=$(echo "$Radio_2" | grep "false")
@@ -2302,7 +2423,7 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
     elif [ $RADIO_STATUS_2G -eq 1 ] && [ $RADIO_STATUS_5G -eq 1 ]; then
         echo_t "[RDKB_SELFHEAL] : Radio's status is down, Skipping ACSD check"
     else
-        ACSD_PID=$(busybox pidof acsd)
+        ACSD_PID=$(get_pid acsd)
         if [ "$ACSD_PID" = ""  ]; then
             echo_t "[ACSD_CRASH/RESTART] : ACSD is not running "
         fi
@@ -2328,10 +2449,10 @@ fi
 
 
 # Checking syseventd PID
-SYSEVENT_PID=$(busybox pidof syseventd)
+SYSEVENT_PID=$(get_pid syseventd)
 if [ "$SYSEVENT_PID" = "" ]; then
     #Needs to avoid false alarm
-    rebootCounter=$(syscfg get X_RDKCENTRAL-COM_LastRebootCounter)
+    rebootCounter=$(get_from_syscfg_cache X_RDKCENTRAL-COM_LastRebootCounter)
     echo_t "[syseventd] Previous rebootCounter:$rebootCounter"
 
     if [ ! -f "$SyseventdCrashed"  ] && [ "$rebootCounter" != "1" ] ; then
@@ -2356,7 +2477,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
         if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
-            SNMP_MASTER_PID=$(busybox pidof snmp_agent_cm)
+            SNMP_MASTER_PID=$(get_pid snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
                 touch $SNMPMASTERCRASHED
@@ -2411,11 +2532,10 @@ case $SELFHEAL_TYPE in
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
         if [ "$WAN_TYPE" != "EPON" ]; then
-            check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-            check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
+            check_param_get_succeed=$(echo "$bridgeMode" | grep "Execution succeed")
             if [ ! -f /tmp/.router_reboot ]; then
                 if [ "$check_param_get_succeed" != "" ]; then
-                    check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
+                    check_device_in_router_mode=$(echo "$bridgeMode" | grep "router")
                     if [ "$check_device_in_router_mode" != "" ]; then
                         check_if_brlan0_created=$(ifconfig | grep "brlan0")
                         check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
@@ -2528,10 +2648,9 @@ case $SELFHEAL_TYPE in
         echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
         if [ ! -f /tmp/.router_reboot ]; then
             if [ "$lanSelfheal" != "done" ]; then
-                check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-                check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
+                check_param_get_succeed=$(echo "$bridgeMode" | grep "Execution succeed")
                 if [ "$check_param_get_succeed" != "" ]; then
-                    check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
+                    check_device_in_router_mode=$(echo "$bridgeMode" | grep "router")
                     if [ "$check_device_in_router_mode" != "" ]; then
                         check_if_brlan0_created=$(ifconfig | grep "brlan0")
                         check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
@@ -2596,7 +2715,7 @@ case $SELFHEAL_TYPE in
                 if [ "$lanSelfheal" != "done" ]; then
                     # Check device is in router mode
                     # Get from syscfg instead of dmcli for performance reasons
-                    check_device_in_bridge_mode=$(syscfg get bridge_mode)
+                    check_device_in_bridge_mode=$(get_from_syscfg_cache bridge_mode)
                     if [ "$check_device_in_bridge_mode" = "0" ]; then
                         check_if_brlan0_created=$(ifconfig | grep "brlan0")
                         check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
@@ -2697,7 +2816,7 @@ case $SELFHEAL_TYPE in
             fi
 
             # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
-            MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            MESH_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
             if [ "$MESH_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
                 t2CountNotify "WIFI_INFO_mesh_enabled"
@@ -2772,23 +2891,21 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
         SSID_DISABLED=0
-        ssidEnable=$(dmcli eRT getv Device.WiFi.SSID.2.Enable)
-        ssidExecution=$(echo "$ssidEnable" | grep "Execution succeed")
-        if [ "$ssidExecution" != "" ]; then
-            isEnabled=$(echo "$ssidEnable" | grep "false")
-            if [ "$isEnabled" != "" ]; then
+        isEnabled=$(get_ssid_enable 2)
+        if is_ssid_execution_succeed; then
+            if [ "$isEnabled" != "true" ]; then
                 SSID_DISABLED=1
                 echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
                 t2CountNotify "WIFI_INFO_5G_DISABLED"
             fi
         else
-            destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
+            destinationError=$(get_from_ssid_cache "Can't find destination component")
             if [ "$destinationError" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
                 t2CountNotify "WIFI_ERROR_WifiDmCliError"
             else
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
-                echo "$ssidEnable"
+                sed -n 1,4p "$SSIDS_CACHE"
             fi
         fi
     ;;
@@ -2800,7 +2917,7 @@ case $SELFHEAL_TYPE in
             SSID_DISABLED=0
             if [ -f "/tmp/wifi_initialized" ]; then
                 echo_t "[RDKB_SELFHEAL] : WiFi Initialization done"
-                ssidEnable=$(dmcli eRT getv Device.WiFi.SSID.2.Enable)
+                ssidEnable=$(fast_dmcli eRT getv Device.WiFi.SSID.2.Enable)
                 ssidExecution=$(echo "$ssidEnable" | grep "Execution succeed")
                 if [ "$ssidExecution" != "" ]; then
                     isEnabled=$(echo "$ssidEnable" | grep "false")
@@ -2837,7 +2954,7 @@ case $SELFHEAL_TYPE in
             SSID_DISABLED=0
             if [ -f "/tmp/wifi_initialized" ]; then
                 echo_t "[RDKB_SELFHEAL] : WiFi Initialization done"
-                ssidEnable=$(dmcli eRT getv Device.WiFi.SSID.2.Enable)
+                ssidEnable=$(fast_dmcli eRT getv Device.WiFi.SSID.2.Enable)
                 ssidExecution=$(echo "$ssidEnable" | grep "Execution succeed")
                 if [ "$ssidExecution" != "" ]; then
                     isEnabled=$(echo "$ssidEnable" | grep "false")
@@ -2873,13 +2990,16 @@ esac
 case $SELFHEAL_TYPE in
     "BASE")
         #check for PandM response
-        bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
         bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
         if [ "$bridgeSucceed" = "" ]; then
             echo_t "[RDKB_SELFHEAL_DEBUG] : bridge mode = $bridgeMode"
-            serialNumber=$(dmcli eRT getv Device.DeviceInfo.SerialNumber)
+            if [ serialNumber == "" ]; then
+                serialNumber=$(fast_dmcli eRT getv Device.DeviceInfo.SerialNumber)
+            fi
             echo_t "[RDKB_SELFHEAL_DEBUG] : SerialNumber = $serialNumber"
-            modelName=$(dmcli eRT getv Device.DeviceInfo.ModelName)
+            if [ modelName == "" ]; then
+                modelName=$(fast_dmcli eRT getv Device.DeviceInfo.ModelName)
+            fi
             echo_t "[RDKB_SELFHEAL_DEBUG] : modelName = $modelName"
 
             pandm_timeout=$(echo "$bridgeMode" | grep "CCSP_ERR_TIMEOUT")
@@ -2887,14 +3007,15 @@ case $SELFHEAL_TYPE in
             pandm_notconnect=$(echo "$bridgeMode" | grep "CCSP_ERR_NOT_CONNECT")
             if [ "$pandm_timeout" != "" ] || [ "$pandm_notexist" != "" ] || [ "$pandm_notconnect" != "" ]; then
                 echo_t "[RDKB_PLATFORM_ERROR] : pandm parameter timed out or failed to return"
-                cr_query=$(dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
-                cr_timeout=$(echo "$cr_query" | grep "CCSP_ERR_TIMEOUT")
-                cr_pam_notexist=$(echo "$cr_query" | grep "CCSP_ERR_NOT_EXIST")
-                cr_pam_notconnect=$(echo "$cr_query" | grep "CCSP_ERR_NOT_CONNECT")
+
+                pam_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.pam.Name)
+                cr_timeout=$(echo "$pam_name" | grep "CCSP_ERR_TIMEOUT")
+                cr_pam_notexist=$(echo "$pam_name" | grep "CCSP_ERR_NOT_EXIST")
+                cr_pam_notconnect=$(echo "$pam_name" | grep "CCSP_ERR_NOT_CONNECT")
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(busybox pidof CcspPandMSsp)
+                    PANDM_PID=$(get_pid CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
@@ -2910,30 +3031,29 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-numofRadios=0
-isnumofRadiosExec=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries |grep "Execution succeed")
-if [ "$isnumofRadiosExec" != "" ]; then
-    numofRadios=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries | grep value | awk '{ print $5 }')
-else
-    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"
-    echo "$isnumofRadiosExec"
+if [ $RADIO_COUNT -eq 0 ]; then
+    RadioNumberOfEntries=$(fast_dmcli eRT getv Device.WiFi.RadioNumberOfEntries)
+    isnumofRadiosExec=$(echo $RadioNumberOfEntries |grep "Execution succeed")
+    if [ "$isnumofRadiosExec" != "" ]; then
+        RADIO_COUNT=$(echo "$RadioNumberOfEntries" | grep value | awk '{ print $5 }')
+    else
+        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"
+        echo "$isnumofRadiosExec"
+    fi
 fi
 
-if [ $numofRadios -eq 3 ]; then
+if [ $RADIO_COUNT -eq 3 ]; then
     SSID_DISABLED_6G=0
-    ssidEnable_6=$(dmcli eRT getv Device.WiFi.SSID.17.Enable)
-    ssidExecution_6=$(echo "$ssidEnable_6" | grep "Execution succeed")
-
-    if [ "$ssidExecution_6" != "" ]; then
-        isEnabled_6=$(echo "$ssidEnable_6" | grep "false")
-        if [ "$isEnabled_6" != "" ]; then
+    isEnabled_6=$(get_ssid_enable 17)
+    if is_ssid_execution_succeed; then
+        if [ "$isEnabled_6" != "true" ]; then
             SSID_DISABLED_6G=1
             echo_t "[RDKB_SELFHEAL] : SSID 6GHZ is disabled"
             t2CountNotify "WIFI_INFO_6G_DISABLED"
         fi
     else
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 6G Enable"
-        echo "$ssidEnable_6"
+        sed -n 1,4p "$SSIDS_CACHE"
     fi
 fi
 
@@ -2941,58 +3061,47 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
     if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]; then
-        ssidStatus_5=$(dmcli eRT getv Device.WiFi.SSID.2.Status)
-        isExecutionSucceed=$(echo "$ssidStatus_5" | grep "Execution succeed")
-        if [ "$isExecutionSucceed" != "" ]; then
-
-            isUp=$(echo "$ssidStatus_5" | grep "Up")
-            if [ "$isUp" = "" ]; then
+        ssidStatus_5=$(get_ssid_status 2)
+        if is_ssid_execution_succeed; then
+            if [ "$ssidStatus_5" != "Up" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
-                isDown=$(echo "$ssidStatus_5" | grep "Down")
-                if [ "$isDown" != "" ]; then
+                if [ "$ssidStatus_5" = "Down" ]; then
                             echo_t "[RDKB_PLATFORM_ERROR] : 5G private SSID (ath1) is off."
                             t2CountNotify "WIFI_INFO_5GPrivateSSID_OFF"
                 else
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."
-                    echo "$ssidStatus_5"
+                    sed -n 1,4p "$SSIDS_CACHE"
                 fi
             fi
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
             t2CountNotify "WIFI_ERROR_DMCLI_crash_5G_Status"
-            echo "$ssidStatus_5"
+            sed -n 1,4p "$SSIDS_CACHE"
         fi
     fi
 
     # Check the status if 2.4GHz Wifi SSID
     SSID_DISABLED_2G=0
-    ssidEnable_2=$(dmcli eRT getv Device.WiFi.SSID.1.Enable)
-    ssidExecution_2=$(echo "$ssidEnable_2" | grep "Execution succeed")
-
-    if [ "$ssidExecution_2" != "" ]; then
-        isEnabled_2=$(echo "$ssidEnable_2" | grep "false")
-        if [ "$isEnabled_2" != "" ]; then
+    isEnabled_2=$(get_ssid_enable 1)
+    if is_ssid_execution_succeed; then
+        if [ "$isEnabled_2" != "true" ]; then
             SSID_DISABLED_2G=1
             echo_t "[RDKB_SELFHEAL] : SSID 2.4GHZ is disabled"
             t2CountNotify "WIFI_INFO_2G_DISABLED"
         fi
     else
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Enable"
-        echo "$ssidEnable_2"
+        sed -n 1,4p "$SSIDS_CACHE"
     fi
 
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
     if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED_2G -eq 0 ]; then
-        ssidStatus_2=$(dmcli eRT getv Device.WiFi.SSID.1.Status)
-        isExecutionSucceed_2=$(echo "$ssidStatus_2" | grep "Execution succeed")
-        if [ "$isExecutionSucceed_2" != "" ]; then
-
-            isUp=$(echo "$ssidStatus_2" | grep "Up")
-            if [ "$isUp" = "" ]; then
+        ssidStatus_2=$(get_ssid_status 1)
+        if is_ssid_execution_succeed; then
+            if [ "$ssidStatus_2" != "Up" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
-                isDown=$(echo "$ssidStatus_2" | grep "Down")
-                if [ "$isDown" != "" ]; then
+                if [ "$ssidStatus_2" = "Down" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : 2.4G private SSID (ath0) is off."
                     t2CountNotify "WIFI_INFO_2GPrivateSSID_OFF"
                 else
@@ -3003,12 +3112,12 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
             t2CountNotify "WIFI_ERROR_DMCLI_crash_2G_Status"
-            echo "$ssidStatus_2"
+            sed -n 1,4p "$SSIDS_CACHE"
         fi
     fi
 fi
 
-FIREWALL_ENABLED=$(syscfg get firewall_enabled)
+FIREWALL_ENABLED=$(get_from_syscfg_cache firewall_enabled)
 
 echo_t "[RDKB_SELFHEAL] : BRIDGE_MODE is $BR_MODE"
 if [ $BR_MODE -eq 1 ]; then
@@ -3021,14 +3130,14 @@ echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
 #if device is in full bridge-mode(3) then we need to disable both radio and SSID's
 if [ $BR_MODE -eq 1 ]; then
 
-    isBridging=$(syscfg get bridge_mode)
+    isBridging=$(get_from_syscfg_cache bridge_mode)
     echo_t "[RDKB_SELFHEAL] : BR_MODE:$isBridging"
 
     #full bridge-mode(3)
     if [ "$isBridging" = "3" ]; then
         # Check the status if 2.4GHz Wifi Radio
         RADIO_ENABLED_2G=0
-        RadioEnable_2=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
+        RadioEnable_2=$(fast_dmcli eRT getv Device.WiFi.Radio.1.Enable)
         RadioExecution_2=$(echo "$RadioEnable_2" | grep "Execution succeed")
 
         if [ "$RadioExecution_2" != "" ]; then
@@ -3044,7 +3153,7 @@ if [ $BR_MODE -eq 1 ]; then
 
         # Check the status if 5GHz Wifi Radio
         RADIO_ENABLED_5G=0
-        RadioEnable_5=$(dmcli eRT getv Device.WiFi.Radio.2.Enable)
+        RadioEnable_5=$(fast_dmcli eRT getv Device.WiFi.Radio.2.Enable)
         RadioExecution_5=$(echo "$RadioEnable_5" | grep "Execution succeed")
 
         if [ "$RadioExecution_5" != "" ]; then
@@ -3058,10 +3167,10 @@ if [ $BR_MODE -eq 1 ]; then
             echo "$RadioEnable_5"
         fi
 
-        if [ $numofRadios -eq 3 ]; then
+        if [ $RADIO_COUNT -eq 3 ]; then
             # Check the status if 6GHz Wifi Radio
             RADIO_ENABLED_6G=0
-            RadioEnable_6=$(dmcli eRT getv Device.WiFi.Radio.3.Enable)
+            RadioEnable_6=$(fast_dmcli eRT getv Device.WiFi.Radio.3.Enable)
             RadioExecution_6=$(echo "$RadioEnable_5" | grep "Execution succeed")
 
             if [ "$RadioExecution_6" != "" ]; then
@@ -3075,7 +3184,7 @@ if [ $BR_MODE -eq 1 ]; then
                 echo "$RadioEnable_6"
             fi
         fi
-        if [ $numofRadios -eq 3 ]; then
+        if [ $RADIO_COUNT -eq 3 ]; then
             if [ $RADIO_ENABLED_5G -eq 1 ] || [ $RADIO_ENABLED_2G -eq 1 ] || [ $RADIO_ENABLED_6G -eq 1 ]; then
                 dmcli eRT setv Device.WiFi.Radio.1.Enable bool false
                 sleep 2
@@ -3100,7 +3209,7 @@ if [ $BR_MODE -eq 1 ]; then
         fi
     fi
 
-    if [ $numofRadios -eq 3 ]; then
+    if [ $RADIO_COUNT -eq 3 ]; then
         if [ $SSID_DISABLED_2G -eq 0 ] || [ $SSID_DISABLED -eq 0 ] || [ $SSID_DISABLED_6G -eq 0 ]; then
             dmcli eRT setv Device.WiFi.SSID.1.Enable bool false
             sleep 2
@@ -3120,7 +3229,7 @@ if [ $BR_MODE -eq 1 ]; then
         fi
     fi
 
-    if [ $numofRadios -eq 3 ]; then
+    if [ $RADIO_COUNT -eq 3 ]; then
         if [ "$IsNeedtoDoApplySetting" = "1" ]; then
             dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
             sleep 3
@@ -3187,30 +3296,30 @@ case $SELFHEAL_TYPE in
 esac
 
 #Logging to check the DHCP range corruption
-lan_ipaddr=$(syscfg get lan_ipaddr)
-lan_netmask=$(syscfg get lan_netmask)
+lan_ipaddr=$(get_from_syscfg_cache lan_ipaddr)
+lan_netmask=$(get_from_syscfg_cache lan_netmask)
 echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : lan_ipaddr = $lan_ipaddr lan_netmask = $lan_netmask"
 
-lost_and_found_enable=$(syscfg get lost_and_found_enable)
+lost_and_found_enable=$(get_from_syscfg_cache lost_and_found_enable)
 echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] :  lost_and_found_enable = $lost_and_found_enable"
 if [ "$lost_and_found_enable" = "true" ]; then
-    iot_ifname=$(syscfg get iot_ifname)
+    iot_ifname=$(get_from_syscfg_cache iot_ifname)
     if [ "$iot_ifname" = "l2sd0.106" ]; then
-        iot_ifname=$(syscfg get iot_brname)
+        iot_ifname=$(get_from_syscfg_cache iot_brname)
     fi
-    iot_dhcp_start=$(syscfg get iot_dhcp_start)
-    iot_dhcp_end=$(syscfg get iot_dhcp_end)
-    iot_netmask=$(syscfg get iot_netmask)
+    iot_dhcp_start=$(get_from_syscfg_cache iot_dhcp_start)
+    iot_dhcp_end=$(get_from_syscfg_cache iot_dhcp_end)
+    iot_netmask=$(get_from_syscfg_cache iot_netmask)
     echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : DHCP server configuring for IOT iot_ifname = $iot_ifname "
     echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
 fi
 
 #Checking whether dnsmasq is running or not and if zombie for XF3
 if [ "$thisWAN_TYPE" = "EPON" ]; then
-    DNS_PID=$(busybox pidof dnsmasq)
+    DNS_PID=$(get_pid dnsmasq)
     if [ "$DNS_PID" = "" ]; then
         InterfaceInConf=""
-        Bridge_Mode_t=$(syscfg get bridge_mode)
+        Bridge_Mode_t=$(get_from_syscfg_cache bridge_mode)
         InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
         if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
             if [ ! -f /tmp/dnsmaq_noiface ]; then
@@ -3238,7 +3347,7 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
 	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
     then
-    checkIfDnsmasqIsZombie=$(busybox ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+    checkIfDnsmasqIsZombie=$(grep "dnsmasq" $PROCESSES_CACHE | grep "Z" | awk '{ print $1 }')
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
         for zombiepid in $checkIfDnsmasqIsZombie
           do
@@ -3257,7 +3366,7 @@ if [ "$thisWAN_TYPE" = "EPON" ]; then
                 esac
                 echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                 t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                kill -9 "$(busybox pidof dnsmasq)"
+                kill -9 "$(get_pid dnsmasq)"
                 systemctl stop dnsmasq
                 systemctl start dnsmasq
                 case $SELFHEAL_TYPE in
@@ -3280,10 +3389,10 @@ fi
 
 #Checking whether dnsmasq is running or not
 if [ "$thisWAN_TYPE" != "EPON" ]; then
-    DNS_PID=$(busybox pidof dnsmasq)
+    DNS_PID=$(get_pid dnsmasq)
     if [ "$DNS_PID" = "" ]; then
         InterfaceInConf=""
-        Bridge_Mode_t=$(syscfg get bridge_mode)
+        Bridge_Mode_t=$(get_from_syscfg_cache bridge_mode)
         InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
         if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
             if [ ! -f /tmp/dnsmaq_noiface ]; then
@@ -3388,7 +3497,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
 		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 		then
-                checkIfDnsmasqIsZombie=$(ps -aux | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
+                checkIfDnsmasqIsZombie=$(awk '/Z.*dnsmasq/{ print $1 }' $PROCESSES_CACHE)
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
                     for zombiepid in $checkIfDnsmasqIsZombie
                       do
@@ -3396,7 +3505,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                         if [ "$confirmZombie" != "" ] ; then
                             echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                             t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
-                            kill -9 "$(busybox pidof dnsmasq)"
+                            kill -9 "$(get_pid dnsmasq)"
                             sysevent set dhcp_server-restart
                             break
                         fi
@@ -3420,7 +3529,7 @@ case $SELFHEAL_TYPE in
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
             if [ "$BOX_TYPE" = "XB6" -a "$SOC_TYPE" = "Broadcom" ] ; then
-                partner_id=$(syscfg get PartnerID)
+                partner_id=$(get_from_syscfg_cache PartnerID)
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
                     sysctl -w net.ipv6.conf.erouter0.disable_ipv6=1
@@ -3449,11 +3558,11 @@ if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
 then
 #Checking dibbler server is running or not RDKB_10683
-DIBBLER_PID=$(busybox pidof dibbler-server)
+DIBBLER_PID=$(get_pid dibbler-server)
 if [ "$DIBBLER_PID" = "" ]; then
 #   IPV6_STATUS=`sysevent get ipv6-status`
     DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
-    routerMode="`syscfg get last_erouter_mode`"
+    routerMode="`get_from_syscfg_cache last_erouter_mode`"
 
     if [ "$BOX_TYPE" = "HUB4" ]; then
         #Since dibbler client not supported for hub4
@@ -3462,10 +3571,10 @@ if [ "$DIBBLER_PID" = "" ]; then
 
     if [ "$BR_MODE" = "0" ] && [ "$DHCPV6C_ENABLED" = "1" ]; then
         Sizeof_ServerConf=`stat -c %s $DIBBLER_SERVER_CONF`
-        DHCPv6_ServerType="`syscfg get dhcpv6s00::servertype`"
+        DHCPv6_ServerType="`get_from_syscfg_cache dhcpv6s00::servertype`"
         case $SELFHEAL_TYPE in
             "BASE"|"TCCBR")
-                DHCPv6EnableStatus=$(syscfg get dhcpv6s00::serverenable)
+                DHCPv6EnableStatus=$(get_from_syscfg_cache dhcpv6s00::serverenable)
                 if [ "$IS_BCI" = "yes" ] && [ "0" = "$DHCPv6EnableStatus" ]; then
                     echo_t "DHCPv6 Disabled. Restart of Dibbler process not Required"
                 elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
@@ -3603,7 +3712,7 @@ fi
 
 #Checking the zebra is running or not
 WAN_STATUS=$(sysevent get wan-status)
-ZEBRA_PID=$(busybox pidof zebra)
+ZEBRA_PID=$(get_pid zebra)
 if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
     if [ "$BR_MODE" = "0" ]; then
 
@@ -3627,7 +3736,7 @@ case $SELFHEAL_TYPE in
 
 
             #Checking if rpcserver is running
-            RPCSERVER_PID=$(busybox pidof rpcserver)
+            RPCSERVER_PID=$(get_pid rpcserver)
             if [ "$RPCSERVER_PID" = "" ] && [ -f /usr/bin/rpcserver ]; then
                 echo_t "RDKB_PROCESS_CRASHED : RPCSERVER is not running on ARM side, restarting "
                 /usr/bin/rpcserver &
@@ -3637,7 +3746,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
         #Checking the ntpd is running or not for TCCBR
         if [ "$WAN_TYPE" != "EPON" ]; then
-            NTPD_PID=$(busybox pidof ntpd)
+            NTPD_PID=$(get_pid ntpd)
             if [ "$NTPD_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : NTPD is not running, restarting the NTPD"
                 sysevent set ntpd-restart
@@ -3702,7 +3811,7 @@ fi
 #by the later stages of this script.
 erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
 erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
-erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
+erouter_mode_check=$(get_from_syscfg_cache last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
 IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
 if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
     case $SELFHEAL_TYPE in
@@ -3723,18 +3832,12 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
         ;;
         "BASE")
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            task_to_be_killed=$(busybox ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f1 -d" ")
-            if [ "$task_to_be_killed" = "" ]; then
-                task_to_be_killed=$(busybox ps | grep -i "dhcp6c" | grep -i "erouter0" | cut -f2 -d" ")
-            fi
+            task_to_be_killed=$(awk '/dhcp6c.*erouter0/{ print $1 }' $PROCESSES_CACHE)
             if [ "$erouter0_up_check" = "" ]; then
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
                 #Adding to kill ipv4 process to solve RDKB-27177
-                task_to_kill=`busybox ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
-                if [ "x$task_to_kill" = "x" ]; then
-                    task_to_kill=`busybox ps w | grep udhcpc | grep erouter | cut -f2 -d " "`
-                fi
+                task_to_kill=$(awk '/udhcpc.*erouter/{ print $1 }' $PROCESSES_CACHE)
                 if [ "x$task_to_kill" != "x" ]; then
                     kill $task_to_kill
                 fi
@@ -3769,37 +3872,37 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     wan_dhcp_client_v6=1
 
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    LAST_EROUTER_MODE=`syscfg get last_erouter_mode`
+    LAST_EROUTER_MODE=`get_from_syscfg_cache last_erouter_mode`
 
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
-            UDHCPC_Enable=$(syscfg get UDHCPEnable)
-            dibbler_client_enable=$(syscfg get dibbler_client_enable)
+            UDHCPC_Enable=$(get_from_syscfg_cache UDHCPEnable)
 
             if ( [ "$SOC_TYPE" = "Broadcom" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
-                check_wan_dhcp_client_v4=$(ps -aux | grep "udhcpc" | grep "erouter")
-                check_wan_dhcp_client_v6=$(ps -aux | grep "dibbler-client" | grep -v "grep")
+                check_wan_dhcp_client_v4=$(grep -E 'udhcpc.*erouter' $PROCESSES_CACHE)
+                check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
             else
                 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
-                    dhcp_cli_output=$(busybox ps w | grep "ti_" | grep "erouter0")
+                    dhcp_cli_output=$(grep -E 'ti_.*erouter0' $PROCESSES_CACHE)
                     if [ "$MAPT_CONFIG" != "set" ]; then
                     if [ "$UDHCPC_Enable" = "true" ]; then
-                        check_wan_dhcp_client_v4=$(ps -aux | grep "sbin/udhcpc" | grep "erouter")
+                        check_wan_dhcp_client_v4=$(grep -E 'sbin/udhcpc.*erouter' $PROCESSES_CACHE)
                     else
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
                     fi
                     fi
+                    dibbler_client_enable=$(get_from_syscfg_cache dibbler_client_enable)
                     if [ "$dibbler_client_enable" = "true" ]; then
-                        check_wan_dhcp_client_v6=$(ps -aux | grep "dibbler-client" | grep -v "grep")
+                        check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
                     else
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
                 else
                     if [ "$FIRMWARE_TYPE" = "OFW" ]; then
-                        check_wan_dhcp_client_v4=$(ps aux | grep udhcpc | grep erouter)
-                        check_wan_dhcp_client_v6=$(ps aux | grep dibbler-client | grep -v grep)
+                        check_wan_dhcp_client_v4=$(grep -E 'udhcpc.*erouter' $PROCESSES_CACHE)
+                        check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
                     else
-                        dhcp_cli_output=$(ps -aux | grep "ti_" | grep "erouter0")
+                        dhcp_cli_output=$(cgrep -E 'ti_.*erouter0' $PROCESSES_CACHE)
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
                         check_wan_dhcp_client_v6=$(echo "$dhcp_cli_output" | grep "ti_dhcp6c")
                     fi
@@ -3807,8 +3910,8 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             fi
         ;;
         "TCCBR")
-            check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
-            check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
+            check_wan_dhcp_client_v4=$(grep -E 'udhcpc.*erouter' $PROCESSES_CACHE)
+            check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
         ;;
     esac
 
@@ -3847,7 +3950,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 		wan_dhcp_client_v6=0
 	fi
 
-        DHCP_STATUS_query=$(dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
+        DHCP_STATUS_query=$(fast_dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
         DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
         DHCP_STATUS=$(echo "$DHCP_STATUS_query" | grep "value" | cut -f3 -d":" | awk '{print $1}')
 
@@ -3948,7 +4051,7 @@ fi # [ "$WAN_STATUS" = "started" ]
 case $SELFHEAL_TYPE in
     "BASE")
         # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
-        MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        MESH_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
         if [ "$MESH_ENABLE" = "true" ]; then
             echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
             t2CountNotify  "WIFI_INFO_mesh_enabled"
@@ -4226,13 +4329,13 @@ fi  # [ $rebootDeviceNeeded -eq 1 ]
 # Checking telemetry2_0 health and recovery
 T2_0_BIN="/usr/bin/telemetry2_0"
 T2_0_APP="telemetry2_0"
-T2_ENABLE=$(syscfg get T2Enable)
+T2_ENABLE=$(get_from_syscfg_cache T2Enable)
 if [ ! -f $T2_0_BIN ]; then
     T2_ENABLE="false"
 fi
 echo_t "Telemetry 2.0 feature is $T2_ENABLE"
 if [ "$T2_ENABLE" = "true" ]; then
-    T2_PID=$(busybox pidof $T2_0_APP)
+    T2_PID=$(get_pid $T2_0_APP)
     if [ "$T2_PID" = "" ]; then
         echo_t "RDKB_PROCESS_CRASHED : $T2_0_APP is not running, need restart"
         if [ -f /lib/rdk/dcm.service ]; then 
@@ -4244,8 +4347,8 @@ fi
 # Checking D process running or not
 case $SELFHEAL_TYPE in
       "BASE"|"SYSTEMD"|"TCCBR")
-      check_D_process=`busybox ps -w | grep " DW " | grep -v grep | wc -l`
-      if [ $check_D_process -eq 0 ]; then
+      check_D_process=$(grep " [D]W " $PROCESSES_CACHE)
+      if [ "$check_D_process" = "" ]; then
            echo_t "[RDKB_SELFHEAL] : There is no D process running in this device"
       else
            echo_t "[RDKB_SELFHEAL] : D process is running in this device"
@@ -4267,8 +4370,8 @@ if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
 fi
 
 if [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
-        MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-        OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        MESH_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
+        OPENSYNC_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
         if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
                 vlantag_wl0=$( /usr/opensync/tools/ovsh s Port -w name==wl0 | egrep "tag" | egrep 100)
@@ -4282,12 +4385,12 @@ if [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
 fi
 
 # Run IGD process if not running
-upnp_enabled=`syscfg get upnp_igd_enabled`
+upnp_enabled=`get_from_syscfg_cache upnp_igd_enabled`
 if [ "1" = "$upnp_enabled" ]; then
-  check_IGD_process=`ps | grep "IGD" | grep -v grep | wc -l`
-  if [ $check_IGD_process -eq 0 ]; then
-	  echo_t "[RDKB_SELFHEAL] : There is no IGD process running in this device"
-	  sysevent set igd-restart
+    IGD_PIDS=$(get_pid IGD)
+    if [ "$IGD_PIDS" = "" ]; then
+	    echo_t "[RDKB_SELFHEAL] : There is no IGD process running in this device"
+	    sysevent set igd-restart
   fi
 fi
 
