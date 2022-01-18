@@ -52,6 +52,7 @@ case $BOX_TYPE in
     "SR300") SELFHEAL_TYPE="SYSTEMD";;
     "SE501") SELFHEAL_TYPE="SYSTEMD";;
     "SR213") SELFHEAL_TYPE="SYSTEMD";;
+    "WNXL11BWL") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -890,7 +891,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         case $BOX_TYPE in
-            "HUB4"|"SR300"|"SE501"|"SR213")
+            "HUB4"|"SR300"|"SE501"|"SR213"|"WNXL11BWL")
                 Harvester_PID=$(busybox pidof harvester)
                 if [ "$Harvester_PID" != "" ]; then
                     Harvester_CPU=$(top -bn1 | grep "harvester" | grep -v "grep" | head -n5 | awk -F'%' '{print $2}' | sed -e 's/^[ \t]*//' | awk '{$1=$1};1')
@@ -969,7 +970,7 @@ esac
 if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
 else
-    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]; then
+    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
@@ -1608,7 +1609,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
             #Checking dropbear PID
             DROPBEAR_PID=$(busybox pidof dropbear)
             if [ "$DROPBEAR_PID" = "" ]; then
@@ -2210,7 +2211,7 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
             # Checking whether brlan0 is created properly , if not recreate it
             lanSelfheal=$(sysevent get lan_selfheal)
             echo_t "[RDKB_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
@@ -2385,7 +2386,7 @@ case $SELFHEAL_TYPE in
                       done
                 fi
             fi
-        fi #Not HUB4 && SR300 && SE501 && SR213
+        fi #Not HUB4 && SR300 && SE501 && SR213 && WNXL11BWL
     ;;
 esac
 fi
@@ -2874,7 +2875,7 @@ fi
 
 case $SELFHEAL_TYPE in
     "BASE"|"SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]  && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
+        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$thisIS_BCI" != "yes" ] && [ $BR_MODE -eq 0 ] && [ ! -f "$brlan1_firewall" ]; then
             firewall_rules=$(iptables-save)
             check_if_brlan1=$(echo "$firewall_rules" | grep "brlan1")
             if [ "$check_if_brlan1" = "" ]; then
@@ -2993,7 +2994,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                 touch /tmp/dnsmaq_noiface
             fi
         else
-            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]  ; then
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] ; then
                 echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
                 t2CountNotify "SYS_SH_dnsmasq_restart"
             fi
@@ -3037,7 +3038,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
+                if [ "$thisIS_BCI" != "yes" ] && [ "$brlan1up" = "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
                     echo_t "[RDKB_SELFHEAL] : brlan1 info is not availble in dnsmasq.conf"
                     IsAnyOneInfFailtoUp=1
                 fi
@@ -3195,7 +3196,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
-                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ];then
+                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ];then
                             #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
@@ -3275,7 +3276,7 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
-                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ];then
+                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ];then
                             #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
@@ -3376,7 +3377,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
     echo_t "isIPv6 = $isIPv6"
     if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
@@ -3400,7 +3401,7 @@ erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
 erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
 erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
 IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
+if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
     case $SELFHEAL_TYPE in
         "SYSTEMD")
             if [ "$erouter0_up_check" = "" ]; then
@@ -3460,7 +3461,7 @@ fi
 #Logic ends here for RDKB-25714
 wan_dhcp_client_v4=1
 wan_dhcp_client_v6=1
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$WAN_STATUS" = "started" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$WAN_STATUS" = "started" ]; then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
 
@@ -3698,7 +3699,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
+        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
@@ -3783,7 +3784,7 @@ case $SELFHEAL_TYPE in
                 fi
                 wan_dhcp_client_v6=1
             fi
-        fi #Not HUB4 && SR300 && SE501 && SR213
+        fi #Not HUB4 && SR300 && SE501 && SR213 && WNXL11BWL
     ;;
 esac
 fi
@@ -3915,6 +3916,51 @@ if [ $rebootDeviceNeeded -eq 1 ]; then
     fi  # [ $inMaintWindow -eq 1 ]
 fi  # [ $rebootDeviceNeeded -eq 1 ]
 
+isPeriodicFWCheckEnable=$(syscfg get PeriodicFWCheck_Enable)
+if [ "$isPeriodicFWCheckEnable" = "false" ] || [ "$isPeriodicFWCheckEnable" = "" ]; then
+    #check firmware download script is running.
+    case $SELFHEAL_TYPE in
+        "BASE")
+            if [ "$BOX_TYPE" = "XB3" ]; then
+                firmDwnldPid=$(ps w | grep -w "xb3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+                if [ "$firmDwnldPid" = "" ]; then
+                    echo_t "Restarting XB3 firmwareDwnld script"
+                    exec  /etc/xb3_firmwareDwnld.sh &
+                fi
+            fi
+        ;;
+        "TCCBR")
+            if [ "$BOX_TYPE" = "TCCBR" ]; then
+                fDwnldPid=$(ps w | grep -w "cbr_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+                if [ "$fDwnldPid" = "" ]; then
+                    echo_t "Restarting CBR firmwareDwnld script"
+                    exec  /etc/cbr_firmwareDwnld.sh &
+                fi
+            fi
+        ;;
+        "SYSTEMD")
+            if [ "$WAN_TYPE" = "EPON" ]; then
+                fDwnldPid=$(ps w | grep -w "xf3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            elif [ "$BOX_TYPE" = "HUB4" ]; then
+                fDwnldPid=$(ps w | grep -w "hub4_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            elif [ "$BOX_TYPE" = "SR300" ]; then
+                fDwnldPid=$(ps w | grep -w "sr300_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            elif [ "$BOX_TYPE" = "SE501" ]; then
+                fDwnldPid=$(ps w | grep -w "se501_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            elif [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+                fDwnldPid=$(ps w | grep -w "wnxl11bwl_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            else
+                fDwnldPid=$(ps w | grep -w "xb6_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
+            fi
+
+            if [ "$fDwnldPid" = "" ]; then
+                echo_t "Restarting firmwareDwnld script"
+                systemctl stop CcspXconf.service
+                systemctl start CcspXconf.service
+            fi
+        ;;
+    esac
+fi
 
 # Checking telemetry2_0 health and recovery
 T2_0_BIN="/usr/bin/telemetry2_0"
