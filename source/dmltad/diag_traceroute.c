@@ -51,7 +51,6 @@
 #include <errno.h>
 #include "diag_inter.h"
 #include "ansc_platform.h"
-
 #include "plugin_main_apis.h"
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
@@ -270,7 +269,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     if (cfg->bport)
         left -= snprintf(cmd + strlen(cmd), left, "-p %u ", cfg->bport);
     if (cfg->timo)
-        left -= snprintf(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+        left -= snprintf(cmd + strlen(cmd), left, "-w %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
     if (cfg->tos)
         left -= snprintf(cmd + strlen(cmd), left, "-t %u ", cfg->tos);
     if (cfg->maxhop)

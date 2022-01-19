@@ -214,7 +214,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     if (cfg->size)
         left -= snprintf(cmd + strlen(cmd), left, "-s %u ", cfg->size);
     if (cfg->timo)
-        left -= snprintf(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+        left -= snprintf(cmd + strlen(cmd), left, "-W %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
     if (cfg->interval)
         left -= snprintf(cmd + strlen(cmd), left, "-i %u ", cfg->interval);
 #ifdef PING_HAS_QOS
