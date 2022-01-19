@@ -160,7 +160,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     }
     if (cfg->timo)
     {
-        rc = sprintf_s(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+        rc = sprintf_s(cmd + strlen(cmd), left, "-W %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
         if (rc < EOK)
         {
             ERR_CHK(rc);
