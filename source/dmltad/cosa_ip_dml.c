@@ -1643,7 +1643,7 @@ IPPing_GetParamUlongValue
     if (strcmp(ParamName, "NumberOfRepetitions") == 0)
         *puLong = cfg.cnt;
     else if (strcmp(ParamName, "Timeout") == 0)
-        *puLong = cfg.timo * 1000;
+        *puLong = cfg.timo;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
         *puLong = cfg.size;
     else if (strcmp(ParamName, "DSCP") == 0)
@@ -1920,7 +1920,7 @@ IPPing_SetParamUlongValue
     }
     else if (strcmp(ParamName, "Timeout") == 0)
     {
-        cfg.timo = uValue / 1000;
+        cfg.timo = uValue;
         syscfg_set_u_commit (NULL, "IPPingTimeout", cfg.timo);
     }
     else if (strcmp(ParamName, "DataBlockSize") == 0)
@@ -2381,7 +2381,7 @@ TraceRoute_GetParamUlongValue
     else if (strcmp(ParamName, "X_LGI-COM_BasePort") == 0)
         *puLong = cfg.bport;
     else if (strcmp(ParamName, "Timeout") == 0)
-        *puLong = cfg.timo * 1000;
+        *puLong = cfg.timo;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
         *puLong = cfg.size;
     else if (strcmp(ParamName, "DSCP") == 0)
@@ -2649,7 +2649,7 @@ TraceRoute_SetParamUlongValue
     else if (strcmp(ParamName, "X_LGI-COM_BasePort") == 0)
         cfg.bport = uValue;
     else if (strcmp(ParamName, "Timeout") == 0)
-        cfg.timo = uValue / 1000;
+        cfg.timo = uValue;
     else if (strcmp(ParamName, "DataBlockSize") == 0)
         cfg.size = uValue;
     else if (strcmp(ParamName, "DSCP") == 0)

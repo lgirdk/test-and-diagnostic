@@ -312,7 +312,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     }
     if (cfg->timo)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+        left -= sprintf_s(cmd + strlen(cmd), left, "-w %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
         if(left < EOK)
         {
             ERR_CHK(left);

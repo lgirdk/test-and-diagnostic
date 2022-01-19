@@ -479,6 +479,7 @@ static void *diag_task(void *arg)
 {
     diag_obj_t  *diag = arg;
     diag_cfg_t  cfg;
+    diag_mode_t mode;
     diag_stat_t stat;
     diag_err_t  err;
     char        buf[IFNAMSIZ];
@@ -491,6 +492,7 @@ static void *diag_task(void *arg)
 
     pthread_mutex_lock(&diag->mutex);
     cfg = diag->cfg;
+    mode = diag->mode;
     pthread_mutex_unlock(&diag->mutex);
 #if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
 /**
@@ -540,7 +542,7 @@ static void *diag_task(void *arg)
       do
       {
         sleep(1);
-        diag_getcfg(DIAG_MD_PING, &cfgtemp);
+        diag_getcfg(mode, &cfgtemp);
         cfg = cfgtemp;
         if(strlen(cfg.host))
             break;
