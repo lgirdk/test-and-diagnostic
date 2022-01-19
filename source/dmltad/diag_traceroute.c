@@ -47,7 +47,7 @@
 #include "safec_lib_common.h"
 
 #define TRACERT_DEF_CNT     3
-#define TRACERT_DEF_TIMO    5
+#define TRACERT_DEF_TIMO    5000        /* mSec */
 #define TRACERT_DEF_SIZE    64
 #define TRACERT_DEF_MAXHOP  30
 
@@ -198,8 +198,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     cmd[0] = '\0', left = sizeof(cmd);
 
 #if !defined(_PLATFORM_RASPBERRYPI_)
-    timeout=cfg->timo;
-    timeout=timeout*1000;
+    timeout = cfg->timo;
     rc = sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
     if (rc < EOK)
     {
@@ -247,7 +246,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     }
     if (cfg->timo)
     {
-        rc = sprintf_s(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+        rc = sprintf_s(cmd + strlen(cmd), left, "-w %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
         if (rc < EOK)
         {
             ERR_CHK(rc);

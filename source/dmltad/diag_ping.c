@@ -46,7 +46,7 @@
 #include "safec_lib_common.h"
 
 #define PING_DEF_CNT        1
-#define PING_DEF_TIMO       10
+#define PING_DEF_TIMO       10000       /* mSec */
 #define PING_DEF_SIZE       56
 
 static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *st);
@@ -171,7 +171,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     }
     if (cfg->timo)
     {
-        rc = sprintf_s(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+        rc = sprintf_s(cmd + strlen(cmd), left, "-W %u ", ((cfg->timo + 999) / 1000));  /* convert millisec to sec, rounding up */
         if (rc < EOK)
         {
             ERR_CHK(rc);
