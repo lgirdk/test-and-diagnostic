@@ -21,10 +21,12 @@
 TAD_PATH="/usr/ccsp/tad/"
 
 source $TAD_PATH/corrective_action.sh
+source /etc/waninfo.sh
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
-WAN_INTERFACE="erouter0"
+WAN_INTERFACE=$(getWanInterfaceName)
+WAN_INTERFACE_IPV4=$(getWanInterfaceName)
 
 calcRandom=1
 ping4_server_num=0
@@ -406,7 +408,7 @@ runPingTest()
 	# Ping test for IPv4 Server 
 	while [ "$ping4_server_num" -le "$IPV4_SERVER_COUNT" ] && [ "$IPV4_SERVER_COUNT" -ne 0 ]
 	do
-
+		
 		ping4_server_num=$((ping4_server_num+1))
 		PING_SERVER_IS=`syscfg get Ipv4_PingServer_$ping4_server_num`
 		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0.0.0.0" ]
@@ -439,6 +441,7 @@ runPingTest()
 	# Ping test for IPv6 Server 
 	while [ "$ping6_server_num" -le "$IPV6_SERVER_COUNT" ] && [ "$IPV6_SERVER_COUNT" -ne 0 ]
 	do
+		
 		ping6_server_num=$((ping6_server_num+1))
 		PING_SERVER_IS=`syscfg get Ipv6_PingServer_$ping6_server_num`
 		if [ "$PING_SERVER_IS" != "" ] && [ "$PING_SERVER_IS" != "0000::0000" ]
@@ -556,6 +559,7 @@ do
 		sleep $INTERVAL
 	fi
 
+	WAN_INTERFACE=$(getWanInterfaceName)
 	wan_status=`sysevent get wan-status`
 	if [ "$wan_status" = "" ] || [ "$wan_status" = "stopped" ]
 	then

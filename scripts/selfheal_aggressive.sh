@@ -20,6 +20,7 @@
 
 TAD_PATH="/usr/ccsp/tad"
 source $TAD_PATH/corrective_action.sh
+source /etc/waninfo.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
@@ -510,7 +511,7 @@ self_heal_interfaces()
             fi
     esac
 
-    WAN_INTERFACE="erouter0"
+    WAN_INTERFACE=$(getWanInterfaceName)
     Check_If_Erouter_Exists=$(ifconfig -a | grep "$WAN_INTERFACE")
     ifconfig $WAN_INTERFACE > /dev/null
     wan_exists=$?
@@ -711,7 +712,7 @@ self_heal_dhcp_clients()
     # Parametizing ps+grep "as" part of RDKB-28847
     PS_WW_VAL=$(ps -ww)
     # Checking for WAN_INTERFACE
-    WAN_INTERFACE="erouter0"
+    WAN_INTERFACE=$(getWanInterfaceName)
     DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
@@ -1138,12 +1139,15 @@ fi
 while [ $(syscfg get selfheal_enable) = "true" ]
 do
     INTERVAL=$(syscfg get AggressiveInterval)
+
     if [ "$INTERVAL" = "" ]
     then
         INTERVAL=5
     fi
     echo_t "[RDKB_AGG_SELFHEAL] : INTERVAL is: $INTERVAL"
     sleep ${INTERVAL}m
+    
+    WAN_INTERFACE=$(getWanInterfaceName)
 
     BOOTUP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     # This Feature is only enabled on devices that have Comcast Product Requirement to be up[ WEB PA Up] within 3:00

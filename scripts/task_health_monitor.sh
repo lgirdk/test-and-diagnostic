@@ -30,6 +30,7 @@ DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
+source /etc/waninfo.sh
 ovs_enable=false
 
 if [ -d "/sys/module/openvswitch/" ];then
@@ -87,7 +88,7 @@ PING_PATH="/usr/sbin"
 case $SELFHEAL_TYPE in
     "BASE")
         SNMPMASTERCRASHED="/tmp/snmp_cm_crashed"
-        WAN_INTERFACE="erouter0"
+        WAN_INTERFACE=$(getWanInterfaceName)
         PEER_COMM_ID="/tmp/elxrretyt.swr"
 
         if [ ! -f /usr/bin/GetConfigFile ]; then
@@ -97,7 +98,7 @@ case $SELFHEAL_TYPE in
         IDLE_TIMEOUT=60
     ;;
     "TCCBR")
-        WAN_INTERFACE="erouter0"
+        WAN_INTERFACE=$(getWanInterfaceName)
         PEER_COMM_ID="/tmp/elxrretyt.swr"
 
         if [ ! -f /usr/bin/GetConfigFile ]; then
@@ -180,7 +181,7 @@ case $SELFHEAL_TYPE in
         reb_window=0
     ;;
     "SYSTEMD")
-        WAN_INTERFACE="erouter0"
+        WAN_INTERFACE=$(getWanInterfaceName)
 
         if [ -f $ADVSEC_PATH ]; then
             source $ADVSEC_PATH

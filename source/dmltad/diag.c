@@ -54,6 +54,34 @@
 #include "ccsp_base_api.h"
 #include "safec_lib_common.h"
 
+#include "ccsp_trace.h"
+
+int commonSyseventFd = -1;
+token_t commonSyseventToken;
+
+static int openCommonSyseventConnection() {
+    if (commonSyseventFd == -1) {
+        CcspTraceInfo(("%s: sysevent_open for TandD common usage\n", __FUNCTION__));
+
+        commonSyseventFd = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION, "common_Sysevent", &commonSyseventToken);
+    }
+    return 0;
+}
+
+int commonSyseventSet(char* key, char* value){
+    if(commonSyseventFd == -1) {
+        openCommonSyseventConnection();
+    }
+    return sysevent_set(commonSyseventFd, commonSyseventToken, key, value, 0);
+}
+
+int commonSyseventGet(char* key, char* value, int valLen){
+    if(commonSyseventFd == -1) {
+        openCommonSyseventConnection();
+    }
+    return sysevent_get(commonSyseventFd, commonSyseventToken, key, value, valLen);
+}
+
 /* XXX: if there are more instances, we may use a dynamic list to 
  * handle these instances, or with dynamic load. */
 
@@ -381,8 +409,20 @@ static const char *assign_iface(const char *host, char *buf, size_t size)
         if (inet6_nexthop_not_def(&in6addr))
             return NULL;
     }
+    char wan_ifname[32] ;
+    rc= memset_s(wan_ifname,sizeof(wan_ifname),0,sizeof(wan_ifname));
+    ERR_CHK(rc);
 
-    rc = strcpy_s(buf, size, "erouter0");
+    commonSyseventGet("current_wan_ifname",wan_ifname,sizeof(wan_ifname));
+    CcspTraceInfo(("%s: current_wan_ifname is %s\n", __FUNCTION__,wan_ifname));
+    if (wan_ifname[0] != '\0')
+    {
+       rc = strcpy_s(buf, size, wan_ifname);
+    }
+    else
+    {
+         rc = strcpy_s(buf, size, "erouter0");
+    }
     ERR_CHK(rc);
     return buf;
 }

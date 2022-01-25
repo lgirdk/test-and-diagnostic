@@ -28,7 +28,7 @@ then
 fi
 
 CM_INTERFACE="wan0"
-WAN_INTERFACE="erouter0"
+WAN_INTERFACE=$(getWanInterfaceName)
 Check_CM_Ip=0
 Check_WAN_Ip=0
 

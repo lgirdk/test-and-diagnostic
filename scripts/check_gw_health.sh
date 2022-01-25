@@ -20,9 +20,10 @@
 
 source /etc/log_timestamp.sh
 source /etc/utopia/service.d/log_env_var.sh
+source /etc/waninfo.sh
 
 CM_INTERFACE="wan0"
-WAN_INTERFACE="erouter0"
+WAN_INTERFACE=$(getWanInterfaceName)
 
 #bit mask for corresponding functionality
 CMStatus_mask=$((1<<0))
@@ -162,7 +163,7 @@ CheckandSetWANIPStatus()
 
 CheckandSetIPv4PingStatus()
 {
-	WAN_INTERFACE="erouter0"
+	WAN_INTERFACE=$(getWanInterfaceName)
 	PING_PACKET_SIZE=56
 	PINGCOUNT=3
 	RESWAITTIME=3
