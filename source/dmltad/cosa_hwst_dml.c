@@ -241,7 +241,7 @@ hwHealthTest_SetParamBoolValue
                 return TRUE;
             }
             errno_t rc = -1;
-            rc = sprintf_s(cmd, sizeof(cmd) , "/usr/bin/hwselftest %lu &", 0001 );
+            rc = sprintf_s(cmd, sizeof(cmd) , "/usr/bin/hwselftest_run.sh 0001 &");
             if(rc < EOK)
             {
                  ERR_CHK(rc);
