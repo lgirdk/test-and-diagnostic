@@ -79,7 +79,6 @@ extern char                 g_SubSysPrefix_Irep[32];
 extern char                 g_Subsystem[32];
 extern  BOOL                g_bActive;
 
-#ifdef _ANSC_LINUX
 ANSC_STATUS
 ssp_TadMbi_MessageBusEngage
     (
@@ -212,7 +211,6 @@ CcspTandD_path_message_func
                );
 }
 
-#endif
 
 int
 ssp_TadMbi_Initialize

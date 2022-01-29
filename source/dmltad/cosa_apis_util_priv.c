@@ -71,7 +71,6 @@
 #include "cosa_apis.h"
 #include "plugin_main_apis.h"
 
-#ifdef _ANSC_LINUX
 #include <stdio.h>
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -79,7 +78,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#endif
 #include "ansc_platform.h"
 
 
