@@ -100,11 +100,7 @@ extern  char                            g_Subsystem[32];
 static  ANSC_HANDLE                     hDiagPlugin; /*RDKB-7459, CID-33428, global for TandDSsp lib handle*/
 
 
-#if defined(_ANSC_WINDOWSNT)
-#define  COSA_DIAG_PLUGIN_LIBRARY_NAME             "bisga_diagnostic.dll"
-#elif defined(_ANSC_LINUX)
 #define  COSA_DIAG_PLUGIN_LIBRARY_NAME             "libdiagnostic.so"
-#endif
 
 #define  COSA_DIAG_PLUGIN_INIT_PROC                "COSA_Diag_Init"
 #define  COSA_DIAG_PLUGIN_UNLOAD_PROC              "COSA_Diag_Unload"
@@ -261,9 +257,7 @@ ssp_engage_tad
         if( hDiagPlugin == NULL)
         {
             CcspTraceWarning(("Unable to load library -- %s\n", COSA_DIAG_PLUGIN_LIBRARY_NAME));
-#ifdef _ANSC_LINUX
             CcspTraceWarning(("cause:%s\n",  dlerror() ));
-#endif
             g_CosaDiagPluginInfo.uLoadStatus = COSA_STATUS_ERROR_LOAD_LIBRARY;
         }
         else
