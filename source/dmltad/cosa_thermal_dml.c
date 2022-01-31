@@ -128,6 +128,8 @@ Fan_GetEntry
         fanInfo[fanIndex].status = platform_hal_getFanStatus(fanIndex);
         fanInfo[fanIndex].speed  = platform_hal_getFanSpeed(fanIndex);
         fanInfo[fanIndex].rotorLock  = platform_hal_getRotorLock(fanIndex);
+#endif
+#if defined(FAN_THERMAL_CTR) || defined(LIMITED_FAN_WAREHOUSE)
         fanInfo[fanIndex].maxOverride = FALSE; 
 
 #endif
@@ -180,21 +182,23 @@ BOOL Fan_GetParamBoolValue
     )
 {
 
-#ifdef FAN_THERMAL_CTR
-
+#if defined(FAN_THERMAL_CTR) || defined(LIMITED_FAN_WAREHOUSE)
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
+
+    if (strcmp(ParamName, "MaxOverride") == 0)
+    {
+        *bValue = pFanInfo->maxOverride;
+        return TRUE;
+    }
+#endif
+
+#ifdef FAN_THERMAL_CTR
 
     if (strcmp(ParamName, "Status") == 0)
     {
         *bValue = platform_hal_getFanStatus(pFanInfo->fanIndex);
         return TRUE;
     }
-    if (strcmp(ParamName, "MaxOverride") == 0)
-    {
-        *bValue = pFanInfo->maxOverride;
-        return TRUE;
-    }
-
 #endif
 
     return FALSE;
@@ -237,7 +241,7 @@ BOOL Fan_SetParamBoolValue
         BOOL                        bValue
     )
 {
-#ifdef FAN_THERMAL_CTR
+#if defined(FAN_THERMAL_CTR) || defined(LIMITED_FAN_WAREHOUSE)
 
     fanInfo_t         *pFanInfo = (fanInfo_t *)hInsContext;
 
