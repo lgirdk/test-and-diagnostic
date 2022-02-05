@@ -97,19 +97,13 @@ Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL bValu
 #endif
         }
 
-        if (syscfg_set(NULL, "telemetry_enable", bValue ? "true" : "false") != 0)
+        if (syscfg_set_commit(NULL, "telemetry_enable", bValue ? "true" : "false") != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
         }
         else
         {
-            if (syscfg_commit() != 0)
-            {
-                CcspTraceError(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-                return FALSE;
-            }
-
             if (bValue == TRUE)
             {
                 tele_state = TELE_ST_START;
@@ -182,14 +176,9 @@ Telemetry_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, char* pS
             CcspTraceDebug(("%s DCMConfigFileURL is already set with same value  %s\n", __FUNCTION__, pString));
             return TRUE;
         }
-        if (syscfg_set(NULL, "T2ConfigURL", pString) != 0)
+        if (syscfg_set_commit(NULL, "T2ConfigURL", pString) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-            return FALSE;
-        }
-        if (syscfg_commit() != 0)
-        {
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
         }
         AnscCopyString(pMyObject->DCMConfigFileURL, pString);
