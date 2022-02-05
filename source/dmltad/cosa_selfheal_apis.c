@@ -184,32 +184,17 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 	}
 		if(type == PingServerType_IPv4)
 		{
-			if (syscfg_set_u(NULL, "Ipv4PingServer_Count", i) != 0) 
+			if (syscfg_set_u_commit(NULL, "Ipv4PingServer_Count", i) != 0)
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
-			}
-			else 
-			{
-				if (syscfg_commit() != 0) 
-				{
-					CcspTraceWarning(("syscfg_commit failed\n"));
-				}
 			}
 		}
 		else
 		{
-			if (syscfg_set_u(NULL, "Ipv6PingServer_Count", i) != 0) 
+			if (syscfg_set_u_commit(NULL, "Ipv6PingServer_Count", i) != 0)
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
 			}
-			else 
-			{
-				if (syscfg_commit() != 0) 
-				{
-					CcspTraceWarning(("syscfg_commit failed\n"));
-				}
-			}
-
 		}
 	return i;
 }
@@ -857,16 +842,9 @@ void SavePingServerURI(PingServerType type, char *URL, int InstNum)
 				ERR_CHK(rc);
 			}
 		}
-		if (syscfg_set(NULL, recName, URL) != 0) 
+		if (syscfg_set_commit(NULL, recName, URL) != 0)
 		{
 			CcspTraceWarning(("syscfg_set failed\n"));
-		}
-		else 
-		{
-			if (syscfg_commit() != 0) 
-			{
-				CcspTraceWarning(("syscfg_commit failed\n"));
-			}
 		}
 }
 
@@ -948,28 +926,22 @@ ANSC_STATUS CosaDmlModifySelfHealDiagnosticModeStatus( ANSC_HANDLE hThisObject,
 			  *  2. If "DiagnosticMode == FALSE" then need to set "ConnTest_CorrectiveAction 
 			  *      as TRUE". To allow corrective action from connectivity test
 			  */
-			if ( 0 == syscfg_set( NULL, 
+			if ( 0 == syscfg_set_commit( NULL,
 								  "ConnTest_CorrectiveAction", 
 								  ( ( bValue == TRUE ) ?  "false" : "true" ) ) ) 
 			{
-				if ( 0 == syscfg_commit( ) ) 
-				{
 					pConnTest->CorrectiveAction = ( ( bValue == TRUE ) ?  FALSE : TRUE );
-				}
 			}
 			
 			/* 
 			  * Set diagnostic mode flag to restrict the corrective action from both resource monitor and self heal 
 			  * connectivity side 
 			  */
-			if ( 0 == syscfg_set( NULL, 
+			if ( 0 == syscfg_set_commit( NULL,
 								   "Selfheal_DiagnosticMode", 
 								   ( ( bValue == TRUE ) ?  "true" : "false" ) ) ) 
 			{
-				if ( 0 == syscfg_commit( ) ) 
-				{
 					pMyObject->DiagnosticMode = ( ( bValue == TRUE ) ?  TRUE : FALSE );
-				}
 			}
 
                         /* Modify the cron scheduling based on configured Loguploadfrequency */
@@ -1004,14 +976,11 @@ ANSC_STATUS CosaDmlModifySelfHealDNSPingTestStatus( ANSC_HANDLE hThisObject,
 		PCOSA_DATAMODEL_SELFHEAL	  pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
 
 		/* Modify the DNS ping test flag */
-		if ( 0 == syscfg_set( NULL, 
+		if ( 0 == syscfg_set_commit( NULL,
 							  "selfheal_dns_pingtest_enable", 
 							  ( ( bValue == TRUE ) ? "true" : "false" ) ) ) 
 		{
-			if ( 0 == syscfg_commit( ) ) 
-			{
 				pMyObject->DNSPingTest_Enable = bValue;
-			}
 		}
 
 		CcspTraceInfo(("[%s] DNSPingTest_Enable:[ %d ]\n",
@@ -1044,17 +1013,14 @@ ANSC_STATUS CosaDmlModifySelfHealDNSPingTestURL( ANSC_HANDLE hThisObject,
 		PCOSA_DATAMODEL_SELFHEAL	  pMyObject  = (PCOSA_DATAMODEL_SELFHEAL)hThisObject;
 
 		/* Modify the DNS ping test flag */
-		if ( 0 == syscfg_set( NULL, 
+		if ( 0 == syscfg_set_commit( NULL,
 							  "selfheal_dns_pingtest_url", 
 							  pString ) ) 
 		{
-			if ( 0 == syscfg_commit( ) ) 
-			{
-				rc = memset_s(pMyObject->DNSPingTest_URL, sizeof( pMyObject->DNSPingTest_URL ), 0, sizeof( pMyObject->DNSPingTest_URL ));
-				ERR_CHK(rc);
-				rc = strcpy_s(pMyObject->DNSPingTest_URL, sizeof(pMyObject->DNSPingTest_URL), pString);
-				ERR_CHK(rc);
-			}
+			rc = memset_s(pMyObject->DNSPingTest_URL, sizeof( pMyObject->DNSPingTest_URL ), 0, sizeof( pMyObject->DNSPingTest_URL ));
+			ERR_CHK(rc);
+			rc = strcpy_s(pMyObject->DNSPingTest_URL, sizeof(pMyObject->DNSPingTest_URL), pString);
+			ERR_CHK(rc);
 		}
 
 		CcspTraceInfo(("[%s] DNSPingTest_URL:[ %s ]\n",
