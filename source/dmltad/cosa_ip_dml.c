@@ -6303,8 +6303,7 @@ SpeedTest_Commit
 {
     BOOL            speedtest_setting = FALSE;
 
-    char buf[128] = {0};
-    char cmd[128] = {0};
+    char buf[128];
     errno_t rc = -1;
 
     if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
@@ -6314,24 +6313,17 @@ SpeedTest_Commit
 
     if( g_enable_speedtest != speedtest_setting )
     {
-        if (syscfg_set(NULL, "enable_speedtest", (g_enable_speedtest ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "enable_speedtest", (g_enable_speedtest ? "true" : "false")) != 0)
         {
             AnscTraceWarning(("%s syscfg_set failed  for Enable_Speedtest\n",__FUNCTION__));
-            return 1;
-        }
-        if (syscfg_commit() != 0)
-        {
-            AnscTraceWarning(("%s syscfg_commit failed for Enable_Speedtest\n",__FUNCTION__));
             return 1;
         }
     }
 
     if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
     {
-        rc = strcpy_s(cmd, sizeof(cmd) , "/usr/ccsp/tad/speedtest.sh &");
-        ERR_CHK(rc);
         AnscTraceFlow(("Executing Speedtest..\n"));
-        system(cmd);
+        system("/usr/ccsp/tad/speedtest.sh &");
         g_run_speedtest = FALSE;
     }
 
