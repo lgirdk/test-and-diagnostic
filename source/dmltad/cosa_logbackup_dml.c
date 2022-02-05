@@ -139,17 +139,11 @@ BOOL LogBackup_SetParamBoolValue
             return TRUE;
 	}
         
-        if (syscfg_set(NULL, "logbackup_enable", (bValue ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "logbackup_enable", bValue ? "true" : "false") != 0)
         {
 	    	CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	   	return FALSE;
         }
-
-	if (syscfg_commit() != 0)
-	{
-	      	CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-		return FALSE;
-	}
 	
         g_logbackup_enable = bValue;
         return TRUE;
@@ -255,16 +249,11 @@ LogBackup_SetParamUlongValue
             return TRUE;
 	}
         
-        if (syscfg_set_u(NULL, "logbackup_interval", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "logbackup_interval", uValue) != 0)
         {
 		CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 		return FALSE;
         }
-	if (syscfg_commit() != 0)
-	{
-        	CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-		return FALSE;
-	}
         g_logbackup_interval = uValue;
         return TRUE;
     }
@@ -380,48 +369,30 @@ LogBackup_Rollback
 void
 get_logbackupcfg()
 {	
-	char buf[128];
-	memset(buf,0,sizeof(buf));
+	char buf[16];
+
 	if((syscfg_get( NULL, "logbackup_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
 	{
 			g_logbackup_enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
 	}
 	else
 	{
-	        if (syscfg_set(NULL, "logbackup_enable", "true") != 0)
+	        if (syscfg_set_commit(NULL, "logbackup_enable", "true") != 0)
 	        {
 		    	CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
-		   	
 	        }
-		else
-		{
-			if (syscfg_commit() != 0)
-			{
-			      	CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
-				
-			}
-		}
 	}
 
-	memset(buf,0,sizeof(buf));
 	if((syscfg_get( NULL, "logbackup_interval", buf, sizeof(buf)) == 0) && (buf[0] != '\0'))
 	{
 		g_logbackup_interval = atoi(buf);
 	}
 	else
 	{
-	        if (syscfg_set(NULL, "logbackup_interval", "30") != 0)
+	        if (syscfg_set_commit(NULL, "logbackup_interval", "30") != 0)
 	        {
 			CcspTraceWarning(("%s: syscfg_set failed \n", __FUNCTION__));
 	        }
-	        else
-	        {
-			if (syscfg_commit() != 0)
-			{
-		        	CcspTraceWarning(("%s: syscfg commit failed \n", __FUNCTION__));
-			}
-	        }
-	
 	}
 
 }

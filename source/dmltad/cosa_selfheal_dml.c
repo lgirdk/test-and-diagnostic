@@ -162,18 +162,13 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
 	}
 
-        if (syscfg_set(NULL, "selfheal_enable", (bValue ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "selfheal_enable", bValue ? "true" : "false") != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
         else 
         { 
-	    if (syscfg_commit() != 0)
-	    {
-                CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-		return FALSE;
-	    }
 
 	    char cmd[128+8];
             if ( bValue == TRUE )
@@ -301,20 +296,13 @@ BOOL SelfHeal_SetParamBoolValue
             return TRUE;
         }
 
-        if (syscfg_set(NULL, "log_backup_enable", (bValue ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "log_backup_enable", bValue ? "true" : "false") != 0)
         {
             AnscTraceWarning(("syscfg_set failed\n"));
         }
         else
         {
-            if (syscfg_commit() != 0)
-            {
-                AnscTraceWarning(("syscfg_commit failed\n"));
-            }
-            else
-            {
                 pMyObject->NoWaitLogSync = bValue;
-            }
         }
 
         return TRUE;
@@ -451,14 +439,9 @@ SelfHeal_SetParamUlongValue
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_FreeMemThreshold") == 0)
 	{
-		if (syscfg_set_u(NULL, "Free_Mem_Threshold", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "Free_Mem_Threshold", uValue) != 0)
 		{
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-			return FALSE;
-		}
-		if (syscfg_commit() != 0)
-		{
-			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
 		}
                 CcspTraceWarning(("%s : %lu \n",ParamName,uValue));
@@ -468,14 +451,9 @@ SelfHeal_SetParamUlongValue
 
 	if (strcmp(ParamName, "X_RDKCENTRAL-COM_MemFragThreshold") == 0)
 	{
-		if (syscfg_set_u(NULL, "Mem_Frag_Threshold", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "Mem_Frag_Threshold", uValue) != 0)
 		{
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-			return FALSE;
-		}
-		if (syscfg_commit() != 0)
-		{
-			CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
 		}
                 CcspTraceWarning(("%s : %lu \n",ParamName,uValue));
@@ -487,14 +465,9 @@ SelfHeal_SetParamUlongValue
 	{
 		if((uValue >= 1) && (uValue <= 120))
 		{
-			if (syscfg_set_u(NULL, "CpuMemFrag_Interval", uValue) != 0)
+			if (syscfg_set_u_commit(NULL, "CpuMemFrag_Interval", uValue) != 0)
 			{
 					CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-					return FALSE;
-			}
-			if (syscfg_commit() != 0)
-			{
-					CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
 					return FALSE;
 			}
 			pMyObject->CpuMemFragInterval = uValue;
@@ -516,16 +489,11 @@ SelfHeal_SetParamUlongValue
             return TRUE;
 	}
 
-        if (syscfg_set_u(NULL, "max_reboot_count", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "max_reboot_count", uValue) != 0)
         {
 			CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 			return FALSE;
         }
-		if (syscfg_commit() != 0)
-		{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-			return FALSE;
-		}
         pMyObject->MaxRebootCnt = uValue;
         return TRUE;
     }
@@ -537,14 +505,9 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        if (syscfg_set_u(NULL, "max_reset_count", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "max_reset_count", uValue) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-            return FALSE;
-        }
-        if (syscfg_commit() != 0)
-        {
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
         }
         pMyObject->MaxResetCnt = uValue;
@@ -558,14 +521,9 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        if (syscfg_set_u(NULL, "diagMode_LogUploadFrequency", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "diagMode_LogUploadFrequency", uValue) != 0)
         {
             CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
-            return FALSE;
-        }
-        if (syscfg_commit() != 0)
-        {
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
             return FALSE;
         }
         pMyObject->DiagModeLogUploadFrequency = uValue;
@@ -583,20 +541,13 @@ SelfHeal_SetParamUlongValue
             return TRUE;
         }
 
-        if (syscfg_set_u(NULL, "log_backup_threshold", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "log_backup_threshold", uValue) != 0)
         {
             AnscTraceWarning(("syscfg_set failed\n"));
         }
         else
         {
-            if (syscfg_commit() != 0)
-            {
-                AnscTraceWarning(("syscfg_commit failed\n"));
-            }
-            else
-            {
                 pMyObject->LogBackupThreshold = uValue;
-            }
         }
 
         return TRUE;
@@ -844,16 +795,11 @@ BOOL ConnectivityTest_SetParamBoolValue
         }
 	CcspTraceWarning(("%s Changing X_RDKCENTRAL-COM_CorrectiveAction state to %d \n",__FUNCTION__,bValue));
         /* save update to backup */
-		if (syscfg_set(NULL, "ConnTest_CorrectiveAction", (bValue ? "true" : "false")) != 0)
+		if (syscfg_set_commit(NULL, "ConnTest_CorrectiveAction", (bValue ? "true" : "false")) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
 			return FALSE;
 		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_CorrectiveAction\n",__FUNCTION__));
-		    return FALSE;
-        }
         pMyObject->pConnTest->CorrectiveAction = bValue;
         return TRUE;
     }
@@ -968,16 +914,11 @@ ConnectivityTest_SetParamUlongValue
 			return FALSE;
 		}
         /* save update to backup */
-		if (syscfg_set_u(NULL, "ConnTest_PingInterval", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "ConnTest_PingInterval", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingInterval\n",__FUNCTION__));
 			return FALSE;
 		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_PingInterval\n",__FUNCTION__));
-		    return FALSE;
-        }
         pMyObject->pConnTest->PingInterval = uValue;
         return TRUE;
     }
@@ -989,16 +930,11 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
          
-		if (syscfg_set_u(NULL, "ConnTest_NumPingsPerServer", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "ConnTest_NumPingsPerServer", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
 			return FALSE;
 		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_NumPingsPerServer\n",__FUNCTION__));
-		    return FALSE;
-        }
         /* save update to backup */
         pMyObject->pConnTest->PingCount = uValue;
         return TRUE;
@@ -1011,16 +947,11 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
    
-		if (syscfg_set_u(NULL, "ConnTest_MinNumPingServer", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "ConnTest_MinNumPingServer", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
 			return FALSE;
 		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_MinNumPingServer\n",__FUNCTION__));
-		    return FALSE;
-        }     
         /* save update to backup */
 		pMyObject->pConnTest->MinPingServer = uValue;
         return TRUE;
@@ -1033,16 +964,11 @@ ConnectivityTest_SetParamUlongValue
             return  TRUE;
         }
 
-		if (syscfg_set_u(NULL, "ConnTest_PingRespWaitTime", uValue) != 0)
+		if (syscfg_set_u_commit(NULL, "ConnTest_PingRespWaitTime", uValue) != 0)
 		{
 			CcspTraceWarning(("%s syscfg set failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
 			return FALSE;
 		}
-    	if (syscfg_commit() != 0)
-		{
-        	CcspTraceWarning(("%s syscfg commit failed for ConnTest_PingRespWaitTime\n",__FUNCTION__));
-		    return FALSE;
-        }     
         /* save update to backup */
 		pMyObject->pConnTest->WaitTime = uValue;
         return TRUE;
@@ -1068,16 +994,11 @@ ConnectivityTest_SetParamIntValue
             return  TRUE;
         }
 
-        if (syscfg_set_u(NULL, "router_reboot_Interval", pInt) != 0)
+        if (syscfg_set_u_commit(NULL, "router_reboot_Interval", pInt) != 0)
         {
 		CcspTraceWarning(("%s syscfg set failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
 		return FALSE;
 	}
-	if (syscfg_commit() != 0)
-	{
-		CcspTraceWarning(("%s syscfg commit failed for X_RDKCENTRAL-COM_RebootInterval\n",__FUNCTION__));
-		return FALSE;
-        }     
         /* save update to backup */
 	pMyObject->pConnTest->RouterRebootInterval = pInt;
 	return TRUE;
@@ -1224,16 +1145,9 @@ IPv4PingServerTable_AddEntry
 
 	pSelfHeal->pConnTest->IPv4EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv4EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv4EntryCount);
-	if (syscfg_set_u(NULL, "Ipv4PingServer_Count", pSelfHeal->pConnTest->IPv4EntryCount) != 0) 
+	if (syscfg_set_u_commit(NULL, "Ipv4PingServer_Count", pSelfHeal->pConnTest->IPv4EntryCount) != 0)
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
-	}
-	else 
-	{
-		if (syscfg_commit() != 0) 
-		{
-			CcspTraceWarning(("syscfg_commit failed\n"));
-		}
 	}
 	CosaSListPushEntryByInsNum(&pSelfHeal->IPV4PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
     return (ANSC_HANDLE)pSelfHealCxtLink;
@@ -1474,16 +1388,9 @@ IPv6PingServerTable_AddEntry
 	
 	pSelfHeal->pConnTest->IPv6EntryCount++;
 	printf("*** pSelfHeal->pConnTest->IPv6EntryCount = %lu ***\n",pSelfHeal->pConnTest->IPv6EntryCount);
-	if (syscfg_set_u(NULL, "Ipv6PingServer_Count", pSelfHeal->pConnTest->IPv6EntryCount) != 0) 
+	if (syscfg_set_u_commit(NULL, "Ipv6PingServer_Count", pSelfHeal->pConnTest->IPv6EntryCount) != 0)
 	{
 		CcspTraceWarning(("syscfg_set failed\n"));
-	}
-	else 
-	{
-		if (syscfg_commit() != 0) 
-		{
-			CcspTraceWarning(("syscfg_commit failed\n"));
-		}
 	}
 		CosaSListPushEntryByInsNum(&pSelfHeal->IPV6PingServerList, (PCOSA_CONTEXT_LINK_OBJECT)pSelfHealCxtLink);
     return (ANSC_HANDLE)pSelfHealCxtLink;
@@ -1742,16 +1649,11 @@ ResourceMonitor_SetParamUlongValue
 	}
 #endif
 
-        if (syscfg_set_u(NULL, "resource_monitor_interval", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "resource_monitor_interval", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
 	pRescMonitor->MonIntervalTime = uValue;
 	return TRUE;
     }
@@ -1763,16 +1665,11 @@ ResourceMonitor_SetParamUlongValue
             return TRUE;
         }
 
-        if (syscfg_set_u(NULL, "avg_cpu_threshold", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "avg_cpu_threshold", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
 	pRescMonitor->AvgCpuThreshold = uValue;
 	return TRUE;
     }
@@ -1784,16 +1681,11 @@ ResourceMonitor_SetParamUlongValue
             return TRUE;
         }
 
-        if (syscfg_set_u(NULL, "avg_memory_threshold", uValue) != 0)
+        if (syscfg_set_u_commit(NULL, "avg_memory_threshold", uValue) != 0)
         {
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
-	if (syscfg_commit() != 0)
-	{
-            CcspTraceWarning(("%s: syscfg commit failed for %s\n", __FUNCTION__, ParamName));
-	    return FALSE;
-	}
 	pRescMonitor->AvgMemThreshold = uValue;
 	return TRUE;
     }
