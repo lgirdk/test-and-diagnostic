@@ -1053,6 +1053,7 @@ self_heal_dhcp_clients()
 	"TCCBR")
 	;;
 	"SYSTEMD")
+        if [ "$WAN_STATUS" = "started" ]; then
             if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
 		if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
@@ -1125,6 +1126,7 @@ self_heal_dhcp_clients()
                     wan_dhcp_client_v6=1
 		fi
             fi #Not HUB4//SR300//SE501/SR213/WNXL11BWL
+        fi
 	    ;;
     esac
 }
