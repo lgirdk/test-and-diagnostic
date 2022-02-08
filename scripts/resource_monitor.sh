@@ -436,4 +436,24 @@ fi
         COUNT=0
     fi
 
+    NVRAM_USAGE=$(busybox df /nvram | sed -n 's/.* \([0-9]\+\)% .*/\1/p')
+    if [ "$NVRAM_USAGE" -ge 90 ]
+    then
+        echo_t "RDKB_SELFHEAL : Nvram usage is $NVRAM_USAGE % at timestamp $timestamp"
+        echo_t "*********** dump file usage in nvram **************"
+        echo_t "`du -ah /nvram`"
+        echo_t "******************************"
+    fi
+
+    if [ "$BOX_TYPE" = "MV1" ]
+    then
+        ATOM_NVRAM_USAGE=$(rpcclient2 'df /nvram' | sed -n 's/.* \([0-9]\+\)% .*/\1/p')
+        if [ "$ATOM_NVRAM_USAGE" -ge 90 ]
+        then
+            echo_t "RDKB_SELFHEAL : ATOM Nvram usage is $ATOM_NVRAM_USAGE % at timestamp $timestamp"
+            echo_t "*********** dump nvram file usage on ATOM **************"
+            echo_t "`rpcclient2 'du -ah /nvram'`"
+            echo_t "******************************"
+        fi
+    fi
 done
