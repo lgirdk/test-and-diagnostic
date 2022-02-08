@@ -479,4 +479,13 @@ fi
         )
     fi
 
+    NVRAM_USAGE=$(busybox df /nvram | sed -n 's/.* \([0-9]\+\)% .*/\1/p')
+    if [ "$NVRAM_USAGE" -ge 90 ]
+    then
+        echo_t "RDKB_SELFHEAL : Nvram usage is $NVRAM_USAGE % at timestamp $timestamp"
+        echo_t "*********** dump file usage in nvram **************"
+        echo_t "`du -ah /nvram`"
+        echo_t "******************************"
+    fi
+
 done
