@@ -87,6 +87,16 @@ Dhcpv6_Client_restart ()
 	fi
 }
 
+self_heal_process ()
+{
+  status_rpc_error=`systemctl status CcspCMAgentSsp.service | grep "Timed outRPC communication fail"`
+  if [ "$status_rpc_error" != "" ]
+  then
+     echo_t "[RDKB_PLATFORM_ERROR] : CcspCMAgent service restart needed for RPC issue"
+     systemctl restart CcspCMAgentSsp.service
+  fi
+}
+
 ovs_enable=`syscfg get mesh_ovs_enable`
 self_heal_peer_ping ()
 {
@@ -1160,6 +1170,10 @@ do
     self_heal_interfaces
     self_heal_dibbler_server
     self_heal_dhcp_clients
+    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" != "TG4482A" ]
+    then
+       self_heal_process
+    fi
     STOP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     TOTAL_TIME_SEC=$((STOP_TIME_SEC-START_TIME_SEC))
     echo_t "[RDKB_AGG_SELFHEAL]: Total execution time: $TOTAL_TIME_SEC sec"
