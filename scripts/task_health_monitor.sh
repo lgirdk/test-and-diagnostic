@@ -301,6 +301,7 @@ if [ -n "$dead_lock_recovery_needed" ]; then
 
    echo_t "RDKB_SELFHEAL : DEAD LOCK WARNING RECEIVED Checking for component health"
 
+   t2CountNotify "SYS_SH_DEADLOCK_warning"
    #Always keep the array1 & array2 Aligned
    declare -a array1=("cm" "lmlite" "tr069pa" "ethagent" "wifi"  "mta" "notifycomponent" "ssamagent" "tdm" )
    declare -a array2=("CcspCMAgentSsp" "CcspLMLite" "CcspTr069PaSsp" "CcspEthAgent" "CcspWifiSsp" "CcspMtaAgentSsp" "notify_comp" "ssam_agent" "CcspTandDSsp" )
@@ -330,6 +331,7 @@ if [ -n "$dead_lock_recovery_needed" ]; then
        time_out=0
        if [ "$BACK_PID" = "0" ] ; then
           echo_t "RDKB_SELFHEAL : DEAD LOCK WARNING RECEIVED Need to restart ${array2[i]}"
+          t2CountNotify "SYS_SH_DEADLOCK_warning"
           if [ "$BOX_TYPE" = "MV1" ] && [ "${array2[i]}" = "CcspWifiSsp" ]; then
              rpcclient2 "kill -9 $(get_pid ${array2[i]})"
              #Process monitor script at ATOM console will reset CcspWifiSsp
