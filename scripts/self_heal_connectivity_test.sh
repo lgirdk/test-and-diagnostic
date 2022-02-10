@@ -120,6 +120,10 @@ runDNSPingTest()
 
 runPingTest()
 {
+        #BCOMB-1120 getWanInterfaceName returning NULL at the start of device.So calling here if value is NULL
+        if [[ "x$WAN_INTERFACE" = "x" ]];then
+            WAN_INTERFACE=$(getWanInterfaceName)
+        fi
 	PING_PACKET_SIZE=`syscfg get selfheal_ping_DataBlockSize`
 	PINGCOUNT=`syscfg get ConnTest_NumPingsPerServer`
 
@@ -165,7 +169,7 @@ runPingTest()
               then
                  IPv6_Gateway_addr=`ip -6 neigh show dev erouter0 | grep $CMTS_MAC |grep  lladdr | grep fe80 | cut -f1 -d' '`
               fi
-           else      
+           else
               # firstly, use ipv6 neighbor table
               routeEntry=`ip -6 neigh show | grep $WAN_INTERFACE | grep $erouterIP6`
               IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '`
@@ -320,7 +324,7 @@ runPingTest()
                   	 t2CountNotify "RF_ERROR_IPV4PingFailed"
                    	echo_t "PING_FAILED:$IPv4_Gateway_addr"
             fi
-            if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ]
+                if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ]
               	then
                   	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
 			 t2CountNotify "SYS_INFO_NoIPv6_Address"
@@ -548,7 +552,7 @@ do
 		then
 			INTERVAL=60
 		fi
-		INTERVAL=$(($INTERVAL*60))
+                INTERVAL=$(($INTERVAL*60))
 		sleep $INTERVAL
 	fi
 
