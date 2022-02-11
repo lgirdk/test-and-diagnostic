@@ -707,22 +707,6 @@ self_heal_dibbler_server()
     fi
 }
 
-#Checking the dibbler-client is running or not
-if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ]; then
-    DIBBLER_CLIENT_PID=`pidof dibbler-client`
-    PAM_UP="`pidof CcspPandMSsp`"
-    if [ "$PAM_UP" != "" ] && [ "$DIBBLER_CLIENT_PID" = "" ];then
-        echo_t "RDKB_PROCESS_CRASHED : dibbler-client is not running, restarting the dibbler-client"
-
-        dibbler-client stop
-        sleep 2
-        dibbler-client start
-        sleep 5
-
-        touch /tmp/dhcpv6-client_restarted
-    fi
-fi
-
 self_heal_dhcp_clients()
 {
     # Parametizing ps+grep "as" part of RDKB-28847
