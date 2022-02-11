@@ -14,6 +14,8 @@
  * limitations under the License.
   *********************************************************************************/
 
+#include <unistd.h>
+
 #include <syscfg/syscfg.h>
 
 #include "ansc_platform.h"
@@ -175,7 +177,10 @@ BOOL Telemetry_SetParamStringValue(ANSC_HANDLE hInsContext, char* ParamName, cha
         AnscCopyString(pMyObject->DCMConfigFileURL, pString);
         if (pMyObject->Enable == TRUE)  // Reload the service only if the Telemetry feature is enabled
         {
-            tele_state = TELE_ST_RELOAD;
+            if (tele_state != TELE_ST_START)
+            {
+                tele_state = TELE_ST_RELOAD;
+            }
         }
         CcspTraceDebug(("%s Set value %s: Exit\n", __FUNCTION__, pString));
         return TRUE;
@@ -216,12 +221,20 @@ BOOL Telemetry_Commit ( ANSC_HANDLE hInsContext )
 #else
                 system("killall -9 telemetry2_0");
 #endif
+                if (unlink("/tmp/telemetry_initialized") != 0)
+                {
+                    CcspTraceWarning(("%s Unable to remove telemetry initialization complete flag\n", __FUNCTION__));
+                }
                 break;
             }
 	    case TELE_ST_RELOAD :
             {
                 CcspTraceInfo(("%s: Reloading Telemetry service with new configuration file \n", __FUNCTION__));
-                system("killall -12 telemetry2_0");
+                if (access("/tmp/telemetry_initialized", F_OK) == 0)
+                {
+                    CcspTraceInfo(("%s: Send signal 12 to reload configuration file\n", __FUNCTION__));
+                    system("killall -12 telemetry2_0");
+                }
                 break;
             }
        }
