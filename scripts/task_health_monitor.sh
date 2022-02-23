@@ -212,7 +212,7 @@ check_component_status(){
             resetNeeded ssamagent ssam_agent
         fi
 
-        PAM_PID=$(get_pid CcspPandMSsp)
+        PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -995,7 +995,7 @@ else
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(get_pid CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
@@ -1020,7 +1020,7 @@ else
                 if [ "$cr_timeout" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(get_pid CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     rm -rf /tmp/pam_initialized
                     systemctl restart CcspPandMSsp.service
                 fi
@@ -1365,7 +1365,7 @@ case $SELFHEAL_TYPE in
         ###########################################
 
 
-        PAM_PID=$(get_pid CcspPandMSsp)
+        PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
             rm -rf /tmp/pam_initialized
@@ -3015,7 +3015,7 @@ case $SELFHEAL_TYPE in
                 if [ "$cr_timeout" != "" ] || [ "$cr_pam_notexist" != "" ] || [ "$cr_pam_notconnect" != "" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : pandm process is not responding. Restarting it"
                     t2CountNotify "SYS_ERROR_PnM_Not_Responding"
-                    PANDM_PID=$(get_pid CcspPandMSsp)
+                    PANDM_PID=$(busybox pidof CcspPandMSsp)
                     if [ "$PANDM_PID" != "" ]; then
                         kill -9 "$PANDM_PID"
                     fi
