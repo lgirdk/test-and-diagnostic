@@ -876,6 +876,9 @@ resetNeeded()
                 if [ "$ProcessName" = "AdvSecurityAgent" ]; then
                     if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
                         rm $ADVSEC_AGENT_SHUTDOWN
+                        if [ -f $ADVSEC_DEVICE_CERT ]; then
+                           rm $ADVSEC_DEVICE_CERT
+                        fi
                     else
                         echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
                         t2CountNotify "SYS_SH_CUJO_restart"
