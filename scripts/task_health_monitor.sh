@@ -1081,28 +1081,12 @@ case $SELFHEAL_TYPE in
             fi
         fi
 
-        # Checking CcspMoCA PID
-        MOCA_PID=$(busybox pidof CcspMoCA)
-        if [ "$MOCA_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
-            resetNeeded moca CcspMoCA
-        fi
-		
 	 #Checking notify_component PID
 	 NOTIFY_PID=$(busybox pidof notify_comp)
 	 if [ "$NOTIFY_PID" = "" ]; then
 		 echo_t "RDKB_PROCESS_CRASHED : notify_comp is not running, need restart"
 		 resetNeeded notify-comp notify_comp
 	 fi
-
-        if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
-            # Checking mocadlfw PID
-            MOCADLFW_PID=$(busybox pidof mocadlfw)
-            if [ "$MOCADLFW_PID" = "" ]; then
-                echo_t "OEM_PROCESS_MOCADLFW_CRASHED : mocadlfw process is not running, need restart"
-                /usr/sbin/mocadlfw > /dev/null 2>&1 &
-            fi
-        fi
 
 	# BWGRDK-1384: Selfheal mechanism for ripd process
 	if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
