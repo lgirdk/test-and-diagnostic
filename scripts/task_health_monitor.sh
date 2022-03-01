@@ -1133,11 +1133,11 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking CcspMoCA PID
-        MOCA_PID=$(get_pid CcspMoCA)
-        if [ "$MOCA_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
-            resetNeeded moca CcspMoCA
-        fi
+        # MOCA_PID=$(get_pid CcspMoCA)
+        # if [ "$MOCA_PID" = "" ]; then
+        #     echo_t "RDKB_PROCESS_CRASHED : CcspMoCA process is not running, need restart"
+        #     resetNeeded moca CcspMoCA
+        # fi
 
         if [ "$MODEL_NUM" = "DPC3939" ] || [ "$MODEL_NUM" = "DPC3941" ]; then
             # Checking mocadlfw PID
