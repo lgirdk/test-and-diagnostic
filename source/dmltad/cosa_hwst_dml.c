@@ -299,6 +299,7 @@ hwHealthTest_GetParamStringValue
 {
     if (strcmp(ParamName, "Results") == 0)
     {
+        strcpy(pValue, "");
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Results get\n", __FUNCTION__));
 
