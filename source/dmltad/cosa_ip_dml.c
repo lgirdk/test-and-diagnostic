@@ -1221,8 +1221,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->PartnerID );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->PartnerID );
-		
+
 		return 0;
     }
 
@@ -1236,8 +1235,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->ecmMAC );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->ecmMAC );
-		
+
 		return 0;
     }
 
@@ -1251,8 +1249,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceID );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->DeviceID );
-		
+
 		return 0;
     }
 
@@ -1266,8 +1263,7 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceModel );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->DeviceModel );
-		
+
 		return 0;
     }
 
@@ -1676,7 +1672,7 @@ IPPing_GetParamStringValue
         {
             rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
             ERR_CHK(rc);
-            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
+            return 0;
         }
     }
     else if (strcmp(ParamName, "Host") == 0)
@@ -1689,11 +1685,11 @@ IPPing_GetParamStringValue
 
         rc = strcpy_s(pValue, *pUlSize , cfg.host);
         ERR_CHK(rc);
+        return 0;
     }
-    else
-        return -1;
-
-    return 0;
+   
+   return -1;
+   
 }
 
 /**********************************************************************
@@ -2399,7 +2395,7 @@ TraceRoute_GetParamStringValue
         {
             rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
             ERR_CHK(rc);
-            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
+            return 0;
         }
     }
     else if (strcmp(ParamName, "Host") == 0)
@@ -2415,10 +2411,10 @@ TraceRoute_GetParamStringValue
         {
             ERR_CHK(rc);
         }
-
+        return 0;
     }
 
-    return 0;
+    return -1;
 }
 
 /**********************************************************************
@@ -3574,6 +3570,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "ROMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3614,6 +3611,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "BOMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3654,6 +3652,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "EOMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3695,6 +3694,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "TCPOpenRequestTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3735,6 +3735,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "TCPOpenResponseTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -4608,6 +4609,7 @@ UDPEchoConfig_GetParamStringValue
 
     if (strcmp(ParamName, "TimeFirstPacketReceived") == 0)
     {
+        strcpy(pValue, "");
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_UdpEcho
@@ -4648,6 +4650,7 @@ UDPEchoConfig_GetParamStringValue
 
     if (strcmp(ParamName, "TimeLastPacketReceived") == 0)
     {
+        strcpy(pValue, "");
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_UdpEcho
@@ -5789,7 +5792,7 @@ SpeedTestServer_GetParamStringValue
 		return 0;
 	}
 
-    return 1;
+    return -1;
 }
 
 
