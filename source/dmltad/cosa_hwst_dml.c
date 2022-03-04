@@ -299,6 +299,7 @@ hwHealthTest_GetParamStringValue
 {
     if (strcmp(ParamName, "Results") == 0)
     {
+        strcpy(pValue, "");
 #ifdef COLUMBO_HWTEST
         AnscTraceFlow(("%s Results get\n", __FUNCTION__));
 
@@ -339,5 +340,5 @@ hwHealthTest_GetParamStringValue
         return 0;
     }
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
-    return 1;
+    return -1;
 }
