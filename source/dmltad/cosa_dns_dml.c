@@ -1579,8 +1579,6 @@ Result_GetParamStringValue
                 return 1;
             }
         }
-
-        return ANSC_STATUS_FAILURE;
     }
 
     if (strcmp(ParamName, "IPAddresses") == 0)
@@ -1600,8 +1598,6 @@ Result_GetParamStringValue
                 return 1;
             }
         }
-
-        return ANSC_STATUS_FAILURE;
     }
 
     if (strcmp(ParamName, "DNSServerIP") == 0)

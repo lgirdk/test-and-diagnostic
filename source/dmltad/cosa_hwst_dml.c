@@ -340,5 +340,5 @@ hwHealthTest_GetParamStringValue
         return 0;
     }
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
-    return 1;
+    return -1;
 }

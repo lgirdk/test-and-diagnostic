@@ -395,7 +395,6 @@ VendorLogFile_GetParamStringValue
     {
         /* collect value */
 	    AnscCopyString(pValue, "Syslogs");
-	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }
 
@@ -403,7 +402,6 @@ VendorLogFile_GetParamStringValue
     {
         /* collect value */
 	    AnscCopyString(pValue, "/var/log/messages");
-	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }
 
