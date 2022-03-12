@@ -17,8 +17,7 @@
 # limitations under the License.
 ##########################################################################
 
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
+AM_CFLAGS =
 
 if ENABLE_MTA
 AM_CFLAGS  += -DENABLE_MTA
