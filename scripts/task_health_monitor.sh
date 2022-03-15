@@ -124,6 +124,7 @@ case $SELFHEAL_TYPE in
     "BASE")
     ;;
     "TCCBR")
+        thisREADYFILE="/tmp/.brcm_wifi_ready"
     ;;
     "SYSTEMD")
         thisREADYFILE="/tmp/.qtn_ready"
@@ -2361,25 +2362,38 @@ case $SELFHEAL_TYPE in
         fi
     ;;
     "TCCBR")
+        #Selfheal will run after 15mins of bootup, then by now the WIFI initialization must have
+        #completed, so if still wifi_initilization not done, we have to recover the WIFI
+        #Restart the WIFI if initialization is not done with in 15mins of poweron.
         if [ "$WiFi_Flag" = "false" ]; then
             SSID_DISABLED=0
-            ssidEnable=$(dmcli eRT getv Device.WiFi.SSID.2.Enable)
-            ssidExecution=$(echo "$ssidEnable" | grep "Execution succeed")
-            if [ "$ssidExecution" != "" ]; then
-                isEnabled=$(echo "$ssidEnable" | grep "false")
-                if [ "$isEnabled" != "" ]; then
-                    SSID_DISABLED=1
-                    echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
-		    t2CountNotify "WIFI_INFO_5G_DISABLED"
+            if [ -f "/tmp/wifi_initialized" ]; then
+                echo_t "[RDKB_SELFHEAL] : WiFi Initialization done"
+                ssidEnable=$(dmcli eRT getv Device.WiFi.SSID.2.Enable)
+                ssidExecution=$(echo "$ssidEnable" | grep "Execution succeed")
+                if [ "$ssidExecution" != "" ]; then
+                    isEnabled=$(echo "$ssidEnable" | grep "false")
+                    if [ "$isEnabled" != "" ]; then
+                        SSID_DISABLED=1
+                        echo_t "[RDKB_SELFHEAL] : SSID 5GHZ is disabled"
+                        t2CountNotify "WIFI_INFO_5G_DISABLED"
+                    fi
+                else
+                    destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
+                    if [ "$destinationError" != "" ]; then
+                        echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
+                        t2CountNotify "WIFI_ERROR_WifiDmCliError"
+                    else
+                        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
+                        echo "$ssidEnable"
+                    fi
                 fi
             else
-                destinationError=$(echo "$ssidEnable" | grep "Can't find destination component")
-                if [ "$destinationError" != "" ]; then
-                    echo_t "[RDKB_PLATFORM_ERROR] : Parameter cannot be found on WiFi subsystem"
-                    t2CountNotify "WIFI_ERROR_WifiDmCliError"
-                else
-                    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Enable"
-                    echo "$ssidEnable"
+                echo_t  "[RDKB_PLATFORM_ERROR] : WiFi initialization not done"
+                if [ -f "$thisREADYFILE" ]; then
+                    echo_t  "[RDKB_PLATFORM_ERROR] : restarting the CcspWifiSsp"
+                    killall CcspWifiSsp
+                    resetNeeded wifi CcspWifiSsp
                 fi
             fi
         fi
