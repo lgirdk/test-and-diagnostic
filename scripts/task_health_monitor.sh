@@ -3864,49 +3864,6 @@ if [ $rebootDeviceNeeded -eq 1 ]; then
     fi  # [ $inMaintWindow -eq 1 ]
 fi  # [ $rebootDeviceNeeded -eq 1 ]
 
-isPeriodicFWCheckEnable=$(syscfg get PeriodicFWCheck_Enable)
-if [ "$isPeriodicFWCheckEnable" = "false" ] || [ "$isPeriodicFWCheckEnable" = "" ]; then
-    #check firmware download script is running.
-    case $SELFHEAL_TYPE in
-        "BASE")
-            if [ "$BOX_TYPE" = "XB3" ]; then
-                firmDwnldPid=$(ps w | grep -w "xb3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-                if [ "$firmDwnldPid" = "" ]; then
-                    echo_t "Restarting XB3 firmwareDwnld script"
-                    exec  /etc/xb3_firmwareDwnld.sh &
-                fi
-            fi
-        ;;
-        "TCCBR")
-            if [ "$BOX_TYPE" = "TCCBR" ]; then
-                fDwnldPid=$(ps w | grep -w "cbr_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-                if [ "$fDwnldPid" = "" ]; then
-                    echo_t "Restarting CBR firmwareDwnld script"
-                    exec  /etc/cbr_firmwareDwnld.sh &
-                fi
-            fi
-        ;;
-        "SYSTEMD")
-            if [ "$WAN_TYPE" = "EPON" ]; then
-                fDwnldPid=$(ps w | grep -w "xf3_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-            elif [ "$BOX_TYPE" = "HUB4" ]; then
-                fDwnldPid=$(ps w | grep -w "hub4_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-            elif [ "$BOX_TYPE" = "SR300" ]; then
-                fDwnldPid=$(ps w | grep -w "sr300_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-            elif [ "$BOX_TYPE" = "SE501" ]; then
-                fDwnldPid=$(ps w | grep -w "se501_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-            else
-                fDwnldPid=$(ps w | grep -w "xb6_firmwareDwnld.sh" | grep -v "grep" | awk '{print $1}')
-            fi
-
-            if [ "$fDwnldPid" = "" ]; then
-                echo_t "Restarting firmwareDwnld script"
-                systemctl stop CcspXconf.service
-                systemctl start CcspXconf.service
-            fi
-        ;;
-    esac
-fi
 
 # Checking telemetry2_0 health and recovery
 T2_0_BIN="/usr/bin/telemetry2_0"
