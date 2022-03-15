@@ -400,7 +400,7 @@ self_heal_interfaces()
             fi
             ;;
         "SYSTEMD")
-            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SE501" ]; then
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
                 # Checking whether brlan0 is created properly , if not recreate it
                 lanSelfheal=$(sysevent get lan_selfheal)
                 echo_t "[RDKB_AGG_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
@@ -731,7 +731,7 @@ self_heal_dhcp_clients()
             ;;
     esac
 
-    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv6_Addr" != "" ]; then
+    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv6_Addr" != "" ]; then
         isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
         echo_t "isIPv6 = $isIPv6"
         if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
@@ -755,7 +755,7 @@ self_heal_dhcp_clients()
     erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
     erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
     IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-        if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
+        if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
             case $SELFHEAL_TYPE in
                 "SYSTEMD")
                     udhcpc_enable=`syscfg get UDHCPEnable`
@@ -830,7 +830,7 @@ self_heal_dhcp_clients()
                     fi
                     ;;
             esac
-        elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
+        elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
         else
                 if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
@@ -838,7 +838,7 @@ self_heal_dhcp_clients()
                 fi
         fi
     #Logic ends here for RDKB-25714
-    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$WAN_STATUS" = "started" ]; then
+    if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "SR213" ]; then
         wan_dhcp_client_v4=1
         wan_dhcp_client_v6=1
         case $SELFHEAL_TYPE in
@@ -1046,7 +1046,7 @@ self_heal_dhcp_clients()
 	"TCCBR")
 	;;
 	"SYSTEMD")
-            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]; then
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]; then
 		if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
 			V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
@@ -1117,7 +1117,7 @@ self_heal_dhcp_clients()
                     fi
                     wan_dhcp_client_v6=1
 		fi
-            fi #Not HUB4//SR300//SE501
+            fi #Not HUB4//SR300//SE501/SR213
 	    ;;
     esac
 }
