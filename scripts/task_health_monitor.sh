@@ -1634,47 +1634,52 @@ case $SELFHEAL_TYPE in
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
     ;;
     "TCCBR"|"SYSTEMD")
-        # Checking lighttpd PID
-        LIGHTTPD_PID=$(busybox pidof lighttpd)
-        WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
-        if [ "$LIGHTTPD_PID" = "" ]; then
-            if [ "$WEBGUI_PID" != "" ]; then
-                if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
-                    echo_t "WEBGUI is in hung state, restarting it"
-                    kill -9 "$WEBGUI_PID"
-                    rm /tmp/WEBGUI_*
+	#Ignoring for XLE and Ashlene model. lighttpd and webgui.sh are not avaialble in these boxes.
+	if [ "$MODEL_NUM" = "WNXL11BWL" ] || [ "$MODEL_NUM" = "SE501" ]; then
+            : # Do nothing
+        else
+            # Checking lighttpd PID
+            LIGHTTPD_PID=$(busybox pidof lighttpd)
+            WEBGUI_PID=$(ps | grep "webgui.sh" | grep -v "grep" | awk '{ print $1 }')
+            if [ "$LIGHTTPD_PID" = "" ]; then
+                if [ "$WEBGUI_PID" != "" ]; then
+                    if [ -f /tmp/WEBGUI_"$WEBGUI_PID" ]; then
+                        echo_t "WEBGUI is in hung state, restarting it"
+                        kill -9 "$WEBGUI_PID"
+                        rm /tmp/WEBGUI_*
 
+                        isPortKilled=$(netstat -anp | grep "21515")
+                        if [ "$isPortKilled" != "" ]; then
+                            echo_t "Port 21515 is still alive. Killing processes associated to 21515"
+                            fuser -k 21515/tcp
+                        fi
+                        sh /etc/webgui.sh
+                    else
+                        for f in /tmp/WEBGUI_*
+                          do
+                            if [ -f "$f" ]; then  #TODO: file test not needed since we just got list of filenames from shell?
+                                rm "$f"
+                            fi
+                          done
+                        touch /tmp/WEBGUI_"$WEBGUI_PID"
+                        echo_t "WEBGUI is running with pid $WEBGUI_PID"
+                    fi
+                else
                     isPortKilled=$(netstat -anp | grep "21515")
                     if [ "$isPortKilled" != "" ]; then
                         echo_t "Port 21515 is still alive. Killing processes associated to 21515"
                         fuser -k 21515/tcp
                     fi
+                    if [ -f "/tmp/wifi_initialized" ]; then
+                        echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
+                        t2CountNotify "SYS_SH_lighttpdCrash"
+                        #lighttpd -f $LIGHTTPD_CONF
+                    else
+                        #if wifi is not initialized, still starting lighttpd to have gui access. Not a crash.
+                        echo_t "WiFi is not initialized yet. Starting lighttpd for GUI access."
+                    fi
                     sh /etc/webgui.sh
-                else
-                    for f in /tmp/WEBGUI_*
-                      do
-                        if [ -f "$f" ]; then  #TODO: file test not needed since we just got list of filenames from shell?
-                            rm "$f"
-                        fi
-                      done
-                    touch /tmp/WEBGUI_"$WEBGUI_PID"
-                    echo_t "WEBGUI is running with pid $WEBGUI_PID"
                 fi
-            else
-                isPortKilled=$(netstat -anp | grep "21515")
-                if [ "$isPortKilled" != "" ]; then
-                    echo_t "Port 21515 is still alive. Killing processes associated to 21515"
-                    fuser -k 21515/tcp
-                fi
-                if [ -f "/tmp/wifi_initialized" ]; then
-                    echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
-                    t2CountNotify "SYS_SH_lighttpdCrash"
-                    #lighttpd -f $LIGHTTPD_CONF
-                else
-                    #if wifi is not initialized, still starting lighttpd to have gui access. Not a crash.
-                    echo_t "WiFi is not initialized yet. Starting lighttpd for GUI access."
-                fi
-                sh /etc/webgui.sh
             fi
         fi
     ;;
@@ -1864,6 +1869,7 @@ case $SELFHEAL_TYPE in
                     echo_t "Port 21515 is still alive. Killing processes associated to 21515"
                     fuser -k 21515/tcp
                 fi
+
                 echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
                 t2CountNotify "SYS_SH_lighttpdCrash"
                 #lighttpd -f $LIGHTTPD_CONF
