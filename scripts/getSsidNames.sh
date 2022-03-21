@@ -40,26 +40,22 @@ fi
 if [ "x$WiFi_PID" != "x" ]; then
     # check for wifi params only if wifi agent is up and running
     # Get 2.4GHz SSID and do sanity check
-    getSsid24=`dmcli eRT getv Device.WiFi.SSID.1.SSID` 
-    getSsid5=`dmcli eRT getv Device.WiFi.SSID.2.SSID`
-    SSID_24=`echo $getSsid24 | grep "Execution succeed"`
-    if [ "$SSID_24" == "" ]
+    ssid24value=`dmcli eRT retv Device.WiFi.SSID.1.SSID`
+    ssid5value=`dmcli eRT retv Device.WiFi.SSID.2.SSID`
+    if [ "$ssid24value" = "" ]
     then
         echo "`date +'%Y-%m-%d:%H:%M:%S:%6N'` [RDKB_PLATFORM_ERROR] Didn't get WiFi 2.4 GHz SSID from agent"
         t2CountNotify "WIFI_ERROR_atomConsoleDown_2G" 
     else
-        ssid24value=`echo $getSsid24 | cut -f6 -d:`
         got_24=1
     fi
     
     # Get 5GHz SSID and do sanity check
-    SSID_5=`echo $getSsid5 | grep "Execution succeed"`
-    if [ "$SSID_5" == "" ]
+    if [ "$ssid5value" = "" ]
     then
         echo "`date +'%Y-%m-%d:%H:%M:%S:%6N'` [RDKB_PLATFORM_ERROR] Didn't get WiFi 5 GHz SSID from agent"
         t2CountNotify "WIFI_ERROR_atomConsoleDown_5G"
     else
-        ssid5value=`echo $getSsid5 | cut -f6 -d:`
         got_5=1
     fi
     
