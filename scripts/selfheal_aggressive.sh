@@ -235,12 +235,10 @@ self_heal_interfaces()
             # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
             if [ "$WAN_TYPE" != "EPON" ]; then
-                check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-                check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
+                device_mode=$(dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
                 if [ ! -f /tmp/.router_reboot ]; then
-                    if [ "$check_param_get_succeed" != "" ]; then
-                        check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
-                        if [ "$check_device_in_router_mode" != "" ]; then
+                    if [ "$device_mode" != "" ]; then
+                        if [ "$device_mode" = "router" ]; then
                             check_if_brlan0_created=$(ifconfig | grep "brlan0")
                             check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
                             check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
@@ -358,11 +356,9 @@ self_heal_interfaces()
             echo_t "[RDKB_AGG_SELFHEAL] : Value of lanSelfheal : $lanSelfheal"
             if [ ! -f /tmp/.router_reboot ]; then
                 if [ "$lanSelfheal" != "done" ]; then
-                    check_device_mode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
-                    check_param_get_succeed=$(echo "$check_device_mode" | grep "Execution succeed")
-                    if [ "$check_param_get_succeed" != "" ]; then
-                        check_device_in_router_mode=$(echo "$check_device_mode" | grep "router")
-                        if [ "$check_device_in_router_mode" != "" ]; then
+                    device_mode=$(dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+                    if [ "$device_mode" != "" ]; then
+                        if [ "$device_mode" = "router" ]; then
                             check_if_brlan0_created=$(ifconfig | grep "brlan0")
                             check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
                             check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
@@ -989,11 +985,9 @@ self_heal_dhcp_clients()
                     ;;
             esac
 
-            DHCP_STATUS_query=$(dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
-            DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
-            DHCP_STATUS=$(echo "$DHCP_STATUS_query" | grep "value" | cut -f3 -d":" | awk '{print $1}')
+            DHCP_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.DHCPStatus)
 
-            if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
+            if [ "$DHCP_STATUS" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
 
                 echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
                 if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
