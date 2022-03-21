@@ -109,7 +109,7 @@ change()
 
 getVendorName()
 {
-    vendorName=$(dmcli eRT getv Device.DeviceInfo.Manufacturer | grep "value" | awk '{print $5}')
+    vendorName=$(dmcli eRT retv Device.DeviceInfo.Manufacturer)
     if [ "$vendorName" = "" ]; then
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
@@ -134,7 +134,7 @@ getVendorName()
 
 getModelName()
 {
-    modelName=$(dmcli eRT getv Device.DeviceInfo.ModelName | grep "value" | awk '{print $5}')
+    modelName=$(dmcli eRT retv Device.DeviceInfo.ModelName)
     if [ "$modelName" = "" ]; then
         modelName=$MODEL_NUM
     fi
@@ -155,7 +155,7 @@ getDateTime()
 
 getCMMac()
 {
-    CMMac=$(dmcli eRT getv Device.X_CISCO_COM_CableModem.MACAddress | grep "value" | awk '{print $5}')
+    CMMac=$(dmcli eRT retv Device.X_CISCO_COM_CableModem.MACAddress)
     case $SELFHEAL_TYPE in
         "BASE")
             if [ "$CMMac" = "" ]; then
@@ -176,7 +176,7 @@ getCMMac()
             if [ "$ETHWAN_MODE" = "true" ]; then
                 CMMac=$(sysevent get eth_wan_mac)
                 if [ "$CMMac" = "" ] ; then
-                    CMMac=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST-COM_CM_MAC | grep "value" | awk '{print $5}')
+                    CMMac=$(dmcli eRT retv Device.DeviceInfo.X_COMCAST-COM_CM_MAC)
                 fi
             fi
         ;;
@@ -1002,14 +1002,14 @@ storeInformation()
     for index in 1 2 3 5 6
       do
 
-        numberOfEntries=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDeviceNumberOfEntries | grep "value" | awk '{print $5}')
+        numberOfEntries=$(dmcli eRT retv Device.WiFi.AccessPoint.$index.AssociatedDeviceNumberOfEntries)
 
         if [ 0$numberOfEntries -ne 0 ]; then
             assocDev=1
             while [ $assocDev -le 0$numberOfEntries ]
               do
-                MACADDRESS=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.MACAddress | grep "value" | awk '{print $5}')
-                RSSI=$(dmcli eRT getv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.SignalStrength | grep "value" | awk '{print $5}')
+                MACADDRESS=$(dmcli eRT retv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.MACAddress)
+                RSSI=$(dmcli eRT retv Device.WiFi.AccessPoint.$index.AssociatedDevice.$assocDev.SignalStrength)
                 echo_t "RDKB_SELFHEAL : Device $MACADDRESS connected on AccessPoint $index and RSSI is $RSSI dBm"
                 assocDev=$((assocDev+1))
               done
@@ -1018,7 +1018,7 @@ storeInformation()
 
     for radio_index in 1 2
       do
-        channel=$(dmcli eRT getv Device.WiFi.Radio.$radio_index.Channel | grep "value" | awk '{print $5}')
+        channel=$(dmcli eRT retv Device.WiFi.Radio.$radio_index.Channel)
         if [ $radio_index -eq 1 ]; then
             echo_t "RDKB_SELFHEAL : 2.4GHz radio is operating on $channel channel"
         else
@@ -1030,15 +1030,15 @@ storeInformation()
     if [ $isMOCA -eq 0 ]; then
         # Need to capture MoCA stats
 
-        PacketsSent=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsSent | grep "value" | awk '{print $5}')
-        PacketsReceived=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.PacketsReceived | grep "value" | awk '{print $5}')
-        ErrorsSent=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsSent | grep "value" | awk '{print $5}')
-        ErrorsReceived=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.ErrorsReceived | grep "value" | awk '{print $5}')
-        DiscardPacketsSent=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsSent | grep "value" | awk '{print $5}')
-        DiscardPacketsReceived=$(dmcli eRT getv Device.MoCA.Interface.1.Stats.DiscardPacketsReceived | grep "value" | awk '{print $5}')
+        PacketsSent=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.PacketsSent)
+        PacketsReceived=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.PacketsReceived)
+        ErrorsSent=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.ErrorsSent)
+        ErrorsReceived=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.ErrorsReceived)
+        DiscardPacketsSent=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.DiscardPacketsSent)
+        DiscardPacketsReceived=$(dmcli eRT retv Device.MoCA.Interface.1.Stats.DiscardPacketsReceived)
 
-        EgressNumFlows=$(dmcli eRT getv Device.MoCA.Interface.1.QoS.EgressNumFlows | grep "value" | awk '{print $5}')
-        IngressNumFlows=$(dmcli eRT getv Device.MoCA.Interface.1.QoS.IngressNumFlows | grep "value" | awk '{print $5}')
+        EgressNumFlows=$(dmcli eRT retv Device.MoCA.Interface.1.QoS.EgressNumFlows)
+        IngressNumFlows=$(dmcli eRT retv Device.MoCA.Interface.1.QoS.IngressNumFlows)
 
         echo_t "RDKB_SELFHEAL : MoCA Statistics info is below"
         echo_t "RDKB_SELFHEAL : PacketsSent=$PacketsSent PacketsReceived=$PacketsReceived ErrorsSent=$ErrorsSent ErrorsReceived=$ErrorsReceived"
