@@ -52,7 +52,7 @@ t2ValNotify() {
 CheckandSetCMStatus()
 {
 	cm_status=""
-	cm_status=`dmcli eRT getv Device.X_CISCO_COM_CableModem.CMStatus | grep value | awk '{print $5}'`
+	cm_status=`dmcli eRT retv Device.X_CISCO_COM_CableModem.CMStatus`
 	echo_t "cm_status=$cm_status"
 
 	if [ "$cm_status" == "OPERATIONAL" ];then
@@ -70,14 +70,14 @@ CheckandSetCMIPStatus()
 	cm_ipv4=""
 	cm_ipv6=""
 	cm_prov=""
-	cm_prov=`dmcli eRT getv Device.X_CISCO_COM_CableModem.ProvIpType | grep value | awk '{print $5}'`
+	cm_prov=`dmcli eRT retv Device.X_CISCO_COM_CableModem.ProvIpType`
 
 	echo_t "cm_prov=$cm_prov"
         
 # checking also if cm prove type is APM(Alternate provision mode) in docsis 3.1 version of AXB6 and CMXB7
 	if [ "x$cm_prov" == "xIPv4" ] || [ "x$cm_prov" == "xIPV4" ] || [ "x$cm_prov" == "xAPM" ];then
 
-		cm_ipv4=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPAddress | grep value | awk '{print $5}'`
+		cm_ipv4=`dmcli eRT retv Device.X_CISCO_COM_CableModem.IPAddress`
 		echo_t "cm_ipv4=$cm_ipv4"
 
 		if [ "$cm_ipv4" != "" ] && [ "$cm_ipv4" != "0.0.0.0" ];then
@@ -91,7 +91,7 @@ CheckandSetCMIPStatus()
 
 	if [ "x$cm_prov" == "xIPv6" ] || [ "x$cm_prov" == "xIPV6" ] || [ "x$cm_prov" == "xAPM" ];then
 
-		cm_ipv6=`dmcli eRT getv Device.X_CISCO_COM_CableModem.IPv6Address | grep value | awk '{print $5}'`
+		cm_ipv6=`dmcli eRT retv Device.X_CISCO_COM_CableModem.IPv6Address`
 		echo_t "cm_ipv6=$cm_ipv6"
 
 		if [ "$cm_ipv6" != "" ] && [ "$cm_ipv6" != "0000::0000" ];then
@@ -121,13 +121,13 @@ CheckandSetWANIPStatus()
 {
 	wan_ipv4=""
 	wan_ipv6=""
-	wan_ipv4=`dmcli eRT getv Device.DeviceInfo.X_COMCAST-COM_WAN_IP | grep value | awk '{print $5}'`
+	wan_ipv4=`dmcli eRT retv Device.DeviceInfo.X_COMCAST-COM_WAN_IP`
 
 	if [ "$wan_ipv4" == "" ];then
 		wan_ipv4=`ifconfig $WAN_INTERFACE | grep "inet addr" | awk '{print $(NF-2)}' | cut -f2 -d:`
 	fi
 
-	wan_ipv6=`dmcli eRT getv Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6 | grep value | awk '{print $5}'`
+	wan_ipv6=`dmcli eRT retv Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6`
 
 	if [ "$wan_ipv6" == "" ];then
 		wan_ipv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | awk '{print $(NF-1)}' | cut -f1 -d\/`
