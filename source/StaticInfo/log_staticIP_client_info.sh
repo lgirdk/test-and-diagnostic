@@ -34,12 +34,12 @@ Traffic_count="/tmp/Traffic_count"
 if [ "$static_ip_status" = "1" ]; then
       rm -f $Online_mac $Offline_mac $Traffic_count
       rm -f /tmp/list /tmp/dbg_log
-      count=`dmcli eRT getv Device.Hosts.HostNumberOfEntries| grep type | cut -d':' -f3 | tr -d " "`
+      count=`dmcli eRT retv Device.Hosts.HostNumberOfEntries`
       for i in `seq 1 $count`; do
-        ip=`dmcli eRT getv Device.Hosts.Host.$i.IPAddress | grep type | awk '{print $5}' | cut -d"." -f1-2`
+        ip=`dmcli eRT retv Device.Hosts.Host.$i.IPAddress`
         if [ "$static_ip"  == "$ip" ]; then
-              mac=`dmcli eRT getv Device.Hosts.Host.$i.PhysAddress | grep value | awk '{print $5}'`
-              Status=`dmcli eRT getv Device.Hosts.Host.$i.Active | grep value | awk '{print $5}'`
+              mac=`dmcli eRT retv Device.Hosts.Host.$i.PhysAddress`
+              Status=`dmcli eRT retv Device.Hosts.Host.$i.Active`
               if [ "$Status" == "false" ]; then
                     Offline_cnt=`expr $Offline_cnt + 1`
                     echo -n $mac, >> $Offline_mac
