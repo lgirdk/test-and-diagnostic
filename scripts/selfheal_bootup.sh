@@ -417,9 +417,8 @@ fi
 				fi
 
                 # Retest by querying some other parameter
-                crReTestop=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode`
-                isCRAlive=`echo $crReTestop | grep "Execution succeed"`
-                  if [ "$isCRAlive" == "" ]; then
+                isCRAlive=`dmcli eRT retv Device.X_CISCO_COM_DeviceControl.DeviceMode`
+                  if [ "$isCRAlive" = "" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
                         echo_t "RDKB_SELFHEAL_BOOTUP : CR_process is not running, need reboot"
                         touch $HAVECRASH
@@ -500,14 +499,11 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 
 # Checking whether brlan0 and l2sd0.100 are created properly
 
-        check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+        device_mode=`dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
 
-        check_param_get_succeed=`echo $check_device_mode | grep "Execution succeed"`
-
-        if [ "$check_param_get_succeed" != "" ]
+        if [ "$device_mode" != "" ]
         then
-            check_device_in_router_mode=`echo $check_param_get_succeed | grep router`
-            if [ "$check_device_in_router_mode" != "" ]
+            if [ "$device_mode" = "router" ]
             then
                	    check_if_brlan0_created=`ifconfig | grep brlan0`
 		    check_if_brlan0_up=`ifconfig brlan0 | grep UP`
@@ -659,12 +655,10 @@ if [ "$WAN_TYPE" != "EPON" ]; then
     if [ "$DNS_PID" == "" ]
     then
 		  BR_MODE=0
-		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-			  bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-			  if [ "$bridgeSucceed" != "" ]
+		  bridgeMode=`dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+			  if [ "$bridgeMode" != "" ]
 			  then
-				   isBridging=`echo $bridgeMode | grep router`
-				   if [ "$isBridging" = "" ]
+				   if [ "$bridgeMode" != "router" ]
 				   then
 					   BR_MODE=1
 				   fi
@@ -716,12 +710,10 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 
 	  IsAnyOneInfFailtoUp=0	
 	  BR_MODE=0
-	  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-          bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-          if [ "$bridgeSucceed" != "" ]
+	  bridgeMode=`dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+          if [ "$bridgeMode" != "" ]
           then
-               isBridging=`echo $bridgeMode | grep router`
-               if [ "$isBridging" = "" ]
+               if [ "$bridgeMode" != "router" ]
                then
                    BR_MODE=1
                fi
@@ -818,12 +810,12 @@ fi
 #Temporary selfheal. Needs to be removed after ARRISXB6-11395 is fixed.
 if [ "$MODEL_NUM" = "TG3482G" ];then
 	Host_Count=0
-	Host_Count=`dmcli eRT getv Device.Hosts.HostNumberOfEntries | grep value | cut -f3 -d : | cut -f2 -d" "`
+	Host_Count=`dmcli eRT retv Device.Hosts.HostNumberOfEntries`
 	echo_t "Host_Count:$Host_Count"
 
 	if [ $Host_Count -gt 0 ];then
-		host_active_success=`dmcli eRT getv Device.Hosts.Host.1.Active | grep "Execution succeed"`
-		if [ "$host_active_success" == "" ];then
+		host_active_success=`dmcli eRT retv Device.Hosts.Host.1.Active`
+		if [ "$host_active_success" = "" ];then
 			echo_t "RDKB_SELFHEAL_BOOTUP : Restart LMLite"
 			systemctl restart CcspLMLite.service
 		fi
