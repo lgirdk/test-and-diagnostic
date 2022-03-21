@@ -358,7 +358,7 @@ runPingTest()
 
                 if [ "$BOX_TYPE" = "XB3" ]
                 then
-                      dhcpStatus=`dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus | grep value | awk '{print $5}'`
+                      dhcpStatus=`dmcli eRT retv Device.DHCPv4.Client.1.DHCPStatus`
                       wanIP=`ifconfig erouter0 | grep "inet addr" | head -n1 |cut -f2 -d: | cut -f1 -d" "`
                       if [ "$dhcpStatus" = "Rebinding" ] && [ "$wanIP" != "" ]
                       then
