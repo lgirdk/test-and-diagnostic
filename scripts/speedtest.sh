@@ -28,7 +28,7 @@ echo "$(date +"[%Y-%m-%d %H:%M:%S]" ) Enabling / Starting speedtest..." >> $LOG_
 # Node.js client support removed for XB3 ,XB6 and XF3 devices.
   # If Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.ClientType exists, then:
   # Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.ClientType = 1 implies the C client should run.
-ST_CLIENT_TYPE=`dmcli eRT getv Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.ClientType | awk '/value/ { print $5 }'`
+ST_CLIENT_TYPE=`dmcli eRT retv Device.IP.Diagnostics.X_RDKCENTRAL-COM_SpeedTest.ClientType`
 
 if [ "x$ST_CLIENT_TYPE" = 'x1' ]
 then
