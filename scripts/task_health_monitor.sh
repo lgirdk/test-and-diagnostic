@@ -838,7 +838,7 @@ case $SELFHEAL_TYPE in
                     # Retest by querying some other parameter
                     crReTestop=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.DeviceMode)
                     isCRAlive=$(echo "$crReTestop" | grep "Can't find destination compo")
-                    RBUS_STATUS=`dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable | grep value | awk '{print $NF}'`
+                    RBUS_STATUS=`dmcli eRT retv Device.DeviceInfo.X_RDKCENTRAL-COM_RFC.Feature.RBUS.Enable`
                     if [ "$isCRAlive" != "" ] || [ "$RBUS_STATUS" == "true" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : CR_process is not running, need to reboot the unit"
                         vendor=$(getVendorName)
@@ -952,12 +952,10 @@ case $SELFHEAL_TYPE in
 esac
 
 BR_MODE=0
-bridgeMode=$(fast_dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+bridgeMode=$(dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
 # RDKB-6895
-bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
-if [ "$bridgeSucceed" != "" ]; then
-    isBridging=$(echo "$bridgeMode" | grep "router")
-    if [ "$isBridging" = "" ]; then
+if [ "$bridgeMode" != "" ]; then
+    if [ "$bridgeMode" != "router" ]; then
         BR_MODE=1
         echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
         Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
@@ -1549,8 +1547,8 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
 
             primary=$(sysevent get hotspotfd-primary)
             secondary=$(sysevent get hotspotfd-secondary)
-            PRIMARY_EP=$(fast_dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
-            SECOND_EP=$(fast_dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
+            PRIMARY_EP=$(dmcli eRT retv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint)
+            SECOND_EP=$(dmcli eRT retv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint)
             if [ "$primary" = "" ] ; then
                echo_t "Primary endpoint is empty. Restoring it"
                sysevent set hotspotfd-primary $PRIMARY_EP
@@ -2818,7 +2816,7 @@ case $SELFHEAL_TYPE in
             fi
 
             # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
-            MESH_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
+            MESH_ENABLE=$(dmcli eRT retv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable)
             if [ "$MESH_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
                 t2CountNotify "WIFI_INFO_mesh_enabled"
@@ -2996,11 +2994,11 @@ case $SELFHEAL_TYPE in
         if [ "$bridgeSucceed" = "" ]; then
             echo_t "[RDKB_SELFHEAL_DEBUG] : bridge mode = $bridgeMode"
             if [ serialNumber == "" ]; then
-                serialNumber=$(fast_dmcli eRT getv Device.DeviceInfo.SerialNumber)
+                serialNumber=$(dmcli eRT retv Device.DeviceInfo.SerialNumber)
             fi
             echo_t "[RDKB_SELFHEAL_DEBUG] : SerialNumber = $serialNumber"
             if [ modelName == "" ]; then
-                modelName=$(fast_dmcli eRT getv Device.DeviceInfo.ModelName)
+                modelName=$(dmcli eRT retv Device.DeviceInfo.ModelName)
             fi
             echo_t "[RDKB_SELFHEAL_DEBUG] : modelName = $modelName"
 
@@ -3034,11 +3032,8 @@ case $SELFHEAL_TYPE in
 esac
 
 if [ $RADIO_COUNT -eq 0 ]; then
-    RadioNumberOfEntries=$(fast_dmcli eRT getv Device.WiFi.RadioNumberOfEntries)
-    isnumofRadiosExec=$(echo $RadioNumberOfEntries |grep "Execution succeed")
-    if [ "$isnumofRadiosExec" != "" ]; then
-        RADIO_COUNT=$(echo "$RadioNumberOfEntries" | grep value | awk '{ print $5 }')
-    else
+    RADIO_COUNT=$(dmcli eRT retv Device.WiFi.RadioNumberOfEntries)
+    if [ "$RADIO_COUNT" = "" ]; then
         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"
         echo "$isnumofRadiosExec"
     fi
@@ -3952,11 +3947,9 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 		wan_dhcp_client_v6=0
 	fi
 
-        DHCP_STATUS_query=$(fast_dmcli eRT getv Device.DHCPv4.Client.1.DHCPStatus)
-        DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
-        DHCP_STATUS=$(echo "$DHCP_STATUS_query" | grep "value" | cut -f3 -d":" | awk '{print $1}')
+        DHCP_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.DHCPStatus)
 
-        if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
+        if [ "$DHCP_STATUS" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
 
             echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
             if ([ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]) || [ $wan_dhcp_client_v6 -eq 0 ]; then
@@ -4053,7 +4046,7 @@ fi # [ "$WAN_STATUS" = "started" ]
 case $SELFHEAL_TYPE in
     "BASE")
         # Test to make sure that if mesh is enabled the backhaul tunnels are attached to the bridges
-        MESH_ENABLE=$(fast_dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | sed -ne 's/[[:blank:]]*$//; s/.*value: //p')
+        MESH_ENABLE=$(dmcli eRT retv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable)
         if [ "$MESH_ENABLE" = "true" ]; then
             echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if tunnels are attached to bridges"
             t2CountNotify  "WIFI_INFO_mesh_enabled"
