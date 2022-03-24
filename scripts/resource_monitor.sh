@@ -486,4 +486,20 @@ fi
         COUNT=0
     fi
 
+    #Kernel Memory info -> Slab
+    while read name value
+    do
+        if [ "$name" = "Slab:" ]
+        then
+            echo_t "RDKB_SELFHEAL : $name $value"
+            t2ValNotify "Slab_split" "$value"
+            break
+        fi
+    done < /proc/meminfo
+    (
+      set -- $(slabtop -o -sc | head -n10 | tail -3)
+      echo_t "RDKB_SELFHEAL : Top Slab usage: ${8},${7},${16},${15},${24},${23}"
+      t2ValNotify "SlabUsage_split" "${8},${7},${16},${15},${24},${23}"
+    )
+
 done
