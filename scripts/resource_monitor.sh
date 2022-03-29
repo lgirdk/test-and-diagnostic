@@ -446,14 +446,19 @@ fi
     fi
 
     #Kernel Memory info -> Slab
-    slabmemory=`awk '/^Slab:/ {print $2,$3}' /proc/meminfo`
-    echo_t "RDKB_SELFHEAL : Slab: $slabmemory"
-    t2ValNotify "Slab_split" "$slabmemory"
-
-    slabtop -sc | head -n10 | tail -3 | sed -e "s/\r//g" > /tmp/slabtop_info.txt
-    slabArray=($(awk '{print $8,$7}' /tmp/slabtop_info.txt))
-    echo_t "RDKB_SELFHEAL : Top Slab usage: ${slabArray[0]},${slabArray[1]},${slabArray[2]},${slabArray[3]},${slabArray[4]},${slabArray[5]}"
-    t2ValNotify "SlabUsage_split" "${slabArray[0]},${slabArray[1]},${slabArray[2]},${slabArray[3]},${slabArray[4]},${slabArray[5]}"
-    rm -rf /tmp/slabtop_info.txt
+    while read name value
+    do
+        if [ "$name" = "Slab:" ]
+        then
+            echo_t "RDKB_SELFHEAL : $name $value"
+            t2ValNotify "Slab_split" "$value"
+            break
+        fi
+    done < /proc/meminfo
+    (
+      set -- $(slabtop -o -sc | head -n10 | tail -3)
+      echo_t "RDKB_SELFHEAL : Top Slab usage: ${8},${7},${16},${15},${24},${23}"
+      t2ValNotify "SlabUsage_split" "${8},${7},${16},${15},${24},${23}"
+    )
 
 done
