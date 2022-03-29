@@ -182,9 +182,17 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 		}
 
 	}
+		char buf[11];
+		rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
+		ERR_CHK(rc);
+		rc = sprintf_s(buf,sizeof(buf),"%d",i);
+		if(rc < EOK)
+		{
+			ERR_CHK(rc);
+		}
 		if(type == PingServerType_IPv4)
 		{
-			if (syscfg_set_u(NULL, "Ipv4PingServer_Count", i) != 0) 
+			if (syscfg_set(NULL, "Ipv4PingServer_Count", buf) != 0) 
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
 			}
@@ -198,7 +206,7 @@ int SyncServerlistInDb(PingServerType type, int EntryCount)
 		}
 		else
 		{
-			if (syscfg_set_u(NULL, "Ipv6PingServer_Count", i) != 0) 
+			if (syscfg_set(NULL, "Ipv6PingServer_Count", buf) != 0) 
 			{
 				CcspTraceWarning(("syscfg_set failed\n"));
 			}
@@ -839,9 +847,11 @@ CosaSelfHealRemove
 }
 void SavePingServerURI(PingServerType type, char *URL, int InstNum)
 {
-		char recName[256];
-                errno_t rc = -1;
-		memset(recName,0,sizeof(recName));
+		char uri[256] = {0};
+		char recName[256] = {0};
+		errno_t rc = -1;
+		rc = strcpy_s(uri,sizeof(uri),URL);
+		ERR_CHK(rc);
 		if(type == PingServerType_IPv4)
 		{
 			rc = sprintf_s(recName, sizeof(recName), Ipv4_Server, InstNum);
@@ -858,7 +868,7 @@ void SavePingServerURI(PingServerType type, char *URL, int InstNum)
 				ERR_CHK(rc);
 			}
 		}
-		if (syscfg_set(NULL, recName, URL) != 0) 
+		if (syscfg_set(NULL, recName, uri) != 0) 
 		{
 			CcspTraceWarning(("syscfg_set failed\n"));
 		}
@@ -895,7 +905,7 @@ ANSC_STATUS RemovePingServerURI(PingServerType type, int InstNum)
 		}
 		if (syscfg_unset(NULL, recName) != 0) 
 		{
-			CcspTraceWarning(("syscfg_unset failed\n"));
+			CcspTraceWarning(("syscfg_set failed\n"));
 			return ANSC_STATUS_FAILURE;
 		}
 		else 
