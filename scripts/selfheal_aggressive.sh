@@ -551,6 +551,13 @@ self_heal_interfaces()
 
 self_heal_dibbler_server()
 {
+   WAN_INTERFACE=$(getWanInterfaceName)
+   DEFAULT_WAN_INTERFACE=$(sysevent get wan_ifname)
+   if [ "$WAN_INTERFACE" != "$DEFAULT_WAN_INTERFACE" ]; then
+       echo_t "DHCPv6 server disabled when secondary wan is active.."
+       return
+   fi
+
     #Checking dibbler server is running or not RDKB_10683
     BR_MODE=`syscfg get bridge_mode`
     DIBBLER_PID=$(busybox pidof dibbler-server)
