@@ -205,13 +205,6 @@ check_component_status(){
             resetNeeded notifycomponent notify_comp
         fi
 
-        # Checking ssamagent's PID
-        ssam_agent_pid=$(get_pid ssam_agent)
-        if [ "$ssam_agent_pid" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : ssam_agent is not running, need restart"
-            resetNeeded ssamagent ssam_agent
-        fi
-
         PAM_PID=$(busybox pidof CcspPandMSsp)
         if [ "$PAM_PID" = "" ]; then
             # Remove the P&M initialized flag
@@ -301,8 +294,8 @@ if [ -n "$dead_lock_recovery_needed" ]; then
 
    t2CountNotify "SYS_SH_DEADLOCK_warning"
    #Always keep the array1 & array2 Aligned
-   declare -a array1=("cm" "lmlite" "tr069pa" "ethagent" "wifi"  "mta" "notifycomponent" "ssamagent" "tdm" )
-   declare -a array2=("CcspCMAgentSsp" "CcspLMLite" "CcspTr069PaSsp" "CcspEthAgent" "CcspWifiSsp" "CcspMtaAgentSsp" "notify_comp" "ssam_agent" "CcspTandDSsp" )
+   declare -a array1=("cm" "lmlite" "tr069pa" "ethagent" "wifi"  "mta" "notifycomponent" "tdm" )
+   declare -a array2=("CcspCMAgentSsp" "CcspLMLite" "CcspTr069PaSsp" "CcspEthAgent" "CcspWifiSsp" "CcspMtaAgentSsp" "notify_comp" "CcspTandDSsp" )
 
    if [ "$BOX_TYPE" = "MV1" ]; then
       wait_time=10
