@@ -1898,8 +1898,28 @@ if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM"
             RADIO_DISBLD_5G=1
         fi
     fi
+    RADIO_STATUS_2G=-1
+    Radio_sts_1=$(dmcli eRT getv Device.WiFi.Radio.1.Status)
+    RadioExecution_sts_1=$(echo "$Radio_sts_1" | grep "Execution succeed")
+    if [ "$RadioExecution_sts_1" != "" ]; then
+        isDisabled_3=$(echo "$Radio_sts_1" | grep "Down")
+        if [ "$isDisabled_3" != "" ]; then
+            RADIO_STATUS_2G=1
+        fi
+    fi
+    RADIO_STATUS_5G=-1
+    Radio_sts_2=$(dmcli eRT getv Device.WiFi.Radio.2.Status)
+    RadioExecution_sts_2=$(echo "$Radio_sts_2" | grep "Execution succeed")
+    if [ "$RadioExecution_sts_2" != "" ]; then
+        isDisabled_4=$(echo "$Radio_sts_2" | grep "Down")
+        if [ "$isDisabled_4" != "" ]; then
+            RADIO_STATUS_5G=1
+        fi
+    fi
     if [ $RADIO_DISBLD_2G -eq 1 ] && [ $RADIO_DISBLD_5G -eq 1 ]; then
         echo_t "[RDKB_SELFHEAL] : Radio's disabled, Skipping ACSD check"
+    elif [ $RADIO_STATUS_2G -eq 1 ] && [ $RADIO_STATUS_5G -eq 1 ]; then
+        echo_t "[RDKB_SELFHEAL] : Radio's status is down, Skipping ACSD check"
     else
         ACSD_PID=$(busybox pidof acsd)
         if [ "$ACSD_PID" = ""  ]; then
