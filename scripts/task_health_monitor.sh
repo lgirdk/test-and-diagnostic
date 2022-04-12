@@ -909,6 +909,32 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
+        OS_WANMANGR_ENABLE_FILE=/tmp/OS_WANMANAGER_ENABLED
+        OS_WANMANGR_DIR=/usr/rdk/wanmanager/wanmanager
+
+        if [ -f $OS_WANMANGR_ENABLE_FILE ];then
+            echo_t "os-wanmanager enabled"
+            if [ -f $OS_WANMANGR_DIR ];then
+                # Checking wanmanager's PID
+                WANMANAGER_PID=$(busybox pidof wanmanager)
+                if [ "$WANMANAGER_PID" = "" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, need CPE reboot"
+                    t2CountNotify "SYS_ERROR_wanmanager_crash_reboot"
+                    reason="wanmanager_crash"
+                    rebootCount=1
+                    rebootNeeded RM "WANMANAGER" $reason $rebootCount
+                fi
+            fi
+        fi
+    ;;
+esac
+
+case $SELFHEAL_TYPE in
+    "BASE")
+    ;;
+    "TCCBR")
+    ;;
+    "SYSTEMD")
         WiFi_Flag=false
         WiFi_PID=$(busybox pidof CcspWifiSsp)
         if [ "$WiFi_PID" != "" ]; then
