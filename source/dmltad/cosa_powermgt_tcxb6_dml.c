@@ -20,6 +20,7 @@
 #include "ansc_platform.h"
 #include "plugin_main_apis.h"
 #include "cosa_powermgt_tcxb6_dml.h"
+#include "secure_wrapper.h"
 
 /***********************************************************************
 
@@ -155,10 +156,10 @@ BOOL PowerManagement_SetParamBoolValue
 #if defined(_COSA_BCM_ARM_) && defined(_XB6_PRODUCT_REQ_)
         if ( (int)bValue == 1 ) {
             CcspTraceError(("PowerSave/PowerManagement is enabled \n"));
-            system("echo 'powersave' > /sys/module/pcie_aspm/parameters/policy");
+            v_secure_system("echo 'powersave' > /sys/module/pcie_aspm/parameters/policy");
         } else  { 
             CcspTraceError(("PowerSave/PowerManagement is disabled \n"));
-            system("echo 'performance' > /sys/module/pcie_aspm/parameters/policy");
+            v_secure_system("echo 'performance' > /sys/module/pcie_aspm/parameters/policy");
         }
 #endif
         return TRUE;

@@ -34,4 +34,4 @@ libdmltad_la_SOURCES = cosa_apis_util.c plugin_main.c cosa_apis_util_priv.c cosa
 
 libdmltad_la_DEPENDENCIES=$(EXTRA_DEPENDENCIES)
 libdmltad_la_LIBADD=$(libdmltad_la_DEPENDENCIES)
-libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg -lsysevent 
+libdmltad_la_LDFLAGS = -lccsp_common -lsyscfg -lsysevent -lsecure_wrapper

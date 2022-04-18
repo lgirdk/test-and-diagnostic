@@ -25,6 +25,7 @@
 #include "plugin_main_apis.h"
 #include "safec_lib_common.h"
 #include <syscfg/syscfg.h>
+#include "secure_wrapper.h"
 
 #define DEFAULT_MONITOR_INTERVAL    15 /* in minute */ 
 #define DEFAULT_CPU_THRESHOLD       100 /* in percentage */
@@ -155,8 +156,7 @@ BOOL SelfHeal_SetParamBoolValue
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
     char buf[128] = {0};
-    errno_t rc = -1;
-
+    FILE *fp;
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
         if( pMyObject->Enable == bValue )
@@ -177,91 +177,47 @@ BOOL SelfHeal_SetParamBoolValue
 		return FALSE;
 	    }
 
-	    char cmd[128+8];
             if ( bValue == TRUE )
             {
+                v_secure_system("/usr/ccsp/tad/self_heal_connectivity_test.sh &"); 
 
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/self_heal_connectivity_test.sh &");
-                ERR_CHK(rc);
-                system(cmd); 
+                v_secure_system("/usr/ccsp/tad/resource_monitor.sh &"); 
 
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/resource_monitor.sh &");
-                ERR_CHK(rc);
-                system(cmd); 
-
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "/usr/ccsp/tad/selfheal_aggressive.sh &");
-                ERR_CHK(rc);
-                system(cmd);
+                v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
 	    }
             else
 	    {
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof self_heal_connectivity_test.sh");
-                ERR_CHK(rc);
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
+                fp = v_secure_popen("r", "busybox pidof self_heal_connectivity_test.sh");
+                copy_command_output(fp, buf, sizeof(buf));
+                v_secure_pclose(fp);
 
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
                 } else {    
 	            CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
-                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
-                    if(rc < EOK)
-                    {
-                        ERR_CHK(rc);
-                    }
-                    system(cmd);
+                    v_secure_system("kill -9 %s", buf);
                 }
     
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof resource_monitor.sh");
-                ERR_CHK(rc);
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
+                fp = v_secure_popen("r", "busybox pidof resource_monitor.sh");
+                copy_command_output(fp, buf, sizeof(buf));
+                v_secure_pclose(fp);
 
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
                 } else {    
 	            CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
-                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
-                    if(rc < EOK)
-                    {
-                        ERR_CHK(rc);
-                    }
-                    system(cmd);
+                    v_secure_system("kill -9 %s", buf);
                 }   
        
-                rc = memset_s(cmd, sizeof(cmd), 0, sizeof(cmd));
-                ERR_CHK(rc);
-                rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
-                ERR_CHK(rc);
-                rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof selfheal_aggressive.sh");
-                ERR_CHK(rc);
-                copy_command_output(cmd, buf, sizeof(buf));
-                buf[strlen(buf)] = '\0';
+                fp = v_secure_popen("r", "busybox pidof selfheal_aggressive.sh");
+                copy_command_output(fp, buf, sizeof(buf));
+                v_secure_pclose(fp);
 
                 if (!strcmp(buf, "")) {
 	            CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
                 } else {
 	            CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
-                    rc = sprintf_s(cmd, sizeof(cmd), "kill -9 %s", buf);
-                    if(rc < EOK)
-                    {
-                        ERR_CHK(rc);
-                    }
-                    system(cmd);
+                    v_secure_system("kill -9 %s", buf);
                 }
 	    }
 	    pMyObject->Enable = bValue;
@@ -273,17 +229,10 @@ BOOL SelfHeal_SetParamBoolValue
     {
         if (bValue) 
         {
-            char cmd[128] = "\0";
-
-            rc = memset_s (cmd, sizeof(cmd), 0, sizeof(cmd));
-            ERR_CHK(rc);
-            rc = memset_s (buf, sizeof(buf), 0, sizeof(buf));
-            ERR_CHK(rc);
-            rc = strcpy_s(cmd, sizeof(cmd), "busybox pidof cpuprocanalyzer");
-            ERR_CHK(rc);
-            copy_command_output(cmd, buf, sizeof(buf));
-            buf[strlen(buf)] = '\0';
-            CcspTraceWarning(("Value of cmd: %s and Value of buf: %s and Check for strcmp: %d \n", cmd, buf, strcmp(buf, "")));
+            fp = v_secure_popen("r", "busybox pidof cpuprocanalyzer");
+            copy_command_output(fp, buf, sizeof(buf));
+            v_secure_pclose(fp);
+            CcspTraceWarning(("Value of buf: %s and Check for strcmp: %d \n", buf, strcmp(buf, "")));
             if (strcmp(buf, "")) 
             {
                 CcspTraceWarning(("%s: CPUProcAnalyzer is already running!\n", __FUNCTION__));
@@ -291,7 +240,7 @@ BOOL SelfHeal_SetParamBoolValue
             else 
             {
                 CcspTraceWarning(("%s: Triggering RunCPUProcAnalyzer script\n", __FUNCTION__));
-                system("/lib/rdk/RunCPUProcAnalyzer.sh start &");
+                v_secure_system("/lib/rdk/RunCPUProcAnalyzer.sh start &");
             }
         }
         return TRUE;

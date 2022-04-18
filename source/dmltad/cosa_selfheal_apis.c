@@ -75,33 +75,26 @@
 #include "cosa_logbackup_dml.h"
 #include "safec_lib_common.h"
 #include <syscfg/syscfg.h>
+#include "secure_wrapper.h"
 
 static char *Ipv4_Server ="Ipv4_PingServer_%d";
 static char *Ipv6_Server ="Ipv6_PingServer_%d";
 
 //static int count=0; /*RDKB-24432 : Memory usage and fragmentation selfheal*/
 
-void copy_command_output(char * cmd, char * out, int len)
+void copy_command_output(FILE *fp, char * buf, int len)
 {
-    FILE * fp;
-    char   buf[256] = {0};
     char * p;
-    errno_t rc = -1;
-    fp = popen(cmd, "r");
 
     if (fp)
     {
-        fgets(buf, sizeof(buf), fp);
-
+        fgets(buf, len, fp);
+        buf[len-1] = '\0';
         /*we need to remove the \n char in buf*/
-        if ((p = strchr(buf, '\n'))) *p = 0;
-
-        rc = strcpy_s(out, len, buf);
-        ERR_CHK(rc);
-
-        pclose(fp);
+        if ((p = strchr(buf, '\n'))) {
+                *p = 0;
+        }
     }
-
 }
 
 int SyncServerlistInDb(PingServerType type, int EntryCount)
@@ -302,27 +295,19 @@ CosaDmlGetSelfHealMonitorCfg(
 
 void CpuMemFragCronSchedule(ULONG uinterval, BOOL bCollectnow)
 {
-     char command[256] = {0};
-     errno_t rc = -1;
      if(bCollectnow == TRUE) 
      {
        if((uinterval >= 1 ) && ( uinterval <= 120 ))
        {
            CcspTraceInfo(("%s calling collection script\n",__FUNCTION__));
            /*For Featching /proc/buddyinfo data immediatelly	*/
-           system("sh /usr/ccsp/tad/log_buddyinfo.sh &");
+           v_secure_system("/usr/ccsp/tad/log_buddyinfo.sh &");
        }
        else
           CcspTraceError(("%s, Time interval is not in range\n",__FUNCTION__));
      }
 	/*For Featching /proc/buddyinfo data after interval	*/
-	rc = sprintf_s(command, sizeof(command), "sh /usr/ccsp/tad/cpumemfrag_cron.sh %lu &",uinterval);
-	if(rc < EOK)
-	{
-		ERR_CHK(rc);
-	}
-	
-	system(command);
+	v_secure_system("/usr/ccsp/tad/cpumemfrag_cron.sh %lu &",uinterval);
 
 
 }
@@ -490,12 +475,12 @@ CosaDmlGetSelfHealCfg(
 	pMyObject->Enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
         if ( pMyObject->Enable == TRUE )
         {
-            system("/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+            v_secure_system("/usr/ccsp/tad/self_heal_connectivity_test.sh &");
 #if defined(_COSA_BCM_MIPS_)
-            system("/lib/rdk/xf3_wifi_self_heal.sh &");
+            v_secure_system("/lib/rdk/xf3_wifi_self_heal.sh &");
 #endif
-	    system("/usr/ccsp/tad/resource_monitor.sh &");
-            system("/usr/ccsp/tad/selfheal_aggressive.sh &");
+	    v_secure_system("/usr/ccsp/tad/resource_monitor.sh &");
+            v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
 	}  
 
 	rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
@@ -1081,6 +1066,6 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun )
 		*/
 		CcspTraceInfo(("%s - Modify DCM cron schedule\n",__FUNCTION__ ));
 		
-		system("sh /lib/rdk/DCMCronreschedule.sh &");
+		v_secure_system("/lib/rdk/DCMCronreschedule.sh &");
 	}
 }

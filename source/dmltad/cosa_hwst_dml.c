@@ -23,6 +23,7 @@
 #include "cosa_hwst_dml.h"
 #include "platform_hal.h"
 #include "safec_lib_common.h"
+#include "secure_wrapper.h"
 
 #define HWSELFTEST_RESULTS_SIZE 2048
 #define HWSELFTEST_RESULTS_FILE "/tmp/hwselftest.results"
@@ -205,7 +206,6 @@ hwHealthTest_SetParamBoolValue
             AnscTraceWarning(("%llu space left in tmp\n", result));
         }
 
-        char cmd[128] = {0};
         hwst_runTest = bValue;
         if(hwst_runTest)
         {
@@ -240,15 +240,9 @@ hwHealthTest_SetParamBoolValue
                 AnscCopyString(hwExecInfo,info);
                 return TRUE;
             }
-            errno_t rc = -1;
-            rc = sprintf_s(cmd, sizeof(cmd) , "/usr/bin/hwselftest_run.sh 0001 &");
-            if(rc < EOK)
-            {
-                 ERR_CHK(rc);
-            }
-            AnscTraceWarning(("Command to execute HWST: %s\n", cmd));
+            AnscTraceWarning(("Command to execute HWST\n"));
             AnscTraceFlow(("Executing Hwselftest..\n"));
-            system(cmd);
+            v_secure_system("/usr/bin/hwselftest_run.sh 0001 &");
         }
         else
         {

@@ -69,7 +69,7 @@
 **************************************************************************/
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
-
+#include "secure_wrapper.h"
 #include "arpa/inet.h"
 #include <utctx.h>
 #include <utctx_api.h>
@@ -104,9 +104,7 @@ static int _GetARPCacheEntries (int *count, arpHost_t **out_hosts)
 
     arpHost_t *hosts = NULL;
 
-    unlink(ARP_CACHE_FILE);
-    snprintf(line, sizeof(line), "ip neigh show > %s", ARP_CACHE_FILE);
-    system(line);
+    v_secure_system("ip neigh show > " ARP_CACHE_FILE);
 
     FILE *fp = fopen(ARP_CACHE_FILE, "r");
     if (fp) {

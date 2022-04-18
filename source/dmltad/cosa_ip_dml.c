@@ -76,6 +76,7 @@
 #include "ansc_string_util.h"
 #include <syscfg/syscfg.h>
 #include "ccsp_trace.h"
+#include "secure_wrapper.h"
 
 #ifdef EMMC_DIAG_SUPPORT
 #include "platform_hal.h"
@@ -6299,8 +6300,6 @@ SpeedTest_Commit
     BOOL            speedtest_setting = FALSE;
 
     char buf[128] = {0};
-    char cmd[128] = {0};
-    errno_t rc = -1;
 
     if((syscfg_get( NULL, "enable_speedtest", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
     {
@@ -6323,10 +6322,8 @@ SpeedTest_Commit
 
     if(g_enable_speedtest == TRUE && g_run_speedtest == TRUE)
     {
-        rc = strcpy_s(cmd, sizeof(cmd) , "/usr/ccsp/tad/speedtest.sh &");
-        ERR_CHK(rc);
         AnscTraceFlow(("Executing Speedtest..\n"));
-        system(cmd);
+        v_secure_system("/usr/ccsp/tad/speedtest.sh &");
         g_run_speedtest = FALSE;
     }
 
