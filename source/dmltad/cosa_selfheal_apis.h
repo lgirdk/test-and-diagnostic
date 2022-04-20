@@ -40,6 +40,14 @@
 #define COSA_DML_HOST		1
 #define COSA_DML_PEER		2
 
+#define CONFIG_FILE           "/nvram/procanalyzerconfig.ini"
+#define PROCESS_LIST_FILE     "/nvram/processes.list"
+#define PARAM_NAME_PREPEND    "FEATURE.CPUPROCANALYZER."
+#define BUF_16     16
+#define BUF_32     32
+#define BUF_64     64
+#define BUF_128    128
+
 typedef enum _PingServerType
 {
 	PingServerType_IPv4 = 0,
@@ -191,3 +199,9 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun );
 void CpuMemFragCronSchedule(ULONG uinterval, BOOL bConnectnow);
 void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma );
 void copy_command_output(FILE *fp, char * buf, int len);
+
+//Proc Analyzer TR-181 support
+char* RemoveSpaces(char *str);
+void CosaReadProcAnalConfig(const char *paramname, char *res);
+void CosaWriteProcAnalConfig(const char *paramname, char *res);
+int CosaIsProcAnalRunning();

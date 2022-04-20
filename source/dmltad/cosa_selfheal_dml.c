@@ -90,12 +90,6 @@ BOOL SelfHeal_GetParamBoolValue
         return TRUE;
     }
 
-    if (strcmp(ParamName, "X_RDK_CPUProcAnalyzer_Enable") == 0)
-    {
-        *bValue = FALSE;
-        return TRUE;
-    }
-
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_DNS_PINGTEST_Enable") == 0)
     {
         *bValue = pMyObject->DNSPingTest_Enable;
@@ -217,27 +211,6 @@ BOOL SelfHeal_SetParamBoolValue
 	    }
 	    pMyObject->Enable = bValue;
 	}
-        return TRUE;
-    }
-
-    if (strcmp(ParamName, "X_RDK_CPUProcAnalyzer_Enable") == 0)
-    {
-        if (bValue) 
-        {
-            fp = v_secure_popen("r", "busybox pidof cpuprocanalyzer");
-            copy_command_output(fp, buf, sizeof(buf));
-            v_secure_pclose(fp);
-            CcspTraceWarning(("Value of buf: %s and Check for strcmp: %d \n", buf, strcmp(buf, "")));
-            if (strcmp(buf, "")) 
-            {
-                CcspTraceWarning(("%s: CPUProcAnalyzer is already running!\n", __FUNCTION__));
-            } 
-            else 
-            {
-                CcspTraceWarning(("%s: Triggering RunCPUProcAnalyzer script\n", __FUNCTION__));
-                v_secure_system("/lib/rdk/RunCPUProcAnalyzer.sh start &");
-            }
-        }
         return TRUE;
     }
 
@@ -1914,4 +1887,339 @@ CpuMemFrag_GetParamUlongValue
 return FALSE;
 }
 
+/**********************************************************************
+    caller:     owner of this object
+    prototype
+        BOOL
+        CPUProcAnalyzer_GetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL*                       bValue
+            );
+    description:
+        This function is called to retrieve BOOL parameter value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+                char*                       ParamName,
+                The parameter name;
+                BOOL*                       bValue
+                The buffer of returned BOOL value;
+    return:     TRUE if succeeded.
+**********************************************************************/
+BOOL CPUProcAnalyzer_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       bValue
+    )
+{
+    char res[BUF_64] = {0};
+    if ( strcmp(ParamName, "Enable") == 0 )
+    {
+        *bValue = FALSE;
+        return TRUE;
+    }
+    else if ( (strcmp(ParamName, "DynamicProcess") == 0) ||
+              (strcmp(ParamName, "MonitorAllProcess") == 0) ||
+              (strcmp(ParamName, "TelemetryOnly") == 0) )
+    {
+        CosaReadProcAnalConfig(ParamName, res);
+        *bValue = res[0] - '0';
+    }
+    else
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
 
+/**********************************************************************
+    caller:     owner of this object
+    prototype
+        BOOL
+        CPUProcAnalyzer_SetParamBoolValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                BOOL                        bValue
+            );
+    description:
+        This function is called to set BOOL parameter value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+                char*                       ParamName,
+                The parameter name;
+                BOOL                        bValue
+                The buffer of returned BOOL value;
+    return:     TRUE if succeeded.
+**********************************************************************/
+BOOL CPUProcAnalyzer_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    )
+{
+    int ret = 0;
+    if ( strcmp(ParamName, "Enable") == 0 )
+    {
+        if ( bValue )
+        {
+            if ( CosaIsProcAnalRunning() )
+            {
+                CcspTraceWarning(("%s: CPUProcAnalyzer is already running!\n", __FUNCTION__));
+            }
+            else
+            {
+                CcspTraceInfo(("%s: Triggering RunCPUProcAnalyzer script\n", __FUNCTION__));
+                ret = v_secure_system("/lib/rdk/RunCPUProcAnalyzer.sh start &");
+                if(ret != 0)
+                {
+                      CcspTraceWarning(("%s - System Command failure\n",__FUNCTION__ ));
+                }
+            }
+        }
+    }
+    else if ( (strcmp(ParamName, "DynamicProcess") == 0) ||
+              (strcmp(ParamName, "MonitorAllProcess") == 0) ||
+              (strcmp(ParamName, "TelemetryOnly") == 0) )
+    {
+        if( !CosaIsProcAnalRunning() )
+        {
+            CosaWriteProcAnalConfig(ParamName, bValue ? "1" : "0");
+        }
+        else
+        {
+            CcspTraceWarning(("%s - ProcAnalyzer is already running, cannot change config\n",
+                                    __FUNCTION__));
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**********************************************************************
+    caller:     owner of this object
+    prototype
+        BOOL
+        CPUProcAnalyzer_GetParamUlongValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                ULONG*                      puLong
+            );
+    description:
+        This function is called to retrieve ULONG parameter value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+                char*                       ParamName,
+                The parameter name;
+                ULONG*                      puLong
+                The buffer of returned ULONG value;
+    return:     TRUE if succeeded.
+**********************************************************************/
+BOOL
+CPUProcAnalyzer_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    )
+{
+    char res[BUF_64] = {0};
+    char *ptr = NULL;
+    if( (strcmp(ParamName, "SleepInterval") == 0) || (strcmp(ParamName, "TimeToRun") == 0) ||
+        (strcmp(ParamName, "MemoryLimit") == 0) )
+    {
+        CosaReadProcAnalConfig(ParamName, res);
+        *puLong = strtoul(res,&ptr,10);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/**********************************************************************
+    caller:     owner of this object
+    prototype:
+        BOOL
+        CPUProcAnalyzer_SetParamUlongValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                ULONG                       uValue
+            );
+    description:
+        This function is called to set ULONG parameter value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+                char*                       ParamName,
+                The parameter name;
+                ULONG                       uValue
+                The updated ULONG value;
+    return:     TRUE if succeeded.
+**********************************************************************/
+BOOL
+CPUProcAnalyzer_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       uValue
+    )
+{
+    if( (strcmp(ParamName, "SleepInterval") == 0) || (strcmp(ParamName, "TimeToRun") == 0) ||
+        (strcmp(ParamName, "MemoryLimit") == 0) )
+    {
+        if( !CosaIsProcAnalRunning() )
+        {
+            char res[BUF_64] = {0};
+            _ansc_ultoa(uValue, res, 10);
+            CosaWriteProcAnalConfig(ParamName, res);
+        }
+        else
+        {
+            CcspTraceWarning(("%s - ProcAnalyzer is already running, cannot change config\n",
+                                    __FUNCTION__));
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/**********************************************************************
+    caller:     owner of this object
+    prototype:
+        BOOL
+        CPUProcAnalyzer_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue,
+                ULONG*                      pUlSize
+            );
+    description:
+        This function is called to get string value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+                char*                       ParamName,
+                The parameter name;
+                char*                       pValue,
+                The parameter value;
+                ULONG                       pUlSize
+                The string length;
+    return:     ULONG Size of the returned string.
+**********************************************************************/
+ULONG
+CPUProcAnalyzer_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+
+{
+    if( strcmp(ParamName, "ProcessList") == 0 )
+    {
+        char buf[1024] = {0};
+        FILE *fp = fopen(PROCESS_LIST_FILE, "r");
+        if(fp)
+        {
+            while(fscanf(fp,"%s", buf) != EOF)
+            {
+                if(*pValue)
+                {
+                    strcat(pValue,",");
+                }
+                strncat(pValue,buf,*pUlSize);
+            }
+            fclose(fp);
+        }
+    }
+    else if ( (strcmp(ParamName, "SystemStatsToMonitor") == 0) ||
+              (strcmp(ParamName, "ProcessStatsToMonitor") == 0) )
+    {
+        CosaReadProcAnalConfig(ParamName, pValue);
+    }
+    return 0;
+}
+
+/**********************************************************************
+    caller:     owner of this object
+    prototype
+        BOOL
+        CPUProcAnalyzer_SetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       strValue
+            );
+    description:
+        This function is called to set string parameter value;
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       strValue
+                The buffer of the string value;
+    return:     TRUE if succeeded.
+
+**********************************************************************/
+BOOL
+CPUProcAnalyzer_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    )
+
+{
+    if( strcmp(ParamName, "ProcessList") == 0 )
+    {
+        if( !CosaIsProcAnalRunning() )
+        {
+            FILE *fp = fopen(PROCESS_LIST_FILE,"w");
+            if( fp )
+            {
+                char *token = strtok(strValue, ",");
+                while(token != NULL)
+                {
+                    fprintf(fp, "%s\n", token);
+                    token = strtok(NULL, ",");
+                }
+                fclose(fp);
+            }
+        }
+        else
+        {
+            CcspTraceInfo(("%s - ProcAnalyzer is already running, cannot change config\n",
+                                 __FUNCTION__ ));
+        }
+    }
+    else if ( (strcmp(ParamName, "SystemStatsToMonitor") == 0) ||
+              (strcmp(ParamName, "ProcessStatsToMonitor") == 0) )
+    {
+        if( !CosaIsProcAnalRunning() )
+        {
+            CosaWriteProcAnalConfig(ParamName, strValue);
+        }
+        else
+        {
+            CcspTraceWarning(("%s - ProcAnalyzer is already running, cannot change config\n",
+                                    __FUNCTION__));
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+    return TRUE;
+}

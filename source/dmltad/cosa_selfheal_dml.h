@@ -321,4 +321,66 @@ CpuMemFrag_GetParamUlongValue
         ULONG*                      puLen
     );
 
+/***********************************************************************
+ APIs for Object:
+
+    SelfHeal.CPUProcAnalyzer.
+
+    *  CPUProcAnalyzer_GetParamUlongValue
+    *  CPUProcAnalyzer_SetParamUlongValue
+    *  CPUProcAnalyzer_GetParamBoolValue
+    *  CPUProcAnalyzer_SetParamBoolValue
+    *  CPUProcAnalyzer_GetParamStringValue
+    *  CPUProcAnalyzer_SetParamStringValue
+***********************************************************************/
+
+BOOL
+CPUProcAnalyzer_GetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL*                       bValue
+    );
+
+BOOL
+CPUProcAnalyzer_SetParamBoolValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        BOOL                        bValue
+    );
+
+BOOL
+CPUProcAnalyzer_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      puLong
+    );
+
+BOOL
+CPUProcAnalyzer_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       uValue
+    );
+
+ULONG
+CPUProcAnalyzer_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+BOOL
+CPUProcAnalyzer_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       strValue
+    );
+
 #endif

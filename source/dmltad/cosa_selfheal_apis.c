@@ -1034,3 +1034,146 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun )
 		v_secure_system("/lib/rdk/DCMCronreschedule.sh &");
 	}
 }
+
+/**********************************************************************
+    prototype
+        char* RemoveSpaces
+            (
+                char*    str
+            );
+    description:
+        This function is called to remove spaces in config file
+    argument:
+            char*    str,    Input string;
+    return:
+            char*
+**********************************************************************/
+char* RemoveSpaces(char *str)
+{
+    int i=0,j=0;
+    while(str[i] != '\0')
+    {
+        if (str[i] != ' ')
+            str[j++] = str[i];
+        i++;
+    }
+    str[j] = '\0';
+    return str;
+}
+
+/**********************************************************************
+    prototype
+        void CosaReadProcAnalConfig
+            (
+                const char*    paramname,
+                char*          res
+            );
+    description:
+        This function is called to remove spaces in config file
+    argument:
+            const char*    paramname,      ParamName
+            char*          res,            ParamValue;
+    return:
+            void
+**********************************************************************/
+void CosaReadProcAnalConfig(const char *paramname, char *res)
+{
+    FILE *fp = fopen(CONFIG_FILE,"r");
+    char tmp_string[BUF_128] = {0};
+    char* tmp = NULL;
+    char* pch = NULL;
+    errno_t rc = -1;
+
+    if(fp)
+    {
+        while(fgets(tmp_string,BUF_128,fp)!= NULL)
+        {
+             if(strstr(tmp_string,paramname))
+             {
+                tmp=RemoveSpaces(tmp_string);
+                pch=strchr(tmp,'=');
+                pch=pch+1;
+                rc = strcpy_s(res,BUF_64,pch);
+                ERR_CHK(rc);
+                break;
+            }
+            rc = memset_s(tmp_string,sizeof(tmp_string),0,sizeof(tmp_string));
+            ERR_CHK(rc);
+        }
+        fclose(fp);
+    }
+}
+
+/**********************************************************************
+    prototype
+        void CosaWriteProcAnalConfig
+            (
+                const char*    paramname,
+                char*          res
+            );
+    description:
+        This function is called to remove spaces in config file
+    argument:
+            const char*    paramname,      ParamName
+            char*          res,            ParamValue;
+    return:
+            void
+**********************************************************************/
+void CosaWriteProcAnalConfig(const char *paramname, char *res)
+{
+    int ret = 0;
+    if(!access(CONFIG_FILE, W_OK))
+    {
+        ret = v_secure_system("sed -i '/%s/d' "CONFIG_FILE, paramname);
+        if(ret != 0)
+        {
+             CcspTraceError(("%s - System Command failure\n",__FUNCTION__ ));
+             return;
+        }
+    }
+    FILE *fp = fopen(CONFIG_FILE, "a");
+    if(fp)
+    {
+        fprintf(fp, PARAM_NAME_PREPEND"%s = %s\n", paramname, res);
+        fclose(fp);
+    }
+}
+
+/**********************************************************************
+    prototype
+        int CosaIsProcAnalRunning()
+    description:
+        This function is called to check if ProcAnal is running or not
+    argument:
+        NULL
+    return:
+        1 - If proc anal running
+        0 - If proc anal not running
+**********************************************************************/
+int CosaIsProcAnalRunning()
+{
+    char buf[BUF_128] = {0};
+    FILE *fp;
+
+    fp = v_secure_popen("r", "busybox pidof cpuprocanalyzer");
+    if ( fp == 0 )
+    {
+        CcspTraceInfo(("%s: Not able to read cpuprocanalyser pid\n", __FUNCTION__));
+    }
+    else
+    {
+        copy_command_output(fp, buf, sizeof(buf));
+    }
+    v_secure_pclose(fp);
+
+    if(*buf)
+    {
+        CcspTraceInfo(("%s: CPUProcAnalyzer is RUNNING!\n", __FUNCTION__));
+        return 1;
+    }
+    else
+    {
+        CcspTraceInfo(("%s: CPUProcAnalyzer is NOT RUNNING!\n", __FUNCTION__));
+        return 0;
+    }
+}

@@ -1018,12 +1018,6 @@
                       <syntax>bool</syntax>
                       <writable>true</writable>
                 </parameter>
-                <parameter>
-                      <name>X_RDK_CPUProcAnalyzer_Enable</name>
-                      <type>boolean</type>
-                      <syntax>bool</syntax>
-                      <writable>true</writable>
-                </parameter>
                <parameter>
                       <name>X_RDKCENTRAL-COM_MaxRebootCount</name>
                       <type>unsignedInt</type>
@@ -1272,6 +1266,80 @@
                             <writable>true</writable>
                         </parameter>
                  </parameters>
+            </object>
+            <object>
+                <name>CPUProcAnalyzer</name>
+                <objectType>object</objectType>
+                <functions>
+                    <func_GetParamUlongValue>CPUProcAnalyzer_GetParamUlongValue</func_GetParamUlongValue>
+                    <func_SetParamUlongValue>CPUProcAnalyzer_SetParamUlongValue</func_SetParamUlongValue>
+                    <func_GetParamBoolValue>CPUProcAnalyzer_GetParamBoolValue</func_GetParamBoolValue>
+                    <func_SetParamBoolValue>CPUProcAnalyzer_SetParamBoolValue</func_SetParamBoolValue>
+                    <func_GetParamStringValue>CPUProcAnalyzer_GetParamStringValue</func_GetParamStringValue>
+                    <func_SetParamStringValue>CPUProcAnalyzer_SetParamStringValue</func_SetParamStringValue>
+                </functions>
+                <parameters>
+                    <parameter>
+                        <name>Enable</name>
+                        <type>boolean</type>
+                        <syntax>bool</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>SleepInterval</name>
+                        <type>unsignedInt</type>
+                        <syntax>uint32</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>TimeToRun</name>
+                        <type>unsignedInt</type>
+                        <syntax>uint32</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>DynamicProcess</name>
+                        <type>boolean</type>
+                        <syntax>bool</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>MonitorAllProcess</name>
+                        <type>boolean</type>
+                        <syntax>bool</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>MemoryLimit</name>
+                        <type>unsignedInt</type>
+                        <syntax>uint32</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>ProcessList</name>
+                        <type>string</type>
+                        <syntax>string</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>SystemStatsToMonitor</name>
+                        <type>string</type>
+                        <syntax>string</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>ProcessStatsToMonitor</name>
+                        <type>string</type>
+                        <syntax>string</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                    <parameter>
+                        <name>TelemetryOnly</name>
+                        <type>boolean</type>
+                        <syntax>bool</syntax>
+                        <writable>true</writable>
+                    </parameter>
+                </parameters>
             </object>
             </objects>
         </object>
