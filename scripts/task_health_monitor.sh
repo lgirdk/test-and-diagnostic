@@ -147,6 +147,7 @@ check_component_status(){
             if [ "$CM_PID" = "" ]; then
                 #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
                 echo_t "RDKB_PROCESS_CRASHED : CM_process is not running, need restart"
+                t2CountNotify "SYS_SH_CM_restart"
                 resetNeeded cm CcspCMAgentSsp
             fi
         fi
