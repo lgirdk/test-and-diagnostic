@@ -897,14 +897,14 @@ self_heal_dhcp_clients()
 
                 if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunning"
                     wan_dhcp_client_v4=0
                 fi
                 ;;
             "TCCBR")
                 if [ "$check_wan_dhcp_client_v4" = "" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+                    t2CountNotify "SYS_ERROR_DHCPV4Client_notrunning"
                     wan_dhcp_client_v4=0
                 fi
                 ;;
@@ -918,13 +918,13 @@ self_heal_dhcp_clients()
                     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                     if [ "$check_wan_dhcp_client_v4" = "" ] && [ "$LAST_EROUTER_MODE" != "2" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                        t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+                        t2CountNotify "SYS_ERROR_DHCPV4Client_notrunning"
                         wan_dhcp_client_v4=0
                     fi
                 else
                     if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-                        t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+                        t2CountNotify "SYS_ERROR_DHCPV4Client_notrunning"
                         wan_dhcp_client_v4=0
                     fi
                 fi
@@ -937,7 +937,7 @@ self_heal_dhcp_clients()
                 "BASE"|"TCCBR")
                     if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ] ; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+                        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunning"
                         wan_dhcp_client_v6=0
                     fi
                     ;;
@@ -946,13 +946,13 @@ self_heal_dhcp_clients()
                         #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
                         if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$LAST_EROUTER_MODE" != "1" ] && [ "$Unit_Activated" != "0" ]; then
                             echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                            t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+                            t2CountNotify "SYS_ERROR_DHCPV6Client_notrunning"
                             wan_dhcp_client_v6=0
                         fi
                     else
                         if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ]; then
                             echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-                            t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+                            t2CountNotify "SYS_ERROR_DHCPV6Client_notrunning"
                             wan_dhcp_client_v6=0
                         fi
                     fi

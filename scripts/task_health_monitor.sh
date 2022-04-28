@@ -3525,7 +3525,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ] && [ "$MAPT_CONFIG" != "set" ]; then
           echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
-          t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
+          t2CountNotify "SYS_ERROR_DHCPV4Client_notrunning"
 	  wan_dhcp_client_v4=0
     fi
 
@@ -3534,7 +3534,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
         #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
 	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ]; then
         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
-        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
+        t2CountNotify "SYS_ERROR_DHCPV6Client_notrunning"
 		wan_dhcp_client_v6=0
 	fi
 
