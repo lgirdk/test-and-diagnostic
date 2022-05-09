@@ -4364,6 +4364,31 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
         ;;
     esac
 
+    if [ "$(sysevent get wan-status)" = "started" ] && [ -n "$(ifconfig $WAN_INTERFACE | grep 'UP')" ]
+    then
+        LAST_EROUTER_MODE=$(get_from_syscfg_cache last_erouter_mode)
+        if [ "$LAST_EROUTER_MODE" != "2" ] ; then
+            WAN_IPv4_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
+            if [ "$WAN_IPv4_Addr" = "" ] ; then
+                echo_t "erouter ipv4 address is empty"
+                t2CountNotify "RF_ERROR_erouter_ipv4_loss"
+                sysevent set dhcp_client-restart
+            fi
+        fi
+        if [ "$LAST_EROUTER_MODE" != "1" ] ; then
+            WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
+            if [ "$WAN_IPv6_Addr" = "" ] ; then
+                echo_t "erouter ipv6 address is empty"
+                t2CountNotify "RF_ERROR_erouter_ipv6_loss"
+                t2CountNotify "SYS_SH_ti_dhcp6c_restart"
+                echo_t "restart dibbler-client"
+                /usr/sbin/dibbler-client stop
+                sleep 2
+                /usr/sbin/dibbler-client start
+            fi
+        fi
+    fi
+
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
     if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ] && [ "$MAPT_CONFIG" != "set" ] && [ $DHCPV4C_STATUS != "false" ]; then
           echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
