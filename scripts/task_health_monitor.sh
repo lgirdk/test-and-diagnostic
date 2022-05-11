@@ -1246,8 +1246,6 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
                echo_t "Secondary endpoint is empty. Restoring it"
                sysevent set hotspotfd-secondary $SECOND_EP
             fi
-            echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
-            t2CountNotify "WIFI_SH_hotspot_restart"
             resetNeeded "" CcspHotspot
         fi
     fi

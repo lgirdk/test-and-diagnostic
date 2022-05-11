@@ -766,10 +766,17 @@ resetNeeded()
                 cd -
 
             elif [ "$ProcessName" = "CcspHotspot" ]; then
-                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                cd /usr/ccsp/hotspot
-                $BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
-                cd -
+                CCSPHOTSPOT_PID=$(busybox pidof CcspHotspot)
+                if [ "$CCSPHOTSPOT_PID" = "" ]; then
+                    echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
+                    t2CountNotify "WIFI_SH_hotspot_restart"
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/hotspot
+                    $BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
+                    cd -
+                else
+                    echo_t "RDKB_SELFHEAL : $ProcessName is already running"
+                fi
 
             elif [ "$ProcessName" = "hotspotfd" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
