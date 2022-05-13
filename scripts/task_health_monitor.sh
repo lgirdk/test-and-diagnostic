@@ -3351,12 +3351,18 @@ if [ "$DIBBLER_PID" = "" ]; then
                                 ip -6 addr add $v6addr dev $PRIVATE_LAN
                                 sleep 5
                             fi
-                         elif [ $Sizeof_ServerConf -le 1 ]; then
-                            Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
-                            ret_val=`echo $?`
-                            if [ "$ret_val" = "1" ];then
+                        elif [ $Sizeof_ServerConf -le 1 ]; then
+                            if [ "$BOX_TYPE" = "HUB4" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
-                                t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                echo "DIBBLER : Setting 'sysevent dibblerServer-restart restart' to trigger PAM for dibbler-server file creation"
+                                sysevent set dibblerServer-restart restart
+                            else
+                                Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
+                                ret_val=`echo $?`
+                                if [ "$ret_val" = "1" ];then
+                                    echo "DIBBLER : Dibbler Server Config is empty"
+                                    t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
+                                fi
                             fi
                         elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ];then
                             #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
