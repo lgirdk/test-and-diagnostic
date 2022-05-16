@@ -905,6 +905,26 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+# To check PSM DB validity
+ case $SELFHEAL_TYPE in
+    "BASE")
+    ;;
+    "TCCBR")
+    ;;
+    "SYSTEMD")
+        case $BOX_TYPE in
+            "HUB4")
+                psmDbXmlValidityCheck=`xmllint --noout --nonet /nvram/bbhm_bak_cfg.xml > /dev/null 2>&1;echo $?`
+
+                if [ "$psmDbXmlValidityCheck" != "0" ] ; then
+                    echo "bbhm_bak_cfg.xml is corrupted. Trigger Factory Reset"
+                    dmcli eRT setv Device.X_CISCO_COM_DeviceControl.FactoryReset string Router,Wifi,VoIP,Firewall
+                fi
+            ;;
+        esac
+    ;;
+esac
+
 case $SELFHEAL_TYPE in
     "BASE")
     ;;
