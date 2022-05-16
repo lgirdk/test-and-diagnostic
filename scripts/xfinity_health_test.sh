@@ -6,13 +6,18 @@ testenable=`syscfg get XfinityHealthCheckEnable`
 testcadence=`syscfg get XfinityHealthCheckCadence`
 daystotest=`syscfg get XfinityHealthCheckRemDays`
 donetoday=`syscfg get XfinityHealthCheckDone`
+grestatus="`ip link show gretap0 | grep DOWN`"
 
 if [ "$xfinityenable" = "1" ] && [ "$testenable" = "true" ];then
     checkMaintenanceWindow
     if [ $reb_window -eq 1 ];then
         if [ "$donetoday" = "false" ];then
             if [ "$daystotest" = "0" ];then
-                /usr/bin/xfinitytest brTest 4091
+                if [ "$grestatus" = "" ];then
+                    /usr/bin/xfinitytest brTest 4091
+                else
+                    echo `date` ": HOTSPOT_HEALTHCHECK : GRE tunnel is down" >> $xfinitytestlogfile
+                fi
                 syscfg set XfinityHealthCheckRemDays $((--testcadence));
             else
                 syscfg set XfinityHealthCheckRemDays $((--daystotest));
