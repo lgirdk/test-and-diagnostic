@@ -2498,17 +2498,19 @@ bridgeMode=$(dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.
 # RDKB-6895
 bridgeSucceed=$(echo "$bridgeMode" | grep "Execution succeed")
 if [ "$bridgeSucceed" != "" ]; then
-    isBridging=$(echo "$bridgeMode" | grep "router")
-    if [ "$isBridging" = "" ]; then
-        BR_MODE=1
-        echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-        Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
-        if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+	isBridging=$(echo "$bridgeMode" | grep "router")
+        if [ "$isBridging" = "" ]; then
+        	BR_MODE=1
+                echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
+                if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+        		Bridge_Mode_Type=$(echo "$bridgeMode" | grep -oE "(full-bridge-static|bridge-static)")
+        		if [ "$Bridge_Mode_Type" = "full-bridge-static" ]; then
+            			echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        		elif [ "$Bridge_Mode_Type" = "bridge-static" ]; then
+            			echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        		fi
+		fi
         fi
-    fi
 else
     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking bridge mode."
     t2CountNotify "SYS_ERROR_DmCli_Bridge_mode_error"
@@ -2517,10 +2519,12 @@ else
     if [ "$isBridging" != "0" ]; then
         BR_MODE=1
         echo_t "[RDKB_SELFHEAL] : Device in bridge mode"
-        if [ "$isBridging" = "3" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
-        elif [ "$isBridging" = "2" ]; then
-            echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+        if [ "$MODEL_NUM" = "CGA4332COM" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
+        	if [ "$isBridging" = "3" ]; then
+            		echo_t "[RDKB_SELFHEAL] : Device in Basic Bridge mode"
+        	elif [ "$isBridging" = "2" ]; then
+            		echo_t "[RDKB_SELFHEAL] : Device in Advanced Bridge mode"
+       		fi
         fi
     fi
 
