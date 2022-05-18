@@ -330,6 +330,7 @@ do
 #			rebootNeeded RM CPU
 #		fi
 
+
 ####################################################
 # Logic : 	If total CPU is 100% and boot time is more than 45 min,
 #		Take sum of the cpu consumption of top 5 downstream_manager processes.
@@ -359,6 +360,13 @@ do
 				fi
 			fi
 		fi
+fi
+
+# Checking fans rotor lock. If not running log the telemetry string.
+if [ "$BOX_TYPE" == "WNXL11BWL" ] || [ "$BOX_TYPE" == "SE501" ]; then
+	if [ "x$THERMALCTRL_ENABLE" == "xtrue" ]; then
+		/bin/sh /usr/ccsp/tad/check_fan.sh
+	fi
 fi
 
 if [ "$BOX_TYPE" = "XB3" ] ; then
