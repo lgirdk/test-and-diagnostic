@@ -4145,12 +4145,24 @@ if [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
         OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
         if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
-                vlantag_wl0=$( /usr/opensync/tools/ovsh s Port -w name==wl0 | egrep "tag" | egrep 100)
-                vlantag_wl1=$( /usr/opensync/tools/ovsh s Port -w name==wl1 | egrep "tag" | egrep 100)
-                if [[ ! -z "$vlantag_wl0" ]] || [[ ! -z "$vlantag_wl1" ]]; then
-                        echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
-                        ovs-vsctl remove port wl0 tag 100
-                        ovs-vsctl remove port wl1 tag 100
+                if [ "$OneWiFiEnabled" = "true" ] 
+                then
+                    echo_t "[RDKB_SELFHEAL] : OneWiFi is enabled "
+                    vlantag_wl01=$( /usr/opensync/tools/ovsh s Port -w name==wl0.1 | egrep "tag" | egrep 100)
+                    vlantag_wl11=$( /usr/opensync/tools/ovsh s Port -w name==wl1.1 | egrep "tag" | egrep 100)
+                    if [[ ! -z "$vlantag_wl01" ]] || [[ ! -z "$vlantag_wl11" ]]; then
+                            echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
+                            ovs-vsctl remove port wl0.1 tag 100
+                            ovs-vsctl remove port wl1.1 tag 100
+                    fi
+                else
+                    vlantag_wl0=$( /usr/opensync/tools/ovsh s Port -w name==wl0 | egrep "tag" | egrep 100)
+                    vlantag_wl1=$( /usr/opensync/tools/ovsh s Port -w name==wl1 | egrep "tag" | egrep 100)
+                    if [[ ! -z "$vlantag_wl0" ]] || [[ ! -z "$vlantag_wl1" ]]; then
+                            echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
+                            ovs-vsctl remove port wl0 tag 100
+                            ovs-vsctl remove port wl1 tag 100
+                    fi
                 fi
         fi
 fi
