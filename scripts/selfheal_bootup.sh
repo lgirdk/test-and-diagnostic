@@ -79,6 +79,12 @@ t2ValNotify() {
     fi
 }
 
+rreason="$(syscfg get X_RDKCENTRAL-COM_LastRebootReason)"
+if [ "$rreason" = "Reboot Factory reset ACS" ]; then
+        echo_t "RDKB_REBOOT : FactoryReset triggered from TR69 with value"
+        t2CountNotify "SYS_ERROR_tr69_reboot"
+fi
+
 if [ -f /etc/device.properties ]
 then
 	source /etc/device.properties
