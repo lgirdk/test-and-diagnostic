@@ -888,7 +888,7 @@ resetNeeded()
                         if [ -f $ADVSEC_DEVICE_CERT ]; then
                            rm $ADVSEC_DEVICE_CERT
                         fi
-                    else
+                    elif [ -f $ADVSEC_INITIALIZED ]; then
                         echo_t "RDKB_SELFHEAL : Resetting process CcspAdvSecuritySsp $ProcessName"
                         t2CountNotify "SYS_SH_CUJO_restart"
                     fi
