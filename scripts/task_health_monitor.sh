@@ -3216,6 +3216,23 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+case $SELFHEAL_TYPE in
+    "BASE")
+    ;;
+    "SYSTEMD")
+        if [ "$BOX_TYPE" = "HUB4" ]; then
+            WANMANAGER_REBOOT=$(sysevent get wanmanager_reboot_status)
+            if [ "$WANMANAGER_REBOOT" = "1" ]; then
+                echo_t "RDKB_SELFHEAL : wanmanager hw reconfiguration required , rebooting the device"
+                t2CountNotify "SYS_INFO_WanManager_HW_reconfigure_reboot"
+                reason="wanmanager_hw_reconfig"
+                rebootCount=1
+                rebootNeeded RM "WANMANAGER" $reason $rebootCount
+            fi
+        fi
+    ;;
+esac
+
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
