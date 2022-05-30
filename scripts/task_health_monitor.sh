@@ -1529,19 +1529,15 @@ case $SELFHEAL_TYPE in
         fi  # [ "$WAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]
     ;;
     "TCCBR")
-          if [ "$HOTSPOT_ENABLE" = "true" ]; then                                                                                      
-                XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")            
-                XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")                   
-                XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-                
+          if [ "$HOTSPOT_ENABLE" = "true" ]; then
+            Radio_1=$(dmcli eRT getv Device.WiFi.Radio.1.Status| grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            if [ "$Radio_1" = "true" ]; then
+                XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 open2=`wlctl -i wl0.2 bss`
-                open5=`wlctl -i wl1.2 bss`
                 sec2=`wlctl -i wl0.4 bss`
-                sec5=`wlctl -i wl1.4 bss`
-                open16=`wlctl -i wl1.7 bss`
-                xcount=0 
+                xcount=0
+
                 if [ "$XOPEN_24" = "true" ]; then
                       if [ "$open2" = "down" ]; then
                            wlctl -i wl0.2 bss up
@@ -1549,15 +1545,6 @@ case $SELFHEAL_TYPE in
                            xcount=1
                       fi
                 fi
-                
-                if [ "$XOPEN_5" = "true" ]; then
-                      if [ "$open5" = "down" ]; then
-                           wlctl -i wl1.2 bss up
-                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:6 5GHz restoring"
-                           xcount=1
-                      fi
-                fi
-                
                 if [ "$XSEC_24" = "true" ]; then
                       if [ "$sec2" = "down" ]; then
                            wlctl -i wl0.4 bss up
@@ -1566,6 +1553,29 @@ case $SELFHEAL_TYPE in
                       fi
                 fi
 
+                if [ $xcount -eq 1 ] ; then
+                      echo_t "apply settings for Radio 1"
+                      dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                fi
+            fi
+
+            Radio_2=$(dmcli eRT getv Device.WiFi.Radio.2.Status| grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            if [ "$Radio_2" = "true" ]; then
+                XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+                XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+
+                open5=`wlctl -i wl1.2 bss`
+                sec5=`wlctl -i wl1.4 bss`
+                open16=`wlctl -i wl1.7 bss`
+
+                if [ "$XOPEN_5" = "true" ]; then
+                      if [ "$open5" = "down" ]; then
+                           wlctl -i wl1.2 bss up
+                           echo_t "[RDKB_PLATFORM_INFO] :XfinityWifi:  TCBR SSID:6 5GHz restoring"
+                           xcount=1
+                      fi
+                fi
                 if [ "$XSEC_5" = "true" ]; then
                       if [ "$sec5" = "down" ]; then
                            wlctl -i wl1.4 bss up
@@ -1573,7 +1583,6 @@ case $SELFHEAL_TYPE in
                            xcount=1
                       fi
                 fi
-
                 if [ "$XOPEN_16" = "true" ]; then
                       if [ "$open16" = "down" ]; then
                            wlctl -i wl1.7 bss up
@@ -1581,13 +1590,14 @@ case $SELFHEAL_TYPE in
                            xcount=1
                       fi
                 fi
-                
+
                 if [ $xcount -eq 1 ] ; then
-                      echo_t "apply settings"
-                      dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                      echo_t "apply settings for Radio 2"
                       dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
                 fi
-         fi                                                                                  
+            fi
+
+         fi
     ;;
     "SYSTEMD")
     ;;
