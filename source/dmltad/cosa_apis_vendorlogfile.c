@@ -398,7 +398,6 @@ VendorLogFile_GetParamStringValue
         /* collect value */
 	    rc = strcpy_s(pValue, *pUlSize , "Syslogs");
 	    ERR_CHK(rc);
-	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }
 
@@ -407,7 +406,6 @@ VendorLogFile_GetParamStringValue
         /* collect value */
 	    rc = strcpy_s(pValue, *pUlSize , "/var/log/messages");
 	    ERR_CHK(rc);
-	    *pUlSize = AnscSizeOfString(pValue);
 		return 0;
     }
 
