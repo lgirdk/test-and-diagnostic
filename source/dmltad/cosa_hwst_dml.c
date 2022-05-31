@@ -324,7 +324,12 @@ hwHealthTest_GetParamStringValue
                     hwst_runTest = FALSE;
                 }
                 else
+                {
                     AnscTraceWarning(("hwExecInfo NOT set.\n"));
+                    rc = strcpy_s(pValue, 1024 , "");
+                    ERR_CHK(rc);
+                }
+
                 return 0;
             }
         }
@@ -347,6 +352,7 @@ hwHealthTest_GetParamStringValue
         return 0;
 #endif
     }
+
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
-    return 1;
+    return -1;
 }

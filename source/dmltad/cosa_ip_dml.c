@@ -1294,8 +1294,6 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->PartnerID );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->PartnerID );
-		
 		return 0;
     }
 
@@ -1309,8 +1307,6 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->ecmMAC );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->ecmMAC );
-		
 		return 0;
     }
 
@@ -1324,8 +1320,6 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceID );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->DeviceID );
-		
 		return 0;
     }
 
@@ -1339,8 +1333,6 @@ X_RDKCENTRAL_COM_PingTest_GetParamStringValue
 
 		rc = strcpy_s( pValue, *pUlSize ,devdetails->DeviceModel );
 		ERR_CHK(rc);
-		*pUlSize = AnscSizeOfString( devdetails->DeviceModel );
-		
 		return 0;
     }
 
@@ -1735,14 +1727,13 @@ IPPing_GetParamStringValue
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
             return 1;
         }
-        else
-        {
-            rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
-            ERR_CHK(rc);
-            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
-        }
+
+        rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
+        ERR_CHK(rc);
+        return 0;
     }
-    else if (strcmp(ParamName, "Host") == 0)
+
+    if (strcmp(ParamName, "Host") == 0)
     {
         if (*pUlSize <= strlen(cfg.host))
         {
@@ -1752,11 +1743,10 @@ IPPing_GetParamStringValue
 
         rc = strcpy_s(pValue, *pUlSize , cfg.host);
         ERR_CHK(rc);
+        return 0;
     }
-    else
-        return -1;
-
-    return 0;
+   
+    return -1;
 }
 
 /**********************************************************************
@@ -2429,14 +2419,13 @@ TraceRoute_GetParamStringValue
             *pUlSize = _ansc_strlen(cfg.Interface) + 1;
             return 1;
         }
-        else
-        {
-            rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
-            ERR_CHK(rc);
-            *pUlSize = _ansc_strlen(cfg.Interface) + 1;
-        }
+
+        rc = strcpy_s(pValue, *pUlSize , cfg.Interface);
+        ERR_CHK(rc);
+        return 0;
     }
-    else if (strcmp(ParamName, "Host") == 0)
+
+    if (strcmp(ParamName, "Host") == 0)
     {
         if (*pUlSize <= strlen(cfg.host))
         {
@@ -2449,10 +2438,10 @@ TraceRoute_GetParamStringValue
         {
             ERR_CHK(rc);
         }
-
+        return 0;
     }
 
-    return 0;
+    return -1;
 }
 
 /**********************************************************************
@@ -6760,7 +6749,6 @@ SpeedTestServer_GetParamStringValue
 		return 0;
 	}
 
-
 	if (strcmp(ParamName, "Password") == 0)
 	{
 		rc = strcpy_s(pValue, *pUlSize ,pSpeedTestServer->Password);
@@ -6768,7 +6756,7 @@ SpeedTestServer_GetParamStringValue
 		return 0;
 	}
 
-    return 1;
+    return -1;
 }
 
 
