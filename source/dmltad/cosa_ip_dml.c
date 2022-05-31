@@ -3609,6 +3609,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "ROMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3649,6 +3650,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "BOMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3689,6 +3691,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "EOMTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3730,6 +3733,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "TCPOpenRequestTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -3770,6 +3774,7 @@ UploadDiagnostics_GetParamStringValue
 
     if (strcmp(ParamName, "TCPOpenResponseTime") == 0)
     {
+        strcpy(pValue, "");
         pUploadDiagStats = (PDSLH_TR143_UPLOAD_DIAG_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_Upload
@@ -4643,6 +4648,7 @@ UDPEchoConfig_GetParamStringValue
 
     if (strcmp(ParamName, "TimeFirstPacketReceived") == 0)
     {
+        strcpy(pValue, "");
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_UdpEcho
@@ -4683,6 +4689,7 @@ UDPEchoConfig_GetParamStringValue
 
     if (strcmp(ParamName, "TimeLastPacketReceived") == 0)
     {
+        strcpy(pValue, "");
         pUdpEchoStats = (PDSLH_UDP_ECHO_SERVER_STATS)CosaDmlDiagGetResults
                             (
                                 DSLH_DIAGNOSTIC_TYPE_UdpEcho
