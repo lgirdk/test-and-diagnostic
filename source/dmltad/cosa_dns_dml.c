@@ -1580,7 +1580,7 @@ Result_GetParamStringValue
     {
         AnscTraceWarning(("Fail to get result parameters hInsContext!\n"));
 
-        return ANSC_STATUS_FAILURE;
+        return -1;
     }
 
     /* check the parameter name and return the corresponding value */
@@ -1603,7 +1603,7 @@ Result_GetParamStringValue
             }
         }
 
-        return ANSC_STATUS_FAILURE;
+        return -1;
     }
 
     if (strcmp(ParamName, "IPAddresses") == 0)
@@ -1625,7 +1625,7 @@ Result_GetParamStringValue
             }
         }
 
-        return ANSC_STATUS_FAILURE;
+        return -1;
     }
 
     if (strcmp(ParamName, "DNSServerIP") == 0)
