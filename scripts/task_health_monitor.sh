@@ -2536,9 +2536,8 @@ case $SELFHEAL_TYPE in
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
         if [ "$WAN_TYPE" != "EPON" ]; then
-            check_param_get_succeed=$(echo "$bridgeMode" | grep "Execution succeed")
             if [ ! -f /tmp/.router_reboot ]; then
-                if [ "$check_param_get_succeed" != "" ]; then
+                if [ "$bridgeMode" != "" ]; then
                     check_device_in_router_mode=$(echo "$bridgeMode" | grep "router")
                     if [ "$check_device_in_router_mode" != "" ]; then
                         check_if_brlan0_created=$(ifconfig | grep "brlan0")
