@@ -637,6 +637,22 @@
                         </parameter>
                     </parameters>
                 </object>
+                 <object>
+                    <name>X_RDK_SpeedTest</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamUlongValue>RDK_SpeedTest_GetParamUlongValue</func_GetParamUlongValue>
+                        <func_SetParamUlongValue>RDK_SpeedTest_SetParamUlongValue</func_SetParamUlongValue>
+                     </functions>
+                     <parameters>
+                        <parameter>
+                            <name>SubscriberUnPauseTimeOut</name>
+                            <type>unsignedInt</type>
+                            <syntax>uint32</syntax>
+                            <writable>true</writable>
+                       </parameter>
+                     </parameters>
+                </object>
                 <object>
                     <name>X_RDKCENTRAL-COM_SpeedTest</name>
                     <objectType>object</objectType>

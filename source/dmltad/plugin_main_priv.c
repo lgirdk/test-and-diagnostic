@@ -151,6 +151,8 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
 	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_GetParamUlongValue",  RDK_SpeedTest_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_SetParamUlongValue",  RDK_SpeedTest_SetParamUlongValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
@@ -204,6 +206,5 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamIntValue",  NetworkProperties_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamUlongValue",  NetworkProperties_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamStringValue",  NetworkProperties_GetParamStringValue);
-
 }
 

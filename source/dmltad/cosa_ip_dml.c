@@ -122,7 +122,6 @@ char g_authentication_speedtest[SPEEDTEST_AUTH_SIZE + 1] = {0};
 char g_clientversion_speedtest[SPEEDTEST_VERSION_SIZE + 1] = {0};
 int g_clienttype_speedtest = 1;
 int g_status_speedtest = 0;
-
 #ifdef WAN_FAILOVER_SUPPORTED
 #define WAN_FAILOVER_SUPPORT_CHECK if (!isServiceNeeded() && g_enable_speedtest == TRUE) \
      { \
@@ -6090,7 +6089,6 @@ UDPEchoConfig_Rollback
     return 0;
 }
 
-
 /***********************************************************************
 
 
@@ -6359,6 +6357,157 @@ SpeedTest_Rollback
     g_run_speedtest = FALSE;
 
     return 0;
+}
+
+/***********************************************************************
+
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDK_SpeedTest.
+
+    *  RDK_SpeedTest_GetParamUlongValue
+    *  RDK_SpeedTest_SetParamUlongValue
+
+***********************************************************************/
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        RDK_SpeedTest_GetParamUlongValue
+            (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    )
+
+    description:
+
+        This function is called to retrieve ULONG parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                ULONG*                      pUlong
+                The buffer of returned ULONG value;
+
+    return:     TRUE if succeeded.
+
+
+**********************************************************************/
+BOOL
+RDK_SpeedTest_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    )
+{
+    char TO_buf[4]={0};
+    /* check the parameter name and return the corresponding value */
+    if (strcmp(ParamName, "SubscriberUnPauseTimeOut") == 0)
+    {
+            if((syscfg_get( NULL, "Speedtest_SubUnPauseTimeOut", TO_buf, sizeof(TO_buf)) == 0 ) && (TO_buf[0] != '\0') )
+            {
+                AnscTraceFlow(("%s SubscriberUnPauseTimeOut value : %s \n", __FUNCTION__, TO_buf));
+                *pUlong = atoi(TO_buf);
+                return TRUE;
+            }
+            else
+            {
+                AnscTraceFlow(("%s syscfg_get SubscriberUnPauseTimeOut Failed \n", __FUNCTION__));
+            }
+    }
+    else
+    {
+        AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    }
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        RDK_SpeedTest_SetParamUlongValue
+            (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       ulong
+    );
+
+    description:
+
+        This function is called to set ULONG parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                ULONG                      ulong
+                The updated ULONG value;
+
+    return:     TRUE if succeeded.
+
+
+**********************************************************************/
+
+BOOL
+RDK_SpeedTest_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       ulong
+    )
+{
+    char TO_buf[4];
+    errno_t rc = -1;
+    if (strcmp(ParamName, "SubscriberUnPauseTimeOut") == 0)
+    {
+        AnscTraceFlow(("%s SubscriberUnPauseTimeOut value : %lu \n",__FUNCTION__, ulong));
+        if (ulong >= 1 && ulong <= 180 )
+        {
+            rc = sprintf_s(TO_buf, sizeof(TO_buf),"%lu", ulong);
+            if(rc < EOK)
+            {
+                ERR_CHK(rc);
+                return FALSE;
+            }
+            if (syscfg_set(NULL, "Speedtest_SubUnPauseTimeOut", TO_buf) != 0)
+            {
+                AnscTraceWarning(("%s syscfg_set failed\n",__FUNCTION__));
+            }
+            else
+            {
+                if (syscfg_commit() != 0)
+                {
+                    AnscTraceWarning(("%s syscfg_commit failed\n",__FUNCTION__));
+                }
+            }
+            return TRUE;
+        }
+        else
+        {
+            AnscTraceWarning(("%s Invalid Timeout Range '%lu'\n",__FUNCTION__, ulong));
+            return FALSE;
+        }
+    }
+    else
+    {
+        AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    }
+    return FALSE;
 }
 
 
@@ -6640,7 +6789,8 @@ SpeedTest_GetParamUlongValue
             AnscTraceFlow(("%s Status Speedtest : %d \n", __FUNCTION__, g_status_speedtest));
             *pUlong = g_status_speedtest;
             return TRUE;
-    } else
+    }
+    else
         AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;
 }
@@ -6696,7 +6846,6 @@ SpeedTest_SetParamUlongValue
         g_status_speedtest = ulong;
         return TRUE;
     }
-
     else
     	AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;

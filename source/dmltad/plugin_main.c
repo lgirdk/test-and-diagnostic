@@ -220,10 +220,12 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamStringValue",  SpeedTest_SetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamUlongValue",  SpeedTest_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamUlongValue",  SpeedTest_SetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_GetParamUlongValue",  RDK_SpeedTest_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_SetParamUlongValue",  RDK_SpeedTest_SetParamUlongValue);
 
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamBoolValue",  SpeedTestServer_GetParamBoolValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamStringValue",  SpeedTestServer_GetParamStringValue);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_SetParamStringValue",  SpeedTestServer_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamBoolValue",  SpeedTestServer_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamStringValue",  SpeedTestServer_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_SetParamStringValue",  SpeedTestServer_SetParamStringValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
@@ -271,7 +273,6 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "hwHealthTest_SetParamBoolValue", hwHealthTest_SetParamBoolValue );
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "hwHealthTest_GetParamStringValue", hwHealthTest_GetParamStringValue);
 
-    
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
 
     if( pGetCHProc != NULL)

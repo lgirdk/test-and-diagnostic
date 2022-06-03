@@ -973,4 +973,31 @@ SpeedTestServer_SetParamStringValue
         char*                       ParamName,
         char*                       pString
     );
+/***********************************************************************
+
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDK_SpeedTest
+
+    RDK_SpeedTest_GetParamUlongValue
+    RDK_SpeedTest_SetParamUlongValue
+
+**********************************************************************/
+
+BOOL
+RDK_SpeedTest_GetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG*                      pUlong
+    );
+
+BOOL
+RDK_SpeedTest_SetParamUlongValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        ULONG                       ulong
+    );
 #endif
