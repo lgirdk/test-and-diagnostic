@@ -150,6 +150,44 @@ static char dev_type[20];
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
+
+static int validate_hostname (char *host, size_t sizelimit)
+{
+    int i;
+    size_t len;
+
+    len = strlen(host);
+
+    if (len == 0)
+        return 0;   /* empty string is OK */
+
+    if (len >= sizelimit)
+        return -1;
+
+    /*
+       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
+       input validation based on following possible character lists:
+
+         IPv4 - numeric, dot(.)
+         IPv6 - alpha-numeric, colon(:)
+         FQDN - alpha-numeric, hyphen(-), dot(.)
+
+       Checking that 'host' contains only characters in the above lists
+       is better than checking for certain troublesome characters.
+    */
+    for (i = 0; i < len; i++)
+    {
+        if (!isalnum(host[i]) &&
+            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
+        {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+
 /***********************************************************************
  IMPORTANT NOTE:
 
@@ -2020,7 +2058,7 @@ IPPing_SetParamStringValue
             return FALSE;
         }
 
-        if (CosaDmlInputValidation(pString, sizeof(cfg.host)) != ANSC_STATUS_SUCCESS)
+        if (validate_hostname(pString, sizeof(cfg.host)) != 0)
             return FALSE;
 
         rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", pString);
@@ -2743,7 +2781,7 @@ TraceRoute_SetParamStringValue
             return FALSE;
         }
 
-        if (CosaDmlInputValidation(pString, sizeof(cfg.host)) != ANSC_STATUS_SUCCESS)
+        if (validate_hostname(pString, sizeof(cfg.host)) != 0)
             return FALSE;
 
         rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", pString);
