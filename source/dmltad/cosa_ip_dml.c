@@ -2011,7 +2011,7 @@ IPPing_SetParamStringValue
     else if (strcmp(ParamName, "Host") == 0)
     {
 		ANSC_STATUS             ret;
-		char wrapped_host[64]={0};
+		char wrapped_host[256 + 1] = { 0 };
         ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
@@ -2699,7 +2699,7 @@ TraceRoute_SetParamStringValue
     else if (strcmp(ParamName, "Host") == 0)
     {
 		ANSC_STATUS             ret;
-		char wrapped_host[64]={0};
+		char wrapped_host[256 + 1] = { 0 };
 		ret=CosaDmlInputValidation(pString, wrapped_host, AnscSizeOfString(pString), sizeof( wrapped_host ));
 		if(ANSC_STATUS_SUCCESS != ret)
 			return FALSE;
