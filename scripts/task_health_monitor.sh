@@ -2964,21 +2964,33 @@ if [ $BR_MODE -eq 1 ]; then
 
     if [ $numofRadios -eq 3 ]; then
         if [ "$IsNeedtoDoApplySetting" = "1" ]; then
-            dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
-            sleep 3
-            dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
-            sleep 3
-            dmcli eRT setv Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting bool true
-            sleep 3
-            dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+            if systemctl status onewifi.service | grep active ; then
+                dmcli eRT setv Device.WiFi.ApplyAccessPointSettings bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.ApplyRadioSettings bool true
+            else
+                dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.Radio.3.X_CISCO_COM_ApplySetting bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+            fi
         fi
     else
         if [ "$IsNeedtoDoApplySetting" = "1" ]; then
-            dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
-            sleep 3
-            dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
-            sleep 3
-            dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+            if systemctl status onewifi.service | grep active ; then
+                dmcli eRT setv Device.WiFi.ApplyAccessPointSettings bool true
+                sleep 5
+                dmcli eRT setv Device.WiFi.ApplyRadioSettings bool true
+            else
+                dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.Radio.2.X_CISCO_COM_ApplySetting bool true
+                sleep 3
+                dmcli eRT setv Device.WiFi.X_CISCO_COM_ResetRadios bool true
+            fi
         fi
     fi
 fi
