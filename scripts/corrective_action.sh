@@ -30,6 +30,7 @@ case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
     "MV1") SELFHEAL_TYPE="BASE";;
     "MV2PLUS") SELFHEAL_TYPE="BASE";;
+    "MV3") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
@@ -835,10 +836,12 @@ resetNeeded()
                 cd -
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspCMAgentSsp" ]; then
-                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                cd /usr/ccsp/cm
-                $BINPATH/CcspCMAgentSsp -subsys $Subsys
-                cd -
+                if [ "$BOX_TYPE" != "MV3" ]; then
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/cm
+                    $BINPATH/CcspCMAgentSsp -subsys $Subsys
+                    cd -
+                fi
 
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspEPONAgentSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
@@ -847,10 +850,12 @@ resetNeeded()
                 cd -
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspMtaAgentSsp" ]; then
-                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                cd /usr/ccsp/mta
-                $BINPATH/CcspMtaAgentSsp -subsys $Subsys
-                cd -
+                if [ "$BOX_TYPE" != "MV3" ]; then
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/mta
+                    $BINPATH/CcspMtaAgentSsp -subsys $Subsys
+                    cd -
+                fi
 
             elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "CcspMoCA" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"

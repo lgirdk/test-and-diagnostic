@@ -273,6 +273,7 @@ case $BOX_TYPE in
     "XB3") SELFHEAL_TYPE="BASE";;
     "MV1") SELFHEAL_TYPE="BASE";;
     "MV2PLUS") SELFHEAL_TYPE="BASE";;
+    "MV3") SELFHEAL_TYPE="BASE";;
     "XB6") SELFHEAL_TYPE="SYSTEMD";;
     "XF3") SELFHEAL_TYPE="SYSTEMD";;
     "TCCBR") SELFHEAL_TYPE="TCCBR";;
@@ -1117,7 +1118,7 @@ case $SELFHEAL_TYPE in
         fi
 
         # Checking snmp v2 subagent PID
-        if [ -f "/etc/SNMP_PA_ENABLE" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+        if [ -f "/etc/SNMP_PA_ENABLE" ] && [ "$BOX_TYPE" != "MV2PLUS" ] && [ "$BOX_TYPE" != "MV3" ]; then
             SNMP_PID=$(grep "snmp_subagent" $PROCESSES_CACHE | grep -v "cm_snmp_ma_2" | grep -v "grep" | awk '{print $2}')
             if [ "$SNMP_PID" = "" ]; then
                 if [ -f /tmp/.snmp_agent_restarting ]; then
@@ -2529,7 +2530,7 @@ case $SELFHEAL_TYPE in
     "BASE")
         # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
 
-        if [ "$WAN_TYPE" != "EPON" ]; then
+        if [ "$WAN_TYPE" != "EPON" ] && [ "$BOX_TYPE" != "MV3" ]; then
             if [ ! -f /tmp/.router_reboot ]; then
                 if [ "$bridgeMode" != "" ]; then
                     check_device_in_router_mode=$(echo "$bridgeMode" | grep "router")
@@ -2591,7 +2592,7 @@ case $SELFHEAL_TYPE in
 
             #TODO: Need to revisit this after enabling CcspHomeSecurity
             # Checking whether brlan1 and l2sd0.101 interface are created properly
-            if [ "$thisIS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ]; then
+            if [ "$thisIS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                 check_if_brlan1_created=$(ifconfig | grep "brlan1")
                 check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                 check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
