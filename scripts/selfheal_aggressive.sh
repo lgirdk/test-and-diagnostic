@@ -328,7 +328,7 @@ self_heal_interfaces()
                 fi
 
                 # Checking whether brlan1 and l2sd0.101 interface are created properly
-                if [ "$IS_BCI" != "yes" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ]; then
+                if [ "$IS_BCI" != "yes" ] && [ "$FIRMWARE_TYPE" != "OFW" ]; then
                     check_if_brlan1_created=$(ifconfig | grep "brlan1")
                     check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
                     check_if_brlan1_hasip=$(ifconfig brlan1 | grep "inet addr")
