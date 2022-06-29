@@ -857,6 +857,25 @@
                     </parameters>
                 </object>
 <?endif?>
+                <object>
+                    <name>X_RDKCENTRAL-COM_RxTxStats</name>
+                    <objectType>object</objectType>
+                    <functions>
+                        <func_GetParamStringValue>X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue</func_GetParamStringValue>
+                        <func_SetParamStringValue>X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue</func_SetParamStringValue>
+                        <func_Commit>X_RDKCENTRAL_COM_RxTxStats_Commit</func_Commit>
+                        <func_Validate>X_RDKCENTRAL_COM_RxTxStats_Validate</func_Validate>
+                        <func_Rollback>X_RDKCENTRAL_COM_RxTxStats_Rollback</func_Rollback>
+                    </functions>
+                    <parameters>
+                        <parameter>
+                            <name>InterfaceList</name>
+                            <type>string(256)</type>
+                            <syntax>string</syntax>
+                            <writable>true</writable>
+                        </parameter>
+                    </parameters>
+                </object>
             </objects>
         </object>
         <object>

@@ -1000,4 +1000,49 @@ RDK_SpeedTest_SetParamUlongValue
         char*                       ParamName,
         ULONG                       ulong
     );
+/***********************************************************************
+
+
+ APIs for Object:
+
+    IP.Diagnostics.X_RDKCENTRAL-COM_RxTxStats
+
+    X_RDKCENTRAL-COM_RxTxStats_GetParamStringValue
+    X_RDKCENTRAL-COM_RxTxStats_SetParamStringValue
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+
+BOOL
+X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    );
+BOOL
+X_RDKCENTRAL_COM_RxTxStats_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    );
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    );
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    );
 #endif

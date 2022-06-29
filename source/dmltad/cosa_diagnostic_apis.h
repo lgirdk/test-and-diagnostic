@@ -97,6 +97,14 @@ _COSA_DML_DIAG_SPEEDTEST_SERVER
 }
 COSA_DML_DIAG_SPEEDTEST_SERVER,*PCOSA_DML_DIAG_SPEEDTEST_SERVER;
 
+#define RXTX_INTFLIST_SZ 256
+typedef  struct
+_COSA_DML_DIAG_RXTX_STATS
+{
+    UCHAR                           Interfacelist[RXTX_INTFLIST_SZ];
+}
+COSA_DML_DIAG_RXTX_STATS,*PCOSA_DML_DIAG_RXTX_STATS;
+
 /*******************************************************
     NSLookup Diagnostic Manager Object Definition
 ********************************************************/
@@ -115,6 +123,7 @@ COSA_DML_DIAG_SPEEDTEST_SERVER,*PCOSA_DML_DIAG_SPEEDTEST_SERVER;
     ULONG                       ArpEntryCount;                                    \
     PCOSA_DML_DIAG_ARP_TABLE    pArpTable;                                        \
     PCOSA_DML_DIAG_SPEEDTEST_SERVER    pSpeedTestServer;                                    \
+    PCOSA_DML_DIAG_RXTX_STATS   pRxTxStats;                                                 \
     /* end of Diagnostic object class content */                                                    \
 
 typedef  struct
@@ -204,5 +213,7 @@ CosaDmlDiagGetARPTablePriv
         ANSC_HANDLE                 hContext,
         PULONG                      pulCount
     );
+ANSC_STATUS CosaDmlInitializeRxTxStats
+    (PCOSA_DML_DIAG_RXTX_STATS pRxTxStats);
 #endif
 

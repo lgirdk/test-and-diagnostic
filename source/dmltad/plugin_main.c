@@ -273,6 +273,17 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "hwHealthTest_SetParamBoolValue", hwHealthTest_SetParamBoolValue );
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "hwHealthTest_GetParamStringValue", hwHealthTest_GetParamStringValue);
 
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue", 
+                                X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue", 
+                                X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL_COM_RxTxStats_Validate", 
+                                X_RDKCENTRAL_COM_RxTxStats_Validate);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL_COM_RxTxStats_Commit", 
+                                X_RDKCENTRAL_COM_RxTxStats_Commit);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_RDKCENTRAL_COM_RxTxStats_Rollback", 
+                                X_RDKCENTRAL_COM_RxTxStats_Rollback);
+
     pGetCHProc = (COSAGetCommonHandleProc)pPlugInfo->AcquireFunction("COSAGetDiagPluginInfo");
 
     if( pGetCHProc != NULL)

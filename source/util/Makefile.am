@@ -38,3 +38,11 @@ AM_LDFLAGS += -lhal_mta
 endif
 Selfhealutil_CPPFLAGS =
 Selfhealutil_SOURCES = selfheal_utility.c
+
+bin_PROGRAMS = RxTx100
+if CORE_NET_LIB_FEATURE_SUPPORT
+AM_LDFLAGS += -lnet
+endif
+AM_LDFLAGS += -lsyscfg -lsecure_wrapper -ltelemetry_msgsender
+RxTx100_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util
+RxTx100_SOURCES = rxtx_100.c

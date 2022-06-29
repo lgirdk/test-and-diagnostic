@@ -172,6 +172,7 @@ CosaDiagInitialize
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo        = (PDSLH_TR143_DOWNLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo          = (PDSLH_TR143_UPLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo         = (PDSLH_TR143_UDP_ECHO_CONFIG)NULL;
+    PCOSA_DML_DIAG_RXTX_STATS       pRxTxStats           = (PCOSA_DML_DIAG_RXTX_STATS)NULL;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 		pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)NULL;
 
     pDiagPingInfo = AnscAllocateMemory(sizeof(DSLH_PING_INFO));
@@ -335,6 +336,20 @@ CosaDiagInitialize
 			AnscTraceWarning(("RDK_LOG_WARN,TDM %s :Capability [%d]\n",__FUNCTION__,pSpeedTestServer->Capability));
 		}
 	}
+
+    /*Init RxTxStats*/
+    pRxTxStats = AnscAllocateMemory(sizeof(COSA_DML_DIAG_RXTX_STATS));
+    if (!pRxTxStats)
+    {
+        AnscFreeMemory(pMyObject->pRxTxStats);
+        pMyObject->pRxTxStats = NULL;
+        return ANSC_STATUS_RESOURCES;
+    }
+    else
+    {
+        CosaDmlInitializeRxTxStats(pRxTxStats);
+        pMyObject->pRxTxStats = pRxTxStats;
+    }
 	/* Initiation all functions */
 
     return returnStatus;
@@ -413,6 +428,11 @@ CosaDiagRemove
     if ( pMyObject->pSpeedTestServer )
     {
         AnscFreeMemory(pMyObject->pSpeedTestServer);
+    }
+
+    if ( pMyObject->pRxTxStats )
+    {
+        AnscFreeMemory(pMyObject->pRxTxStats);
     }
 
 
@@ -757,6 +777,37 @@ CosaDmlInputValidation
 
     return returnStatus;
 
+}
+
+
+/* To initialize Rxstats interface list, fetch from syscfg, if we have
+entry copy to pRxTxStats*/
+
+ANSC_STATUS CosaDmlInitializeRxTxStats(PCOSA_DML_DIAG_RXTX_STATS pRxTxStats)
+{
+    char buf[RXTX_INTFLIST_SZ]={0};
+    errno_t rc = -1;
+
+    rc = memset_s(pRxTxStats->Interfacelist, sizeof(pRxTxStats->Interfacelist), 0, sizeof(pRxTxStats->Interfacelist));
+    ERR_CHK(rc);
+
+    if (syscfg_get( NULL, "rxtxstats_interface_list", buf, sizeof(buf)) == 0)
+    {
+       if (buf[0] != '\0')
+       {
+            rc = strcpy_s(pRxTxStats->Interfacelist, sizeof(pRxTxStats->Interfacelist), buf);
+            ERR_CHK(rc);
+            CcspTraceInfo(("[%s] RxTx Stats Interfacelist:[ %s ]\n",__FUNCTION__,pRxTxStats->Interfacelist));
+       }
+       else
+           CcspTraceInfo(("[%s] Syscfg RxTx Stats Interfacelist is empty\n",__FUNCTION__)); 
+    }
+    else
+    {
+        AnscTraceWarning(("%s syscfg_get failed  for RxTxStats Interfacelist\n",__FUNCTION__));
+    }
+
+    return ANSC_STATUS_SUCCESS;
 }
 
 

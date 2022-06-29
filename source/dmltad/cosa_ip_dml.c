@@ -7149,3 +7149,217 @@ eMMCFlashDiag_GetParamBoolValue
     return FALSE;
 }
 #endif
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        X_RDKCENTRAL-COM_RxTxStats_GetParamStringValue
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       ParamName,
+                char*                       pValue
+            );
+
+    description:
+
+        This function is called to retrieve string parameter value;
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       ParamName,
+                The parameter name;
+
+                char*                       pValue
+                The string value buffer;
+
+    return:     0 if succeeded;
+                1 unable to read results file;
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+    UNREFERENCED_PARAMETER(pUlSize);
+    PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+    PCOSA_DML_DIAG_RXTX_STATS     pRxTXStats   = (PCOSA_DML_DIAG_RXTX_STATS) pMyObject->pRxTxStats;
+    errno_t                         rc           = -1;
+    if( AnscEqualString(ParamName, "InterfaceList", TRUE))
+    {
+        /* collect value */
+        rc = strcpy_s(pValue, sizeof(pRxTXStats->Interfacelist), pRxTXStats->Interfacelist);
+        if(rc != EOK)
+        {
+            ERR_CHK(rc);
+            return -1;
+        }
+        return 0;
+    }
+
+    AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    return 1;
+}
+
+BOOL
+X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       ParamName,
+        char*                       pValue,
+        ULONG*                      pUlSize
+    )
+{
+
+    UNREFERENCED_PARAMETER(pUlSize);
+    PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+    PCOSA_DML_DIAG_RXTX_STATS     pRxTXStats   = (PCOSA_DML_DIAG_RXTX_STATS) pMyObject->pRxTxStats;
+    errno_t                    rc           = -1;
+
+    /* check the parameter name and return the corresponding value */
+    if( AnscEqualString(ParamName, "InterfaceList", TRUE))
+    {
+        rc = memset_s(pRxTXStats->Interfacelist, sizeof(pRxTXStats->Interfacelist), 0, sizeof(pRxTXStats->Interfacelist));
+        ERR_CHK(rc);
+        rc = strcpy_s(pRxTXStats->Interfacelist, sizeof(pRxTXStats->Interfacelist), pValue);
+        ERR_CHK(rc);
+        CcspTraceInfo(("[%s] SET RxTx Stats Interfacelist:[ %s ]\n",__FUNCTION__,pRxTXStats->Interfacelist));
+        return TRUE;
+    }
+    AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
+    return FALSE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        BOOL
+        X_RDKCENTRAL_COM_RxTxStats_Validate
+            (
+                ANSC_HANDLE                 hInsContext,
+                char*                       pReturnParamName,
+                ULONG*                      puLength
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+                char*                       pReturnParamName,
+                The buffer (128 bytes) of parameter name if there's a validation.
+
+                ULONG*                      puLength
+                The output length of the param name.
+
+    return:     TRUE if there's no validation.
+
+**********************************************************************/
+BOOL
+X_RDKCENTRAL_COM_RxTxStats_Validate
+    (
+        ANSC_HANDLE                 hInsContext,
+        char*                       pReturnParamName,
+        ULONG*                      puLength
+    )
+{
+    return TRUE;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        X_RDKCENTRAL_COM_RxTxStats_Commit
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to finally commit all the update.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_Commit
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+
+    char Interfacelist[RXTX_INTFLIST_SZ]={0};
+    errno_t rc = -1;
+
+    PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
+    PCOSA_DML_DIAG_RXTX_STATS     pRxTXStats   = (PCOSA_DML_DIAG_RXTX_STATS) pMyObject->pRxTxStats;
+
+    if (syscfg_set_commit(NULL, "rxtxstats_interface_list", pRxTXStats->Interfacelist) != 0)
+    {
+        AnscTraceWarning(("%s syscfg_set failed  for Rx stats interface list\n",__FUNCTION__));
+        /*Rollback to previous value if any*/
+        if((syscfg_get( NULL, "rxtxstats_interface_list", Interfacelist, sizeof(Interfacelist)) == 0 ) 
+                && (Interfacelist[0] != '\0') )
+        {
+            AnscTraceWarning(("%s Roll back Interfacelist to previous value %s\n",__FUNCTION__,Interfacelist));
+            rc = strcpy_s(pRxTXStats->Interfacelist, sizeof(pRxTXStats->Interfacelist), Interfacelist);
+            ERR_CHK(rc);
+        }
+        return 1;
+    }
+    return 0;
+}
+
+/**********************************************************************
+
+    caller:     owner of this object
+
+    prototype:
+
+        ULONG
+        SpeedTest_Rollback
+            (
+                ANSC_HANDLE                 hInsContext
+            );
+
+    description:
+
+        This function is called to roll back the update whenever there's a
+        validation found.
+
+    argument:   ANSC_HANDLE                 hInsContext,
+                The instance handle;
+
+    return:     The status of the operation.
+
+**********************************************************************/
+ULONG
+X_RDKCENTRAL_COM_RxTxStats_Rollback
+    (
+        ANSC_HANDLE                 hInsContext
+    )
+{
+    return 0;
+}
+
