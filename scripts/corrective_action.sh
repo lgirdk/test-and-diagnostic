@@ -882,7 +882,11 @@ resetNeeded()
                 restart_adv_security
 
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "SYSTEMD" ] && [ "$folderName" = "advsec_bin" ]; then
-                if [ "$ProcessName" = "AdvSecurityAgent" ]; then
+                if [ "$ProcessName" = "AdvSecurityAgent" ] && [ -f $ADVSEC_AGENT_SHUTDOWN_COMPLETE ]; then
+                    rm $ADVSEC_AGENT_SHUTDOWN_COMPLETE
+                    /usr/ccsp/advsec/start_adv_security.sh "-disable"
+                    /usr/ccsp/advsec/start_adv_security.sh "-enable" &
+                elif [ "$ProcessName" = "AdvSecurityAgent" ]; then
                     if [ -f $ADVSEC_AGENT_SHUTDOWN ]; then
                         rm $ADVSEC_AGENT_SHUTDOWN
                         if [ -f $ADVSEC_DEVICE_CERT ]; then

@@ -1040,7 +1040,7 @@ else
                                 if [ ! -f $ADVSEC_INITIALIZING ]; then
                                     ADV_AGENT_PID=$(advsec_is_alive ${CUJO_AGENT})
                                     if [ "${ADV_AGENT_PID}" = "" ] ; then
-                                        if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ]; then
+                                        if  [ ! -e ${ADVSEC_AGENT_SHUTDOWN} ] && [ ! -e ${ADVSEC_AGENT_SHUTDOWN_COMPLETE} ]; then
                                             echo_t "RDKB_PROCESS_CRASHED : AdvSecurity ${CUJO_AGENT_LOG} process is not running, need restart"
                                         fi
                                         resetNeeded advsec_bin AdvSecurityAgent
