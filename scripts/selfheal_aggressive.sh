@@ -1185,7 +1185,7 @@ do
     self_heal_interfaces
     self_heal_dibbler_server
     self_heal_dhcp_clients
-    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" != "TG4482A" ]
+    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
     fi
