@@ -947,7 +947,7 @@
             </objects>
         </object>
         <object>
-            <name>SelfHeal</name>
+            <name>X_RDKCENTRAL-COM_SelfHeal</name>
             <objectType>object</objectType>
             <functions>
              <func_GetParamBoolValue>SelfHeal_GetParamBoolValue</func_GetParamBoolValue>
