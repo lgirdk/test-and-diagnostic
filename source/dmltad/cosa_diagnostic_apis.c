@@ -716,3 +716,45 @@ CosaDmlDiagGetARPTable
 {
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
+
+ANSC_STATUS
+CosaDmlInputValidation
+    (
+        char                       *host,
+        size_t                      sizelimit
+    )
+{
+    int i;
+    size_t len;
+
+    len = strlen(host);
+
+    if (len == 0)
+        return ANSC_STATUS_SUCCESS;
+
+    if (len >= sizelimit)
+        return ANSC_STATUS_FAILURE;
+
+    /*
+       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
+       input validation based on following possible character lists:
+
+         IPv4 - numeric, dot(.)
+         IPv6 - alpha-numeric, colon(:)
+         FQDN - alpha-numeric, hyphen(-), dot(.)
+
+       Checking that 'host' contains only characters in the above lists is
+       better than the original approach of checking for the presence of
+       certain troublesome characters.
+    */
+    for (i = 0; i < len; i++)
+    {
+        if (!isalnum(host[i]) &&
+            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
+        {
+            return ANSC_STATUS_FAILURE;
+        }
+    }
+
+    return ANSC_STATUS_SUCCESS;
+}
