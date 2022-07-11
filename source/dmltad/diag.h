@@ -80,9 +80,6 @@ typedef struct diag_cfg_s {
     unsigned    size;
     unsigned    tos;
     unsigned    maxhop; /* trace route only */
-    unsigned    interval; //Ping only
-    unsigned    pingdnsquerytype;  // Ping only
-    unsigned    tracednsquerytype; // TraceRoute only
 } diag_cfg_t;
 
 typedef struct ping_stat_s {

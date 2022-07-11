@@ -43,23 +43,11 @@
 #include <string.h>
 #include <assert.h>
 #include "diag_inter.h"
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <errno.h>
 #include "safec_lib_common.h"
 
-#include "plugin_main_apis.h"
-extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
-extern  ANSC_HANDLE                         bus_handle;
 #define PING_DEF_CNT        1
 #define PING_DEF_TIMO       10
 #define PING_DEF_SIZE       56
-#define PING_DEF_DNS_QUERY_TYPE      1
-#define PING_DEF_INTERVAL            1
 
 static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_t *st);
 static diag_err_t ping_stop(diag_obj_t *diag);
@@ -73,8 +61,6 @@ static diag_obj_t diag_ping = {
         .cnt        = PING_DEF_CNT,
         .timo       = PING_DEF_TIMO,
         .size       = PING_DEF_SIZE,
-        .pingdnsquerytype  = PING_DEF_DNS_QUERY_TYPE,
-        .interval   = PING_DEF_INTERVAL,
     },
     .ops        = {
         .start      = ping_start,
@@ -86,74 +72,6 @@ static diag_obj_t diag_ping = {
 diag_obj_t *diag_ping_load(void)
 {
     return &diag_ping;
-}
-
-static BOOL isDSLiteEnabled()
-{
-    ANSC_STATUS             retval  = ANSC_STATUS_FAILURE;
-    parameterValStruct_t    param;
-    char                    name[] = "Device.DSLite.InterfaceSetting.1.Status";
-    char                    value[16] = {};
-    int                     valSize = 16;
-    int                     size = 16;
-
-    param.parameterName  = name;
-    param.parameterValue = value;
-     retval = g_GetParamValueByPathNameProc(bus_handle, &param, &valSize);
-
-    if ( retval == ANSC_STATUS_SUCCESS ) {
-        if ( 0== strcmp(value, "Enabled") ) {
-            return TRUE;
-        }
-    }
-    return FALSE;
-}
-static int getIPbyInterfaceName(char *interface, char *ip)
-{
-    int fd;
-    struct ifreq ifr;
-    strcpy(ip, "0.0.0.0");
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd < 0) {
-        return -1;
-    }
-    ifr.ifr_addr.sa_family = AF_INET;
-    strncpy(ifr.ifr_name, interface, IFNAMSIZ-1);
-    if (ioctl(fd, SIOCGIFADDR, &ifr) >= 0) {
-        strcpy(ip, inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr));
-    }
-    close(fd);
-    return 0;
-}
-
-static BOOL isIPv4Host(const char *host)
-{
-    struct addrinfo hints, *res, *rp;
-    int errcode;
-    BOOL isIpv4 = FALSE;
-
-    memset (&hints, 0, sizeof (hints));
-    hints.ai_family = PF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags |= AI_CANONNAME;
-
-    errcode = getaddrinfo (host, NULL, &hints, &res);
-    if (errcode != 0) {
-        return FALSE;
-    }
-
-    for (rp = res; rp != NULL; rp = rp->ai_next) {
-        if (rp->ai_family == AF_INET) {
-            isIpv4 = TRUE;
-            break;
-        }
-    }
-
-    if (res != NULL) {
-        freeaddrinfo(res);
-    }
-
-    return isIpv4;
 }
 
 /*
@@ -192,28 +110,27 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         cnt = PING_DEF_CNT; /* or never return */
     else
         cnt = cfg->cnt;
-
-    char host[100] = {};
-    strncpy(host, cfg->host+1, strlen(cfg->host)-2);
-
-    if( cfg->pingdnsquerytype == 2)
+#if defined(_PLATFORM_TURRIS_)
+    left -= sprintf_s(cmd + strlen(cmd), left, "ping ");
+    if(left < EOK)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping6 %s ", host);
+        ERR_CHK(rc);
     }
-    else
+#else
+    left -= sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    if(left < EOK)
     {
-        left -= snprintf(cmd + strlen(cmd), left, "ping %s ", host);
+        ERR_CHK(rc);
     }
-
-    if (isDSLiteEnabled() && cfg->pingdnsquerytype != 2 && isIPv4Host(host)) { 
-        char ifip[16] = {};
-        getIPbyInterfaceName("brlan0", ifip);
-        left -= snprintf(cmd + strlen(cmd), left, "-I %s ", ifip);
-    } else {
-        if (strlen(cfg->ifname))
-            left -= snprintf(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+#endif
+    if (strlen(cfg->ifname))
+    {
+        left -= sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+        if(left < EOK)
+        {
+            ERR_CHK(rc);
+        }
     }
-
     if (cnt)
     {
         left -= sprintf_s(cmd + strlen(cmd), left, "-c %u ", cnt);
@@ -237,10 +154,6 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         {
             ERR_CHK(rc);
         }
-    }
-    if (cfg->interval)
-    {
-        left -= snprintf(cmd + strlen(cmd), left, "-i %u ", cfg->interval);
     }
 #ifdef PING_HAS_QOS
     if (cfg->tos)
