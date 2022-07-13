@@ -56,9 +56,9 @@ logTmpFs()
       if [ "$1" = "log" ]
       then
         echo_t "RDKB_TMPFS_USAGE_PERIODIC:$TMPFS_CUR_USAGE"
-        t2CountNotify "TMPFS_USAGE_PERIODIC" "$TMPFS_CUR_USAGE"
+        t2ValNotify "TMPFS_USAGE_PERIODIC" "$TMPFS_CUR_USAGE"
       fi
-      
+
       if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ]
       then
         echo_t "TMPFS_USAGE:$TMPFS_CUR_USAGE"
