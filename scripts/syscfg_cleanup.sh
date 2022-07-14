@@ -109,6 +109,12 @@ if [ "$BOX_TYPE" = "XB3" ];then
 	kill -9 $(busybox pidof CcspPandMSsp)
 	/usr/bin/CcspPandMSsp -subsys eRT.
 
+	isPeriodicFWCheckEnable=`syscfg get PeriodicFWCheck_Enable`
+	PID_XCONF=$(busybox pidof xb3_firmwareDwnld.sh)
+	if [ "$isPeriodicFWCheckEnable" == "false" ] && [ "$PID_XCONF" == "" ] ;then
+	        echo "XCONF SCRIPT : Calling XCONF Client"
+	        /etc/xb3_firmwareDwnld.sh &
+	fi
 elif [ "$BOX_TYPE" = "XB6" ];then
 		echo "XB6 device, restaring PandM"
 

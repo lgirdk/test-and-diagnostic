@@ -2754,6 +2754,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         ssidStatus_5=$(dmcli eRT getv Device.WiFi.SSID.2.Status)
         isExecutionSucceed=$(echo "$ssidStatus_5" | grep "Execution succeed")
         if [ "$isExecutionSucceed" != "" ]; then
+
             isUp=$(echo "$ssidStatus_5" | grep "Up")
             if [ "$isUp" = "" ]; then
                 # We need to verify if it was a dmcli crash or is WiFi really down
