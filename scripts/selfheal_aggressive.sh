@@ -98,7 +98,11 @@ self_heal_process ()
   fi
 }
 
-ovs_enable=`syscfg get mesh_ovs_enable`
+if [ -f /etc/onewifi_enabled ]; then
+    ovs_enable="true"
+else
+    ovs_enable=`syscfg get mesh_ovs_enable`
+fi
 self_heal_peer_ping ()
 {
     ping_failed=0
