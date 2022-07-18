@@ -1281,6 +1281,19 @@ esac
 
 case $SELFHEAL_TYPE in
     "BASE")
+     if [ "$FIRMWARE_TYPE" = "OFW" ] && [ "$BOX_TYPE" != "MV1" ]; then
+        WiFi_PID=$(get_pid CcspWifiSsp)
+        if [ "$WiFi_PID" != "" ]; then
+            wifi_name=$(fast_dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Health)
+            wifi_name_timeout=$(echo "$wifi_name" | grep "$CCSP_ERR_TIMEOUT")
+            wifi_name_notexist=$(echo "$wifi_name" | grep "$CCSP_ERR_NOT_EXIST")
+            if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
+                echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
+                kill -9 $WIFI_PID
+                resetNeeded wifi CcspWifiSsp
+            fi
+        fi
+    fi
     ;;
     "TCCBR")
     ;;
