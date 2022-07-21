@@ -4039,6 +4039,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             if [ "$WAN_IPv6_Addr" = "" ] ; then
                 echo_t "erouter ipv6 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv6_loss"
+                t2CountNotify "SYS_SH_ti_dhcp6c_restart"
                 killall dibbler-client
                 /lib/rdk/dibbler-init.sh
                 /usr/sbin/dibbler-client start
