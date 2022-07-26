@@ -216,12 +216,12 @@ runPingTest()
     	   fi
 	fi	
 
-    if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] ||  [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]
+    if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] ||  [ "$BOX_TYPE" = "SR213" ]
     then
         IPv6_Gateway_addr=`ip -6 neigh show | grep $WAN_INTERFACE | grep lladdr |cut -f1 -d ' '`
     fi
 
-	if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$MAPT_CONFIG" != "set" ]
+	if [ "$IPv4_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$MAPT_CONFIG" != "set" ]
 	then
 		PING_OUTPUT=`ping -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv4_Gateway_addr`
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
@@ -244,7 +244,7 @@ runPingTest()
 	fi
 
     # For HUB4/SR300/SE501/SR213, Using IPOE Health Check Status
-    if [ "$IPv4_Gateway_addr" != "" ] && ([ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ])
+    if [ "$IPv4_Gateway_addr" != "" ] && ([ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ])
     then
         IPOE_HEALTH_CHECK_STATUS_IPV4=`sysevent get ipoe_health_check_ipv4_status`
         if [ "$IPOE_HEALTH_CHECK_STATUS_IPV4" = "success" ]
@@ -255,7 +255,7 @@ runPingTest()
         fi
     fi
 
-	if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] 
+	if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]
 	then
 		for IPv6_Gateway_addr in $IPv6_Gateway_addr
 		do
@@ -282,7 +282,7 @@ runPingTest()
 		done
 	fi
 
-	if [ "$ping6_failed" -eq 1 ] && [ "$IPv6_Gateway_addr_global" != "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]
+	if [ "$ping6_failed" -eq 1 ] && [ "$IPv6_Gateway_addr_global" != "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]
 	then
 		PING_OUTPUT=`ping6 -I $WAN_INTERFACE -c $PINGCOUNT -w $RESWAITTIME -s $PING_PACKET_SIZE $IPv6_Gateway_addr_global`
 		CHECK_PACKET_RECEIVED=`echo $PING_OUTPUT | grep "packet loss" | cut -d"%" -f1 | awk '{print $NF}'`
@@ -305,7 +305,7 @@ runPingTest()
 	fi
 
     # For HUB4/SR300/SE501/SR213, Using IPOE Health Check Status
-    if [ "$IPv6_Gateway_addr" != "" ] && ([ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ])
+    if [ "$IPv6_Gateway_addr" != "" ] && ([ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ])
     then
         IPOE_HEALTH_CHECK_STATUS_IPV6=`sysevent get ipoe_health_check_ipv6_status`
         if [ "$IPOE_HEALTH_CHECK_STATUS_IPV6" = "success" ]
