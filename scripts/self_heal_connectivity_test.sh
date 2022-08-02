@@ -204,7 +204,7 @@ runPingTest()
 	#If GW IPv6 is missing in both route list and neighbour list checking for Link Local GW ipv6 in neighbour list and    	
 	#Checking if route list returns Box_IPv6_addr as IPv6_Gateway_addr	
 
-	Box_IPv6_addr=`ifconfig erouter0 | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d\/`	
+	Box_IPv6_addr=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d\/`	
 	
 	if [ "$BOX_TYPE" != "XF3" ]
 	then
@@ -337,8 +337,8 @@ runPingTest()
             fi
  
 		# check if erouter0 is up
-		echo_t "RDKB_SELFHEAL : checking erouter0 status"
-		ifconfig erouter0
+		echo_t "RDKB_SELFHEAL : checking $WAN_INTERFACE status"
+		ifconfig $WAN_INTERFACE
 
 		if [ `getCorrectiveActionState` = "true" ]
 		then

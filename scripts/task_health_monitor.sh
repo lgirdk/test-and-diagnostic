@@ -200,17 +200,30 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-#Find the DHCPv6 client type 
-ti_dhcpv6_type="$(busybox pidof ti_dhcp6c)"
-dibbler_client_type="$(busybox pidof dibbler-client)"
-if [ "$ti_dhcpv6_type" = "" ] && [ ! -z "$dibbler_client_type" ];then
-	DHCPv6_TYPE="dibbler-client"
-elif [ ! -z "$ti_dhcpv6_type" ] && [ "$dibbler_client_type" = "" ];then
-	DHCPv6_TYPE="ti_dhcp6c"
-else
-	DHCPv6_TYPE=""
+xle_device_mode=0
+if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+    # checking device mode
+    xle_device_mode=`syscfg get Device_Mode`
+    if [ "$xle_device_mode" -eq "1" ]; then
+        echo_t "[RDKB_SELFHEAL] : Device is in extender mode"
+    else
+        echo_t "[RDKB_SELFHEAL] : Device is in router mode"
+    fi
+  /usr/bin/xle_selfheal $xle_device_mode &
 fi
-echo_t "DHCPv6_Client_type is $DHCPv6_TYPE"
+if [ "$xle_device_mode" = "0" ]; then
+    #Find the DHCPv6 client type 
+    ti_dhcpv6_type="$(busybox pidof ti_dhcp6c)"
+    dibbler_client_type="$(busybox pidof dibbler-client)"
+    if [ "$ti_dhcpv6_type" = "" ] && [ ! -z "$dibbler_client_type" ];then
+        DHCPv6_TYPE="dibbler-client"
+    elif [ ! -z "$ti_dhcpv6_type" ] && [ "$dibbler_client_type" = "" ];then
+        DHCPv6_TYPE="ti_dhcp6c"
+    else
+        DHCPv6_TYPE=""
+    fi
+    echo_t "DHCPv6_Client_type is $DHCPv6_TYPE"
+fi
 #function to restart Dhcpv6_Client
 Dhcpv6_Client_restart ()
 {
@@ -3010,25 +3023,32 @@ if [ $BR_MODE -eq 0 ]; then
         #sysevent set firewall-restart
     fi
 fi
+if [ "$xle_device_mode" -eq "0" ]; then
+    Ipv4_error_file="/tmp/.ipv4table_error"
+    Ipv6_error_file="/tmp/.ipv6table_error"
+elif [ "$xle_device_mode" -eq "1" ]; then
+    Ipv4_error_file="/tmp/.ipv4table_ext_error"
+    Ipv6_error_file="/tmp/.ipv6table_ext_error"
+fi
 
-if [ -s /tmp/.ipv4table_error ] || [ -s /tmp/.ipv6table_error ];then
-	firewall_selfheal_count=$(sysevent get firewall_selfheal_count)
-	if [ "$firewall_selfheal_count" = "" ];then
-		firewall_selfheal_count=0
-	fi
-	if [ $firewall_selfheal_count -lt 3 ];then
-		echo_t "[RDKB_SELFHEAL] : iptables error , restarting firewall"
-		echo ">>>> /tmp/.ipv4table_error <<<<"
-		cat /tmp/.ipv4table_error
-		echo ">>>> /tmp/.ipv6table_error <<<<"
-		cat /tmp/.ipv6table_error
-		sysevent set firewall-restart
-		firewall_selfheal_count=$((firewall_selfheal_count + 1))
-		sysevent set firewall_selfheal_count $firewall_selfheal_count
-		echo_t "[RDKB_SELFHEAL] : firewall_selfheal_count is $firewall_selfheal_count"
-	else
-		echo_t "[RDKB_SELFHEAL] : max firewall_selfheal_count reached, not restarting firewall"
-	fi
+if [ -s $Ipv4_error_file ] || [ -s $Ipv6_error_file ];then
+    firewall_selfheal_count=$(sysevent get firewall_selfheal_count)
+    if [ "$firewall_selfheal_count" = "" ];then
+        firewall_selfheal_count=0
+    fi
+    if [ $firewall_selfheal_count -lt 3 ];then
+        echo_t "[RDKB_SELFHEAL] : iptables error , restarting firewall"
+        echo ">>>> $Ipv4_error_file <<<<"
+        cat $Ipv4_error_file
+        echo ">>>> $Ipv6_error_file <<<<"
+        cat $Ipv6_error_file
+        sysevent set firewall-restart
+        firewall_selfheal_count=$((firewall_selfheal_count + 1))
+        sysevent set firewall_selfheal_count $firewall_selfheal_count
+        echo_t "[RDKB_SELFHEAL] : firewall_selfheal_count is $firewall_selfheal_count"
+    else
+        echo_t "[RDKB_SELFHEAL] : max firewall_selfheal_count reached, not restarting firewall"
+    fi
 fi
 
 case $SELFHEAL_TYPE in
@@ -3066,27 +3086,29 @@ if [ "$lost_and_found_enable" = "true" ]; then
     echo_t "[RDKB_SELFHEAL] [DHCPCORRUPT_TRACE] : iot_dhcp_start = $iot_dhcp_start iot_dhcp_end=$iot_dhcp_end iot_netmask=$iot_netmask"
 fi
 
-#Checking whether dnsmasq is running or not and if zombie for XF3
-if [ "$thisWAN_TYPE" = "EPON" ]; then
-    DNS_PID=$(busybox pidof dnsmasq)
-    if [ "$DNS_PID" = "" ]; then
-        InterfaceInConf=""
-        Bridge_Mode_t=$(syscfg get bridge_mode)
-        InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
-        if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
-            if [ ! -f /tmp/dnsmaq_noiface ]; then
-                echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
-                touch /tmp/dnsmaq_noiface
+if [ "$xle_device_mode" -eq "0" ]; then
+    #Checking whether dnsmasq is running or not and if zombie for XF3
+    if [ "$thisWAN_TYPE" = "EPON" ]; then
+        DNS_PID=$(busybox pidof dnsmasq)
+        if [ "$DNS_PID" = "" ]; then
+            InterfaceInConf=""
+            Bridge_Mode_t=$(syscfg get bridge_mode)
+            InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
+            if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+                if [ ! -f /tmp/dnsmaq_noiface ]; then
+                    echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                    touch /tmp/dnsmaq_noiface
+                fi
+            else
+                echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+                t2CountNotify "SYS_SH_dnsmasq_restart"
             fi
         else
-            echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
-            t2CountNotify "SYS_SH_dnsmasq_restart"
+            if [ -f /tmp/dnsmaq_noiface ]; then
+                rm -rf /tmp/dnsmaq_noiface
+            fi
         fi
-    else
-        if [ -f /tmp/dnsmaq_noiface ]; then
-            rm -rf /tmp/dnsmaq_noiface
-        fi
-    fi
+fi
     # ARRIS XB6 => MODEL_NUM=TG3482G
     # Tech CBR  => MODEL_NUM=CGA4131COM
     # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -3141,46 +3163,47 @@ fi
 
 #Checking whether dnsmasq is running or not
 if [ "$thisWAN_TYPE" != "EPON" ]; then
-    DNS_PID=$(busybox pidof dnsmasq)
-    if [ "$DNS_PID" = "" ]; then
-        InterfaceInConf=""
-        Bridge_Mode_t=$(syscfg get bridge_mode)
-        InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
-        if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
-            if [ ! -f /tmp/dnsmaq_noiface ]; then
-                echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
-                touch /tmp/dnsmaq_noiface
+    if [ "$xle_device_mode" -ne "1" ]; then
+        DNS_PID=$(busybox pidof dnsmasq)
+        if [ "$DNS_PID" = "" ]; then
+            InterfaceInConf=""
+            Bridge_Mode_t=$(syscfg get bridge_mode)
+            InterfaceInConf=$(grep "interface=" /var/dnsmasq.conf)
+            if [ "$InterfaceInConf" = "" ] && [ "0" != "$Bridge_Mode_t" ] ; then
+                if [ ! -f /tmp/dnsmaq_noiface ]; then
+                    echo_t "[RDKB_SELFHEAL] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+                    touch /tmp/dnsmaq_noiface
+                fi
+            else
+                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] ; then
+                    echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
+                    t2CountNotify "SYS_SH_dnsmasq_restart"
+                fi
             fi
         else
-            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] ; then
-                echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
-                t2CountNotify "SYS_SH_dnsmasq_restart"
-            fi
-        fi
-    else
-        brlan0up=$(grep "brlan0" /var/dnsmasq.conf)
-        case $SELFHEAL_TYPE in
-            "BASE")
-                brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-                lnf_ifname=$(syscfg get iot_ifname)
-                if [ "$lnf_ifname" = "l2sd0.106" ]; then
-                    lnf_ifname=$(syscfg get iot_brname)
-                fi
-                if [ "$lnf_ifname" != "" ]; then
-                    echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
-                    infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
-                else
-                    echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
-                    #Set some value so that dnsmasq won't restart
-                    infup="NA"
-                fi
-            ;;
-            "TCCBR")
-            ;;
-            "SYSTEMD")
-                brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
-            ;;
-        esac
+                brlan0up=$(grep "brlan0" /var/dnsmasq.conf)
+                case $SELFHEAL_TYPE in
+                    "BASE")
+                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+                        lnf_ifname=$(syscfg get iot_ifname)
+                        if [ "$lnf_ifname" = "l2sd0.106" ]; then
+                            lnf_ifname=$(syscfg get iot_brname)
+                        fi
+                        if [ "$lnf_ifname" != "" ]; then
+                            echo_t "[RDKB_SELFHEAL] : LnF interface is: $lnf_ifname"
+                            infup=$(grep "$lnf_ifname" /var/dnsmasq.conf)
+                        else
+                            echo_t "[RDKB_SELFHEAL] : LnF interface not available in DB"
+                            #Set some value so that dnsmasq won't restart
+                            infup="NA"
+                        fi
+                    ;;
+                    "TCCBR")
+                    ;;
+                    "SYSTEMD")
+                        brlan1up=$(grep "brlan1" /var/dnsmasq.conf)
+                    ;;
+                esac
 
         if [ -f /tmp/dnsmaq_noiface ]; then
             rm -rf /tmp/dnsmaq_noiface
@@ -3261,7 +3284,8 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 		fi
             ;;
         esac
-    fi   # [ "$DNS_PID" = "" ]
+        fi # [ "$DNS_PID" = "" ]
+    fi
 fi  # [ "$thisWAN_TYPE" != "EPON" ]
 
 case $SELFHEAL_TYPE in
@@ -3271,6 +3295,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         #Checking ipv6 dad failure and restart dibbler client [TCXB6-5169]
+    if [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
         CHKIPV6_DAD_FAILED=$(ip -6 addr show dev erouter0 | grep "scope link tentative dadfailed")
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
@@ -3289,6 +3314,7 @@ case $SELFHEAL_TYPE in
                 fi
             fi
         fi
+    fi
     ;;
 esac
 
@@ -3318,15 +3344,17 @@ esac
 # Tech XB8  => MODEL_NUM=CGM4981COM
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
-if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
-then
-#Checking dibbler server is running or not RDKB_10683
-DIBBLER_PID=$(busybox pidof dibbler-server)
-if [ "$DIBBLER_PID" = "" ]; then
-#   IPV6_STATUS=`sysevent get ipv6-status`
-    DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
-    routerMode="`syscfg get last_erouter_mode`"
+if [ "$xle_device_mode" -ne "1" ]; then
+# for xle no need to check dibbler client and server
+    if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
+        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+    then
+    #Checking dibbler server is running or not RDKB_10683
+    DIBBLER_PID=$(busybox pidof dibbler-server)
+    if [ "$DIBBLER_PID" = "" ]; then
+    #   IPV6_STATUS=`sysevent get ipv6-status`
+        DHCPV6C_ENABLED=$(sysevent get dhcpv6c_enabled)
+        routerMode="`syscfg get last_erouter_mode`"
 
     if [ "$BOX_TYPE" = "HUB4" ]; then
         #Since dibbler client not supported for hub4
@@ -3477,22 +3505,24 @@ if [ "$DIBBLER_PID" = "" ]; then
             ;;
         esac
     fi
-fi
-fi
-
-#Checking the zebra is running or not
-WAN_STATUS=$(sysevent get wan-status)
-ZEBRA_PID=$(busybox pidof zebra)
-if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
-    if [ "$BR_MODE" = "0" ]; then
-
-        echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
-        t2CountNotify "SYS_SH_Zebra_restart"
-        /etc/utopia/registration.d/20_routing restart
-        sysevent set zebra-restart
+    fi
     fi
 fi
+# xle mode ends
+if [ "$xle_device_mode" -ne "1" ]; then #zebra for non xle
+    #Checking the zebra is running or not
+    WAN_STATUS=$(sysevent get wan-status)
+    ZEBRA_PID=$(busybox pidof zebra)
+    if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
+        if [ "$BR_MODE" = "0" ]; then
 
+            echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
+            t2CountNotify "SYS_SH_Zebra_restart"
+            /etc/utopia/registration.d/20_routing restart
+            sysevent set zebra-restart
+        fi
+    fi
+fi
 case $SELFHEAL_TYPE in
     "BASE")
         #Checking the ntpd is running or not
