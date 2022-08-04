@@ -35,9 +35,8 @@ timestamp=`getDate`
 
 logTmpFs()
 {
-
-   TMPFS_CUR_USAGE=0
    TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
+
    if [ $TMPFS_CUR_USAGE -ge $TMPFS_THRESHOLD ] || [ "$1" = "log" ]
    then   
       echo_t "================================================================================"
@@ -245,9 +244,6 @@ get_high_mem_processes() {
 	count=`syscfg get process_memory_log_count`
 	count=$((count + 1))
 	echo_t "Count is $count"
-        
-        TMPFS_CUR_USAGE=0
-        TMPFS_CUR_USAGE=`df /tmp | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
 
 	if [ "$count" -eq "$max_count" ]
 	then
