@@ -25,6 +25,14 @@ PRIVATE_LAN="brlan0"
 BR_MODE=0
 CONSOLE_LOG="/rdklogs/logs/Consolelog.txt.0"
 
+#upflowed INTCS-125.patch as part of RDKB-41505.
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+	DCM_LOGS_TMP=/tmp/dcmscript_tmp.txt
+	DCM_LOGS=/rdklogs/logs/dcmscript.log
+	SECCONSOLE_LOGS=/rdklogs/logs/SecConsole.txt.0
+	DCM_TMP_LINES=15
+fi
+
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
 then
@@ -1890,6 +1898,16 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
     ;;
 esac
+#upflowed INTCS-125.patch as part of RDKB-41505.
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+        tail -n $DCM_TMP_LINES $DCM_LOGS > $DCM_LOGS_TMP
+       if grep -q -e "RF_ERROR_RpcRegisterFail" ${DCM_LOGS_TMP}; then
+               echo "[RDKB_SELFHEAL] : ERROR, RPC Management Server Failed Registering" >> "$SECCONSOLE_LOGS"
+               echo "[RDKB_SELFHEAL] : Restarting RPC Management Server Service" >> "$SECCONSOLE_LOGS"
+               systemctl restart systemd-rpc_management_srv_init-puma7.service
+       fi
+               rm -rf $DCM_LOGS_TMP
+fi
 
 if [ "$MODEL_NUM" = "PX5001" ] || [ "$MODEL_NUM" = "PX5001B" ] || [ "$MODEL_NUM" = "CGA4131COM" ]; then
     #Checking if acsd is running and whether acsd core is generated or not
