@@ -1256,8 +1256,10 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
 
             primary=$(sysevent get hotspotfd-primary)
             secondary=$(sysevent get hotspotfd-secondary)
+            keepalive_interval=$(sysevent get hotspotfd-keep-alive)
             PRIMARY_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.PrimaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
             SECOND_EP=$(dmcli eRT getv Device.X_COMCAST-COM_GRE.Tunnel.1.SecondaryRemoteEndpoint | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+            WAN_STATUS=$(sysevent get wan-status)
             if [ "$primary" = "" ] ; then
                echo_t "Primary endpoint is empty. Restoring it"
                sysevent set hotspotfd-primary $PRIMARY_EP
@@ -1267,7 +1269,16 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
                echo_t "Secondary endpoint is empty. Restoring it"
                sysevent set hotspotfd-secondary $SECOND_EP
             fi
-            resetNeeded "" CcspHotspot
+            if [ "$WAN_STATUS" = "started" ] ; then
+                if [ "$keepalive_interval" = "" ] ; then
+                   echo_t "KeepAlive Parameters are not set"
+                   sysevent set hotspot-start
+                else
+                   resetNeeded "" CcspHotspot
+                fi
+            else
+                echo_t "Not Starting CcspHotspot since WAN is not started"
+            fi
         fi
     fi
 fi
