@@ -1657,6 +1657,22 @@ case $SELFHEAL_TYPE in
                 echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
                 t2CountNotify "SYS_SH_Dropbear_restart"
                 sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+            else
+                #In platforms with multiple dropbear instances, checking the instance on wan interface
+                PS_DROPBEAR=$(ps ww | grep 'dropbear -E -s -b /etc/sshbanner.txt' | grep -v grep)
+                NUMPROC_DROPBEAR=$(echo $PS_DROPBEAR | wc -l)
+                if [ "$NUMPROC_DROPBEAR" -eq 0 ] ; then
+                    echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
+                    sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+                else
+                    #Checking if dropbear binds to ipv4 but fails with ipv6
+                    NUMPROC_DROPBEAR_IPV6=$(echo $PS_DROPBEAR |  egrep -c '([a-f0-9:]+:+)+[a-f0-9]+')
+                    NS_DROPBEAR_IPV6=$(netstat -tulpn | grep -c ":22 .*:::\* .*dropbear")
+                    if [ "$NUMPROC_DROPBEAR_IPV6" -gt 0 -a "$NS_DROPBEAR_IPV6" -eq "0" ]; then
+                         echo_t "Dropbear not listening on ipv6 address, restarting dropbear "
+                         sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+                    fi
+                fi
             fi
             if [ -f "/nvram/ETHWAN_ENABLE" ]; then
                 NUMPROC=$(netstat -tulpn | grep ":22 " | grep -c "dropbear")
