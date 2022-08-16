@@ -101,6 +101,7 @@
 */
 #include "cosa_diagnostic_apis.h"
 #include "cosa_selfheal_apis.h"
+#include "cosa_wanconnectivity_apis.h"
 
 PCOSA_DIAG_PLUGIN_INFO             g_pCosaDiagPluginInfo;
 COSAGetParamValueStringProc        g_GetParamValueString;
@@ -209,6 +210,10 @@ CosaBackEndManagerInitialize
     /*pMyObject->hNat           = (ANSC_HANDLE)CosaNatCreate();*/
     pMyObject->hDiag          = (ANSC_HANDLE)CosaDiagCreate();
     pMyObject->hSelfHeal          = (ANSC_HANDLE)CosaSelfHealCreate();
+    if (CosaWanCnctvtyChk_Init() != ANSC_STATUS_SUCCESS)
+    {
+        CcspTraceError(("Wan connectivity check initialization failed\n"));
+    }
 /*
     pMyObject->hProcStatus    = (ANSC_HANDLE)CosaProcStatusCreate();
    pMyObject->hDeviceInfo    = (ANSC_HANDLE)CosaDeviceInfoCreate();
@@ -380,6 +385,7 @@ CosaBackEndManagerRemove
         CosaPPPRemove((ANSC_HANDLE)pMyObject->hPPP);
     }
 */
+    CosaWanCnctvtyChkRemove();
 
     /* Remove self */
     AnscFreeMemory((ANSC_HANDLE)pMyObject);
