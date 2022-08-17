@@ -1581,7 +1581,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
           if [ "$HOTSPOT_ENABLE" = "true" ]; then
             Radio_1=$(dmcli eRT getv Device.WiFi.Radio.1.Status| grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            if [ "$Radio_1" = "true" ]; then
+            if [ "$Radio_1" = "Up" ]; then
                 XOPEN_24=$(dmcli eRT getv Device.WiFi.SSID.5.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 XSEC_24=$(dmcli eRT getv Device.WiFi.SSID.9.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 open2=`wlctl -i wl0.2 bss`
@@ -1610,7 +1610,7 @@ case $SELFHEAL_TYPE in
             fi
 
             Radio_2=$(dmcli eRT getv Device.WiFi.Radio.2.Status| grep "value" | cut -f3 -d":" | cut -f2 -d" ")
-            if [ "$Radio_2" = "true" ]; then
+            if [ "$Radio_2" = "Up" ]; then
                 XOPEN_5=$(dmcli eRT getv Device.WiFi.SSID.6.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 XSEC_5=$(dmcli eRT getv Device.WiFi.SSID.10.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
                 XOPEN_16=$(dmcli eRT getv Device.WiFi.SSID.16.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
