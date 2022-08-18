@@ -23,7 +23,14 @@ source $TAD_PATH/corrective_action.sh
 source /etc/waninfo.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
-DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
+then
+    DHCPV6_HANDLER="/usr/bin/service_dhcpv6_client"
+else
+    DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+fi
+
 PRIVATE_LAN="brlan0"
 CCSP_COMMON_FIFO="/tmp/ccsp_common_fifo"
 
@@ -65,14 +72,14 @@ Dhcpv6_Client_restart ()
 		sysevent set dibbler_server_conf-status ""
 		if [ "$1" = "dibbler-client" ];then
 			dibbler-client stop
-            		sleep 2
-            		dibbler-client start
-            		sleep 8
+            sleep 2
+            dibbler-client start
+            sleep 8
 		elif [ "$1" = "ti_dhcp6c" ];then
-			sh $DHCPV6_HANDLER disable
-	                sleep 2
-	                sh $DHCPV6_HANDLER enable
-            		sleep 8
+			$DHCPV6_HANDLER dhcpv6_client_service_disable
+            sleep 2
+            $DHCPV6_HANDLER dhcpv6_client_service_enable
+            sleep 8
 		fi
 		wait_till_state "dibbler_server_conf" "ready"
 		touch /tmp/dhcpv6-client_restarted
@@ -675,14 +682,14 @@ self_heal_dibbler_server()
                                     echo "DADFAILED : Recovering device from DADFAILED state"
                                     # save global ipv6 address before disable it
                                     v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}')
-                                    sh $DHCPV6_HANDLER disable
+                                    $DHCPV6_HANDLER dhcpv6_client_service_disable
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
                                     sleep 1
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
                                     sleep 1
-                                    sh $DHCPV6_HANDLER enable
+                                    $DHCPV6_HANDLER dhcpv6_client_service_enable
                                     # re-add global ipv6 address after enabled it
                                     ip -6 addr add $v6addr dev $PRIVATE_LAN
                                     sleep 5
@@ -727,7 +734,13 @@ self_heal_dhcp_clients()
     DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
-    DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+
+    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
+    then
+        DHCPV6_HANDLER="/usr/bin/service_dhcpv6_client"
+    else
+        DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
+    fi
 
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
@@ -791,7 +804,12 @@ self_heal_dhcp_clients()
                         /usr/sbin/dibbler-client stop
                     elif [ "$BOX_TYPE" = "XB6" ]; then
                         echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
-                        sh $DHCPV6_HANDLER disable
+                        if [ "$MODEL_NUM" = "CGM4981COM" ]
+                        then
+                            sh $DHCPV6_HANDLER disable
+                        else
+                            $DHCPV6_HANDLER dhcpv6_client_service_disable
+                        fi
                     fi
                     fi
                     ;;
