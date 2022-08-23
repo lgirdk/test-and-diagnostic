@@ -106,83 +106,123 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         return DIAG_ERR_PARAM;
 
     cmd[0] = '\0', left = sizeof(cmd);
+
     if (cfg->cnt <= 0)
         cnt = PING_DEF_CNT; /* or never return */
     else
         cnt = cfg->cnt;
+
 #if defined(_PLATFORM_TURRIS_)
-    left -= sprintf_s(cmd + strlen(cmd), left, "ping ");
-    if(left < EOK)
+    rc = sprintf_s(cmd + strlen(cmd), left, "ping ");
+    if (rc < EOK)
     {
         ERR_CHK(rc);
     }
+    else
+    {
+        left -= rc;
+    }
 #else
-    left -= sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
-    if(left < EOK)
+    rc = sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
+    if (rc < EOK)
     {
         ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
     }
 #endif
     if (strlen(cfg->ifname))
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-I %s ", cfg->ifname);
+        if (rc < EOK)
         {
             ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cnt)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-c %u ", cnt);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-c %u ", cnt);
+        if (rc < EOK)
         {
             ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->size)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-s %u ", cfg->size);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-s %u ", cfg->size);
+        if (rc < EOK)
         {
             ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->timo)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-W %u ", cfg->timo);
+        if (rc < EOK)
         {
             ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
 #ifdef PING_HAS_QOS
     if (cfg->tos)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-Q %u ", cfg->tos);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-Q %u ", cfg->tos);
+        if (rc < EOK)
         {
             ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
 #endif
 
 #if defined(_PLATFORM_TURRIS_)
-    left -= sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
-    if(left < EOK)
+    rc = sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
+    if (rc < EOK)
     {
         ERR_CHK(rc);
     }
+    else
+    {
+        left -= rc;
+    }
 #endif
-    left -= sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
-    if(left < EOK)
+
+    rc = sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    if (rc < EOK)
     {
         ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
     }
 
     if (left <= strlen(awkcmd) + 1)
         return DIAG_ERR_NOMEM;
+
     rc = sprintf_s(cmd + strlen(cmd), left, "%s ", awkcmd);
-    if(rc < EOK)
+    if (rc < EOK)
     {
         ERR_CHK(rc);
     }
