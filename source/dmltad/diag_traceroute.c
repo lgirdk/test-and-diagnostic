@@ -193,75 +193,113 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     assert(diag == &diag_tracert);
 
     cmd[0] = '\0', left = sizeof(cmd);
+
 #if !defined(_PLATFORM_RASPBERRYPI_)
     timeout=cfg->timo;
     timeout=timeout*1000;
-    left -= sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
-    if(left < EOK)
+    rc = sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
+    if (rc < EOK)
     {
-        ERR_CHK(left);
+        ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
     }
 #else
-    left -= sprintf_s(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
-    if(left < EOK)
+    rc = sprintf_s(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
+    if (rc < EOK)
     {
-        ERR_CHK(left);
+        ERR_CHK(rc);
     }
-
+    else
+    {
+        left -= rc;
+    }
 #endif
+
     if (strlen(cfg->ifname))
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-i %s ", cfg->ifname);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->cnt)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-q %u ", cfg->cnt);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->timo)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-w %u ", cfg->timo);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->tos)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-t %u ", cfg->tos);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-t %u ", cfg->tos);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->maxhop)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "-m %u ", cfg->maxhop);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "-m %u ", cfg->maxhop);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
     if (cfg->size)
     {
-        left -= sprintf_s(cmd + strlen(cmd), left, "%u ", cfg->size);
-        if(left < EOK)
+        rc = sprintf_s(cmd + strlen(cmd), left, "%u ", cfg->size);
+        if (rc < EOK)
         {
-            ERR_CHK(left);
+            ERR_CHK(rc);
+        }
+        else
+        {
+            left -= rc;
         }
     }
-    left -= sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
-    if(left < EOK)
-        {
-            ERR_CHK(left);
-        }
+
+    rc = sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
+    }
 
     fprintf(stderr, "%s: %s\n", __FUNCTION__, cmd);
 
