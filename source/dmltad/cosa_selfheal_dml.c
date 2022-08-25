@@ -2128,7 +2128,7 @@ CPUProcAnalyzer_GetParamStringValue
     if( strcmp(ParamName, "ProcessList") == 0 )
     {
         char buf[1024] = {0};
-        FILE *fp = fopen(PROCESS_LIST_FILE, "r");
+        FILE *fp = fopen(CPA_PROCESS_LIST_FILE, "r");
         if(fp)
         {
             while(fscanf(fp,"%s", buf) != EOF)
@@ -2186,7 +2186,7 @@ CPUProcAnalyzer_SetParamStringValue
     {
         if( !CosaIsProcAnalRunning() )
         {
-            FILE *fp = fopen(PROCESS_LIST_FILE,"w");
+            FILE *fp = fopen(CPA_PROCESS_LIST_FILE,"w");
             if( fp )
             {
                 char *token = strtok(strValue, ",");

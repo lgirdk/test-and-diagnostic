@@ -1078,11 +1078,15 @@ char* RemoveSpaces(char *str)
 **********************************************************************/
 void CosaReadProcAnalConfig(const char *paramname, char *res)
 {
-    FILE *fp = fopen(CONFIG_FILE,"r");
     char tmp_string[BUF_128] = {0};
     char* tmp = NULL;
     char* pch = NULL;
+    char *tmp_file = NULL;
+    FILE *fp = NULL;
     errno_t rc = -1;
+
+    GET_CPA_CONF_FILE(tmp_file);
+    fp = fopen(tmp_file,"r");
 
     if(fp)
     {
@@ -1122,19 +1126,19 @@ void CosaReadProcAnalConfig(const char *paramname, char *res)
 void CosaWriteProcAnalConfig(const char *paramname, char *res)
 {
     int ret = 0;
-    if(!access(CONFIG_FILE, W_OK))
+    FILE *fp = NULL;
+    SYNC_CPA_CONF_FILE();
+    ret = v_secure_system("sed -i '/%s/d' "CPA_CONFIG_FILE, paramname);
+    if(ret != 0)
     {
-        ret = v_secure_system("sed -i '/%s/d' "CONFIG_FILE, paramname);
-        if(ret != 0)
-        {
-             CcspTraceError(("%s - System Command failure\n",__FUNCTION__ ));
-             return;
-        }
+         CcspTraceError(("%s - System Command failure\n",__FUNCTION__ ));
+         return;
     }
-    FILE *fp = fopen(CONFIG_FILE, "a");
+
+    fp = fopen(CPA_CONFIG_FILE, "a");
     if(fp)
     {
-        fprintf(fp, PARAM_NAME_PREPEND"%s = %s\n", paramname, res);
+        fprintf(fp, CPA_PARAM_NAME_PREPEND"%s = %s\n", paramname, res);
         fclose(fp);
     }
 }
