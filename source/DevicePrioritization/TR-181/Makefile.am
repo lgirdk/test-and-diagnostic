@@ -17,21 +17,14 @@
 # limitations under the License.
 ######################################################################
 
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-
-AM_CPPFLAGS = -Wall -Werror
 ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
 
 noinst_LTLIBRARIES = libDevicePrio.la
 
-libDevicePrio_la_CPPFLAGS = -I$(top_srcdir)/source/DevicePrioritization/ \ 
+libDevicePrio_la_CPPFLAGS = -I$(top_srcdir)/source/DevicePrioritization/ \
                             -I$(top_srcdir)/source/DevicePrioritization/TR-181 \
                             -I$(top_srcdir)/source/TandDSsp \
-                            -I=${includedir} \
-                            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus 
+                            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus
 
 libDevicePrio_la_SOURCES = device_prio_util_apis.c device_prio_apis.c device_prio_dml.c device_prio_rbus_handler_apis.c
 
@@ -40,7 +33,7 @@ libDevicePrio_la_LDFLAGS = -lccsp_common -lsyscfg -lrbus -lsysevent
 libDevicePrio_la_CFLAGS = $(DEVICE_PRIORITIZATION_CFLAGS)
 
 if FEATURE_RDK_SCHEDULER
-libDevicePrio_la_SOURCES += webconfig_scheduler_doc.c webconfig_helper_apis.c device_prio_scheduler_apis.c device_prio_webconfig_apis.c 
+libDevicePrio_la_SOURCES += webconfig_scheduler_doc.c webconfig_helper_apis.c device_prio_scheduler_apis.c device_prio_webconfig_apis.c
 
 libDevicePrio_la_LDFLAGS += -lmsgpackc -lcurl -lwebconfig_framework -ltrower-base64 -lrdk_scheduler -lcimplog
 

@@ -1,5 +1,5 @@
 ##########################################################################
-# If not stated otherwise in this file or this component's LICENSE
+# If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
 # Copyright 2015 RDK Management
@@ -17,11 +17,7 @@
 # limitations under the License.
 ##########################################################################
 
-AM_CFLAGS =
-
 AM_CXXFLAGS = -std=c++11
-
-ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = CosaWanCnctvtyChk_gtest.bin
 
@@ -50,4 +46,3 @@ CosaWanCnctvtyChk_gtest_bin_LDADD = $(top_builddir)/source/dmltad/libdmltad.la \
 
 CosaWanCnctvtyChk_gtest_bin_LDFLAGS = -lccsp_common -lsyscfg -lsysevent -lsecure_wrapper -lrbus \
                                       -lresolv -lev -lpcap -lgtest -lgmock -lgcov
-
