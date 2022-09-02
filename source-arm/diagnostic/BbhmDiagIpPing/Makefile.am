@@ -16,11 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS =
-
-ACLOCAL_AMFLAGS = -I m4
 
 noinst_LTLIBRARIES = libdiagprivarm.la
 
-libdiagprivarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
+libdiagprivarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include \
+                             -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing \
+                             -I$(top_srcdir)/source/dmltad \
+                             -I$(top_srcdir)/source/TandDSsp
+
 libdiagprivarm_la_SOURCES = bbhm_diagip_operation_priv.c

@@ -16,11 +16,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS =
-
-ACLOCAL_AMFLAGS = -I m4
 
 noinst_LTLIBRARIES = libdmlarm.la
 
-libdmlarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
-libdmlarm_la_SOURCES = cosa_diagnostic_apis_priv.c  plugin_main_priv.c
+libdmlarm_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include \
+                        -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing \
+                        -I$(top_srcdir)/source/dmltad \
+                        -I$(top_srcdir)/source/TandDSsp
+
+libdmlarm_la_SOURCES = cosa_diagnostic_apis_priv.c plugin_main_priv.c
