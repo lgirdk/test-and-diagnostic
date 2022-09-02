@@ -68,8 +68,6 @@
 
 **************************************************************************/
 
-#include <syscfg/syscfg.h>
-
 #include "plugin_main_apis.h"
 #include "cosa_selfheal_apis.h"
 #include "cosa_logbackup_dml.h"
