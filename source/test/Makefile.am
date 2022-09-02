@@ -1,5 +1,5 @@
 ##########################################################################
-# If not stated otherwise in this file or this component's LICENSE
+# If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
 # Copyright 2015 RDK Management
@@ -16,15 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-
-
 AM_CFLAGS =
-
-AM_CPPFLAGS = -Wall -g -Werror
 AM_CXXFLAGS = -std=c++11
 
 ACLOCAL_AMFLAGS = -I m4
+
 bin_PROGRAMS = CcspTandDSsp_gtest.bin
+
 CcspTandDSsp_gtest_bin_CPPFLAGS = -I$(PKG_CONFIG_SYSROOT_DIR)$(includedir)/gtest -I${top_srcdir}/gtest/include -I${top_srcdir}/source -I${top_srcdir}/source/include
-CcspTandDSsp_gtest_bin_SOURCES =  CcspTandDSspTest.cpp gtest_main.cpp
+CcspTandDSsp_gtest_bin_SOURCES = CcspTandDSspTest.cpp gtest_main.cpp
 CcspTandDSsp_gtest_bin_LDFLAGS = -lgtest -lgmock -lgcov
