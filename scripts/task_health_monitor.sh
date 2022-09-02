@@ -58,27 +58,7 @@ MAPT_CONFIG=`sysevent get mapt_config_flag`
 
 PSM_SHUTDOWN="/tmp/.forcefull_psm_shutdown"
 
-# use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
-case $BOX_TYPE in
-    "XB3") SELFHEAL_TYPE="BASE";;
-    "XB6") SELFHEAL_TYPE="SYSTEMD";;
-    "XF3") SELFHEAL_TYPE="SYSTEMD";;
-    "TCCBR") SELFHEAL_TYPE="TCCBR";;
-    "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
-    "HUB4") SELFHEAL_TYPE="SYSTEMD";;
-    "SR300") SELFHEAL_TYPE="SYSTEMD";;
-    "SE501") SELFHEAL_TYPE="SYSTEMD";;
-    "SR213") SELFHEAL_TYPE="SYSTEMD";;
-    "WNXL11BWL") SELFHEAL_TYPE="SYSTEMD";;
-    *)
-        echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
-        SELFHEAL_TYPE="BASE";;
-esac
-
-case $MODEL_NUM in
-            "CGA4332COM") SELFHEAL_TYPE="SYSTEMD";;
-            *) ;;
-esac
+SELFHEAL_TYPE="BASE"
 
 case $SELFHEAL_TYPE in
     "BASE")
