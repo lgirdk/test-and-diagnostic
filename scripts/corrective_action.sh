@@ -25,24 +25,7 @@ fi
 
 source /lib/rdk/t2Shared_api.sh
 
-# use SELFHEAL_TYPE to handle various code paths below (BOX_TYPE is set in device.properties)
-case $BOX_TYPE in
-    "XB3") SELFHEAL_TYPE="BASE";;
-    "XB6") SELFHEAL_TYPE="SYSTEMD";;
-    "XF3") SELFHEAL_TYPE="SYSTEMD";;
-    "TCCBR") SELFHEAL_TYPE="TCCBR";;
-    "pi"|"rpi") SELFHEAL_TYPE="BASE";;  # TBD?!
-    "HUB4") SELFHEAL_TYPE="SYSTEMD";;
-    "SR300") SELFHEAL_TYPE="SYSTEMD";;
-    "SE501") SELFHEAL_TYPE="SYSTEMD";;
-    "SR213") SELFHEAL_TYPE="SYSTEMD";;
-    "WNXL11BWL") SELFHEAL_TYPE="SYSTEMD";;
-    "VNTXER5") SELFHEAL_TYPE="SYSTEMD";;
-    *)
-        echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
-        SELFHEAL_TYPE="BASE";;
-esac
-
+SELFHEAL_TYPE="BASE"
 
 TAD_PATH="/usr/ccsp/tad/"
 UTOPIA_PATH="/etc/utopia/service.d"
