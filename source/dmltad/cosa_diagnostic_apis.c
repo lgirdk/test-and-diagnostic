@@ -68,8 +68,6 @@
 
 **************************************************************************/
 
-#include <syscfg/syscfg.h>
-
 #include "plugin_main_apis.h"
 #include "cosa_diagnostic_apis.h"
 #include <syscfg/syscfg.h>
