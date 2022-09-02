@@ -16,25 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-
 AM_CFLAGS =
-
-if ENABLE_MTA
-AM_CFLAGS  += -DENABLE_MTA
-endif
 
 ACLOCAL_AMFLAGS = -I m4
 
-AM_LDFLAGS =  -lpthread -lz
+bin_PROGRAMS = Sub64 Selfhealutil
 
-bin_PROGRAMS = Sub64
-Sub64_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util
 Sub64_SOURCES = sub64.c
+Sub64_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util
 
-bin_PROGRAMS += Selfhealutil
-AM_CFLAGS += $(AM_CPPFLAGS)
-if ENABLE_MTA
-AM_LDFLAGS += -lhal_mta
-endif
-Selfhealutil_CPPFLAGS =
 Selfhealutil_SOURCES = selfheal_utility.c
+if ENABLE_MTA
+Selfhealutil_CPPFLAGS = -DENABLE_MTA
+Selfhealutil_LDFLAGS = -lhal_mta
+else
+Selfhealutil_CPPFLAGS =
+Selfhealutil_LDFLAGS =
+endif
