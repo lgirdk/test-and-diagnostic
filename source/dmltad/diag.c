@@ -462,7 +462,7 @@ static void *diag_task(void *arg)
     diag_err_t  err;
     char        buf[IFNAMSIZ];
     diag_cfg_t  cfgtemp;
-    int retrycount = 0;
+    int retrycount;
     errno_t rc = -1;
 
     if (!diag)
@@ -513,22 +513,17 @@ static void *diag_task(void *arg)
 #endif //NAT46_KERNEL_SUPPORT
 #endif //_HUB4_PRODUCT_REQ_
 
-/*RDKB-12522:If Diagstate comes first and wait for daig params to set*/
-   if(!strlen(cfg.host))
+    /* RDKB-12522:If Diagstate comes first and wait for daig params to set */
+    retrycount = 0;
+    while (strlen(cfg.host) == 0)
     {
-      do
-      {
         sleep(1);
-        diag_getcfg(DIAG_MD_PING, &cfgtemp);
-        cfg = cfgtemp;
-        if(strlen(cfg.host))
+        pthread_mutex_lock(&diag->mutex);
+        cfg = diag->cfg;
+        pthread_mutex_unlock(&diag->mutex);
+        if (++retrycount >= 5)
             break;
-        else
-        retrycount++;
-      }while(retrycount == 5);
-
     }
-
 
     err = diag->op_start(diag, &cfg, &stat);
 
