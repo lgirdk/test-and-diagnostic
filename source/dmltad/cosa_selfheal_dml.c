@@ -29,6 +29,27 @@
 #define DEFAULT_CPU_THRESHOLD       100 /* in percentage */
 #define DEFAULT_MEMORY_THRESHOLD    100 /* in percentage */
 
+static void copy_command_output2 (char *cmd, char *out, int len)
+{
+    FILE *fp;
+    char *p;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        *out = 0;
+        return;
+    }
+
+    fgets(out, len, fp);
+    pclose(fp);
+
+    /* Remove trailing newline */
+    if ((p = strchr(out, '\n')))
+    {
+        *p = 0;
+    }
+}
+
 /***********************************************************************
 
  APIs for Object:
@@ -147,8 +168,7 @@ BOOL SelfHeal_SetParamBoolValue
     )
 {
     PCOSA_DATAMODEL_SELFHEAL            pMyObject    = (PCOSA_DATAMODEL_SELFHEAL)g_pCosaBEManager->hSelfHeal;
-    char buf[128] = {0};
-    FILE *fp;
+
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_Enable") == 0)
     {
         if( pMyObject->Enable == bValue )
@@ -161,54 +181,44 @@ BOOL SelfHeal_SetParamBoolValue
 	    CcspTraceWarning(("%s: syscfg_set failed for %s\n", __FUNCTION__, ParamName));
 	    return FALSE;
         }
-        else 
-        { 
 
-            if ( bValue == TRUE )
-            {
-                v_secure_system("/usr/ccsp/tad/self_heal_connectivity_test.sh &"); 
+        if ( bValue == TRUE )
+        {
+            v_secure_system("/usr/ccsp/tad/self_heal_connectivity_test.sh &");
+            v_secure_system("/usr/ccsp/tad/resource_monitor.sh &");
+            v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
+        }
+        else
+        {
+            char buf[32];
 
-                v_secure_system("/usr/ccsp/tad/resource_monitor.sh &"); 
+            copy_command_output2("busybox pidof self_heal_connectivity_test.sh", buf, sizeof(buf));
+            if (strlen(buf) == 0) {
+                CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
+            } else {
+                CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
+                v_secure_system("kill -9 %s", buf);
+            }
 
-                v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
-	    }
-            else
-	    {
-                fp = v_secure_popen("r", "busybox pidof self_heal_connectivity_test.sh");
-                copy_command_output(fp, buf, sizeof(buf));
-                v_secure_pclose(fp);
+            copy_command_output2("busybox pidof resource_monitor.sh", buf, sizeof(buf));
+            if (strlen(buf) == 0) {
+                CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
+            } else {
+                CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
+                v_secure_system("kill -9 %s", buf);
+            }
 
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: SelfHeal Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop SelfHeal Monitor script\n", __FUNCTION__));
-                    v_secure_system("kill -9 %s", buf);
-                }
-    
-                fp = v_secure_popen("r", "busybox pidof resource_monitor.sh");
-                copy_command_output(fp, buf, sizeof(buf));
-                v_secure_pclose(fp);
+            copy_command_output2("busybox pidof selfheal_aggressive.sh", buf, sizeof(buf));
+            if (strlen(buf) == 0) {
+                CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
+            } else {
+                CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
+                v_secure_system("kill -9 %s", buf);
+            }
+        }
 
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: Resource Monitor script is not running\n", __FUNCTION__));
-                } else {    
-	            CcspTraceWarning(("%s: Stop Resource Monitor script\n", __FUNCTION__));
-                    v_secure_system("kill -9 %s", buf);
-                }   
-       
-                fp = v_secure_popen("r", "busybox pidof selfheal_aggressive.sh");
-                copy_command_output(fp, buf, sizeof(buf));
-                v_secure_pclose(fp);
+        pMyObject->Enable = bValue;
 
-                if (!strcmp(buf, "")) {
-	            CcspTraceWarning(("%s: Aggressive self heal script is not running\n", __FUNCTION__));
-                } else {
-	            CcspTraceWarning(("%s: Aggressive self heal script\n", __FUNCTION__));
-                    v_secure_system("kill -9 %s", buf);
-                }
-	    }
-	    pMyObject->Enable = bValue;
-	}
         return TRUE;
     }
 
@@ -800,8 +810,8 @@ ConnectivityTest_GetParamUlongValue
     
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_LastReboot") == 0)
     {
-        /* collect value */
-        char buf[64]={0};
+        char buf[64];
+
         syscfg_get( NULL, "last_router_reboot_time", buf, sizeof(buf));
     	if( buf[0] != '\0' )
     	{
@@ -832,8 +842,8 @@ ConnectivityTest_GetParamIntValue
 
     if (strcmp(ParamName, "X_RDKCENTRAL-COM_CurrentCount") == 0)
     {
-        /* collect value */
-        char buf[16]={0};
+        char buf[16];
+
         syscfg_get( NULL, "todays_reset_count", buf, sizeof(buf));
         if( buf[0] != '\0' )
         {
@@ -1594,11 +1604,8 @@ ResourceMonitor_SetParamUlongValue
   
 #if defined(_ARRIS_XB6_PRODUCT_REQ_) || defined(_CBR_PRODUCT_REQ_) || defined(_PLATFORM_RASPBERRYPI_) || defined(_PLATFORM_TURRIS_) || \
 (defined(_XB6_PRODUCT_REQ_) && defined(_COSA_BCM_ARM_))
-        char buf[8];
-        errno_t rc = -1;
+        char buf[12];
 	ULONG aggressive_interval;
-        rc = memset_s(buf, sizeof(buf), 0, sizeof(buf));
-        ERR_CHK(rc);
 
 	if (syscfg_get( NULL, "AggressiveInterval", buf, sizeof(buf)) != 0)
 	{
