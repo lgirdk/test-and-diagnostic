@@ -192,6 +192,9 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     diag_err_t err = DIAG_ERR_INTERNAL;
     assert(diag == &diag_tracert);
 
+    if (!cfg || !strlen(cfg->host) || !stat)
+        return DIAG_ERR_PARAM;
+
     cmd[0] = '\0', left = sizeof(cmd);
 
 #if !defined(_PLATFORM_RASPBERRYPI_)
