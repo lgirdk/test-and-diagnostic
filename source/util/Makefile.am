@@ -16,9 +16,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS =
-
-ACLOCAL_AMFLAGS = -I m4
 
 bin_PROGRAMS = Sub64 Selfhealutil RxTx100
 
