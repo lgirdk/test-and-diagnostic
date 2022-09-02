@@ -17,26 +17,17 @@
 # limitations under the License.
 ######################################################################
 
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
-AM_CFLAGS += -D_ANSC_LITTLE_ENDIAN_
-
-AM_CPPFLAGS = -Wall -Werror
-ACLOCAL_AMFLAGS = -I m4
-hardware_platform = i686-linux-gnu
-
 noinst_LTLIBRARIES = libLowLatency.la
 
-libLowLatency_la_CPPFLAGS = -I$(top_srcdir)/source/LatencyMeasurement/ \ 
-                            -I$(top_srcdir)/source/LatencyMeasurement/TR-181 \ 
-                            -I${top_srcdir}/source/LatencyMeasurement/ServiceMonitor/include\
+libLowLatency_la_CPPFLAGS = -I$(top_srcdir)/source/LatencyMeasurement/ \
+                            -I$(top_srcdir)/source/LatencyMeasurement/TR-181 \
+                            -I${top_srcdir}/source/LatencyMeasurement/ServiceMonitor/include \
                             -I$(top_srcdir)/source/TandDSsp \
-                            -I=${includedir} \
-                            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus 
+                            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus
 
 libLowLatency_la_SOURCES = lowlatency_util_apis.c lowlatency_apis.c lowlatency_dml.c lowlatency_rbus_handler_apis.c
 
-libLowLatency_la_LDFLAGS = -lccsp_common -lsyscfg -lrbus
+libLowLatency_la_LDFLAGS = -lccsp_common -lsyscfg -lrbus -lpthread
 
 libLowLatency_DEPENDENCIES = ${top_builddir}/source/LatencyMeasurement/ServiceMonitor/libCcspTandDSsp_ServiceMonitor.la
 						

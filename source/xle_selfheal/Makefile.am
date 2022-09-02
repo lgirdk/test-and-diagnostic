@@ -17,19 +17,8 @@
 # limitations under the License.
 ##########################################################################
 
-AM_CFLAGS = -D_ANSC_LINUX
-AM_CFLAGS += -D_ANSC_USER
-
-
-ACLOCAL_AMFLAGS = -I m4
-
-AM_LDFLAGS =  -lpthread -lz
-
-AM_CFLAGS += $(AM_CPPFLAGS)
-
 bin_PROGRAMS = xle_selfheal
+
 xle_selfheal_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/xle_selfheal
 xle_selfheal_SOURCES = xle_selfheal_util.c
 xle_selfheal_LDFLAGS = -lccsp_common -lsyscfg -lsysevent
-
-
