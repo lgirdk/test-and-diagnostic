@@ -16,15 +16,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-AM_CFLAGS =
-
-ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/dmltad/libdmlarm.la
 
 lib_LTLIBRARIES = libdmltad.la
 
-libdmltad_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp \
+libdmltad_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include \
+                        -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing \
+                        -I$(top_srcdir)/source/dmltad \
+                        -I$(top_srcdir)/source/TandDSsp \
                         -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus
 
 libdmltad_la_SOURCES = cosa_apis_util.c plugin_main.c cosa_apis_util_priv.c cosa_ip_dml_priv.c cosa_apis_busutil.c \
