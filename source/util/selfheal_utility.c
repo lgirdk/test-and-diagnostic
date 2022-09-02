@@ -22,43 +22,39 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef ENABLE_MTA
+
 #include "mta_hal.h"
 
-#ifndef ULONG
-#define ULONG unsigned long
-#endif
-  
-int mtaBatteryGetPowerMode()
+static int mtaBatteryGetPowerMode (void)
 {
-    #ifdef ENABLE_MTA
-    char value[32] = {0};
+    char value[32] = { 0 };
     ULONG size = 0;
 
-    if ( mta_hal_BatteryGetPowerStatus(value, &size) == 0 )
+    mta_hal_InitDB();
+
+    if (mta_hal_BatteryGetPowerStatus(value, &size) == 0)
     {
-    	if(strcmp(value,"Battery") == 0)
-    	{
-    		return 1;
-    	}else {
-    		return 0 ;
-    	}
-    } 
-    #endif
-        return 0 ;
- }
+        return (strcmp(value, "Battery") == 0) ? 1 : 0;
+    }
 
-int main(int argc,char *argv[])
+    return 0;
+}
+#endif
+
+int main (int argc, char *argv[])
 {
-	int powermode_status = 0;
+    int powermode_status = 0;
 
-	if(argc < 2)
-   	    return 0;
-	if (strcmp(argv[1],"power_mode")==0)
-	{
-		#ifdef ENABLE_MTA
-		mta_hal_InitDB();
-		powermode_status= mtaBatteryGetPowerMode();
-                #endif
-	}
-	return powermode_status ;
+    if (argc < 2)
+        return 0;
+
+#ifdef ENABLE_MTA
+    if (strcmp(argv[1], "power_mode") == 0)
+    {
+        powermode_status = mtaBatteryGetPowerMode();
+    }
+#endif
+
+    return powermode_status;
 }
