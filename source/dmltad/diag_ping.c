@@ -102,8 +102,11 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 
     assert(diag == &diag_ping);
 
-    if (!cfg || !strlen(cfg->host) || !st)
+    if (!cfg || !st)
         return DIAG_ERR_PARAM;
+
+    if (strlen(cfg->host) == 0)
+        return DIAG_ERR_RESOLVE;
 
     if (cfg->cnt <= 0)
         cnt = PING_DEF_CNT; /* or never return */

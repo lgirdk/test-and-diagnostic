@@ -135,6 +135,9 @@ static int validate_hostname (char *host, size_t sizelimit)
 
     len = strlen(host);
 
+    if (len == 0)
+        return 0;   /* empty string is OK */
+
     if (len >= sizelimit)
         return -1;
 
