@@ -66,8 +66,6 @@
 
 **************************************************************************/
 
-#include <syscfg/syscfg.h>
-
 #include "ansc_platform.h"
 #include "cosa_diagnostic_apis.h"
 #include "plugin_main_apis.h"
