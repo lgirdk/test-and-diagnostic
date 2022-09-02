@@ -28,6 +28,27 @@
 #define DEFAULT_CPU_THRESHOLD       100 /* in percentage */
 #define DEFAULT_MEMORY_THRESHOLD    100 /* in percentage */
 
+static void copy_command_output (char *cmd, char *out, int len)
+{
+    FILE *fp;
+    char *p;
+
+    if ((fp = popen(cmd, "r")) == NULL)
+    {
+        *out = 0;
+        return;
+    }
+
+    fgets(out, len, fp);
+    pclose(fp);
+
+    /* Remove trailing newline */
+    if ((p = strchr(out, '\n')))
+    {
+        *p = 0;
+    }
+}
+
 /***********************************************************************
 
  APIs for Object:

@@ -190,4 +190,3 @@ VOID CosaSelfHealAPIModifyCronSchedule( BOOL bForceRun );
 
 void CpuMemFragCronSchedule(ULONG uinterval, BOOL bConnectnow);
 void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma );
-void copy_command_output(char * cmd, char * out, int len);

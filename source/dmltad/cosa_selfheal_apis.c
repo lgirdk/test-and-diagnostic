@@ -77,30 +77,6 @@
 static char *Ipv4_Server ="Ipv4_PingServer_%d";
 static char *Ipv6_Server ="Ipv6_PingServer_%d";
 
-//static int count=0; /*RDKB-24432 : Memory usage and fragmentation selfheal*/
-
-void copy_command_output(char * cmd, char * out, int len)
-{
-    FILE * fp;
-    char   buf[256] = {0};
-    char * p;
-    errno_t rc = -1;
-    fp = popen(cmd, "r");
-
-    if (fp)
-    {
-        fgets(buf, sizeof(buf), fp);
-
-        /*we need to remove the \n char in buf*/
-        if ((p = strchr(buf, '\n'))) *p = 0;
-
-        rc = strcpy_s(out, len, buf);
-        ERR_CHK(rc);
-
-        pclose(fp);
-    }
-
-}
 
 int SyncServerlistInDb(PingServerType type, int EntryCount)
 {
