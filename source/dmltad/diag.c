@@ -477,6 +477,19 @@ static void *diag_task(void *arg)
     pthread_mutex_lock(&diag->mutex);
     cfg = diag->cfg;
     pthread_mutex_unlock(&diag->mutex);
+
+    /* RDKB-12522:If Diagstate comes first and wait for daig params to set */
+    retrycount = 0;
+    while (strlen(cfg.host) == 0)
+    {
+        sleep(1);
+        pthread_mutex_lock(&diag->mutex);
+        cfg = diag->cfg;
+        pthread_mutex_unlock(&diag->mutex);
+        if (++retrycount >= 5)
+            break;
+    }
+
 #if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
 /**
  inet_pton is failing because of extra quotes in ip address (cfg.host)
@@ -488,6 +501,7 @@ static void *diag_task(void *arg)
         cfg.host[len-2]='\0';
     }
 #endif
+
     /**
      * XXX: work around for dual WAN issue.
      * We have two WAN default route, one for wan0 another for erouter0.
@@ -518,18 +532,6 @@ static void *diag_task(void *arg)
 
 #endif //NAT46_KERNEL_SUPPORT
 #endif //_HUB4_PRODUCT_REQ_
-
-    /* RDKB-12522:If Diagstate comes first and wait for daig params to set */
-    retrycount = 0;
-    while (strlen(cfg.host) == 0)
-    {
-        sleep(1);
-        pthread_mutex_lock(&diag->mutex);
-        cfg = diag->cfg;
-        pthread_mutex_unlock(&diag->mutex);
-        if (++retrycount >= 5)
-            break;
-    }
 
     err = diag->op_start(diag, &cfg, &stat);
 
