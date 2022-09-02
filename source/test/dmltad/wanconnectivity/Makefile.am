@@ -1,5 +1,5 @@
 ##########################################################################
-# If not stated otherwise in this file or this component's LICENSE
+# If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
 # Copyright 2015 RDK Management
@@ -17,14 +17,10 @@
 # limitations under the License.
 ##########################################################################
 
-
-AM_CFLAGS =
-
-AM_CPPFLAGS = -Wall -g -Werror
 AM_CXXFLAGS = -std=c++11
 
-ACLOCAL_AMFLAGS = -I m4
 bin_PROGRAMS = CosaWanCnctvtyChk_gtest.bin
+
 CosaWanCnctvtyChk_gtest_bin_CPPFLAGS = -I$(PKG_CONFIG_SYSROOT_DIR)$(includedir)/gtest \
                                   -I${top_srcdir}/gtest/include \
                                   -I${top_srcdir}/source \
@@ -42,8 +38,8 @@ CosaWanCnctvtyChk_gtest_bin_CPPFLAGS = -I$(PKG_CONFIG_SYSROOT_DIR)$(includedir)/
                                   -I$(top_srcdir)/source/dmltad \
                                   -I$(top_srcdir)/source/TandDSsp
 
-CosaWanCnctvtyChk_gtest_bin_SOURCES =  CosaWanCnctvtyChkTest.cpp \
-                                       gtest_main.cpp
+CosaWanCnctvtyChk_gtest_bin_SOURCES = CosaWanCnctvtyChkTest.cpp \
+                                      gtest_main.cpp
 
 CosaWanCnctvtyChk_gtest_bin_LDADD = $(top_builddir)/source/dmltad/libdmltad.la \
                                     $(top_builddir)/source-arm/dmltad/libdmlarm.la
