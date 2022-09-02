@@ -208,13 +208,11 @@ static int inet_is_onlink(const struct in_addr *addr)
 
 static int inet_is_local(const struct in_addr *addr)
 {
-    char cmd[1024];
     char entry[1024];
     FILE *fp;
     char *tok, *delim = " \t\r\n", *sp;
     char *dest, *preflen;
     struct in_addr inaddr;
-    errno_t rc = -1;
 
     if (!addr)
         return 0;
@@ -225,18 +223,10 @@ static int inet_is_local(const struct in_addr *addr)
      * 2. unicast to address of local device, 'local xxx.xxx.xxx.xxx'
      * 3. unicast to address in same network e.g,. "xxx.xxx.xxx.xxx/xx" 
      */
-     rc = strcpy_s(cmd, sizeof(cmd), "ip route show table local");
-     ERR_CHK(rc);
-#if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
-/*
-rb mode is not supported to create pipe
-*/
-    if ((fp = popen(cmd, "r")) == NULL)
+
+    if ((fp = popen("ip route show table local", "r")) == NULL)
         return 0;
-#else
-    if ((fp = popen(cmd, "rb")) == NULL)
-        return 0;
-#endif
+
     while (fgets(entry, sizeof(entry), fp) != NULL) {
         trim(entry);
 
