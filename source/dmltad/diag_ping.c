@@ -237,7 +237,19 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         return DIAG_ERR_OTHER;
     }
 
+    pclose(fp);
+
     fprintf(stderr, "%s: result: %s\n", __FUNCTION__, result);
+
+    /* iputils ping error message: "ping: unknown host" */
+    if (strncmp(result, "ping: unknown host", strlen("ping: unknown host")) == 0) {
+        return DIAG_ERR_RESOLVE;
+    }
+
+    /* busybox ping error message: "ping: bad address" */
+    if (strncmp(result, "ping: bad address", strlen("ping: bad address")) == 0) {
+        return DIAG_ERR_RESOLVE;
+    }
 
     rc = memset_s(st, sizeof(*st), 0, sizeof(*st));
     ERR_CHK(rc);
@@ -245,25 +257,16 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
             &sent, &st->u.ping.success, &st->u.ping.rtt_min, 
             &st->u.ping.rtt_avg, &st->u.ping.rtt_max);
 
-    if (strstr(result, "ping: unknown host") != NULL
-            || strstr(result, "ping: bad address") != NULL) {
-        pclose(fp);
-        return DIAG_ERR_RESOLVE;
-    }
-
     if((sent > 0) && (st->u.ping.success == 0)) {
         st->u.ping.failure = sent - st->u.ping.success;
-        pclose(fp);
         return DIAG_ERR_OTHER;
     }
 
     if (copy == 5 || copy == 2) { /* RTT may not exist */
         st->u.ping.failure = sent - st->u.ping.success;
-        pclose(fp);
         return DIAG_ERR_OK;
     }
 
-    pclose(fp);
     return DIAG_ERR_OTHER;
 }
 
