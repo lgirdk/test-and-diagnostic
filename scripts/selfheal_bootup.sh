@@ -46,6 +46,10 @@ crash_count=0
 MF_WiFi_Index="5 6 9 10"
 PSM_CONFIG="/tmp/bbhm_cur_cfg.xml"
 WiFi_INIT_FILE="/tmp/wifi_initialized"
+xle_device_mode=0
+if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+    xle_device_mode=`syscfg get Device_Mode`
+fi
 
 
 source $UTOPIA_PATH/log_env_var.sh
@@ -501,7 +505,7 @@ fi
 	fi
 
 if [ "$WAN_TYPE" != "EPON" ]; then
-
+    if [ "$xle_device_mode" -eq "0" ]; then
 # Checking whether brlan0 and l2sd0.100 are created properly
 
         check_device_mode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
@@ -582,53 +586,54 @@ if [ "$WAN_TYPE" != "EPON" ]; then
         fi
 
 # Checking whether brlan1 and l2sd0.101 interface are created properly
-	if [ "$IS_BCI" != "yes" ]; then
-		check_if_brlan1_created=`ifconfig | grep brlan1`
-		check_if_brlan1_up=`ifconfig brlan1 | grep UP`
-	        check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
-		
-        	# l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
-        	if [ "$BOX_TYPE" = "XB6" ]
-        	then
-	    		check_if_l2sd0_101_created="NotApplicable"
-	    		check_if_l2sd0_101_up="NotApplicable"
-        	else
-	    		check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
-	    		check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
-        	fi
-		
-		if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
-        	then
-			echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
-			ifconfig brlan1;ifconfig l2sd0.101;
-            		if [ "x$ovs_enable" = "xtrue" ];then
-                		ovs-vsctl list-ifaces brlan1
-            		else
-                		brctl show
-            		fi
-	       		echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+		if [ "$IS_BCI" != "yes" ]; then
+			check_if_brlan1_created=`ifconfig | grep brlan1`
+			check_if_brlan1_up=`ifconfig brlan1 | grep UP`
+				check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
 			
-			ipv5_status=`sysevent get ipv4_5-status`
-	        	lan_l3net=`sysevent get homesecurity_lan_l3net`
-			
-			if [ "$lan_l3net" != "" ]
-			then
-				if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+				# l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
+				if [ "$BOX_TYPE" = "XB6" ]
 				then
-					echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
-					sysevent set ipv4-up $lan_l3net
-					sleep 60
+					check_if_l2sd0_101_created="NotApplicable"
+					check_if_l2sd0_101_up="NotApplicable"
+				else
+					check_if_l2sd0_101_created=`ifconfig | grep l2sd0.101`
+					check_if_l2sd0_101_up=`ifconfig l2sd0.101 | grep UP`
+				fi
+			
+			if [ "$check_if_brlan1_created" = "" ] || [ "$check_if_brlan1_up" = "" ] || [ "$check_if_brlan1_hasip" = "" ] || [ "$check_if_l2sd0_101_created" = "" ] || [ "$check_if_l2sd0_101_up" = "" ]
+				then
+				echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 and l2sd0.101 o/p "
+				ifconfig brlan1;ifconfig l2sd0.101;
+						if [ "x$ovs_enable" = "xtrue" ];then
+							ovs-vsctl list-ifaces brlan1
+						else
+							brctl show
+						fi
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : Either brlan1 or l2sd0.101 is not completely up, setting event to recreate vlan and brlan1 interface"
+				
+				ipv5_status=`sysevent get ipv4_5-status`
+					lan_l3net=`sysevent get homesecurity_lan_l3net`
+				
+				if [ "$lan_l3net" != "" ]
+				then
+					if [ "$ipv5_status" = "" ] || [ "$ipv5_status" = "down" ]
+					then
+						echo_t "[RDKB_SELFHEAL_BOOTUP] : ipv5_4-status is not set , setting event to create homesecurity lan"
+						sysevent set ipv4-up $lan_l3net
+						sleep 60
+					else
+						sysevent set multinet-down 2
+						sleep 5
+						sysevent set multinet-up 2
+						sleep 10
+					fi
 				else
 					sysevent set multinet-down 2
 					sleep 5
 					sysevent set multinet-up 2
 					sleep 10
 				fi
-			else
-				sysevent set multinet-down 2
-				sleep 5
-				sysevent set multinet-up 2
-				sleep 10
 			fi
 		fi
 	fi
@@ -657,111 +662,111 @@ fi
 
 
 if [ "$WAN_TYPE" != "EPON" ]; then	
+	if [ "$xle_device_mode" -eq "0" ]; then
+		#Check whether dnsmasq is running or not
+		DNS_PID=$(busybox pidof dnsmasq)
+		if [ "$DNS_PID" == "" ]
+		then
+			BR_MODE=0
+			bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+				bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+				if [ "$bridgeSucceed" != "" ]
+				then
+					isBridging=`echo $bridgeMode | grep router`
+					if [ "$isBridging" = "" ]
+					then
+						BR_MODE=1
+					fi
+				fi
 
-    #Check whether dnsmasq is running or not
-    DNS_PID=$(busybox pidof dnsmasq)
-    if [ "$DNS_PID" == "" ]
-    then
-		  BR_MODE=0
-		  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-			  bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-			  if [ "$bridgeSucceed" != "" ]
-			  then
-				   isBridging=`echo $bridgeMode | grep router`
-				   if [ "$isBridging" = "" ]
-				   then
-					   BR_MODE=1
-				   fi
-			  fi
+				InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
+				if [ "x$InterfaceInConf" = "x" ] && [ $BR_MODE -eq 1 ] ; then
+						if [ ! -f /tmp/dnsmaq_noiface ]; then
+							echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Unit in bridge mode,interface info not available in dnsmasq.conf"
+							touch /tmp/dnsmaq_noiface
+						fi
+				else
+						echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
+						t2CountNotify "SYS_SH_dnsmasq_restart"
+				fi
 
-              InterfaceInConf=`grep "interface=" /var/dnsmasq.conf`
-              if [ "x$InterfaceInConf" = "x" ] && [ $BR_MODE -eq 1 ] ; then
-                    if [ ! -f /tmp/dnsmaq_noiface ]; then
-                        echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Unit in bridge mode,interface info not available in dnsmasq.conf"
-                        touch /tmp/dnsmaq_noiface
-                    fi
-              else
-                    echo_t "[ RDKB_SELFHEAL_BOOTUP ] : dnsmasq is not running."
-                    t2CountNotify "SYS_SH_dnsmasq_restart"
-              fi
+				if [ $BR_MODE -eq 1 ]
+				then
+					echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Device is in bridge mode"
 
-			  if [ $BR_MODE -eq 1 ]
-			  then
-				  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Device is in bridge mode"
-
-				  if [ "" == "`sysevent get lan_status-dhcp`" ] ; then
-					  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting lan_status-dhcp event to started"
-					  sysevent set lan_status-dhcp started
-                      			  echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
-					  sysevent set dhcp_server-restart
-				  fi
-			  fi
-    else
-	  brlan1up=`grep brlan1 /var/dnsmasq.conf`
-          brlan0up=`grep brlan0 /var/dnsmasq.conf`
-          infup="NA"
-          if [ "$(syscfg get lost_and_found_enable)" = "true" ]; then
-              lnf_ifname=$(syscfg get iot_ifname)
-              if [ $lnf_ifname == "l2sd0.106" ]; then
-                 lnf_ifname=$(syscfg get iot_brname)
-              fi
-              if [ -n "$lnf_ifname" ]
-              then
-                  echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface is: $lnf_ifname"
-                  infup=$(grep $lnf_ifname /var/dnsmasq.conf)
-              else
-                  echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface not available in DB"
-              fi
-          fi
-
-      if [ -f /tmp/dnsmaq_noiface ]; then
-          rm -rf /tmp/dnsmasq_noiface
-      fi
-
-	  IsAnyOneInfFailtoUp=0	
-	  BR_MODE=0
-	  bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
-          bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
-          if [ "$bridgeSucceed" != "" ]
-          then
-               isBridging=`echo $bridgeMode | grep router`
-               if [ "$isBridging" = "" ]
-               then
-                   BR_MODE=1
-               fi
-          fi
-
-	  if [ $BR_MODE -eq 0 ]
-	  then
-			if [ "$brlan0up" == "" ]
-			then
-			    echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 info is not availble in dnsmasq.conf"
-			    IsAnyOneInfFailtoUp=1
+					if [ "" == "`sysevent get lan_status-dhcp`" ] ; then
+						echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting lan_status-dhcp event to started"
+						sysevent set lan_status-dhcp started
+									echo_t "[ RDKB_SELFHEAL_BOOTUP ] : Setting an event to restart dnsmasq"
+						sysevent set dhcp_server-restart
+					fi
+				fi
+		else
+		brlan1up=`grep brlan1 /var/dnsmasq.conf`
+			brlan0up=`grep brlan0 /var/dnsmasq.conf`
+			infup="NA"
+			if [ "$(syscfg get lost_and_found_enable)" = "true" ]; then
+				lnf_ifname=$(syscfg get iot_ifname)
+				if [ $lnf_ifname == "l2sd0.106" ]; then
+					lnf_ifname=$(syscfg get iot_brname)
+				fi
+				if [ -n "$lnf_ifname" ]
+				then
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface is: $lnf_ifname"
+					infup=$(grep $lnf_ifname /var/dnsmasq.conf)
+				else
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : LnF interface not available in DB"
+				fi
 			fi
-	  fi
 
-	  if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]
-	  then
-	         echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
-			 IsAnyOneInfFailtoUp=1
-	  fi
+		if [ -f /tmp/dnsmaq_noiface ]; then
+			rm -rf /tmp/dnsmasq_noiface
+		fi
 
-          if [ "$infup" == "" ]
-          then
-                 echo_t "[RDKB_SELFHEAL_BOOTUP] : $lnf_ifname info is not availble in dnsmasq.conf"
-			 IsAnyOneInfFailtoUp=1
-          fi
-	  if [ $IsAnyOneInfFailtoUp -eq 1 ]
-	  then
-		 echo_t "[RDKB_SELFHEAL_BOOTUP] : dnsmasq.conf is." 
-	 	 echo "`cat /var/dnsmasq.conf`"
+		IsAnyOneInfFailtoUp=0	
+		BR_MODE=0
+		bridgeMode=`dmcli eRT getv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode`
+			bridgeSucceed=`echo $bridgeMode | grep "Execution succeed"`
+			if [ "$bridgeSucceed" != "" ]
+			then
+				isBridging=`echo $bridgeMode | grep router`
+				if [ "$isBridging" = "" ]
+				then
+					BR_MODE=1
+				fi
+			fi
 
-		 echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
-		 sysevent set dhcp_server-restart
-        fi
-    fi
+		if [ $BR_MODE -eq 0 ]
+		then
+				if [ "$brlan0up" == "" ]
+				then
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan0 info is not availble in dnsmasq.conf"
+					IsAnyOneInfFailtoUp=1
+				fi
+		fi
+
+		if [ "$IS_BCI" != "yes" ] && [ "$brlan1up" == "" ] && [ "$BOX_TYPE" != "HUB4" ] &&  [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]
+		then
+				echo_t "[RDKB_SELFHEAL_BOOTUP] : brlan1 info is not availble in dnsmasq.conf"
+				IsAnyOneInfFailtoUp=1
+		fi
+
+			if [ "$infup" == "" ]
+			then
+					echo_t "[RDKB_SELFHEAL_BOOTUP] : $lnf_ifname info is not availble in dnsmasq.conf"
+				IsAnyOneInfFailtoUp=1
+			fi
+		if [ $IsAnyOneInfFailtoUp -eq 1 ]
+		then
+			echo_t "[RDKB_SELFHEAL_BOOTUP] : dnsmasq.conf is." 
+			echo "`cat /var/dnsmasq.conf`"
+
+			echo_t "[RDKB_SELFHEAL_BOOTUP] : Setting an event to restart dnsmasq"
+			sysevent set dhcp_server-restart
+			fi
+		fi
+	fi
 fi
-
 	if [ "$BOX_TYPE" = "XB3" ]
 	then
 		GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
