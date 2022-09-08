@@ -91,6 +91,7 @@ AC_CONFIG_FILES(
 	source/xle_selfheal/Makefile
         source-arm/diagnostic/BbhmDiagIpPing/Makefile
         source-arm/dmltad/Makefile
+        source/ImageHealthChecker/Makefile
 	Makefile
 )
 

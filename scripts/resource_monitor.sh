@@ -32,6 +32,7 @@ source $UTOPIA_PATH/log_env_var.sh
 source $TAD_PATH/corrective_action.sh
 #source /etc/device.properties
 source /etc/log_timestamp.sh
+Last_reboot_reason="`syscfg get X_RDKCENTRAL-COM_LastRebootReason`"
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
@@ -41,7 +42,6 @@ DELAY=30
 threshold_reached=0
 SELFHEAL_ENABLE=`syscfg get selfheal_enable`
 COUNT=0
-
 
 sysevent set atom_hang_count 0
 
@@ -55,7 +55,20 @@ do
 	RESOURCE_MONITOR_INTERVAL=$(($RESOURCE_MONITOR_INTERVAL*60))
 
 	sleep $RESOURCE_MONITOR_INTERVAL
-	
+
+        BOOTUP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
+        #IHC should be called once when a reboot happens
+        if [ $BOOTUP_TIME_SEC -ge 800 ] && [ $BOOTUP_TIME_SEC -le 1100 ] && [ "$Last_reboot_reason" = "Software_upgrade" ]
+        then
+            IHC_Enable="`syscfg get IHC_Mode`"
+            #starting the IHC now
+            if [[ "$IHC_Enable" = "Monitor" ]]
+            then
+                echo_t "Starting the ImageHealthChecker from bootup-check mode"
+                /usr/bin/ImageHealthChecker bootup-check &
+            fi
+        fi
+
 	totalMemSys=`free | awk 'FNR == 2 {print $2}'`
 	usedMemSys=`free | awk 'FNR == 2 {print $3}'`
 	freeMemSys=`free | awk 'FNR == 2 {print $4}'`

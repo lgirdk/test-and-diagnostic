@@ -1,4 +1,3 @@
-##########################################################################
 # If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
@@ -16,8 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = TandDSsp dmltad util xle_selfheal ImageHealthChecker
-
-if WITH_GTEST_SUPPORT
-SUBDIRS += test
-endif
+bin_PROGRAMS = ImageHealthChecker
+DEPENDS_append = " telemetry libunpriv"
+#ImageHealthChecker_SOURCES = ImageHealthChecker_bus_connection.c  ImageHealthChecker_bus_connection.h  ImagehealthChecker.c  ImagehealthChecker.h rbus_event_subscribe.c
+ImageHealthChecker_SOURCES = ImagehealthChecker.c  ImagehealthChecker.h IHC_Client.c  ImageHealthChecker_bus_connection.h ImageHealthChecker_bus_connection.c
+ImageHealthChecker_CFLAGS = -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus $(DBUS_CFLAGS)
+ImageHealthChecker_LDFLAGS = $(DBUS_LIBS)
+ImageHealthChecker_LDFLAGS +=  -lccsp_common -lpthread -lsyscfg -lrbus -lsecure_wrapper -ltelemetry_msgsender -lprivilege -lhal_ethsw -g
