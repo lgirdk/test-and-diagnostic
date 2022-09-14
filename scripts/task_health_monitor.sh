@@ -1635,57 +1635,6 @@ esac
 
 case $SELFHEAL_TYPE in
     "BASE")
-        # TODO: move DROPBEAR BASE code with TCCBR,SYSTEMD code!
-    ;;
-    "TCCBR")
-        #Check dropbear is alive to do rsync/scp to/fro ATOM
-        if [ "$ARM_INTERFACE_IP" != "" ]; then
-            DROPBEAR_ENABLE=$(ps -ww | grep "dropbear" | grep "$ARM_INTERFACE_IP")
-            if [ "$DROPBEAR_ENABLE" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
-                t2CountNotify "SYS_SH_Dropbear_restart"
-                dropbear -E -s -p $ARM_INTERFACE_IP:22 > /dev/null 2>&1
-            fi
-        fi
-    ;;
-    "SYSTEMD")
-        if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
-            #Checking dropbear PID
-            DROPBEAR_PID=$(busybox pidof dropbear)
-            if [ "$DROPBEAR_PID" = "" ]; then
-                echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-                t2CountNotify "SYS_SH_Dropbear_restart"
-                sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-            else
-                #In platforms with multiple dropbear instances, checking the instance on wan interface
-                PS_DROPBEAR=$(ps ww | grep 'dropbear -E -s -b /etc/sshbanner.txt' | grep -v grep)
-                NUMPROC_DROPBEAR=$(echo $PS_DROPBEAR | wc -l)
-                if [ "$NUMPROC_DROPBEAR" -eq 0 ] ; then
-                    echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
-                    sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-                else
-                    #Checking if dropbear binds to ipv4 but fails with ipv6
-                    NUMPROC_DROPBEAR_IPV6=$(echo $PS_DROPBEAR |  egrep -c '([a-f0-9:]+:+)+[a-f0-9]+')
-                    NS_DROPBEAR_IPV6=$(netstat -tulpn | grep -c ":22 .*:::\* .*dropbear")
-                    if [ "$NUMPROC_DROPBEAR_IPV6" -gt 0 -a "$NS_DROPBEAR_IPV6" -eq "0" ]; then
-                         echo_t "Dropbear not listening on ipv6 address, restarting dropbear "
-                         sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-                    fi
-                fi
-            fi
-            if [ -f "/nvram/ETHWAN_ENABLE" ]; then
-                NUMPROC=$(netstat -tulpn | grep ":22 " | grep -c "dropbear")
-                if [ $NUMPROC -lt 2 ] ; then
-                    echo_t "EWAN mode : Dropbear not listening on ipv6 address, restarting dropbear "
-                    sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
-                fi
-            fi
-        fi
-    ;;
-esac
-
-case $SELFHEAL_TYPE in
-    "BASE")
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
     ;;
     "TCCBR"|"SYSTEMD")
