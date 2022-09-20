@@ -216,6 +216,15 @@ check_component_status(){
             t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
             resetNeeded pam CcspPandMSsp
         fi
+
+        if [ "$BOX_TYPE" = "MV3" ]; then
+            #checking for fwupgrademanager
+            FWUM_PID=$(busybox pidof fwupgrademanager)
+            if [ -z "$FWUM_PID" ]; then
+	        echo_t "RDKB_PROCESS_CRASHED : fwupgrademanager is not running, need restart"
+	        resetNeeded fwupgrademanager fwupgrademanager
+            fi
+        fi
 }
 
 CACHE_PATH="/tmp/.thmCache/"
