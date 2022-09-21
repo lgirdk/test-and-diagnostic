@@ -1212,6 +1212,54 @@ self_heal_dropbear()
     esac
 }
 
+CCSP_ERR_NOT_CONNECT=190
+CCSP_ERR_TIMEOUT=191
+CCSP_ERR_NOT_EXIST=192
+
+self_heal_ccspwifissp_hung()
+{
+    case $MODEL_NUM in
+        *CGA4131COM*) thisREADYFILE="/tmp/.brcm_wifi_ready";;
+        *CGM4331COM*) thisREADYFILE="/tmp/.brcm_wifi_ready";;
+        *TG3482G*)    thisREADYFILE="/tmp/.qtn_ready";;
+        *CGM4140COM*) thisREADYFILE="/tmp/.qtn_ready";;
+        *TG4482A*)    thisREADYFILE="/tmp/.puma_wifi_ready";;
+        *) ;;
+    esac
+
+    case $SELFHEAL_TYPE in
+        "BASE")
+        ;;
+        "TCCBR")
+        ;;
+        "SYSTEMD")
+            WiFi_PID=$(busybox pidof CcspWifiSsp)
+            if [ "$WiFi_PID" != "" ]; then
+                radioenable=$(dmcli eRT getv Device.WiFi.Radio.1.Enable)
+                radioenable_timeout=$(echo "$radioenable" | grep "$CCSP_ERR_TIMEOUT")
+                radioenable_notexist=$(echo "$radioenable" | grep "$CCSP_ERR_NOT_EXIST")
+                if [ "$radioenable_timeout" != "" ] || [ "$radioenable_notexist" != "" ]; then
+                    wifi_name=$(dmcli eRT getv com.cisco.spvtg.ccsp.wifi.Name)
+                    wifi_name_timeout=$(echo "$wifi_name" | grep "$CCSP_ERR_TIMEOUT")
+                    wifi_name_notexist=$(echo "$wifi_name" | grep "$CCSP_ERR_NOT_EXIST")
+                    if [ "$wifi_name_timeout" != "" ] || [ "$wifi_name_notexist" != "" ]; then
+                        if [ "$BOX_TYPE" = "XB6" ]; then
+                            if [ -f "$thisREADYFILE" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
+                                systemctl restart ccspwifiagent
+                                t2CountNotify "WIFI_SH_CcspWifiHung_restart"
+                            fi
+                        else
+                            echo_t "[RDKB_PLATFORM_ERROR] : CcspWifiSsp process is hung , restarting it"
+                            systemctl restart ccspwifiagent
+                            t2CountNotify "WIFI_SH_CcspWifiHung_restart"
+                        fi
+                    fi
+                fi
+            fi
+        ;;
+    esac
+}
 
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
@@ -1268,6 +1316,7 @@ do
     self_heal_dibbler_server
     self_heal_dhcp_clients
     self_heal_dropbear
+    self_heal_ccspwifissp_hung
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
