@@ -76,9 +76,17 @@ Dhcpv6_Client_restart ()
             dibbler-client start
             sleep 8
 		elif [ "$1" = "ti_dhcp6c" ];then
-			$DHCPV6_HANDLER dhcpv6_client_service_disable
+            if [ -f /tmp/dhcpmgr_initialized ]; then
+                sysevent set dhcpv6_client-stop
+            else
+                $DHCPV6_HANDLER dhcpv6_client_service_disable
+            fi
             sleep 2
-            $DHCPV6_HANDLER dhcpv6_client_service_enable
+            if [ -f /tmp/dhcpmgr_initialized ]; then
+                sysevent set dhcpv6_client-start
+            else
+                $DHCPV6_HANDLER dhcpv6_client_service_enable
+            fi
             sleep 8
 		fi
 		wait_till_state "dibbler_server_conf" "ready"
@@ -195,6 +203,16 @@ self_heal_peer_ping ()
     else
 	echo_t "RDKB_AGG_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
     fi    
+}
+
+self_heal_dnsmasq()
+{
+    DNSMASQ_UP="$(busybox pidof dnsmasq)"
+    if [ "$DNSMASQ_UP" = "" ];then
+        echo_t "RDKB_PROCESS_CRASHED : dnsmasq is not running, need restart"
+        t2CountNotify "SYS_SH_dnsmasq_restart"
+        sysevent set dhcp_server-restart
+    fi
 }
 
 self_heal_dnsmasq_restart()
@@ -682,14 +700,22 @@ self_heal_dibbler_server()
                                     echo "DADFAILED : Recovering device from DADFAILED state"
                                     # save global ipv6 address before disable it
                                     v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}')
-                                    $DHCPV6_HANDLER dhcpv6_client_service_disable
+                                    if [ -f /tmp/dhcpmgr_initialized ]; then
+                                        sysevent set dhcpv6_client-stop
+                                    else
+                                        $DHCPV6_HANDLER dhcpv6_client_service_disable
+                                    fi
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
                                     sleep 1
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
                                     sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
                                     sleep 1
-                                    $DHCPV6_HANDLER dhcpv6_client_service_enable
+                                    if [ -f /tmp/dhcpmgr_initialized ]; then
+                                        sysevent set dhcpv6_client-start
+                                    else
+                                        $DHCPV6_HANDLER dhcpv6_client_service_enable
+                                    fi
                                     # re-add global ipv6 address after enabled it
                                     ip -6 addr add $v6addr dev $PRIVATE_LAN
                                     sleep 5
@@ -808,7 +834,11 @@ self_heal_dhcp_clients()
                         then
                             sh $DHCPV6_HANDLER disable
                         else
-                            $DHCPV6_HANDLER dhcpv6_client_service_disable
+                            if [ -f /tmp/dhcpmgr_initialized ]; then
+                                sysevent set dhcpv6_client-stop
+                            else
+                                $DHCPV6_HANDLER dhcpv6_client_service_disable
+                            fi
                         fi
                     fi
                     fi
@@ -1311,6 +1341,11 @@ do
  
     START_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     self_heal_peer_ping
+
+    if [ -f /tmp/dhcpmgr_initialized ]; then
+    self_heal_dnsmasq
+    fi
+
     self_heal_dnsmasq_zombie
     self_heal_interfaces
     self_heal_dibbler_server

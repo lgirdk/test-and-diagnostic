@@ -256,9 +256,17 @@ Dhcpv6_Client_restart ()
             dibbler-client start
             sleep 5
 		elif [ "$1" = "ti_dhcp6c" ];then
-			$DHCPV6_HANDLER dhcpv6_client_service_disable
+            if [ -f /tmp/dhcpmgr_initialized ]; then
+                sysevent set dhcpv6_client-stop
+            else
+                $DHCPV6_HANDLER dhcpv6_client_service_disable
+            fi
             sleep 2
-            $DHCPV6_HANDLER dhcpv6_client_service_enable
+            if [ -f /tmp/dhcpmgr_initialized ]; then
+                sysevent set dhcpv6_client-start
+            else
+                $DHCPV6_HANDLER dhcpv6_client_service_enable
+            fi
             sleep 5
 		fi
 		wait_till_state "dibbler_server_conf" "ready"
@@ -3407,14 +3415,22 @@ if [ "$xle_device_mode" -ne "1" ]; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 # save global ipv6 address before disable it
                                 v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
-                                $DHCPV6_HANDLER dhcpv6_client_service_disable
+                                if [ -f /tmp/dhcpmgr_initialized ]; then
+                                    sysevent set dhcpv6_client-stop
+                                else
+                                    $DHCPV6_HANDLER dhcpv6_client_service_disable
+                                fi
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=1
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=0
                                 sleep 1
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.disable_ipv6=0
                                 sysctl -w net.ipv6.conf.$PRIVATE_LAN.accept_dad=1
                                 sleep 1
-                                $DHCPV6_HANDLER dhcpv6_client_service_enable
+                                if [ -f /tmp/dhcpmgr_initialized ]; then
+                                    sysevent set dhcpv6_client-start
+                                else
+                                    $DHCPV6_HANDLER dhcpv6_client_service_enable
+                                fi
                                 # re-add global ipv6 address after enabled it
                                 ip -6 addr add $v6addr dev $PRIVATE_LAN
                                 sleep 5
@@ -3576,7 +3592,11 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 then
                     sh $DHCPV6_HANDLER disable
                 else
-                    $DHCPV6_HANDLER dhcpv6_client_service_disable
+                    if [ -f /tmp/dhcpmgr_initialized ]; then
+                        sysevent set dhcpv6_client-stop
+                    else
+                        $DHCPV6_HANDLER dhcpv6_client_service_disable
+                    fi
                 fi
             fi
             fi
