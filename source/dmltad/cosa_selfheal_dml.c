@@ -2080,8 +2080,8 @@ CPUProcAnalyzer_SetParamUlongValue
     {
         if( !CosaIsProcAnalRunning() )
         {
-            char res[BUF_64] = {0};
-            _ansc_ultoa(uValue, res, 10);
+            char res[24];
+            snprintf(res, sizeof(res), "%lu", uValue);
             CosaWriteProcAnalConfig(ParamName, res);
         }
         else
