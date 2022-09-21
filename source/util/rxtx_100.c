@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
+#include <time.h>
 #include "syscfg.h"
 #include "safec_lib_common.h"
 #include "secure_wrapper.h"
