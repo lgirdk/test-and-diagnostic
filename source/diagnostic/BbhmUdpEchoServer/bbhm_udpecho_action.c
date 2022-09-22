@@ -203,7 +203,7 @@ bbhmUdpechoStartUdpEchoTask
 
         }
 
-        if ( AnscEqualString(pUdpEchoInfo->IfAddrName, "::", FALSE) )
+        if (strcmp(pUdpEchoInfo->IfAddrName, "::") == 0)
         {
             if ( pxskt_src_addrinfo->ai_family == AF_INET )
             {
