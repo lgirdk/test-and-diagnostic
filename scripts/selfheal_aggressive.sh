@@ -1182,7 +1182,11 @@ self_heal_dropbear()
                  else
                      #In platforms with multiple dropbear instances, checking the instance on wan interface
                      PS_DROPBEAR=$(ps ww | grep 'dropbear -E -s -b /etc/sshbanner.txt' | grep -v grep)
-                     NUMPROC_DROPBEAR=$(echo $PS_DROPBEAR | wc -l)
+                     if [ -z "$PS_DROPBEAR" ];then
+    			NUMPROC_DROPBEAR=0;
+		     else
+                     	NUMPROC_DROPBEAR=$(echo $PS_DROPBEAR | wc -l)
+                     fi
                      if [ "$NUMPROC_DROPBEAR" -eq 0 ] ; then
                          echo_t "RDKB_PROCESS_CRASHED : dropbear_process is not running, restarting it"
                          sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
