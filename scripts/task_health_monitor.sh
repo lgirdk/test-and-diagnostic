@@ -3251,7 +3251,7 @@ case $SELFHEAL_TYPE in
     "SYSTEMD")
         #Checking ipv6 dad failure and restart dibbler client [TCXB6-5169]
     if [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
-        CHKIPV6_DAD_FAILED=$(ip -6 addr show dev erouter0 | grep "scope link tentative dadfailed")
+        CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $WAN_INTERFACE | grep "scope link tentative dadfailed")
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
@@ -3259,10 +3259,10 @@ case $SELFHEAL_TYPE in
                 partner_id=$(syscfg get PartnerID)
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
-                    sysctl -w net.ipv6.conf.erouter0.disable_ipv6=1
-                    sysctl -w net.ipv6.conf.erouter0.accept_dad=0
-                    sysctl -w net.ipv6.conf.erouter0.disable_ipv6=0
-                    sysctl -w net.ipv6.conf.erouter0.accept_dad=1
+                    sysctl -w net.ipv6.conf.$WAN_INTERFACE.disable_ipv6=1
+                    sysctl -w net.ipv6.conf.$WAN_INTERFACE.accept_dad=0
+                    sysctl -w net.ipv6.conf.$WAN_INTERFACE.disable_ipv6=0
+                    sysctl -w net.ipv6.conf.$WAN_INTERFACE.accept_dad=1
                     dibbler-client start
                     echo_t "IPV6_DAD_FAILURE : successfully recovered for partner id $partner_id"
                     t2ValNotify "dadrecoverypartner_split" "$partner_id"
