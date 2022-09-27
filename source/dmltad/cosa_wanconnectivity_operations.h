@@ -41,7 +41,8 @@
 #include "ev.h"
 #include <linux/filter.h>
 
- struct sock_filter dns_packet_filter[] = {
+/* Generated with tcpdump -dd "udp src port 53" */
+struct sock_filter dns_packet_filter[] = {
                 { 0x28, 0, 0, 0x0000000c },
                 { 0x15, 0, 6, 0x000086dd },
                 { 0x30, 0, 0, 0x00000014 },

@@ -1620,7 +1620,10 @@ int wancnctvty_chk_create_nfq (u_int16_t family, PWAN_CNCTVTY_CHK_PASSIVE_MONITO
     return 0;
 }
 
-
+/*Uses code from nslookup_lede
+Copyright (C) 2017 Jo-Philipp Wich <jo@mein.io>
+Licensed under the ISC License
+*/
 int dns_parse(const unsigned char *msg, size_t len,bool restart_timer)
 {
     ns_msg handle;
