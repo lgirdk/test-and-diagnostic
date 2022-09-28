@@ -31,7 +31,11 @@ if [ "x$BOX_TYPE" = "xXB3" ]; then
 GET_PID_FROM_PEER=`rpcclient $ATOM_ARPING_IP "busybox pidof CcspWifiSsp"`
 WiFi_PID=`echo "$GET_PID_FROM_PEER" | awk 'END{print}' | grep -v "RPC CONNECTED"`
 else
-WiFi_PID=$(busybox pidof CcspWifiSsp)
+   if [ "$OneWiFiEnabled" == "true" ]; then
+          WiFi_PID=$(busybox pidof OneWifi)
+      else
+          WiFi_PID=$(busybox pidof CcspWifiSsp)
+  fi
 fi
 if [ "x$WiFi_PID" != "x" ]; then
     # check for wifi params only if wifi agent is up and running
