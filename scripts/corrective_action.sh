@@ -856,6 +856,12 @@ resetNeeded()
                 $BINPATH/$ProcessName -subsys $Subsys
                 cd -
 
+            elif [ "$SELFHEAL_TYPE" = "BASE" ] && [ "$ProcessName" = "wanmanager" ]; then
+                echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                cd /usr/ccsp/$folderName
+                $BINPATH/$ProcessName -subsys $Subsys
+                cd -
+
             elif [ "$SELFHEAL_TYPE" = "BASE" -o "$SELFHEAL_TYPE" = "TCCBR" ] && [ "$ProcessName" = "CcspTandDSsp" ]; then
                 echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
                 SelfHealScript_PID=$(busybox pidof self_heal_connectivity_test.sh)
