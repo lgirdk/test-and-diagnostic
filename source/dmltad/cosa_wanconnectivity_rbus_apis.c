@@ -36,7 +36,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "safec_lib.h"
+#include "safec_lib_common.h"
 #include "cosa_wanconnectivity_rbus_apis.h"
 #include "cosa_wanconnectivity_rbus_handler_apis.h"
 #include <syscfg/syscfg.h>
