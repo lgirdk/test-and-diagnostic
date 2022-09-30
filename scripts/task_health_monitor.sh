@@ -224,6 +224,15 @@ check_component_status(){
 	        echo_t "RDKB_PROCESS_CRASHED : fwupgrademanager is not running, need restart"
 	        resetNeeded fwupgrademanager fwupgrademanager
             fi
+
+            WANMANAGER_PID=$(busybox pidof wanmanager)
+            if [ "$WANMANAGER_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, need CPE reboot"
+                t2CountNotify "SYS_ERROR_wanmanager_crash_reboot"
+                reason="wanmanager_crash"
+                rebootCount=1
+                rebootNeeded RM "WANMANAGER" $reason $rebootCount
+            fi
         fi
 }
 
