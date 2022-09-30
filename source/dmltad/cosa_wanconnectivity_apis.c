@@ -21,7 +21,7 @@
 #include "safec_lib_common.h"
 #include "cosa_wanconnectivity_apis.h"
 #include <rbus/rbus.h>
-#include "syscfg.h"
+#include <syscfg/syscfg.h>
 #include "secure_wrapper.h"
 
 
