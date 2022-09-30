@@ -39,7 +39,7 @@
 #include "safec_lib_common.h"
 #include "cosa_wanconnectivity_rbus_apis.h"
 #include "cosa_wanconnectivity_rbus_handler_apis.h"
-#include "syscfg.h"
+#include <syscfg/syscfg.h>
 
 extern rbusHandle_t rbus_handle;
 extern rbusHandle_t rbus_table_handle;
