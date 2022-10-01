@@ -3373,7 +3373,7 @@ DownloadDiagnostics_GetParamUlongValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3395,7 +3395,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3411,7 +3411,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3427,7 +3427,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "TestBytesReceived", TRUE))
+    if (strcmp(ParamName, "TestBytesReceived") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3449,7 +3449,7 @@ DownloadDiagnostics_GetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "TotalBytesReceived", TRUE))
+    if (strcmp(ParamName, "TotalBytesReceived") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3532,7 +3532,7 @@ DownloadDiagnostics_GetParamStringValue
 
 
     /* check the parameter name and return the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3548,7 +3548,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "DownloadURL", TRUE))
+    if (strcmp(ParamName, "DownloadURL") == 0)
     {
         if ( pDownloadInfo )
         {
@@ -3564,7 +3564,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if( AnscEqualString(ParamName, "ROMTime", TRUE))
+    if (strcmp(ParamName, "ROMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3605,7 +3605,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "BOMTime", TRUE))
+    if (strcmp(ParamName, "BOMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3646,7 +3646,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "EOMTime", TRUE))
+    if (strcmp(ParamName, "EOMTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3687,7 +3687,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenRequestTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenRequestTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3728,7 +3728,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-    if ( AnscEqualString(ParamName, "TCPOpenResponseTime", TRUE))
+    if (strcmp(ParamName, "TCPOpenResponseTime") == 0)
     {
         pDownloadDiagStats = (PDSLH_TR143_DOWNLOAD_DIAG_STATS)CosaDmlDiagGetResults
                                 (
@@ -3768,7 +3768,7 @@ DownloadDiagnostics_GetParamStringValue
         return 0;
     }
 
-	if ( AnscEqualString(ParamName, "DownloadTransports", TRUE) )
+	if (strcmp(ParamName, "DownloadTransports") == 0)
 	{
 		if (!pValue || !pUlSize)
 			return -1;
@@ -3922,7 +3922,7 @@ DownloadDiagnostics_SetParamUlongValue
 	pDownloadInfo->DiagnosticsState = DSLH_TR143_DIAGNOSTIC_None;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "DiagnosticsState", TRUE))
+    if (strcmp(ParamName, "DiagnosticsState") == 0)
     {
         uValue--;
         if ( uValue != (ULONG)DSLH_TR143_DIAGNOSTIC_Requested )
@@ -3934,13 +3934,13 @@ DownloadDiagnostics_SetParamUlongValue
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DSCP", TRUE))
+    if (strcmp(ParamName, "DSCP") == 0)
     {
         pDownloadInfo->DSCP= uValue;
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "EthernetPriority", TRUE))
+    if (strcmp(ParamName, "EthernetPriority") == 0)
     {
         pDownloadInfo->EthernetPriority = uValue;
         return TRUE;
@@ -3998,14 +3998,14 @@ DownloadDiagnostics_SetParamStringValue
 	errno_t rc = -1;
 
     /* check the parameter name and set the corresponding value */
-    if ( AnscEqualString(ParamName, "Interface", TRUE))
+    if (strcmp(ParamName, "Interface") == 0)
     {
         rc = strcpy_s(pDownloadInfo->Interface, sizeof(pDownloadInfo->Interface) , pString);
         ERR_CHK(rc);
         return TRUE;
     }
 
-    if ( AnscEqualString(ParamName, "DownloadURL", TRUE))
+    if (strcmp(ParamName, "DownloadURL") == 0)
     {
         if ( !pString || !(*pString) )
         {
@@ -7179,7 +7179,7 @@ X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue
     PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PCOSA_DML_DIAG_RXTX_STATS     pRxTXStats   = (PCOSA_DML_DIAG_RXTX_STATS) pMyObject->pRxTxStats;
     errno_t                         rc           = -1;
-    if( AnscEqualString(ParamName, "InterfaceList", TRUE))
+    if (strcmp(ParamName, "InterfaceList") == 0)
     {
         /* collect value */
         rc = strcpy_s(pValue, sizeof(pRxTXStats->Interfacelist), pRxTXStats->Interfacelist);
@@ -7211,7 +7211,7 @@ X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue
     errno_t                    rc           = -1;
 
     /* check the parameter name and return the corresponding value */
-    if( AnscEqualString(ParamName, "InterfaceList", TRUE))
+    if (strcmp(ParamName, "InterfaceList") == 0)
     {
         rc = memset_s(pRxTXStats->Interfacelist, sizeof(pRxTXStats->Interfacelist), 0, sizeof(pRxTXStats->Interfacelist));
         ERR_CHK(rc);
