@@ -248,19 +248,19 @@ rbusError_t WANCNCTVTYCHK_GetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
             {
                 rbusValue_SetUInt32(value, gIntfInfo->IPInterface.QueryRetry);
             }
-            else if( AnscEqualString(Param, "Alias", TRUE))
+            else if (strcmp(Param, "Alias") == 0)
             {
                 rbusValue_SetString(value, gIntfInfo->IPInterface.Alias);
             }
-            else if( AnscEqualString(Param, "InterfaceName", TRUE))
+            else if (strcmp(Param, "InterfaceName") == 0)
             {
                 rbusValue_SetString(value, gIntfInfo->IPInterface.InterfaceName);
             }
-            else if( AnscEqualString(Param, "RecordType", TRUE))
+            else if (strcmp(Param, "RecordType") == 0)
             {
                 rbusValue_SetString(value, gIntfInfo->IPInterface.RecordType);
             }
-            else if( AnscEqualString(Param, "ServerType", TRUE))
+            else if (strcmp(Param, "ServerType") == 0)
             {
                 rbusValue_SetString(value, gIntfInfo->IPInterface.ServerType);
             }
@@ -523,7 +523,7 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
             }
             if (type == RBUS_STRING)
             {
-                if( AnscEqualString(Param, "RecordType", TRUE))
+                if (strcmp(Param, "RecordType") == 0)
                 {
                     const char *record_type = rbusValue_GetString(value, NULL);
                     if (type != RBUS_STRING || record_type == NULL || strlen(record_type) <= 0 ||
@@ -547,7 +547,7 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                     }
                 }
 
-                if( AnscEqualString(Param, "ServerType", TRUE))
+                if (strcmp(Param, "ServerType") == 0)
                 {
                     const char *server_type = rbusValue_GetString(value, NULL);
                     if (type != RBUS_STRING || server_type == NULL || strlen(server_type) <= 0 ||
