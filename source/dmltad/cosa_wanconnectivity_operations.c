@@ -1257,7 +1257,7 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
 
 wait_for_response:
         start_time = clock_mono_ms();
-        WANCHK_LOG_DBG("waiting for response with timeout:%lld\n",timeout);
+        WANCHK_LOG_DBG("waiting for response with timeout:%lld\n", (long long int)timeout);
         if (timeout >= 0) {
             rc = poll(&pfd, 1, timeout);
         } else {
