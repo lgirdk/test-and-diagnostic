@@ -81,6 +81,7 @@ static int socket_dns_filter_attach(int fd,struct sock_filter *filter, int filte
 
 uint8_t *WanCnctvtyChk_get_transport_header(struct ip6_hdr *ip6h,uint8_t target,uint8_t *payload_tail);
 bool validatemac(char *mac);
+static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName);
 
 /* Logic
 
@@ -281,6 +282,7 @@ ANSC_STATUS wancnctvty_chk_start_active(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfIn
 
     wancnctvty_chk_copy_ctxt_data(gIntfInfo,pActvQueryCtxt->pQueryCtxt);
     WANCHK_LOG_INFO("ActiveMonitor Interface %s Config\n",gIntfInfo->IPInterface.InterfaceName);
+    CosaWanCnctvtyChk_Interface_dump(pIPInterface->InstanceNumber);
     pthread_create( &gIntfInfo->wancnctvychkactivethread_tid, NULL, 
                                             wancnctvty_chk_active_thread, (void *)pActvQueryCtxt);
     gIntfInfo->ActiveMonitor_Running = TRUE;
@@ -293,6 +295,8 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
     /* Copy DNS info from inreface context*/
     /* Copy pIPInterface which we are coming in current context*/
     errno_t rc = -1;
+    recordtype_t rectype;
+    servertype_t srvrtype;
 
     PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface = &gIntfInfo->IPInterface;
     pQuerynowCtxt->InstanceNumber = pIPInterface->InstanceNumber;
@@ -302,10 +306,24 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
     ERR_CHK(rc);
     rc = strcpy_s(pQuerynowCtxt->Alias, MAX_INTF_NAME_SIZE , pIPInterface->Alias);
     ERR_CHK(rc);
-    rc = strcpy_s(pQuerynowCtxt->ServerType, MAX_SERVER_TYPE_SIZE , pIPInterface->ServerType);
-    ERR_CHK(rc);
-    rc = strcpy_s(pQuerynowCtxt->RecordType, MAX_RECORD_TYPE_SIZE , pIPInterface->RecordType);
-    ERR_CHK(rc);
+    if ( get_server_type(pIPInterface->ServerType,&srvrtype) != -1)
+    {
+        pQuerynowCtxt->ServerType = srvrtype;
+    }
+    else
+    {
+        WANCHK_LOG_WARN("%s:ServerType is Invalid\n",__FUNCTION__);
+        pQuerynowCtxt->ServerType = SRVR_TYPE_INVALID;
+    }
+    if ( get_record_type(pIPInterface->RecordType,&rectype) != -1)
+    {
+        pQuerynowCtxt->RecordType = rectype;
+    }
+    else
+    {
+        WANCHK_LOG_WARN("%s:RecordType is Invalid\n",__FUNCTION__);
+        pQuerynowCtxt->RecordType = RECORDTYPE_INVALID;
+    }
     pQuerynowCtxt->DnsServerCount = gIntfInfo->DnsServerCount;
     PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo = gIntfInfo->DnsServerList;
     pQuerynowCtxt->DnsServerList = (PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO) AnscAllocateMemory(
@@ -316,6 +334,8 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
 
     memcpy(pQuerynowCtxt->DnsServerList,pDnsSrvInfo,
                     pQuerynowCtxt->DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO));
+
+    pQuerynowCtxt->url_list = get_url_list(&pQuerynowCtxt->url_count);
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -620,17 +640,13 @@ done
 
 ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt,queryinvoke_type_t invoke_type)
-{
-    char **url_list     = NULL; 
-    recordtype_t rectype;
+{ 
     struct query query_info;
     int i=0;
     errno_t rc = -1;
-   int ind         = -1;
-    servertype_t srvrtype;
+    int ind         = -1;
     BOOL  use_ipv4_dns = FALSE;
     BOOL  use_ipv6_dns = FALSE;
-    unsigned int total_url_entries = 0;
     unsigned int dns_server_count = 0;
     int ret = ANSC_STATUS_SUCCESS;
 
@@ -640,22 +656,13 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
        ret = ANSC_STATUS_FAILURE;
        goto EXIT;
     }
-    /* Fetching here ensures we are taking updated list on consecutive queries, if there is a change
-    */
-    url_list = get_url_list(&total_url_entries);
-    pQuerynowCtxt->url_count = total_url_entries;
 
-    if (!total_url_entries)
+    if (!pQuerynowCtxt->url_count || !pQuerynowCtxt->url_list)
     {
-        WANCHK_LOG_ERROR("URL count is zero, Abort query\n");
+        WANCHK_LOG_ERROR("URL list is empty, Abort query\n");
         ret = ANSC_STATUS_FAILURE;
         goto EXIT;
     }
-
-    /* update context structure so that it can be freed up in cleanup*/
-    /* Fetch url list*/
-    pQuerynowCtxt->url_count = total_url_entries;
-    pQuerynowCtxt->url_list = url_list;
 
     if (!pQuerynowCtxt->DnsServerCount)
     {
@@ -668,23 +675,23 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
         dns_server_count = pQuerynowCtxt->DnsServerCount;
     }
 
-// Fetch server type
-
-    if ( get_server_type(pQuerynowCtxt->ServerType,&srvrtype) != -1)
+    if ( pQuerynowCtxt->ServerType != SRVR_TYPE_INVALID)
     {
-        if ((srvrtype == SRVR_EITHER_IPV4_IPV6) || (srvrtype == SRVR_BOTH_IPV4_IPV6) ||
-                                                                    (srvrtype == SRVR_IPV4_ONLY))
+        if ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) || 
+            (pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) ||
+            (pQuerynowCtxt->ServerType == SRVR_IPV4_ONLY))
         {
             use_ipv4_dns = TRUE;
         }
 
-        if ((srvrtype == SRVR_EITHER_IPV4_IPV6) || (srvrtype == SRVR_BOTH_IPV4_IPV6) || 
-                                                                    (srvrtype == SRVR_IPV6_ONLY))
+        if ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) || 
+            (pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) || 
+            (pQuerynowCtxt->ServerType == SRVR_IPV6_ONLY))
         {
             use_ipv6_dns = TRUE;
         }
 
-        WANCHK_LOG_DBG("Querynow ServerType:%s use_ipv4_dns:%d use_ipv6_dns:%d\n",
+        WANCHK_LOG_DBG("Querynow ServerType:%d use_ipv4_dns:%d use_ipv6_dns:%d\n",
                                             pQuerynowCtxt->ServerType,use_ipv4_dns,use_ipv6_dns);
     }
     else
@@ -703,27 +710,29 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     BOOL URL_v4_resolved = FALSE;
     BOOL URL_v6_resolved = FALSE;
     BOOL use_raw_socket = FALSE;
-    if ( get_record_type(pQuerynowCtxt->RecordType,&rectype) != -1)
+    if ( pQuerynowCtxt->RecordType != RECORDTYPE_INVALID)
     {
-        if ((rectype == EITHER_IPV4_IPV6) || (rectype == BOTH_IPV4_IPV6) || (rectype == IPV4_ONLY))
+        if ((pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6) || 
+            (pQuerynowCtxt->RecordType == BOTH_IPV4_IPV6) || (pQuerynowCtxt->RecordType == IPV4_ONLY))
         {
             v4_query = TRUE;
             no_of_queries++;
         }
 
-        if ((rectype == EITHER_IPV4_IPV6) || (rectype == BOTH_IPV4_IPV6) || (rectype == IPV6_ONLY))
+        if ((pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6) || 
+            (pQuerynowCtxt->RecordType == BOTH_IPV4_IPV6) || (pQuerynowCtxt->RecordType == IPV6_ONLY))
         {
             v6_query = TRUE;
             no_of_queries++;
         }
         WANCHK_LOG_DBG("Querynow RecordType:%d A:%d AAAA:%d dns_server_count:%d\n",
-                                                    rectype,v4_query,v6_query,dns_server_count);
+                                    pQuerynowCtxt->RecordType,v4_query,v6_query,dns_server_count);
 
         int url_index=0;
-        for (url_index=0;url_index < total_url_entries;url_index++)
+        for (url_index=0;url_index < pQuerynowCtxt->url_count;url_index++)
         {
-            WANCHK_LOG_INFO("Checking Connectivity with URL %s on interface: %s\n",url_list[url_index],
-                                                                    pQuerynowCtxt->InterfaceName);
+            WANCHK_LOG_INFO("Checking Connectivity with URL %s on interface: %s\n",
+                                pQuerynowCtxt->url_list[url_index],pQuerynowCtxt->InterfaceName);
             struct mk_query query_list[2];
             int query_index = 0;
             if (v4_query)
@@ -731,7 +740,8 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                 memset(&query_list[query_index].query,0,sizeof(query_list[query_index].query));
                 query_list[query_index].qlen = 0;
                 query_list[query_index].resp_recvd = 0;
-                query_list[query_index].qlen = res_mkquery(QUERY, url_list[url_index], C_IN, ns_t_a,
+                query_list[query_index].qlen = res_mkquery(QUERY, pQuerynowCtxt->url_list[url_index], 
+                                                            C_IN, ns_t_a,
                                                             /*data:*/ NULL, /*datalen:*/ 0,
                                                             /*newrr:*/ NULL,
                                                             query_list[query_index].query,
@@ -743,7 +753,8 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                 memset(&query_list[query_index].query,0,sizeof(query_list[query_index].query));
                 query_list[query_index].qlen = 0;
                 query_list[query_index].resp_recvd = 0;
-                query_list[query_index].qlen = res_mkquery(ns_o_query, url_list[url_index], C_IN, ns_t_aaaa,
+                query_list[query_index].qlen = res_mkquery(ns_o_query, pQuerynowCtxt->url_list[url_index], 
+                                                            C_IN, ns_t_aaaa,
                                                             /*data:*/ NULL, /*datalen:*/ 0,
                                                             /*newrr:*/ NULL,
                                                             query_list[query_index].query,
@@ -759,7 +770,7 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                 query_info.query_timeout = pQuerynowCtxt->QueryTimeout;
                 query_info.query_retry   = pQuerynowCtxt->QueryRetry;
                 query_info.query_count = no_of_queries;
-                query_info.rqstd_rectype = rectype;
+                query_info.rqstd_rectype = pQuerynowCtxt->RecordType;
                 rc = strcmp_s( "Backup",strlen("Backup"),pQuerynowCtxt->Alias, &ind);
                 ERR_CHK(rc);
                 if((!ind) && (rc == EOK))
@@ -779,14 +790,14 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                         if (!send_query(&query_info,query_list,use_raw_socket))
                         {
                             WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s on IPv4 Server:%s\n",
-                                                                                url_list[url_index],
+                                                                pQuerynowCtxt->url_list[url_index],
                                             pQuerynowCtxt->DnsServerList[i].IPAddress.IPv4Address);
                             URL_v4_resolved = TRUE;
                         }
                         else
                         {
                             WANCHK_LOG_DBG("DNS Resolution Failed for URL:%s on IPv4 Server:%s\n",
-                                                                            url_list[url_index],
+                                                                pQuerynowCtxt->url_list[url_index],
                                             pQuerynowCtxt->DnsServerList[i].IPAddress.IPv4Address);
                         }
                     }
@@ -807,26 +818,27 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                         if (!send_query(&query_info,query_list,use_raw_socket))
                         {
                             WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s IPv6 Server:%s\n",
-                                                                              url_list[url_index],
+                                                                pQuerynowCtxt->url_list[url_index],
                                             pQuerynowCtxt->DnsServerList[i].IPAddress.IPv6Address);
                             URL_v6_resolved = TRUE;
                         }
                         else
                         {
                             WANCHK_LOG_DBG("DNS Resolution Failed for URL:%s on IPv6 Server:%s\n",
-                                                                            url_list[url_index],
+                                                                pQuerynowCtxt->url_list[url_index],
                                             pQuerynowCtxt->DnsServerList[i].IPAddress.IPv6Address);
                         }
                     }
                 }
-                if ( ((srvrtype == SRVR_IPV4_ONLY) && URL_v4_resolved) ||
-                    ((srvrtype == SRVR_IPV6_ONLY) && URL_v6_resolved) ||
-                    ((srvrtype == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
-                    ((srvrtype == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
+                if ( ((pQuerynowCtxt->ServerType == SRVR_IPV4_ONLY) && URL_v4_resolved) ||
+                    ((pQuerynowCtxt->ServerType == SRVR_IPV6_ONLY) && URL_v6_resolved) ||
+                    ((pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
+                    ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
                 {
                     WANCHK_LOG_INFO("%s DNS Resolution Succeeded for URL %s on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
-                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",url_list[url_index],
-                            pQuerynowCtxt->InterfaceName,srvrtype,URL_v4_resolved,URL_v6_resolved);
+                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                                        pQuerynowCtxt->url_list[url_index],
+                            pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
                     if (invoke_type == QUERYNOW_INVOKE)
                     {
                         wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
@@ -843,7 +855,8 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                 }
             }
 
-            WANCHK_LOG_ERROR("Resolution Failed for URL %s, lets try next URL\n",url_list[url_index]);
+            WANCHK_LOG_ERROR("Resolution Failed for URL %s, lets try next URL\n",
+                                                                pQuerynowCtxt->url_list[url_index]);
             ret = ANSC_STATUS_FAILURE;
         }
     }
@@ -859,7 +872,7 @@ EXIT:
     {
         WANCHK_LOG_ERROR("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
                     (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor", 
-                    pQuerynowCtxt->InterfaceName,srvrtype,URL_v4_resolved,URL_v6_resolved);
+                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
         if (invoke_type == QUERYNOW_INVOKE)
         {
             wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
@@ -1044,37 +1057,57 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
 
     /* Fetch dst mac*/
     /* Dns is already our peer address, so do a ping to fetch mac address*/
-
-    if (query_info->skt_family == AF_INET) {
-            /* for best effort since in extender mode we don't have extensive traffic*/
-            v_secure_system( "ping -c 1 -W 1 -I %s %s",query_info->ifname,query_info->ns);
+    unsigned int retry_count = 0;
+    do
+    {
+        if (retry_count)
+        {
+            /* Ping utility will have minimum wait time of 1 sec, so when we have connectivity issue
+             failure can be detected only after 1 sec, may not be appropriate for our usecase, 
+             calling own ping utily to send icmp v4/v6 echo with worst time of 20ms*/
+            _send_ping(query_info->ns,query_info->skt_family,query_info->ifname);
+        }
+        if (query_info->skt_family == AF_INET) {
             fp = v_secure_popen("r","ip -4 neigh show %s dev %s | cut -d ' ' -f 3",query_info->ns,
                                                                         query_info->ifname);
-    } else {
-            v_secure_system( "ping6 -c 1 -W 1 -I %s %s",query_info->ifname,query_info->ns);
+        } else {
             fp = v_secure_popen("r","ip -6 neigh show %s dev %s | cut -d ' ' -f 3",query_info->ns,
                                                                     query_info->ifname);
-    }
+        }
 
-    if (fp)
-    {
-        _get_shell_output(fp, dstMac, sizeof(dstMac));
-        v_secure_pclose(fp);
-    }
+        if (fp)
+        {
+            _get_shell_output(fp, dstMac, sizeof(dstMac));
+            v_secure_pclose(fp);
+        }
 
-    if (!strlen(dstMac))
-    {
-        WANCHK_LOG_ERROR("Unable to fetch DST HW address:%s!\n",dstMac);
-        return 0;
-    }
-    else if (validatemac(dstMac) == FALSE) 
-    {
-        WANCHK_LOG_ERROR("DST HW address Not resolved for %s!\n",query_info->ns);
-        return 0;
-    }
-    else {
-        WANCHK_LOG_DBG("Dest HW address:%s!\n",dstMac);         
-    }
+        if (!strlen(dstMac))
+        {
+            if (!retry_count)
+            {
+                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n",query_info->ns);
+                retry_count = 1;
+                continue;
+            }
+            WANCHK_LOG_ERROR("Unable to fetch DST HW address:%s!\n",dstMac);
+            return 0;
+        }
+        else if (validatemac(dstMac) == FALSE) 
+        {
+            if (!retry_count)
+            {
+                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n",query_info->ns);
+                retry_count = 1;
+                continue;
+            }
+            WANCHK_LOG_ERROR("DST HW address Not resolved for %s!\n",query_info->ns);
+            return 0;
+        }
+        else {
+            WANCHK_LOG_DBG("Dest HW address:%s!\n",dstMac);
+            break;        
+        }
+    } while (retry_count);
 
     /* ??? Ingress traffic on brWAN(LTE side) for port 53 always DNAT to brWAN. then it is upto
     dnsmasq on LTE to forward. So LTE on extender mode doesn't really honors the destination ip address
@@ -1101,7 +1134,7 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
     {
         source_port = 40000+rand()%10000;
     }
-    WANCHK_LOG_INFO("Random port for UDP DNS Query %d\n",source_port);
+    WANCHK_LOG_DBG("Random port for UDP DNS Query %d\n",source_port);
     WanCnctvtyChk_CreateUdpHeader(query_info->skt_family, source_port, 53 ,
                                                         query->qlen,&udp_header);
 
@@ -1329,7 +1362,10 @@ wait_for_response:
                      break;
                 }
             }
-            if (no_of_replies >= query_info->query_count)
+            /* if no_of_replies is expected count or if we received a single response in case of
+            A or AAAA break*/
+            if ((no_of_replies >= query_info->query_count) || 
+                 (no_of_replies > 0 && (query_info->rqstd_rectype == EITHER_IPV4_IPV6)))
               break;
         }
     } 
@@ -1875,6 +1911,7 @@ int get_record_type(char *recordtype_string,recordtype_t *output)
     BOOL either_v4_v6 = FALSE;
     BOOL v4_present = FALSE;
     BOOL v6_present = FALSE;
+    char *saveptr   = NULL;
     errno_t rc = -1;
     int ind = -1;
     char tmpStr[MAX_RECORD_TYPE_SIZE] = {0};
@@ -1902,7 +1939,7 @@ int get_record_type(char *recordtype_string,recordtype_t *output)
 
     char* tok;
 
-    tok = strtok(tmpStr, delimiter);
+    tok = strtok_r(tmpStr, delimiter,&saveptr);
 
     // Checks for delimiter
     while (tok != 0) {
@@ -1920,7 +1957,7 @@ int get_record_type(char *recordtype_string,recordtype_t *output)
         {
             v6_present = TRUE;
         }
-        tok = strtok(0, delimiter);
+        tok = strtok_r(NULL, delimiter,&saveptr);
     }
 
     if ( v4_present && v6_present && both_v4_v6)
@@ -1946,6 +1983,7 @@ int get_server_type(char *servertype_string,servertype_t *output)
     BOOL either_v4_v6 = FALSE;
     BOOL v4_present = FALSE;
     BOOL v6_present = FALSE;
+    char *saveptr   = NULL;
     errno_t rc = -1;
     int ind = -1;
     char tmpStr[MAX_SERVER_TYPE_SIZE] = {0};
@@ -1973,7 +2011,7 @@ int get_server_type(char *servertype_string,servertype_t *output)
 
     char* tok;
 
-    tok = strtok(tmpStr, delimiter);
+    tok = strtok_r(tmpStr, delimiter,&saveptr);
 
     // Checks for delimiter
     while (tok != 0) {
@@ -1991,7 +2029,7 @@ int get_server_type(char *servertype_string,servertype_t *output)
         {
             v6_present = TRUE;
         }
-        tok = strtok(0, delimiter);
+        tok = strtok_r(NULL, delimiter,&saveptr);
     }
 
     if ( v4_present && v6_present && both_v4_v6)
@@ -2115,4 +2153,116 @@ bool validatemac(char *mac) {
     if (strlen(mac) != 17) return false;
     return (6 == sscanf(mac, "%02X:%02X:%02X:%02X:%02X:%02X", &bytes[5], &bytes[4], &bytes[3], &bytes[2], &bytes[1],
                         &bytes[0]));
+}
+
+/* This will send a icmp echo v4/v6 , the main objective is to facilitate ARP/Neighbor resolution
+So we won't wait until response received. In worst case we will wait for 20 ms or if we get a response
+within this time frame we will break*/
+static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName)
+{
+    const int val = 64;
+    int sd;
+    WAN_CNCTVTY_CHK_PING_PKT pckt;
+    struct sockaddr_storage r_addr;
+    struct sockaddr_in ping_4;
+    struct sockaddr_in6 ping_6;
+    struct protoent *proto = NULL;
+    struct ifreq ifr;
+    errno_t rc = -1;
+    int result = -1;
+
+    if (skt_family == AF_INET)
+    {
+        memset(&ping_4,0, sizeof(ping_4));
+        ping_4.sin_family = AF_INET;
+        ping_4.sin_port = 0;
+        result = inet_pton(AF_INET, address, &ping_4.sin_addr);
+        if(result == 0) {
+            WANCHK_LOG_ERROR("%s inet_pton error\n", __FUNCTION__);
+            return ANSC_STATUS_FAILURE;
+        }
+    }
+    else
+    {
+        memset(&ping_6, 0,sizeof(ping_6));
+        ping_6.sin6_family = AF_INET6;
+        ping_6.sin6_port   = 0;
+        result = inet_pton(AF_INET6, address, &ping_6.sin6_addr);
+        if(result == 0) {
+            WANCHK_LOG_ERROR("%s inet_pton error\n", __FUNCTION__);
+            return ANSC_STATUS_FAILURE;
+        }
+    }
+
+    proto = getprotobyname((skt_family == AF_INET6) ? "IPv6-ICMP" : "ICMP");
+    sd = socket(skt_family, SOCK_RAW, proto->p_proto);
+    if ( sd < 0 ) {
+        WANCHK_LOG_ERROR("%s Sock Error sd=%d\n", __FUNCTION__, sd);
+        return ANSC_STATUS_FAILURE;
+    }
+    // Bind to a specific interface only 
+    rc = memset_s(&ifr, sizeof(ifr), 0, sizeof(ifr));
+    ERR_CHK(rc);
+    rc = strcpy_s(ifr.ifr_name, sizeof(ifr.ifr_name), ifName);
+    if(rc != EOK) {
+        WANCHK_LOG_ERROR("%s String copy failed\n", __FUNCTION__);
+        ERR_CHK(rc);
+        close(sd);
+        return ANSC_STATUS_FAILURE;
+    }
+
+    ifr.ifr_name[ sizeof(ifr.ifr_name) -1 ] = '\0';
+    
+    if (setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
+        WANCHK_LOG_ERROR("%s Error on SO_BINDTODEVICE..\n",__FUNCTION__);
+        return ANSC_STATUS_FAILURE;
+    }
+
+    if ( setsockopt(sd, (skt_family == AF_INET6) ? IPPROTO_IPV6 : IPPROTO_IP, IP_TTL, &val, sizeof(val)) != 0)
+    { 
+        WANCHK_LOG_ERROR("%s Set TTL option failure\n", __FUNCTION__);
+        return ANSC_STATUS_FAILURE;
+    }
+
+    struct timeval tv_out;
+    tv_out.tv_sec =  0;
+    tv_out.tv_usec = 10000;
+
+    // setting timeout of recv setting
+    if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,(const char*)&tv_out, sizeof tv_out) !=0)
+    {
+        WANCHK_LOG_ERROR("%s Set TTL option failure\n", __FUNCTION__);
+        return ANSC_STATUS_FAILURE;
+    }
+
+    WANCHK_LOG_DBG("_Send_Ping starts\n");
+    for (int seq_cnt = 1;seq_cnt <= 2; seq_cnt++) 
+    {
+        socklen_t len = sizeof(r_addr);
+        memset(&pckt, 0, sizeof(pckt));
+        pckt.hdr.type = (skt_family == AF_INET6) ? ICMP6_ECHO_REQUEST : ICMP_ECHO;
+        pckt.hdr.un.echo.id = getpid();
+
+        strcpy((char *)&pckt.msg, "WAN Connectivity hello");
+
+        pckt.hdr.un.echo.sequence = seq_cnt;
+        pckt.hdr.checksum = WanCnctvtyChk_udp_checksum((unsigned short *)&pckt, sizeof(pckt));
+
+        if ( sendto(sd, &pckt, sizeof(pckt), 0, 
+            (skt_family == AF_INET6) ? (struct sockaddr*)&ping_6 : (struct sockaddr*)&ping_4,
+            (skt_family == AF_INET6) ? sizeof(ping_6) : sizeof(ping_4)) <= 0 ) {
+            WANCHK_LOG_ERROR("sendto error");
+        }
+
+        memset(&pckt, 0, sizeof(pckt));
+
+        if ( recvfrom(sd, &pckt, sizeof(pckt), 0, (struct sockaddr*)&r_addr, &len) > 0 ) 
+        {
+            WANCHK_LOG_INFO("Ping Reply received\n");
+            break;
+        }
+    }
+    WANCHK_LOG_DBG("_Send Ping ends\n");
+    close(sd);
+    return ANSC_STATUS_SUCCESS;
 }

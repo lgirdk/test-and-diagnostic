@@ -211,13 +211,13 @@ ANSC_STATUS CosaWanCnctvtyChk_Init (VOID)
        g_wanconnectivity_check_active    = CosaWanCnctvtyChk_GetActive_Status();
        if (g_wanconnectivity_check_active == TRUE)
        {
-           if (CosaWanCnctvtyChk_Init_IntfTable () != ANSC_STATUS_SUCCESS)
-           {
-               WANCHK_LOG_ERROR("%s: Interface Table Init failed\n",__FUNCTION__);
-           }
            if (CosaWanCnctvtyChk_Init_URLTable () != ANSC_STATUS_SUCCESS)
            {
                WANCHK_LOG_ERROR("%s: URL Table Init failed\n",__FUNCTION__);  
+           }
+           if (CosaWanCnctvtyChk_Init_IntfTable () != ANSC_STATUS_SUCCESS)
+           {
+               WANCHK_LOG_ERROR("%s: Interface Table Init failed\n",__FUNCTION__);
            }
         }
         /* Lets start the subscription and listen for events*/
@@ -869,6 +869,11 @@ errno_t      rc = -1;
    ret = WanCnctvtyChk_GetParameterValue(CURRENT_PRIMARY_INTF_DML,Value);
 #else
    ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "current_wan_ifname", Value, sizeof(Value));
+   if (!strlen(Value))
+   {
+      /*if empty take default wan interface,if default also empty we can't do anything*/
+      ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "wan_ifname", Value, sizeof(Value));  
+   }
 #endif
    if (ret == ANSC_STATUS_SUCCESS)
    {
@@ -1128,6 +1133,7 @@ void handle_dns_srvrcnt_event (char *InterfaceName,unsigned int new_dns_server_c
     errno_t rc = -1;
     int ind = -1;
     unsigned int Old_DnsServerCount = 0;
+    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
     if (!InterfaceName)
     {
         WANCHK_LOG_ERROR("%s:InterfaceName is NULL,Unable to update\n",__FUNCTION__);
@@ -1166,6 +1172,17 @@ void handle_dns_srvrcnt_event (char *InterfaceName,unsigned int new_dns_server_c
             /* reinitialize dns server entry for the interface*/
             CosaWanCnctvtyChk_DNS_GetEntry(InterfaceName);
         }
+        returnStatus = wancnctvty_chk_stop_threads(gIntfInfo->IPInterface.InstanceNumber,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+        }
+
+        returnStatus = wancnctvty_chk_start_threads(gIntfInfo->IPInterface.InstanceNumber,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+        }
     }
 
 
@@ -1176,6 +1193,7 @@ void handle_dns_srv_addrchange_event (char *InterfaceName,int dns_srv_index,
 {
     errno_t  rc = -1;
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+    BOOL restart_threads     = FALSE;
 
     if (!InterfaceName)
     {
@@ -1207,6 +1225,12 @@ void handle_dns_srv_addrchange_event (char *InterfaceName,int dns_srv_index,
             WANCHK_LOG_INFO("%s: updated index %d with IPAddress %s\n",
                                             __FUNCTION__,dns_srv_index,
                         gIntfInfo->DnsServerList[dns_srv_index-1].IPAddress.IPv4Address);
+            restart_threads = TRUE;
+        }
+        else
+        {
+            WANCHK_LOG_INFO("%s: Dns server Index %d already has upated value\n",
+                                                                __FUNCTION__,dns_srv_index);
         }
     }
     else
@@ -1224,21 +1248,30 @@ void handle_dns_srv_addrchange_event (char *InterfaceName,int dns_srv_index,
             WANCHK_LOG_INFO("%s: updated index %d with IPAddress %s\n",
                                             __FUNCTION__,dns_srv_index,
                         gIntfInfo->DnsServerList[dns_srv_index-1].IPAddress.IPv6Address);
+            restart_threads = TRUE;
+        }
+        else
+        {
+            WANCHK_LOG_INFO("%s: Dns server Index %d already has upated value\n",
+                                                                __FUNCTION__,dns_srv_index);
         }
 
     }
     pthread_mutex_unlock(&gIntfAccessMutex);
-    /* Chnage in dns won't affect passive threads*/
-    returnStatus = wancnctvty_chk_stop_threads(InstanceNumber,ACTIVE_MONITOR_THREAD);
-    if (returnStatus != ANSC_STATUS_SUCCESS)
+    if (restart_threads == TRUE)
     {
-        WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
-    }
+        /* Chnage in dns won't affect passive threads*/
+        returnStatus = wancnctvty_chk_stop_threads(gIntfInfo->IPInterface.InstanceNumber,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+        }
 
-    returnStatus = wancnctvty_chk_start_threads(InstanceNumber,ACTIVE_MONITOR_THREAD);
-    if (returnStatus != ANSC_STATUS_SUCCESS)
-    {
-            WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+        returnStatus = wancnctvty_chk_start_threads(gIntfInfo->IPInterface.InstanceNumber,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+                WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+        }
     }
 }
 
@@ -1694,7 +1727,14 @@ ANSC_STATUS CosaDmlGetIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface,BO
         pIPInterface->Enable  = DEF_INTF_ENABLE;
         pIPInterface->PassiveMonitor = DEF_PASSIVE_MONITOR_ENABLE;
         pIPInterface->PassiveMonitorTimeout = DEF_PASSIVE_MONITOR_TIMEOUT;
-        pIPInterface->ActiveMonitor = DEF_ACTIVE_MONITOR_ENABLE;
+        if (pIPInterface->InstanceNumber == PRIMARY_INTF_INDEX)
+        {
+            pIPInterface->ActiveMonitor = DEF_ACTIVE_MONITOR_PRIMARY_ENABLE;
+        }
+        else
+        {
+            pIPInterface->ActiveMonitor = DEF_ACTIVE_MONITOR_BACKUP_ENABLE;
+        }
         pIPInterface->ActiveMonitorInterval = DEF_ACTIVE_MONITOR_INTERVAL;
         pIPInterface->QueryTimeout = DEF_QUERY_TIMEOUT;
         pIPInterface->QueryRetry = DEF_QUERY_RETRY;
@@ -2063,11 +2103,9 @@ ANSC_STATUS CosaWanCnctvtyChk_Interface_dump (ULONG InstanceNumber)
     WANCHK_LOG_INFO("PassiveMonitor             : %s\n",gIntfInfo->IPInterface.PassiveMonitor ? "true" : "false");
     WANCHK_LOG_INFO("PassiveMonitor Timeout     : %ld\n",gIntfInfo->IPInterface.PassiveMonitorTimeout);
 #endif
-#ifdef ACTIVE_MONITOR_ENABLED
     WANCHK_LOG_INFO("ActiveMonitor              : %s\n",gIntfInfo->IPInterface.ActiveMonitor ? "true" : "false");
     WANCHK_LOG_INFO("ActiveMonitorInterval      : %ld\n",gIntfInfo->IPInterface.ActiveMonitorInterval);
     WANCHK_LOG_INFO("MonitorResult              : %ld\n",gIntfInfo->IPInterface.MonitorResult);
-#endif
     WANCHK_LOG_INFO("QueryNow                   : %s\n",gIntfInfo->IPInterface.QueryNow ? "true" : "false");
     WANCHK_LOG_INFO("QueryNowResult             : %ld\n",gIntfInfo->IPInterface.QueryNowResult);
     WANCHK_LOG_INFO("QueryTimeout               : %ld\n",gIntfInfo->IPInterface.QueryTimeout);
