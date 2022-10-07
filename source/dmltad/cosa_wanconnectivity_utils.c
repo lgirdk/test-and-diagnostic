@@ -28,6 +28,7 @@
 #include <netinet/ip6.h>
 #include <netinet/in.h>
 #include <netinet/udp.h>
+#include <netinet/ether.h>
 #include <libnetfilter_queue/libnetfilter_queue.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv4.h>
 #include <libnetfilter_queue/libnetfilter_queue_ipv6.h>
@@ -35,7 +36,6 @@
 #include <libnetfilter_queue/pktbuff.h>
 #include <linux/netfilter.h>
 #include <linux/if_ether.h>
-#include <netinet/ether.h>
 
 extern rbusHandle_t rbus_handle;
 
