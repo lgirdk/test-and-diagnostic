@@ -285,21 +285,14 @@ ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value)
             }
         }
 
-        if (syscfg_set(NULL, "wanconnectivity_chk_enable",
-                                            ((enable_value == TRUE) ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "wanconnectivity_chk_enable", (enable_value == TRUE) ? "true" : "false") != 0)
         {
             WANCHK_LOG_WARN("%s: syscfg_set failed for %s\n", __FUNCTION__,
                                                                     "wanconnectivity_chk_enable");
             return ANSC_STATUS_FAILURE;
         }
-
-        if (syscfg_commit() != 0)
-        {
-            WANCHK_LOG_WARN("%s: syscfg commit failed for %s\n", __FUNCTION__,
-                                                                    "wanconnectivity_chk_enable");
-            return ANSC_STATUS_FAILURE;
-        }
     } 
+
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -539,8 +532,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
 **********************************************************************/
 ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber)
 {
-    char paramName[BUFLEN_128] = {0};
-    char buf[BUFLEN_64] = {0};
+    char paramName[BUFLEN_128];
     int url_max_inst = 0;
     errno_t rc = -1;
     PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
@@ -562,20 +554,15 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber)
         }
     }
     pthread_mutex_unlock(&gUrlAccessMutex);
-    syscfg_unset(NULL,paramName);
+
+    syscfg_unset(NULL, paramName);
+
     /* reset the url max instance number*/
-    rc = sprintf_s(buf,sizeof(buf),"%d",url_max_inst);
-    if (rc < EOK)
+    if (syscfg_set_u_commit(NULL, "wanconnectivity_chk_maxurl_inst", (unsigned) url_max_inst) != 0)
     {
-        ERR_CHK(rc);
+        WANCHK_LOG_WARN("%s: syscfg_set failed for url max inst %d\n", __FUNCTION__, url_max_inst);
     }
 
-    if (syscfg_set(NULL, "wanconnectivity_chk_maxurl_inst", buf) != 0)
-    {
-        WANCHK_LOG_WARN("%s: syscfg_set failed for url max inst %d\n", __FUNCTION__,
-                                                                        url_max_inst);
-    }
-    syscfg_commit();
     return ANSC_STATUS_SUCCESS;
 }
 

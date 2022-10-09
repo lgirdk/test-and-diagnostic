@@ -6525,29 +6525,14 @@ RDK_SpeedTest_SetParamUlongValue
         ULONG                       ulong
     )
 {
-    char TO_buf[4];
-    errno_t rc = -1;
     if (strcmp(ParamName, "SubscriberUnPauseTimeOut") == 0)
     {
         AnscTraceFlow(("%s SubscriberUnPauseTimeOut value : %lu \n",__FUNCTION__, ulong));
         if (ulong >= 1 && ulong <= 180 )
         {
-            rc = sprintf_s(TO_buf, sizeof(TO_buf),"%lu", ulong);
-            if(rc < EOK)
-            {
-                ERR_CHK(rc);
-                return FALSE;
-            }
-            if (syscfg_set(NULL, "Speedtest_SubUnPauseTimeOut", TO_buf) != 0)
+            if (syscfg_set_u_commit(NULL, "Speedtest_SubUnPauseTimeOut", ulong) != 0)
             {
                 AnscTraceWarning(("%s syscfg_set failed\n",__FUNCTION__));
-            }
-            else
-            {
-                if (syscfg_commit() != 0)
-                {
-                    AnscTraceWarning(("%s syscfg_commit failed\n",__FUNCTION__));
-                }
             }
             return TRUE;
         }
@@ -6561,6 +6546,7 @@ RDK_SpeedTest_SetParamUlongValue
     {
         AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     }
+
     return FALSE;
 }
 
