@@ -291,21 +291,14 @@ ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value)
             }
         }
 
-        if (syscfg_set(NULL, "wanconnectivity_chk_enable",
-                                            ((enable_value == TRUE) ? "true" : "false")) != 0)
+        if (syscfg_set_commit(NULL, "wanconnectivity_chk_enable", (enable_value == TRUE) ? "true" : "false") != 0)
         {
             WANCHK_LOG_WARN("%s: syscfg_set failed for %s\n", __FUNCTION__,
                                                                     "wanconnectivity_chk_enable");
             return ANSC_STATUS_FAILURE;
         }
-
-        if (syscfg_commit() != 0)
-        {
-            WANCHK_LOG_WARN("%s: syscfg commit failed for %s\n", __FUNCTION__,
-                                                                    "wanconnectivity_chk_enable");
-            return ANSC_STATUS_FAILURE;
-        }
     } 
+
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -534,8 +527,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
 **********************************************************************/
 ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber)
 {
-    char paramName[BUFLEN_128] = {0};
-    char buf[BUFLEN_64] = {0};
+    char paramName[BUFLEN_128];
     int url_max_inst = 0;
     errno_t rc = -1;
     PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
@@ -557,20 +549,15 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber)
         }
     }
     pthread_mutex_unlock(&gUrlAccessMutex);
-    syscfg_unset(NULL,paramName);
+
+    syscfg_unset(NULL, paramName);
+
     /* reset the url max instance number*/
-    rc = sprintf_s(buf,sizeof(buf),"%d",url_max_inst);
-    if (rc < EOK)
+    if (syscfg_set_u_commit(NULL, "wanconnectivity_chk_maxurl_inst", (unsigned) url_max_inst) != 0)
     {
-        ERR_CHK(rc);
+        WANCHK_LOG_WARN("%s: syscfg_set failed for url max inst %d\n", __FUNCTION__, url_max_inst);
     }
 
-    if (syscfg_set(NULL, "wanconnectivity_chk_maxurl_inst", buf) != 0)
-    {
-        WANCHK_LOG_WARN("%s: syscfg_set failed for url max inst %d\n", __FUNCTION__,
-                                                                        url_max_inst);
-    }
-    syscfg_commit();
     return ANSC_STATUS_SUCCESS;
 }
 
@@ -587,17 +574,15 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber)
 **********************************************************************/
 ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const char *url)
 {
-    errno_t                         rc           = -1;
-    char paramName[BUFLEN_128] = {0};
-    char Current_URL[MAX_URL_SIZE] = {0};
-    BOOL update_syscfg = TRUE;
+    char paramName[BUFLEN_128];
+    char Current_URL[MAX_URL_SIZE];
     int ind = -1;
-    char buf[BUFLEN_128] = {0};
     BOOL bFound = FALSE;
     int url_max_inst = 0;
     PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
     PCOSA_CONTEXT_LINK_OBJECT       pCxtLink          = NULL;
     PCOSA_DML_WANCNCTVTY_CHK_URL_INFO pUrlInfo        = NULL;
+    errno_t rc = -1;
 
     rc = sprintf_s(paramName,sizeof(paramName),"wanconnectivity_chk_url_%d",InstanceNumber);
     if (rc < EOK)
@@ -611,84 +596,68 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const cha
         ERR_CHK(rc);
         if ((!ind) && (rc == EOK))
         {
-            /* we don't have an update,No need to update*/
-            update_syscfg = FALSE;
+            /* No change in URL so no need to update */
             return ANSC_STATUS_SUCCESS;
         }
     }
 
-    if (update_syscfg)
+    pthread_mutex_lock(&gUrlAccessMutex);
+    pSListEntry 	  = AnscSListGetFirstEntry(&gpUrlList);
+    while( pSListEntry != NULL)
     {
+    	pCxtLink	  = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSListEntry);
+    	pSListEntry	  = AnscSListGetNextEntry(pSListEntry);
+    	if (pCxtLink && (pCxtLink->InstanceNumber == InstanceNumber))
+    	{
+    	    bFound = TRUE;
+    	    break;
+    	}
+    }
+    if ( bFound == TRUE )
+    {
+    	pUrlInfo = (PCOSA_DML_WANCNCTVTY_CHK_URL_INFO)pCxtLink->hContext;
+    	rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , url);
+    	ERR_CHK(rc);
+    }
+    else
+    {
+    	WANCHK_LOG_ERROR("Global entry for InstanceNumber %d is NULL\n",InstanceNumber);
+    	pthread_mutex_unlock(&gUrlAccessMutex);
+    	return ANSC_STATUS_FAILURE;
+    }
+    pthread_mutex_unlock(&gUrlAccessMutex);
+    if (syscfg_set(NULL, paramName, url) != 0)
+    {
+    	WANCHK_LOG_WARN("%s: syscfg_set failed for %s\n", __FUNCTION__,pUrlInfo->URL);
+    	/* revert to Old value*/
+    	pthread_mutex_lock(&gUrlAccessMutex);
+    	rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , Current_URL);
+    	ERR_CHK(rc);
+    	pthread_mutex_unlock(&gUrlAccessMutex);
+    	return ANSC_STATUS_FAILURE;
+    }
+
+    pthread_mutex_lock(&gUrlAccessMutex);
+    pSListEntry = AnscSListGetLastEntry(&gpUrlList);
+    if (pSListEntry)
+    {
+    	pCxtLink = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSListEntry);
+    	if (pCxtLink)
+    	{
+    	    url_max_inst = pCxtLink->InstanceNumber;
+    	}
+    }
+    pthread_mutex_unlock(&gUrlAccessMutex);
+
+    /* increase the url count*/
+    if (syscfg_set_commit(NULL, "wanconnectivity_chk_maxurl_inst", (unsigned) url_max_inst) != 0)
+    {
+    	WANCHK_LOG_WARN("%s: syscfg_set failed for url count %s\n", __FUNCTION__, url);
         pthread_mutex_lock(&gUrlAccessMutex);
-        pSListEntry           = AnscSListGetFirstEntry(&gpUrlList);
-        while( pSListEntry != NULL)
-        {
-            pCxtLink          = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSListEntry);
-            pSListEntry       = AnscSListGetNextEntry(pSListEntry);
-            if (pCxtLink && (pCxtLink->InstanceNumber == InstanceNumber))
-            {
-                bFound = TRUE;
-                break;
-            }
-        }
-        if ( bFound == TRUE )
-        {
-            pUrlInfo = (PCOSA_DML_WANCNCTVTY_CHK_URL_INFO)pCxtLink->hContext;
-            rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , url);
-            ERR_CHK(rc);
-        }
-        else
-        {
-            WANCHK_LOG_ERROR("Global entry for InstanceNumber %d is NULL\n",InstanceNumber);
-            pthread_mutex_unlock(&gUrlAccessMutex);
-            return ANSC_STATUS_FAILURE;
-        }
+        rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , Current_URL);
+        ERR_CHK(rc);
         pthread_mutex_unlock(&gUrlAccessMutex);
-        if (syscfg_set(NULL, paramName, url) != 0)
-        {
-            WANCHK_LOG_WARN("%s: syscfg_set failed for %s\n", __FUNCTION__,pUrlInfo->URL);
-            /* revert to Old value*/
-            pthread_mutex_lock(&gUrlAccessMutex);
-            rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , Current_URL);
-            ERR_CHK(rc);
-            pthread_mutex_unlock(&gUrlAccessMutex);
-            return ANSC_STATUS_FAILURE;
-        }
-
-        pthread_mutex_lock(&gUrlAccessMutex);
-        pSListEntry = AnscSListGetLastEntry(&gpUrlList);
-        if (pSListEntry)
-        {
-            pCxtLink = ACCESS_COSA_CONTEXT_LINK_OBJECT(pSListEntry);
-            if (pCxtLink)
-            {
-                url_max_inst = pCxtLink->InstanceNumber;
-            }
-        }
-        pthread_mutex_unlock(&gUrlAccessMutex);
-
-        /* increase the url count*/
-        rc = sprintf_s(buf,sizeof(buf),"%d",url_max_inst);
-        if (rc < EOK)
-        {
-            ERR_CHK(rc);
-        }
-
-        if (syscfg_set(NULL, "wanconnectivity_chk_maxurl_inst", buf) != 0)
-        {
-            WANCHK_LOG_WARN("%s: syscfg_set failed for url count %s\n", __FUNCTION__,
-                                                                            url);
-        }
-
-        if (syscfg_commit() != 0)
-        {
-           WANCHK_LOG_WARN("%s: syscfg commit failed for %s\n", __FUNCTION__,url);
-           pthread_mutex_lock(&gUrlAccessMutex);
-           rc = strcpy_s(pUrlInfo->URL,MAX_URL_SIZE , Current_URL);
-           ERR_CHK(rc);
-           pthread_mutex_unlock(&gUrlAccessMutex);
-           return ANSC_STATUS_FAILURE;
-        }
+        return ANSC_STATUS_FAILURE;
     }
 
     return ANSC_STATUS_SUCCESS;
