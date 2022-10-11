@@ -113,7 +113,7 @@ self_heal_process ()
   fi
 }
 
-if [ -f /etc/onewifi_enabled ]; then
+if [ -f /etc/onewifi_enabled ] || [ -d /sys/module/openvswitch ]; then
     ovs_enable="true"
 else
     ovs_enable=`syscfg get mesh_ovs_enable`
