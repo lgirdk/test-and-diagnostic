@@ -438,14 +438,12 @@ static diag_obj_t *get_diag_by_mode(diag_mode_t mode)
 
 static diag_err_t __diag_stop(diag_obj_t *diag)
 {
-#ifdef _GNU_SOURCE
-    struct timespec timo;
-#endif
-
     diag->op_stop(diag);
     pthread_mutex_unlock(&diag->mutex);
 
 #ifdef _GNU_SOURCE
+#error "Untested code..."
+    struct timespec timo;
     timo.tv_sec = 3;
     timo.tv_nsec = 0;
     if (pthread_timedjoin_np(diag->task, NULL, &timo) != 0) {
