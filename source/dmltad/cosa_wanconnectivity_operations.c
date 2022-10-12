@@ -1420,7 +1420,7 @@ int get_dns_payload(int family, char *payload,unsigned payload_len,
     else
     {
         WANCHK_LOG_DBG("udp_header_start :%d SPT=%u DPT=%u\n",udp_header_start,
-                                                ntohs(udp_header->source), ntohs(udp_header->dest));
+                                                ntohs(udp_header->uh_sport), ntohs(udp_header->uh_dport));
         tmp_dns_payload = (char *)(payload+udp_header_start+sizeof(struct udphdr));
         *dns_payload_len = (payload_len - (udp_header_start+sizeof(struct udphdr)));
         memcpy(dns_payload,tmp_dns_payload,*dns_payload_len);
