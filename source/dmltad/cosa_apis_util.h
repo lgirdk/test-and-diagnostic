@@ -82,14 +82,6 @@ typedef struct StaticRoute
     char         dest_intf[10]; 
 }StaticRoute;
 
-
-ULONG
-CosaUtilGetIfAddr
-    (
-        char*       netdev
-    );
-
-
 PUCHAR
 CosaUtilGetLowerLayers
     (
