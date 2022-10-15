@@ -76,10 +76,8 @@ rbusDataElement_t WANCHK_Feature_Enabled_RbusElements[] =
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.Enable", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.Alias", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.InterfaceName", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
-#ifdef PASSIVE_MONITOR_ENABLED
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.PassiveMonitor", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.PassiveMonitorTimeout", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
-#endif
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ActiveMonitor", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ActiveMonitorInterval", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.MonitorResult", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, NULL, NULL, NULL,WANCNCTVTYCHK_SubHandler , NULL} },
@@ -448,7 +446,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
             }
 
         }
-#ifdef PASSIVE_MONITOR_ENABLED
+
         /* Passive Monitor status*/
         if ((CurrentCfg.PassiveMonitor == TRUE) && (pIPInterface->PassiveMonitor == FALSE))
         {
@@ -463,17 +461,13 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
                 return ANSC_STATUS_FAILURE;
             }
         }
-        else if ( (pIPInterface->Cfg_bitmask & INTF_CFG_PASSIVE_TIMEOUT) ||
-                  (pIPInterface->Cfg_bitmask & INTF_CFG_RECORDTYPE) ||
-                  (pIPInterface->Cfg_bitmask & INTF_CFG_SERVERTYPE))
+        else if (pIPInterface->Cfg_bitmask & INTF_CFG_PASSIVE_TIMEOUT)
         {
             /* Passive monitor config changed, stop passive monitor thread running with old
             config*/
             WANCHK_LOG_INFO("wanconnectivity_chk PassiveMonitor config changed\n");
-            WANCHK_LOG_INFO("Timeout:%ld->%ld,RecordType:%s->%s,ServerType:%s->%s\n",
-                            CurrentCfg.PassiveMonitorTimeout,pIPInterface->PassiveMonitorTimeout,
-                            CurrentCfg.RecordType,pIPInterface->RecordType,
-                            CurrentCfg.ServerType,pIPInterface->ServerType);
+            WANCHK_LOG_INFO("Timeout:%ld->%ld\n",
+                            CurrentCfg.PassiveMonitorTimeout,pIPInterface->PassiveMonitorTimeout);
             returnStatus = wancnctvty_chk_stop_threads(pIPInterface->InstanceNumber,
                                                                     PASSIVE_MONITOR_THREAD);
             if (returnStatus != ANSC_STATUS_SUCCESS)
@@ -482,7 +476,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
                 return ANSC_STATUS_FAILURE;
             }
         }
-#endif
+
         /* Active Monitor status*/
         if ((CurrentCfg.ActiveMonitor == TRUE) && (pIPInterface->ActiveMonitor == FALSE))
         {

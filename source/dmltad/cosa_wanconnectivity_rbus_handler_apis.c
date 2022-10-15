@@ -474,6 +474,11 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if (strcmp(Param, "PassiveMonitorTimeout") == 0)
                 {
                     uint32_t input = rbusValue_GetUInt32(value);
+                    if (input < 1000)
+                    {
+                        WANCHK_LOG_ERROR("%s: PassiveMonitorTimeout not valid\n", __FUNCTION__);
+                        return RBUS_ERROR_INVALID_INPUT;
+                    }
                     if (IPInterface.PassiveMonitorTimeout != input)
                     {
                         IPInterface.PassiveMonitorTimeout =  input;
@@ -484,6 +489,11 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if (strcmp(Param, "ActiveMonitorInterval") == 0)
                 {
                     uint32_t input = rbusValue_GetUInt32(value);
+                    if (input < 1000)
+                    {
+                        WANCHK_LOG_ERROR("%s: ActiveMonitorInterval not valid\n", __FUNCTION__);
+                        return RBUS_ERROR_INVALID_INPUT;
+                    }
                     if (IPInterface.ActiveMonitorInterval != input)
                     {
                         IPInterface.ActiveMonitorInterval =  input;
@@ -516,8 +526,16 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if( AnscEqualString(Param, "RecordType", TRUE))
                 {
                     const char *record_type = rbusValue_GetString(value, NULL);
-                    if (type != RBUS_STRING || record_type == NULL || strlen(record_type) <= 0)
+                    if (type != RBUS_STRING || record_type == NULL || strlen(record_type) <= 0 ||
+                        strlen(record_type) > 6 ||
+                            (strcmp(record_type, "A") &&
+                             strcmp(record_type, "AAAA") &&
+                             strcmp(record_type, "A+AAAA") &&
+                             strcmp(record_type, "A*AAAA")
+                            )
+                       )
                     {
+                        WANCHK_LOG_ERROR("%s: RecordType not valid\n", __FUNCTION__);
                         return RBUS_ERROR_INVALID_INPUT;
                     }
                     if (strcmp(IPInterface.RecordType,record_type))
@@ -532,8 +550,16 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if( AnscEqualString(Param, "ServerType", TRUE))
                 {
                     const char *server_type = rbusValue_GetString(value, NULL);
-                    if (type != RBUS_STRING || server_type == NULL || strlen(server_type) <= 0)
+                    if (type != RBUS_STRING || server_type == NULL || strlen(server_type) <= 0 ||
+                        strlen(server_type) > 9 ||
+                            (strcmp(server_type, "IPv4") &&
+                             strcmp(server_type, "IPv6") &&
+                             strcmp(server_type, "IPv4+IPv6") &&
+                             strcmp(server_type, "IPv4*IPv6")
+                            )
+                       )
                     {
+                        WANCHK_LOG_ERROR("%s: ServerType not valid\n", __FUNCTION__);
                         return RBUS_ERROR_INVALID_INPUT;
                     }
                     if (strcmp(IPInterface.ServerType,server_type))

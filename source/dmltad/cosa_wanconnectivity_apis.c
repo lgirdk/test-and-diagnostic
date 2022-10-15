@@ -40,6 +40,10 @@ BOOL g_wanconnectivity_check_enable = FALSE;
 SLIST_HEADER                  gpUrlList;
 ULONG                         gulUrlNextInsNum = 1;
 ULONG                         gIntfCount = 0;
+USHORT                        g_last_sent_actv_txn_id_A;
+USHORT                        g_last_sent_actv_txn_id_AAAA;
+USHORT                        g_last_sent_actv_txn_id_A_bkp;
+USHORT                        g_last_sent_actv_txn_id_AAAA_bkp;
 int sysevent_fd_wanchk;
 token_t sysevent_token_wanchk;
 int sysevent_fd_wanchk_monitor;
@@ -49,9 +53,11 @@ global DB upto 2. If needed it can be enhanced later*/
 WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES] = {0};
 pthread_mutex_t gIntfAccessMutex;
 pthread_mutex_t gUrlAccessMutex;
+pthread_mutex_t gDnsTxnIdAccessMutex;
+pthread_mutex_t gDnsTxnIdBkpAccessMutex;
 
 static pthread_t sysevent_monitor_tid;
-#ifndef WAN_FAILOVER_SUPPORTED
+#if !defined(WAN_FAILOVER_SUPPORTED) && !defined(GATEWAY_FAILOVER_SUPPORTED)
 static async_id_t current_wan_asyncid;
 #endif
 static async_id_t backupwan_router_addr_asyncid;
@@ -159,24 +165,40 @@ ANSC_STATUS CosaWanCnctvtyChk_Init (VOID)
         return ANSC_STATUS_FAILURE;
     }
 
-    g_wanconnectivity_check_enable = FALSE;
-    g_wanconnectivity_check_active = FALSE;
-    AnscSListInitializeHeader(&gpUrlList);
-    gulUrlNextInsNum          = 1;
-
-        /* Initialize url list access mutex*/
+    /* Initialize url list access mutex */
     pthread_mutexattr_t     mutex_attr_url;
     pthread_mutexattr_init(&mutex_attr_url);
     pthread_mutexattr_settype(&mutex_attr_url, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&(gUrlAccessMutex), &(mutex_attr_url));
     pthread_mutexattr_destroy(&mutex_attr_url);
 
-    /* Initialize interface list access mutex*/
+    /* Initialize interface list access mutex */
     pthread_mutexattr_t     mutex_attr;
     pthread_mutexattr_init(&mutex_attr);
     pthread_mutexattr_settype(&mutex_attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&(gIntfAccessMutex), &(mutex_attr));
     pthread_mutexattr_destroy(&mutex_attr);
+
+    /* Initialize DNS txn id primary interface access mutex */
+    pthread_mutexattr_t     mutex_attr_txn;
+    pthread_mutexattr_init(&mutex_attr_txn);
+    pthread_mutexattr_settype(&mutex_attr_txn, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&(gDnsTxnIdAccessMutex), &(mutex_attr_txn));
+    pthread_mutexattr_destroy(&mutex_attr_txn);
+
+    /* Initialize DNS txn id backup interface access mutex */
+    pthread_mutexattr_t     mutex_attr_txn_bkp;
+    pthread_mutexattr_init(&mutex_attr_txn_bkp);
+    pthread_mutexattr_settype(&mutex_attr_txn_bkp, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&(gDnsTxnIdBkpAccessMutex), &(mutex_attr_txn_bkp));
+    pthread_mutexattr_destroy(&mutex_attr_txn_bkp);
+
+    pthread_mutex_lock(&gUrlAccessMutex);
+    g_wanconnectivity_check_enable = FALSE;
+    g_wanconnectivity_check_active = FALSE;
+    AnscSListInitializeHeader(&gpUrlList);
+    gulUrlNextInsNum          = 1;
+    pthread_mutex_unlock(&gUrlAccessMutex);
 
     for (int i=0;i < MAX_NO_OF_INTERFACES;i++)
     {
@@ -238,7 +260,7 @@ void CosaWanCnctvtyChk_StartSysevent_listener()
         return;
     }
 /* Only in case of WAN_FAILOVER not supported, we take wan if from sysevent*/
-#ifndef WAN_FAILOVER_SUPPORTED
+#if !defined(WAN_FAILOVER_SUPPORTED) && !defined(GATEWAY_FAILOVER_SUPPORTED)
     sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "current_wan_ifname", 
                                                                     &current_wan_asyncid);
 #endif
@@ -248,7 +270,7 @@ void CosaWanCnctvtyChk_StopSysevent_listener()
 {
     if (sysevent_monitor_tid)
     {
-#ifndef WAN_FAILOVER_SUPPORTED
+#if !defined(WAN_FAILOVER_SUPPORTED) && !defined(GATEWAY_FAILOVER_SUPPORTED)
         sysevent_rmnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, 
                                                                             current_wan_asyncid);
 #endif
@@ -305,8 +327,11 @@ ANSC_STATUS CosaWanCnctvtyChk_Init_URLTable (VOID)
     }
     for (index=0; index < total_url_entries;index++)
     {
-        pUrlInfo = (PCOSA_DML_WANCNCTVTY_CHK_URL_INFO)
-                                    AnscAllocateMemory(sizeof(COSA_DML_WANCNCTVTY_CHK_URL_INFO));
+        if ( !pUrlInfo)
+        {
+            pUrlInfo = (PCOSA_DML_WANCNCTVTY_CHK_URL_INFO)
+                                        AnscAllocateMemory(sizeof(COSA_DML_WANCNCTVTY_CHK_URL_INFO));
+        }
         if ( !pUrlInfo)
         {
            return ANSC_STATUS_RESOURCES;
@@ -354,7 +379,8 @@ ANSC_STATUS CosaWanCnctvtyChk_Init_URLTable (VOID)
        if (gulUrlNextInsNum == 0)
             gulUrlNextInsNum = 1;
 
-       pCosaContext->hContext      = (ANSC_HANDLE)pUrlInfo;
+       pCosaContext->hContext      = (ANSC_HANDLE)AnscAllocateMemory(sizeof(COSA_DML_WANCNCTVTY_CHK_URL_INFO));
+       memcpy(pCosaContext->hContext, (ANSC_HANDLE)pUrlInfo, sizeof(COSA_DML_WANCNCTVTY_CHK_URL_INFO));
        pCosaContext->hParentTable  = NULL;
        pCosaContext->bNew          = TRUE;
 
@@ -375,13 +401,12 @@ ANSC_STATUS CosaWanCnctvtyChk_Init_URLTable (VOID)
                                                 __FUNCTION__, __LINE__, WANCHK_TEST_URL_TABLE );
        }
        pthread_mutex_unlock(&gUrlAccessMutex);
+       AnscFreeMemory(pUrlInfo);
+       pUrlInfo = (PCOSA_DML_WANCNCTVTY_CHK_URL_INFO)NULL;
     }
 EXIT:
-    if (returnStatus != ANSC_STATUS_SUCCESS)
-    {
-        if (pUrlInfo)
-           AnscFreeMemory(pUrlInfo);
-    }
+    if (pUrlInfo)
+       AnscFreeMemory(pUrlInfo);
     return returnStatus;
 }
 
@@ -865,7 +890,7 @@ from sysevent*/
 ANSC_STATUS ret = ANSC_STATUS_SUCCESS;
 char Value[MAX_INTF_NAME_SIZE] = {0};
 errno_t      rc = -1;
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
    ret = WanCnctvtyChk_GetParameterValue(CURRENT_PRIMARY_INTF_DML,Value);
 #else
    ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "current_wan_ifname", Value, sizeof(Value));
@@ -1114,7 +1139,7 @@ void *WanCnctvtyChk_SysEventHandlerThrd(void *data)
             {
                 handle_dns_srvrcnt_event("brRWAN",-1);
             }
-#ifndef WAN_FAILOVER_SUPPORTED
+#if !defined(WAN_FAILOVER_SUPPORTED) && !defined(GATEWAY_FAILOVER_SUPPORTED)
             else if(strcmp(name,"current_wan_ifname") == 0)
             {
                 /* Currently we are dependant only on sysevent for primary in wan failover 
@@ -1308,25 +1333,19 @@ ANSC_STATUS CosaWanCnctvtyChk_DeInit_IntfTable(VOID)
 
 void handle_intf_change_event(COSA_WAN_CNCTVTY_CHK_EVENTS event,const char *new_value)
 {
+   char Value[MAX_INTF_NAME_SIZE] = {0};
+   errno_t rc = -1;
+   int ind = -1;
    if (event == INTF_PRIMARY)
    {
-      BOOL configure_secondary = FALSE;
-#ifdef WAN_FAILOVER_SUPPORTED
-      /* First time we are configuring primary interface, Try to configure secondary if exists*/
-      if (CosaWanCnctvtyChk_IsPrimary_Configured() == FALSE)
-      {
-         configure_secondary = TRUE;
-      }
-#endif
       WANCHK_LOG_INFO("%s : New value of ActiveGateway is = %s\n",__FUNCTION__,new_value);
       CosaWanCnctvtyChk_Remove_Intf(PRIMARY_INTF_INDEX);
       /* If new_value is empty, no need to call init*/
       if (strlen(new_value))
       {
-         if ((CosaWanCnctvtyChk_Init_Intf(PRIMARY_INTF_INDEX) == ANSC_STATUS_SUCCESS) &&
-                                                                    (configure_secondary == TRUE))
+         if (CosaWanCnctvtyChk_Init_Intf(PRIMARY_INTF_INDEX) == ANSC_STATUS_SUCCESS)
          {
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
             CosaWanCnctvtyChk_Remove_Intf(SECONDARY_INTF_INDEX);
             CosaWanCnctvtyChk_Init_Intf(SECONDARY_INTF_INDEX);
 #endif
@@ -1340,6 +1359,25 @@ void handle_intf_change_event(COSA_WAN_CNCTVTY_CHK_EVENTS event,const char *new_
       {
          WANCHK_LOG_INFO("%s : Primary Interface Unconfigured Ignore Secondary event\n",__FUNCTION__);
          return;
+      }
+      else
+      {
+          if(CosaWanCnctvtyChk_GetPrimary_IntfName(Value) == TRUE)
+          {
+              rc = strcmp_s(new_value, strlen(new_value), Value, &ind);
+              ERR_CHK(rc);
+              if((!ind) && (rc == EOK))
+              {
+                  WANCHK_LOG_INFO("%s : Primary and Backup Interface are same, Ignore Secondary event\n",
+                                                                                      __FUNCTION__);
+                  return;
+              }
+          }
+          else
+          {
+              WANCHK_LOG_ERROR("%s:%d Unable to get Primary interface\n",__FUNCTION__,__LINE__);
+              return;
+          }
       }
       CosaWanCnctvtyChk_Remove_Intf(SECONDARY_INTF_INDEX);
       if (strlen(new_value))
@@ -1725,16 +1763,17 @@ ANSC_STATUS CosaDmlGetIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface,BO
     if (use_default)
     {
         pIPInterface->Enable  = DEF_INTF_ENABLE;
-        pIPInterface->PassiveMonitor = DEF_PASSIVE_MONITOR_ENABLE;
-        pIPInterface->PassiveMonitorTimeout = DEF_PASSIVE_MONITOR_TIMEOUT;
         if (pIPInterface->InstanceNumber == PRIMARY_INTF_INDEX)
         {
             pIPInterface->ActiveMonitor = DEF_ACTIVE_MONITOR_PRIMARY_ENABLE;
+            pIPInterface->PassiveMonitor = DEF_PASSIVE_MONITOR_PRIMARY_ENABLE;
         }
         else
         {
             pIPInterface->ActiveMonitor = DEF_ACTIVE_MONITOR_BACKUP_ENABLE;
+            pIPInterface->PassiveMonitor = DEF_PASSIVE_MONITOR_BACKUP_ENABLE;
         }
+        pIPInterface->PassiveMonitorTimeout = DEF_PASSIVE_MONITOR_TIMEOUT;
         pIPInterface->ActiveMonitorInterval = DEF_ACTIVE_MONITOR_INTERVAL;
         pIPInterface->QueryTimeout = DEF_QUERY_TIMEOUT;
         pIPInterface->QueryRetry = DEF_QUERY_RETRY;
@@ -2099,10 +2138,8 @@ ANSC_STATUS CosaWanCnctvtyChk_Interface_dump (ULONG InstanceNumber)
     WANCHK_LOG_INFO("Enable                     : %s\n",gIntfInfo->IPInterface.Enable ? "true" : "false");
     WANCHK_LOG_INFO("Alias                      : %s\n",gIntfInfo->IPInterface.Alias);
     WANCHK_LOG_INFO("InterfaceName              : %s\n",gIntfInfo->IPInterface.InterfaceName);
-#ifdef PASSIVE_MONITOR_ENABLED
     WANCHK_LOG_INFO("PassiveMonitor             : %s\n",gIntfInfo->IPInterface.PassiveMonitor ? "true" : "false");
     WANCHK_LOG_INFO("PassiveMonitor Timeout     : %ld\n",gIntfInfo->IPInterface.PassiveMonitorTimeout);
-#endif
     WANCHK_LOG_INFO("ActiveMonitor              : %s\n",gIntfInfo->IPInterface.ActiveMonitor ? "true" : "false");
     WANCHK_LOG_INFO("ActiveMonitorInterval      : %ld\n",gIntfInfo->IPInterface.ActiveMonitorInterval);
     WANCHK_LOG_INFO("MonitorResult              : %ld\n",gIntfInfo->IPInterface.MonitorResult);

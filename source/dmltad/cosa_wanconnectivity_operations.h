@@ -42,6 +42,7 @@
 #include <linux/filter.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
+#include <pcap.h>
 
 /* Generated with tcpdump -dd "udp src port 53" */
 struct sock_filter dns_packet_filter[] = {
@@ -69,7 +70,7 @@ struct sock_filter dns_packet_filter[] = {
 
 #define SIZE_OF_PACKET_FILTER(filter) (sizeof(filter)/sizeof(struct sock_filter))
 #define DNS_PACKET_FILTER_SIZE SIZE_OF_PACKET_FILTER(dns_packet_filter)
-
+#define ACTV_MNTR_PAUSE        "/tmp/actv_mon_pause_%s"
 
 typedef enum _queryinvoke_type {
         QUERYNOW_INVOKE  = 1,
@@ -98,15 +99,20 @@ typedef struct _wan_chk_passive_monitor
 {
     /* libev stuff */
     struct ev_loop     *loop;
-    ev_io              evio_v4;                 /* libev I/O event handler */
-    ev_io              evio_v6;
-    ev_timer           bgtimer;             /* background dns response monitor timer*/
+    ev_io              evio;                 /* libev I/O event handler */
+    ev_timer           bgtimer;              /* background dns response monitor timer */
 
-    /*nfq stuff*/
-    struct nfq_handle *nfqHandle_v4;
-    struct nfq_handle *nfqHandle_v6;
-    int nfq_fd_v4;
-    int nfq_fd_v6;
+    /* libpcap stuff */
+    pcap_t             *pcap;
+    int                pcap_fd;
+    struct bpf_program bpf_fp;
+
+    /* To update monitor status */
+    ULONG              InstanceNumber;
+    /* To pause active monitor */
+    UCHAR              InterfaceName[MAX_INTF_NAME_SIZE];
+    /* To check passive monitor running on primary or backup interface */
+    BOOL               IsPrimary;
 }
 WAN_CNCTVTY_CHK_PASSIVE_MONITOR,*PWAN_CNCTVTY_CHK_PASSIVE_MONITOR;
 
@@ -114,7 +120,11 @@ typedef struct _wan_chk_active_monitor
 {
     /* libev stuff */
     struct ev_loop     *loop;
-    ev_timer           actvtimer;             /* background dns response monitor timer*/
+    ev_timer           actvtimer;             /* background dns response monitor timer */
+    ev_stat            pause_actv_mntr;       /* file watcher to pause active monitor */
+
+    /* To pause active monitor */
+    UCHAR              InterfaceName[MAX_INTF_NAME_SIZE];
 }
 WAN_CNCTVTY_CHK_ACTIVE_MONITOR,*PWAN_CNCTVTY_CHK_ACTIVE_MONITOR;
 
@@ -135,8 +145,9 @@ ANSC_STATUS wancnctvty_chk_start_passive(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfI
 ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo,
                                         PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt);
 void *wancnctvty_chk_querynow_thread( void *arg);
-int send_query(struct query *query_info,struct mk_query *query_list,BOOL);
-int dns_parse(const unsigned char *msg, size_t len,bool restart_timer);
+int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw_socket,
+                                                                            BOOL disable_info_log);
+int dns_parse(const unsigned char *msg, size_t len);
 int send_query_create_raw_skt(struct query *query_info);
 unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *query,
                                                                            unsigned char *packet);
@@ -153,6 +164,7 @@ int get_server_type(char *servertype_string,servertype_t *output);
 ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt,queryinvoke_type_t invoke_type);
 void wanchk_actv_querytimeout_cb (EV_P_ ev_timer *w, int revents);
+void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents);
 
 ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t type);
 ANSC_STATUS wancnctvty_chk_stop_threads(ULONG InstanceNumber,service_type_t type);

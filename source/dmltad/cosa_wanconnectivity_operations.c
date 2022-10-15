@@ -39,10 +39,12 @@
 #include <linux/if_packet.h>
 #include <ctype.h>
 
-
 /*Macro's*/
-#define WANCHK_NFQUEUE_V4 31
-#define WANCHK_NFQUEUE_V6 32
+#define IP_V4_V6_DNS_FILTER "udp src port 53"
+#define PCAP_BUFFER_SIZE 51200
+#define PCAP_BUFFER_TIMEOUT 1
+#define PCAP_SNAP_LEN 512
+#define PCAP_DISPATCH_CNT 100
 
 /*Extern variables*/
 extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES];
@@ -50,23 +52,28 @@ extern BOOL g_wanconnectivity_check_active;
 extern BOOL g_wanconnectivity_check_enable;
 extern pthread_mutex_t gIntfAccessMutex;
 extern pthread_mutex_t gUrlAccessMutex;
+extern pthread_mutex_t gDnsTxnIdAccessMutex;
+extern pthread_mutex_t gDnsTxnIdBkpAccessMutex;
 extern SLIST_HEADER    gpUrlList;
+extern USHORT g_last_sent_actv_txn_id_A;
+extern USHORT g_last_sent_actv_txn_id_AAAA;
+extern USHORT g_last_sent_actv_txn_id_A_bkp;
+extern USHORT g_last_sent_actv_txn_id_AAAA_bkp;
 extern int sysevent_fd_wanchk;
 extern token_t sysevent_token_wanchk;
-
 
 /* Function declarations*/
 static int get_ipv4_addr(const char *ifName, char *ipv4Addr);
 static int get_ipv6_addr(const char *ifName, char *ipv6Addr);
 char** get_url_list(int *total_url_entries);
-static int dns_response_v4_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg,
-                                 struct nfq_data *pkt, void *data);
-static int dns_response_v6_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg,
-                                 struct nfq_data *pkt, void *data);
+static void dns_response_callback(u_char *unused, const struct pcap_pkthdr *pkt_header,
+                                 const u_char *pkt_body);
+static void pcap_recv_cb(EV_P_ ev_io *ev, int revents);
 static void cleanup_querynow(void *arg);
 static void cleanup_querynow_fd(void *arg);
 static void cleanup_activemonitor_ev(void *arg);
 static void cleanup_activequery(void *arg);
+static void cleanup_passivemonitor_ev(void *arg);
 static void _get_shell_output (FILE *fp, char *buf, size_t len);
 void WanCnctvtyChk_CreateEthernetHeader (struct ethhdr *ethernet_header,char *src_mac, char *dst_mac, int protocol);
 void WanCnctvtyChk_CreatePseudoHeaderAndComputeUdpChecksum (int family, struct udphdr *udp_header, void *ip_header,
@@ -82,6 +89,16 @@ static int socket_dns_filter_attach(int fd,struct sock_filter *filter, int filte
 uint8_t *WanCnctvtyChk_get_transport_header(struct ip6_hdr *ip6h,uint8_t target,uint8_t *payload_tail);
 bool validatemac(char *mac);
 static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName);
+
+long long
+current_timestamp()
+{
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
 
 /* Logic
 
@@ -128,7 +145,7 @@ ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t typ
                                                         gIntfInfo->IPInterface.InterfaceName);
                 wancnctvty_chk_start_passive(gIntfInfo);
             }
-            else if ( ((type== PASSIVE_ACTIVE_MONITOR_THREADS)  || (type== ACTIVE_MONITOR_THREAD) ||
+            if ( ((type== PASSIVE_ACTIVE_MONITOR_THREADS)  || (type== ACTIVE_MONITOR_THREAD) ||
                       (type == ALL_THREADS)) && (gIntfInfo->IPInterface.ActiveMonitor == TRUE) &&
                                                     (gIntfInfo->ActiveMonitor_Running == FALSE))
             {
@@ -277,6 +294,7 @@ ANSC_STATUS wancnctvty_chk_start_active(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfIn
         return -1;
     }
     pActvQueryCtxt->ActiveMonitorInterval = pIPInterface->ActiveMonitorInterval;
+    pActvQueryCtxt->PassiveMonitor = pIPInterface->PassiveMonitor;
     pActvQueryCtxt->pQueryCtxt = (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)
                         AnscAllocateMemory(sizeof(COSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO));
 
@@ -295,6 +313,7 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
     /* Copy DNS info from inreface context*/
     /* Copy pIPInterface which we are coming in current context*/
     errno_t rc = -1;
+    int ind = -1;
     recordtype_t rectype;
     servertype_t srvrtype;
 
@@ -302,10 +321,18 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
     pQuerynowCtxt->InstanceNumber = pIPInterface->InstanceNumber;
     pQuerynowCtxt->QueryTimeout = pIPInterface->QueryTimeout;
     pQuerynowCtxt->QueryRetry   = pIPInterface->QueryRetry;
+    pQuerynowCtxt->doInfoLogOnce = TRUE;
     rc = strcpy_s(pQuerynowCtxt->InterfaceName, MAX_INTF_NAME_SIZE , pIPInterface->InterfaceName);
     ERR_CHK(rc);
     rc = strcpy_s(pQuerynowCtxt->Alias, MAX_INTF_NAME_SIZE , pIPInterface->Alias);
     ERR_CHK(rc);
+    pQuerynowCtxt->IsPrimary = TRUE;
+    rc = strcmp_s( "Backup",strlen("Backup"), pQuerynowCtxt->Alias, &ind);
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
+    {
+        pQuerynowCtxt->IsPrimary = FALSE;
+    }
     if ( get_server_type(pIPInterface->ServerType,&srvrtype) != -1)
     {
         pQuerynowCtxt->ServerType = srvrtype;
@@ -370,6 +397,8 @@ void *wancnctvty_chk_active_thread( void *arg)
 {
     /*lets detach the thread*/
     pthread_detach( pthread_self( ) );
+    errno_t rc = -1;
+    char actv_mntr_pause_fname[BUFLEN_128] = {0};
     PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO pActvQueryCtxt   =
                                                 (PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO)arg;
     PWAN_CNCTVTY_CHK_ACTIVE_MONITOR   pActive        = NULL;
@@ -382,8 +411,16 @@ void *wancnctvty_chk_active_thread( void *arg)
         WANCHK_LOG_ERROR("%s:Unable to allocate memory\n",__FUNCTION__);
         return NULL;
     }
-
+    rc = strcpy_s(pActive->InterfaceName, MAX_INTF_NAME_SIZE, pActvQueryCtxt->pQueryCtxt->InterfaceName);
+    ERR_CHK(rc);
+    rc = sprintf_s(actv_mntr_pause_fname, sizeof(actv_mntr_pause_fname), ACTV_MNTR_PAUSE,
+                                                                         pActive->InterfaceName);
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
     pthread_cleanup_push(cleanup_activequery, pActvQueryCtxt);
+
     /* lets send first query and start the timer to go for repeated trigger*/
     wancnctvty_chk_frame_and_send_query(pActvQueryCtxt->pQueryCtxt,ACTIVE_MONITOR_INVOKE);
 
@@ -393,7 +430,19 @@ void *wancnctvty_chk_active_thread( void *arg)
     pActive->actvtimer.repeat = (pActvQueryCtxt->ActiveMonitorInterval/1000);
     pActive->actvtimer.data   = pActvQueryCtxt->pQueryCtxt;
     ev_init (&pActive->actvtimer, wanchk_actv_querytimeout_cb);
-    ev_timer_again (pActive->loop,&pActive->actvtimer);
+    if (pActvQueryCtxt->PassiveMonitor == FALSE)
+    {
+        ev_timer_again (pActive->loop,&pActive->actvtimer);
+    }
+    else
+    {
+        /* Assume active monitor is stopped, it will be unpaused when passive monitor bgtimer expires */
+        v_secure_system("touch /tmp/actv_mon_pause_%s", pActive->InterfaceName);
+    }
+    ev_stat_init (&pActive->pause_actv_mntr, actv_mntr_pause_cb,actv_mntr_pause_fname, 0.);
+    pActive->pause_actv_mntr.data = (void *)pActive;
+    ev_stat_start (pActive->loop, &pActive->pause_actv_mntr);
+
     pthread_cleanup_push(cleanup_activemonitor_ev, pActive);
 
     ev_run (pActive->loop, 0);
@@ -408,23 +457,76 @@ void *wancnctvty_chk_active_thread( void *arg)
 void
 wanchk_actv_querytimeout_cb (EV_P_ ev_timer *w, int revents)
 {
-   WANCHK_LOG_INFO("%s:Active Query timeout happened\n",__FUNCTION__);
-   PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = 
-                                            (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)w->data;
-   wancnctvty_chk_frame_and_send_query(pActvQueryCtxt,ACTIVE_MONITOR_INVOKE);
+    PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = 
+                                             (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)w->data;
+    WANCHK_LOG_DBG("%s:Trigger Active Query for interface %s\n", __FUNCTION__,
+                                                                   pActvQueryCtxt->InterfaceName);
+    wancnctvty_chk_frame_and_send_query(pActvQueryCtxt, ACTIVE_MONITOR_INVOKE);
 }
 
+void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents)
+{
+    (void)loop;
+    (void)revents;
+    PWAN_CNCTVTY_CHK_ACTIVE_MONITOR pActive = w->data;
+    if (!pActive)
+    {
+        WANCHK_LOG_ERROR("%s:pActive is NULL\n", __FUNCTION__);
+        return;
+    }
+    PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = 
+                            (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)pActive->actvtimer.data;
+    if (w->attr.st_nlink)
+    {
+        /* File is touched, pause the timer running in active monitor */
+        ev_timer_stop(pActive->loop, &pActive->actvtimer);
+    }
+    else
+    {
+        /* File is removed, restart the active monitor timer*/
+        pActvQueryCtxt->doInfoLogOnce = TRUE;
+        ev_timer_again(pActive->loop, &pActive->actvtimer);
+    }
+}
 
 static void cleanup_activemonitor_ev(void *arg)
 {
     PWAN_CNCTVTY_CHK_ACTIVE_MONITOR   pActive = (PWAN_CNCTVTY_CHK_ACTIVE_MONITOR)arg;
     WANCHK_LOG_INFO("stopping active monitor loop\n");
-    ev_timer_stop(pActive->loop,&pActive->actvtimer);
+    ev_timer_stop(pActive->loop, &pActive->actvtimer);
     ev_break(pActive->loop,EVBREAK_ALL);
     ev_loop_destroy(pActive->loop);
     if (pActive)
     {
         AnscFreeMemory(pActive);
+        pActive = NULL;
+    }
+}
+
+static void cleanup_passivemonitor_ev(void *arg)
+{
+    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = (PWAN_CNCTVTY_CHK_PASSIVE_MONITOR)arg;
+    WANCHK_LOG_INFO("stopping passive monitor loop\n");
+    if (pPassive->bgtimer.data == pPassive)
+    {
+        ev_timer_stop(pPassive->loop, &pPassive->bgtimer);
+        WANCHK_LOG_DBG("stopped passive monitor bgtimer loop\n");
+    }
+    if (pPassive->evio.data == pPassive)
+    {
+        ev_io_stop(pPassive->loop, &pPassive->evio);
+        WANCHK_LOG_DBG("stopped passive monitor I/O event handler\n");
+    }
+    if ((pPassive->evio.data == pPassive) || (pPassive->bgtimer.data == pPassive))
+    {
+        ev_break(pPassive->loop, EVBREAK_ALL);
+        ev_loop_destroy(pPassive->loop);
+    }
+    v_secure_system("rm -f /tmp/actv_mon_pause_%s", pPassive->InterfaceName);
+    if (pPassive)
+    {
+        AnscFreeMemory(pPassive);
+        pPassive = NULL;
     }
 }
 
@@ -466,8 +568,11 @@ static void cleanup_activequery(void *arg)
 static void cleanup_querynow_fd(void *arg)
 {
     int fd = *(int *)arg;
-    WANCHK_LOG_DBG("Free fd thread descriptor:%d\n",fd);
-    close(fd);
+    if (fd != -1)
+    {
+        WANCHK_LOG_DBG("Free fd thread descriptor:%d\n",fd);
+        close(fd);
+    }
 }
 
 static void cleanup_querynow(void *arg)
@@ -531,80 +636,146 @@ void *wancnctvty_chk_passive_thread( void *arg )
     /*lets detach the thread*/
     pthread_detach( pthread_self( ));
     PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface   = (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO)arg;
-   // PCOSA_DATAMODEL_WANCNCTVTY_CHK         pMyObject  = (PCOSA_DATAMODEL_WANCNCTVTY_CHK)
-   //                                                      g_pCosaBEManager->hWanCnctvty_Chk;
-
-    servertype_t srvrtype;
-    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive         = NULL;
- 
+    // PCOSA_DATAMODEL_WANCNCTVTY_CHK         pMyObject  = (PCOSA_DATAMODEL_WANCNCTVTY_CHK)
+    //                                                      g_pCosaBEManager->hWanCnctvty_Chk;
+    char *filter = NULL;
+    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = NULL;
     pPassive = (PWAN_CNCTVTY_CHK_PASSIVE_MONITOR)AnscAllocateMemory(sizeof(WAN_CNCTVTY_CHK_PASSIVE_MONITOR));
-
+    char errbuf[PCAP_ERRBUF_SIZE];
+    const char *source = pIPInterface->InterfaceName;
+    errno_t rc = -1;
+    int ind = -1;
     if (!pPassive)
     {
         WANCHK_LOG_ERROR("%s:Unable to allocate memory",__FUNCTION__);
         return NULL;
     }
-    
-    pPassive->loop = EV_DEFAULT;
-    /* Lets decide the family of nfq based on the record type we want to monitor*/
-    if ( get_server_type(pIPInterface->ServerType,&srvrtype) != -1)
+    pPassive->InstanceNumber = pIPInterface->InstanceNumber;
+    rc = strcpy_s(pPassive->InterfaceName, MAX_INTF_NAME_SIZE , pIPInterface->InterfaceName);
+    ERR_CHK(rc);
+    pPassive->IsPrimary = TRUE;
+    rc = strcmp_s( "Backup",strlen("Backup"), pIPInterface->Alias, &ind);
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
     {
-        if ((srvrtype == SRVR_EITHER_IPV4_IPV6) || (srvrtype == SRVR_BOTH_IPV4_IPV6) || (srvrtype == SRVR_IPV4_ONLY))
-        {
-            if ((wancnctvty_chk_create_nfq(AF_INET,pPassive) != -1))
-            {
-                /* nfq creation succeeded let's start ev to monitor the fds*/
-                /* Register FD for libev events */
-                ev_io_init(&pPassive->evio_v4, wanchk_pckt_recv_v4, pPassive->nfq_fd_v4, EV_READ);
-                /* Start watching it on the default queue */
-                pPassive->evio_v4.data=(void *)pPassive;
-                ev_io_start(pPassive->loop, &pPassive->evio_v4);
-            }
-            else
-            {
-                WANCHK_LOG_ERROR("%s : Unable to create nfq for server type:%s",__FUNCTION__,
-                                                                        pIPInterface->ServerType);
-                if (pPassive)
-                    AnscFreeMemory(pPassive);
-                return NULL;
-            }
-        }
-
-        if ((srvrtype == SRVR_EITHER_IPV4_IPV6) || (srvrtype == SRVR_BOTH_IPV4_IPV6) || (srvrtype == SRVR_IPV6_ONLY))
-        {
-            if ((wancnctvty_chk_create_nfq(AF_INET6,pPassive) != -1))
-            {
-                /* nfq creation succeeded let's start ev to monitor the fds*/
-                /* Register FD for libev events */
-                ev_io_init(&pPassive->evio_v6, wanchk_pckt_recv_v6, pPassive->nfq_fd_v6, EV_READ);
-                /* Start watching it on the default queue */
-                pPassive->evio_v6.data=(void *)pPassive;
-                ev_io_start(pPassive->loop, &pPassive->evio_v6);
-                
-            }
-            else
-            {
-                WANCHK_LOG_ERROR("%s : Unable to create nfq for server type:%s",__FUNCTION__,
-                                                                        pIPInterface->ServerType);
-                if (pPassive)
-                    AnscFreeMemory(pPassive);
-                return NULL;
-            }
-        }
+        pPassive->IsPrimary = FALSE;
     }
+    WANCHK_LOG_INFO("Capture both IPv4 and IPv6 DNS response for passive monitoring\n");
+    filter = IP_V4_V6_DNS_FILTER;
+
+    pPassive->pcap = pcap_create(source, errbuf);
+    if (pPassive->pcap == NULL)
+    {
+        WANCHK_LOG_ERROR("PCAP initialization failed for interface %s\n", source);
+        goto passive_mon_thrd_error;
+    }
+    WANCHK_LOG_INFO("setting buffer size to %d\n", PCAP_BUFFER_SIZE);
+    rc = pcap_set_buffer_size(pPassive->pcap, PCAP_BUFFER_SIZE);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Unable to set pcap buffer size to %d\n", PCAP_BUFFER_SIZE);
+        goto passive_mon_thrd_error;
+    }
+    WANCHK_LOG_INFO("Setting immediate mode\n");
+    rc = pcap_set_immediate_mode(pPassive->pcap, 1); //non-zero -- immediate mode is set
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Unable to set immediate mode\n");
+        goto passive_mon_thrd_error;
+    }
+    WANCHK_LOG_INFO("Setting snap length to %d\n", PCAP_SNAP_LEN);
+    rc = pcap_set_snaplen(pPassive->pcap, PCAP_SNAP_LEN);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Unable to set snap length to %d\n", PCAP_SNAP_LEN);
+        goto passive_mon_thrd_error;
+    }
+    rc = pcap_setnonblock(pPassive->pcap, 1, errbuf);
+    if (rc == -1)
+    {
+        WANCHK_LOG_ERROR("Unable to set non blocking mode\n");
+        goto passive_mon_thrd_error;
+    }
+    rc = pcap_set_timeout(pPassive->pcap, PCAP_BUFFER_TIMEOUT);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Error setting buffer timeout to %d ms\n", PCAP_BUFFER_TIMEOUT);
+        goto passive_mon_thrd_error;
+    }
+    rc = pcap_activate(pPassive->pcap);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Error activating interface %s pcap_err: %s\n", source, pcap_geterr(pPassive->pcap));
+        goto passive_mon_thrd_error;
+    }
+    rc = pcap_compile(pPassive->pcap , &pPassive->bpf_fp, filter, 0, PCAP_NETMASK_UNKNOWN);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Error compiling filter: %s. pcap_error: %s\n", filter, pcap_geterr(pPassive->pcap));
+        goto passive_mon_thrd_error;
+    }
+    rc = pcap_setfilter(pPassive->pcap , &pPassive->bpf_fp);
+    if (rc != 0)
+    {
+        WANCHK_LOG_ERROR("Error setting capture filter, pcap_err: %s\n", pcap_geterr(pPassive->pcap));
+        goto passive_mon_thrd_error;
+    }
+    pPassive->pcap_fd = pcap_get_selectable_fd(pPassive->pcap);
+    if (pPassive->pcap_fd < 0)
+    {
+        WANCHK_LOG_ERROR("Error getting selectable FD (%d). pcap_err: %s\n", pPassive->pcap_fd, pcap_geterr(pPassive->pcap));
+        goto passive_mon_thrd_error;
+    }
+    pPassive->loop = ev_loop_new(EVFLAG_AUTO);
+    ev_io_init(&pPassive->evio, pcap_recv_cb, pPassive->pcap_fd, EV_READ);
+    pPassive->evio.data = (void *)pPassive;
+    ev_io_start(pPassive->loop, &pPassive->evio);
 
     ev_init (&pPassive->bgtimer, wanchk_bgtimeout_cb);
-    pPassive->bgtimer.repeat = 30.;
-    ev_timer_again (pPassive->loop,&pPassive->bgtimer);
+    pPassive->bgtimer.data = (void *)pPassive;
+    pPassive->bgtimer.repeat = (pIPInterface->PassiveMonitorTimeout / 1000);
+    ev_timer_again (pPassive->loop, &pPassive->bgtimer);
+
+    pthread_cleanup_push(cleanup_passivemonitor_ev, pPassive);
+
     ev_run (pPassive->loop, 0);
 
+    pthread_cleanup_pop(0);
+
+passive_mon_thrd_error:
+
+    if (pPassive)
+    {
+        AnscFreeMemory(pPassive);
+        pPassive = NULL;
+    }
     return NULL;
 }
 
 void
 wanchk_bgtimeout_cb (EV_P_ ev_timer *w, int revents)
 {
-   WANCHK_LOG_ERROR("%s:timeput happened\n",__FUNCTION__);
+    (void)loop;
+    (void)revents;
+    BOOL               ActiveMonitor;
+    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = w->data;
+
+    pthread_mutex_lock(&gIntfAccessMutex);
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[pPassive->InstanceNumber - 1];
+    ActiveMonitor = gIntfInfo->IPInterface.ActiveMonitor;
+    pthread_mutex_unlock(&gIntfAccessMutex);
+
+    WANCHK_LOG_INFO("%s:No DNS Activity detected for interface %s,%s\n",__FUNCTION__, pPassive->InterfaceName,
+                                        (ActiveMonitor == FALSE)?"Update MonitorResult":"Allow ActiveMntr");
+    if (ActiveMonitor == FALSE)
+    {
+        wancnctvty_chk_monitor_result_update(pPassive->InstanceNumber,
+                                                              MONITOR_RESULT_DISCONNECTED);
+    }
+    else
+    {
+        v_secure_system("rm -f /tmp/actv_mon_pause_%s", pPassive->InterfaceName);
+    }
 }
 
 
@@ -710,6 +881,7 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     BOOL URL_v4_resolved = FALSE;
     BOOL URL_v6_resolved = FALSE;
     BOOL use_raw_socket = FALSE;
+    BOOL disable_info_log = FALSE;
     if ( pQuerynowCtxt->RecordType != RECORDTYPE_INVALID)
     {
         if ((pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6) || 
@@ -731,8 +903,17 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
         int url_index=0;
         for (url_index=0;url_index < pQuerynowCtxt->url_count;url_index++)
         {
-            WANCHK_LOG_INFO("Checking Connectivity with URL %s on interface: %s\n",
+            if (invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+            {
+                WANCHK_LOG_INFO("Checking Connectivity with URL %s on interface: %s\n",
                                 pQuerynowCtxt->url_list[url_index],pQuerynowCtxt->InterfaceName);
+            }
+            else
+            {
+                WANCHK_LOG_DBG("Checking Connectivity with URL %s on interface: %s\n",
+                                pQuerynowCtxt->url_list[url_index],pQuerynowCtxt->InterfaceName);
+                disable_info_log = TRUE;
+            }
             struct mk_query query_list[2];
             int query_index = 0;
             if (v4_query)
@@ -759,6 +940,20 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                                                             /*newrr:*/ NULL,
                                                             query_list[query_index].query,
                                                             sizeof(query_list[query_index].query));
+            }
+            if (pQuerynowCtxt->IsPrimary)
+            {
+                pthread_mutex_lock(&gDnsTxnIdAccessMutex);
+                g_last_sent_actv_txn_id_A = *((PUSHORT)query_list[0].query);
+                g_last_sent_actv_txn_id_AAAA = *((PUSHORT)query_list[1].query);
+                pthread_mutex_unlock(&gDnsTxnIdAccessMutex);
+            }
+            else
+            {
+                pthread_mutex_lock(&gDnsTxnIdBkpAccessMutex);
+                g_last_sent_actv_txn_id_A_bkp = *((PUSHORT)query_list[0].query);
+                g_last_sent_actv_txn_id_AAAA_bkp = *((PUSHORT)query_list[1].query);
+                pthread_mutex_unlock(&gDnsTxnIdBkpAccessMutex);
             }
             /* we are trying to mimic cpe dns behaviour, traverse the same way in same order dns servers
              are populated, mark resolution based on results*/
@@ -787,7 +982,7 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                         query_info.skt_family = AF_INET;
                         query_list[0].resp_recvd = 0;
                         query_list[1].resp_recvd = 0;
-                        if (!send_query(&query_info,query_list,use_raw_socket))
+                        if (!send_query(&query_info,query_list,use_raw_socket,disable_info_log))
                         {
                             WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s on IPv4 Server:%s\n",
                                                                 pQuerynowCtxt->url_list[url_index],
@@ -815,7 +1010,7 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                         query_info.skt_family = AF_INET6;
                         query_list[0].resp_recvd = 0;
                         query_list[1].resp_recvd = 0;
-                        if (!send_query(&query_info,query_list,use_raw_socket))
+                        if (!send_query(&query_info,query_list,use_raw_socket,disable_info_log))
                         {
                             WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s IPv6 Server:%s\n",
                                                                 pQuerynowCtxt->url_list[url_index],
@@ -835,10 +1030,10 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                     ((pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
                     ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
                 {
-                    WANCHK_LOG_INFO("%s DNS Resolution Succeeded for URL %s on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
-                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                                                        pQuerynowCtxt->url_list[url_index],
-                            pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                    WANCHK_LOG_INFO("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
+                                        (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                                                    pQuerynowCtxt->url_list[url_index],
+                                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
                     if (invoke_type == QUERYNOW_INVOKE)
                     {
                         wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
@@ -884,6 +1079,9 @@ EXIT:
                                                         MONITOR_RESULT_DISCONNECTED);
         }
     }
+
+    if (pQuerynowCtxt->doInfoLogOnce)
+        pQuerynowCtxt->doInfoLogOnce = FALSE;
 
     return ret;
 }
@@ -1182,7 +1380,7 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
     return pkt_len;
 }
 
-int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw_socket)
+int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw_socket,BOOL disable_info_log)
 {
     struct pollfd pfd;
     int rc = -1;
@@ -1190,8 +1388,14 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
     int ret_parse = 0;
     unsigned char reply[BUFLEN_4096] = {0};
     uint8_t rcode;
+    volatile BOOL v4_resolved = FALSE;
+    volatile BOOL v6_resolved = FALSE;
 
-    WANCHK_LOG_INFO("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
+    if (disable_info_log == FALSE)
+        WANCHK_LOG_INFO("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
+    else
+        WANCHK_LOG_DBG("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
+
     pfd.events = POLLIN;
 
     if (use_raw_socket) {
@@ -1200,6 +1404,8 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
         pfd.fd = send_query_create_udp_skt(query_info);
     }
 
+    pthread_cleanup_push(cleanup_querynow_fd,&pfd.fd);
+
     if (pfd.fd == -1)
     {
         WANCHK_LOG_ERROR("Error creating socket !\n");
@@ -1207,12 +1413,9 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
 
     }
     WANCHK_LOG_DBG("Interface :%s fd :%d\n",query_info->ifname,pfd.fd);
-    pthread_cleanup_push(cleanup_querynow_fd,&pfd.fd);
-  
+
     int flags = fcntl(pfd.fd, F_GETFL);
     fcntl(pfd.fd, F_SETFL, flags | O_NONBLOCK);
-    volatile BOOL v4_resolved = FALSE;
-    volatile BOOL v6_resolved = FALSE;
     int no_of_replies = 0;
     int retry_count = 0;
     int64_t start_time, current_time;
@@ -1252,16 +1455,19 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
             }
         }
 
-        WANCHK_LOG_INFO("Sending %s Attempt:%d\n",retry_count? "Query Retry":"Query",retry_count);
-        timeout = query_info->query_timeout;
+        if (disable_info_log == FALSE)
+            WANCHK_LOG_INFO("Sending %s Attempt:%d\n",retry_count? "Query Retry":"Query",retry_count);
+        else
+            WANCHK_LOG_DBG("Sending %s Attempt:%d\n",retry_count? "Query Retry":"Query",retry_count);
 
+        timeout = query_info->query_timeout;
 wait_for_response:
         start_time = clock_mono_ms();
         WANCHK_LOG_DBG("waiting for response with timeout:%lld\n", (long long int)timeout);
         if (timeout >= 0) {
             rc = poll(&pfd, 1, timeout);
         } else {
-            WANCHK_LOG_WARN("Timeout happened on query response for interface: %s\n",query_info->ifname);
+            WANCHK_LOG_DBG("Timeout happened on query response for interface: %s\n",query_info->ifname);
             retry_count++;
             continue;
         }
@@ -1272,7 +1478,7 @@ wait_for_response:
            ret = -1;
            goto EXIT;
         } else if (rc == 0) {
-           WANCHK_LOG_WARN("Timeout happened on query response for interface: %s\n",query_info->ifname);
+           WANCHK_LOG_DBG("Timeout happened on query response for interface: %s\n",query_info->ifname);
            retry_count++;
            continue;
         } else {
@@ -1317,7 +1523,7 @@ wait_for_response:
                 } 
             }
             if (!match_found) {
-                WANCHK_LOG_INFO("No matching response found yet,continue for interface: %s\n",
+                WANCHK_LOG_DBG("No matching response found yet,continue for interface: %s\n",
                                                                                 query_info->ifname);
                 current_time = clock_mono_ms();
                 timeout = timeout - (current_time - start_time);
@@ -1333,13 +1539,13 @@ wait_for_response:
                 retry_count++;
                 continue;
             } else {
-                ret_parse = dns_parse(dns_payload, dns_payload_len,FALSE);
+                ret_parse = dns_parse(dns_payload, dns_payload_len);
                 switch (ret_parse) {
                 case -1:
                     WANCHK_LOG_WARN("Can't find response for nameserver %s Parse error on interface: %s\n",
                                                                 query_info->ns,query_info->ifname);
                     if (no_of_replies < query_info->query_count) {
-                        WANCHK_LOG_INFO("Not yet received all replies %d for interface:%s\n",
+                        WANCHK_LOG_DBG("Not yet received all replies %d for interface:%s\n",
                                                                 no_of_replies,query_info->ifname);
                         current_time = clock_mono_ms();
                         timeout = timeout - (current_time - start_time);
@@ -1368,27 +1574,35 @@ wait_for_response:
                  (no_of_replies > 0 && (query_info->rqstd_rectype == EITHER_IPV4_IPV6)))
               break;
         }
-    } 
+    }
 EXIT:
-    close(pfd.fd);
+    cleanup_querynow_fd(&pfd.fd);
 
     if ( ((query_info->rqstd_rectype == IPV4_ONLY) && v4_resolved) ||
          ((query_info->rqstd_rectype == IPV6_ONLY) && v6_resolved) ||
          ((query_info->rqstd_rectype == BOTH_IPV4_IPV6) && (v6_resolved && v4_resolved)) ||
          ((query_info->rqstd_rectype == EITHER_IPV4_IPV6) && (v6_resolved || v4_resolved)))
     {
-        WANCHK_LOG_INFO("Query Response Succeeded on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+        if (disable_info_log == FALSE)
+        {
+            WANCHK_LOG_INFO("Query Response Succeeded on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
                         query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+        }
+        else
+        {
+            WANCHK_LOG_DBG("Query Response Succeeded on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+        }
     }
     else
     {
-        WANCHK_LOG_INFO("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+        WANCHK_LOG_WARN("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
                         query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
         ret = -1;
     }
 
-     pthread_cleanup_pop(0);
-     return ret;
+    pthread_cleanup_pop(0);
+    return ret;
 }
 
 int get_dns_payload(int family, char *payload,unsigned payload_len,
@@ -1464,209 +1678,176 @@ int get_dns_payload(int family, char *payload,unsigned payload_len,
 
     return 0;
 }
-/* Receive handler for dns v4 packets*/
 
-void wanchk_pckt_recv_v4(EV_P_ ev_io *ev, int revents)
+/* Receive handler for dns packets*/
+static void
+pcap_recv_cb(EV_P_ ev_io *ev, int revents)
 {
     (void)loop;
     (void)revents;
-    
-    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR self = ev->data;
-    /* Ready to receive packets */
-    char buf[4096];
-    int rv;
-    if ((rv = recv(self->nfq_fd_v4, buf, sizeof(buf), 0)) >= 0)
-        nfq_handle_packet(self->nfqHandle_v4,buf, rv);
-    else
-        WANCHK_LOG_ERROR("%s: unable to handle incoming packet",__FUNCTION__);
+    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = ev->data;
+    WANCHK_LOG_DBG("pcap_dispatch called, current_timestamp in ms = %lld\n", current_timestamp());
+    pcap_dispatch(pPassive->pcap, PCAP_DISPATCH_CNT, dns_response_callback, (u_char *)pPassive);
 }
 
-/* Receive handler for dns v6 packets*/
-void wanchk_pckt_recv_v6(EV_P_ ev_io *ev, int revents)
-{   
-    (void)loop;
-    (void)revents;
-    
-    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR self = ev->data;
-    /* Ready to receive packets */
-    char buf[4096];
-    int rv;
-    if ((rv = recv(self->nfq_fd_v6, buf, sizeof(buf), 0)) >= 0)
-        nfq_handle_packet(self->nfqHandle_v6,buf, rv);
-    else
-        WANCHK_LOG_ERROR("%s: unable to handle incoming packet",__FUNCTION__);
-}
-
-/* Packet processing fucntion for dns v4 response packets*/
-static int dns_response_v4_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg, struct nfq_data *pkt, void *data)
+/* Packet processing fucntion for dns v4/v6 response packets*/
+static void dns_response_callback(
+    u_char *arg,
+    const struct pcap_pkthdr *pkt_header,
+    const u_char *pkt_body
+)
 {
-    int id = 0x00;
-    struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
+    PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = (PWAN_CNCTVTY_CHK_PASSIVE_MONITOR) arg;
     char dns_payload[BUFLEN_4096] = {0};
     unsigned int dns_payload_len = 0;
+    USHORT txn_id;
     uint8_t rcode;
     int ret_parse = 0;
+    errno_t rc = -1;
+    int ind = -1;
     char *payload = NULL;
-    BOOL v4_resolved = FALSE;
-    BOOL v6_resolved = FALSE;
-    int len = nfq_get_payload(pkt, (unsigned char **)&payload);
-
-    if (ph)
-        id = ntohl(ph->packet_id);
-
-    if (get_dns_payload(AF_INET,payload,len,dns_payload,&dns_payload_len) < 0) 
+    int len = 0;
+    rc = strcmp_s("wwan0", strlen("wwan0"), pPassive->InterfaceName, &ind);
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
     {
-        WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
-        return -1;
+        payload = (char *) pkt_body;
+        len = pkt_header->len;
     }
-
-    rcode = dns_payload[3] & 0x0f;
-    WANCHK_LOG_INFO("response code:%d\n",rcode);
-    if (rcode != 0) {
-        WANCHK_LOG_WARN("Unexpected response code:%d,Skip\n",rcode);
-        return -1;
-    } else {
-        ret_parse = dns_parse(dns_payload, dns_payload_len,FALSE);
-        switch (ret_parse) {
-        case -1:
-            return -1;
-        case IPV4_ONLY: 
-            v4_resolved = TRUE;
-            break;
-        case  IPV6_ONLY: 
-            v6_resolved = TRUE;
-            break;
-        case BOTH_IPV4_IPV6: 
-                 v4_resolved = TRUE;
-                 v6_resolved = TRUE;
-             break;
-        }
-    }
-
-    WANCHK_LOG_INFO("response detected from V4 server TYPE_A:%d TYPE_AAAA:%d\n",v4_resolved,v6_resolved);
-    // To - Do update passive monitor status.
-    return nfq_set_verdict(queueHandle, id, NF_ACCEPT, 0, NULL);
-}
-
-/* Packet processing fucntion for dns v6 response packets*/
-static int dns_response_v6_callback(struct nfq_q_handle *queueHandle, struct nfgenmsg *nfmsg, struct nfq_data *pkt, void *data)
-{
-    int id = 0x00;
-    struct nfqnl_msg_packet_hdr *ph = nfq_get_msg_packet_hdr(pkt);
-    char dns_payload[BUFLEN_4096] = {0};
-    unsigned int dns_payload_len = 0;
-    uint8_t rcode;
-    int ret_parse = 0;
-    char *payload = NULL;
-    BOOL v4_resolved = FALSE;
-    BOOL v6_resolved = FALSE;
-    int len = nfq_get_payload(pkt, (unsigned char **)&payload);
-
-    if (ph)
-        id = ntohl(ph->packet_id);
-
-    if (get_dns_payload(AF_INET,payload,len,dns_payload,&dns_payload_len) < 0) 
-    {
-        WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
-        return -1;
-    }
-
-    rcode = dns_payload[3] & 0x0f;
-    WANCHK_LOG_INFO("response code:%d\n",rcode);
-    if (rcode != 0) {
-        WANCHK_LOG_WARN("Unexpected response code:%d,Skip\n",rcode);
-        return -1;
-    } else {
-        ret_parse = dns_parse(dns_payload, dns_payload_len,FALSE);
-        switch (ret_parse) {
-        case -1:
-            return -1;
-        case IPV4_ONLY: 
-            v4_resolved = TRUE;
-            break;
-        case  IPV6_ONLY: 
-            v6_resolved = TRUE;
-            break;
-        case BOTH_IPV4_IPV6: 
-                 v4_resolved = TRUE;
-                 v6_resolved = TRUE;
-             break;
-        }
-    }
-
-    WANCHK_LOG_INFO("response detected from V6 server TYPE_A:%d TYPE_AAAA:%d\n",v4_resolved,v6_resolved);
-
-    return nfq_set_verdict(queueHandle, id, NF_ACCEPT, 0, NULL);
-}
-
-int wancnctvty_chk_create_nfq (u_int16_t family, PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive)
-{
-
-    struct nfq_handle *nfqHandle = NULL;
-    struct nfq_q_handle *queueHandle = NULL;
-    int fd;
-    int queue_num = (family == AF_INET)? WANCHK_NFQUEUE_V4 : WANCHK_NFQUEUE_V6;
-
-    nfqHandle = nfq_open();
-    if (!nfqHandle) {
-        WANCHK_LOG_ERROR("%s: nfq open failed\n", __FUNCTION__);
-        return -1;
-    }
-
-    WANCHK_LOG_INFO("unbinding existing nf_queue handler for %s (if any)\n", family == AF_INET ? "AF_INET" : "AF_INET6");
-    if (nfq_unbind_pf(nfqHandle, family) < 0) {
-        WANCHK_LOG_ERROR("nfq_handler: error during nfq_unbind_pf");
-        return -1;
-    }
-
-    WANCHK_LOG_INFO("binding nfnetlink_queue as nf_queue handler for %s\n", family == AF_INET ? "AF_INET" : "AF_INET6");
-    if (nfq_bind_pf(nfqHandle, family) < 0) {
-        WANCHK_LOG_ERROR("nfq_handler: error during nfq_bind_pf");
-        return -1;
-    }
-
-    WANCHK_LOG_INFO("binding this socket to queue 31\n");
-    if (family == AF_INET)
-        queueHandle = nfq_create_queue(nfqHandle, queue_num, &dns_response_v4_callback , NULL);
     else
-        queueHandle = nfq_create_queue(nfqHandle, queue_num, &dns_response_v6_callback , NULL);
+    {
+        payload = (char *) pkt_body + sizeof(struct ether_header);
+        len = pkt_header->len - sizeof(struct ether_header);
+    }
+    BOOL v4_resolved = FALSE;
+    BOOL v6_resolved = FALSE;
+    BOOL response_from_v4_server = FALSE;
+    BOOL response_from_v6_server = FALSE;
+    char ip_ver = payload[0];
+    ip_ver = (ip_ver & 0xf0) >> 4;
+    WANCHK_LOG_DBG("ip_ver: %d\n", ip_ver);
+    if (ip_ver == 4)
+    {
+        if (get_dns_payload(AF_INET, payload, len, dns_payload, &dns_payload_len) < 0)
+        {
+            WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            return;
+        }
+        response_from_v4_server = TRUE;
+    }
+    else if (ip_ver == 6)
+    {
+        if (get_dns_payload(AF_INET6, payload, len, dns_payload, &dns_payload_len) < 0)
+        {
+            WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            return;
+        }
+        response_from_v6_server = TRUE;
+    }
+    rcode = dns_payload[3] & 0x0f;
+    WANCHK_LOG_DBG("response code:%d\n",rcode);
+    if (rcode != 0)
+    {
+        WANCHK_LOG_WARN("Unexpected response code:%d,Skip\n", rcode);
+        return;
+    }
+    else
+    {
+        txn_id = *((unsigned short *)dns_payload);
 
-    if (!queueHandle) {
-        WANCHK_LOG_ERROR("nfq_handler: error during nfq_create_queue\n");
-        return -1;
+        if (pPassive->IsPrimary)
+        {
+            pthread_mutex_lock(&gDnsTxnIdAccessMutex);
+            if ((txn_id == g_last_sent_actv_txn_id_A) ||
+                (txn_id == g_last_sent_actv_txn_id_AAAA))
+            {
+                pthread_mutex_unlock(&gDnsTxnIdAccessMutex);
+                WANCHK_LOG_DBG("DNS Transaction ID matched with Active Monitor Query\n");
+                WANCHK_LOG_DBG("Skipping Active Monitor DNS response from Primary interface\n");
+                pcap_breakloop(pPassive->pcap);
+                return;
+            }
+            pthread_mutex_unlock(&gDnsTxnIdAccessMutex);
+        }
+        else
+        {
+            pthread_mutex_lock(&gDnsTxnIdBkpAccessMutex);
+            if ((txn_id == g_last_sent_actv_txn_id_A_bkp) ||
+                (txn_id == g_last_sent_actv_txn_id_AAAA_bkp))
+            {
+                pthread_mutex_unlock(&gDnsTxnIdBkpAccessMutex);
+                WANCHK_LOG_DBG("DNS Transaction ID matched with Active Monitor Query\n");
+                WANCHK_LOG_DBG("Skipping Active Monitor DNS response from Backup interface\n");
+                pcap_breakloop(pPassive->pcap);
+                return;
+            }
+            pthread_mutex_unlock(&gDnsTxnIdBkpAccessMutex);
+        }
+
+        ret_parse = dns_parse(dns_payload, dns_payload_len);
+        switch (ret_parse) {
+        case -1:
+            return;
+        case IPV4_ONLY:
+            v4_resolved = TRUE;
+            break;
+        case  IPV6_ONLY:
+            v6_resolved = TRUE;
+            break;
+        case BOTH_IPV4_IPV6:
+            v4_resolved = TRUE;
+            v6_resolved = TRUE;
+            break;
+        }
+    }
+    if (response_from_v4_server == TRUE)
+    {
+        /* These logs may come frequenlty when we have frequent dns activity in client,moving
+           to debug, we will have logging when passive mntr expires, when there is a change in stata
+           ,when we hit any errors etc*/
+        WANCHK_LOG_DBG("PassiveMonitor DNS response detected from V4 server TYPE_A:%d TYPE_AAAA:%d\n",
+                                                v4_resolved, v6_resolved);
+    }
+    else if (response_from_v6_server == TRUE)
+    {
+        WANCHK_LOG_DBG("PassiveMonitor DNS response detected from V6 server TYPE_A:%d TYPE_AAAA:%d\n",
+                                                v4_resolved, v6_resolved);
+    }
+    if ((v4_resolved == TRUE) || (v6_resolved == TRUE))
+    {
+        char filename[BUFLEN_128] = {0};
+        errno_t rc = -1;
+        rc = sprintf_s(filename,BUFLEN_128-1, "/tmp/actv_mon_pause_%s",pPassive->InterfaceName);
+        if (rc < EOK)
+            ERR_CHK(rc);
+        /* this file will be removed when there is no activity, when activity recovered this file
+           will be touched, expectation is this log will print only once in transistions. i.e
+           no activity to activity*/
+        if (access(filename, F_OK) != 0)
+        {
+            WANCHK_LOG_INFO("PassiveMonitor DNS Activity detected for intf %s,Pause ActiveMntr\n",pPassive->InterfaceName);
+        }
+        wancnctvty_chk_monitor_result_update(pPassive->InstanceNumber,
+                                                          MONITOR_RESULT_CONNECTED);
+        v_secure_system("touch /tmp/actv_mon_pause_%s", pPassive->InterfaceName);
+        WANCHK_LOG_DBG("we have to restart the timer\n");
+        ev_timer_again (pPassive->loop,&pPassive->bgtimer);
+        pcap_breakloop(pPassive->pcap);
     }
 
-    WANCHK_LOG_INFO("setting copy_packet mode\n");
-    if (nfq_set_mode(queueHandle, NFQNL_COPY_PACKET, 0xffff) < 0) {
-        WANCHK_LOG_ERROR("can't set packet_copy mode\n");
-        return -1;
-    }
-
-    fd = nfq_fd(nfqHandle);
-
-    if ( family == AF_INET) {
-        pPassive->nfqHandle_v4 = nfqHandle;
-        pPassive->nfq_fd_v4  = fd;
-    }
-    else {
-        pPassive->nfqHandle_v6 = nfqHandle;
-        pPassive->nfq_fd_v6 = fd;
-    }
-
-    return 0;
+    return;
 }
 
 /*Uses code from nslookup_lede
 Copyright (C) 2017 Jo-Philipp Wich <jo@mein.io>
 Licensed under the ISC License
 */
-int dns_parse(const unsigned char *msg, size_t len,bool restart_timer)
+int dns_parse(const unsigned char *msg, size_t len)
 {
     ns_msg handle;
     ns_rr rr;
     int i,rdlen;
     char astr[INET6_ADDRSTRLEN]={0};
-    int restart=0;
     BOOL ns_t_a_found = FALSE;
     BOOL ns_t_aaaa_found = FALSE;
 
@@ -1704,7 +1885,7 @@ int dns_parse(const unsigned char *msg, size_t len,bool restart_timer)
                    return -1;
                 }
                 inet_ntop(AF_INET, ns_rr_rdata(rr), astr, sizeof(astr));
-                WANCHK_LOG_INFO("Name:\t%s\tAddress: %s\n", ns_rr_name(rr), astr);
+                WANCHK_LOG_DBG("Name:\t%s\tAddress: %s\n", ns_rr_name(rr), astr);
                 ns_t_a_found = TRUE;
                 break;
 
@@ -1714,19 +1895,13 @@ int dns_parse(const unsigned char *msg, size_t len,bool restart_timer)
                     return -1;
                 }
                 inet_ntop(AF_INET6, ns_rr_rdata(rr), astr, sizeof(astr));
-                WANCHK_LOG_INFO("Name:\t%s\tAddress: %s\n", ns_rr_name(rr), astr);
+                WANCHK_LOG_DBG("Name:\t%s\tAddress: %s\n", ns_rr_name(rr), astr);
                 ns_t_aaaa_found = TRUE;
                 break;
 
            default:
                 break;
         }
-     }
-
-     if(restart && restart_timer)
-     {
-       WANCHK_LOG_INFO("we have to restart the timer\n");
-       //ev_timer_again(wanchk_ptr->loop,&wanchk_ptr->bgtimer);
      }
 
      if ( ns_t_a_found && ns_t_aaaa_found)
