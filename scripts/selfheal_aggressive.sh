@@ -676,7 +676,6 @@ self_heal_dibbler_server()
                             echo_t "RDKB_PROCESS_CRASHED : Dibbler is not running, restarting the dibbler"
                             t2CountNotify "SYS_SH_Dibbler_restart"
                         fi
-                        t2CountNotify "SYS_SH_Dibbler_restart"
                         if [ -f "/etc/dibbler/server.conf" ]; then
                             BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link" | grep "tentative" | grep "dadfailed")
                             if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
