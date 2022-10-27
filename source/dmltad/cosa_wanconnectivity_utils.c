@@ -256,11 +256,12 @@ ANSC_STATUS WanCnctvtyChk_GetRemoteParameterValue( char *mac_addr,
     /* Update the parameter value */
     if(rbusValueType == RBUS_BOOLEAN)
     {
+	/* CID 305987 fix */
         if (rbusValue_GetBoolean(value))
         {
-            pStrVal= "true";
+            pStrVal= strdup("true");
         } else {
-            pStrVal = "false";
+            pStrVal = strdup("false");
         }
     }
     else

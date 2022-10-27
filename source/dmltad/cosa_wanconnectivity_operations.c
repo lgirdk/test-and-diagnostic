@@ -1103,6 +1103,8 @@ int send_query_create_raw_skt(struct query *query_info)
     if(-1 == (ioctl(fd, SIOCGIFINDEX, &inf_request)))
     {
         WANCHK_LOG_ERROR("Error getting Interface index !\n");
+	/* CID 305977 - 1 fix */
+        close(fd);
         return -1;
     }
 
@@ -1119,6 +1121,8 @@ int send_query_create_raw_skt(struct query *query_info)
     if(-1 == (bind(fd, (struct sockaddr *)&socket_ll, sizeof(socket_ll))))
     {
         WANCHK_LOG_ERROR("Error binding to socket!\n");
+	/* CID 305977 - 2 fix */
+	close(fd);
         return -1;
     }
 
@@ -1138,11 +1142,13 @@ int send_query_create_udp_skt(struct query *query_info)
     int flag = 1;
 
     fd = socket(query_info->skt_family, SOCK_DGRAM, IPPROTO_UDP);
+    /* CID 305966 fix */
     if ( query_info->skt_family == AF_INET )
     {
         if (get_ipv4_addr(query_info->ifname,ipv4_src) != 0)
         {
             WANCHK_LOG_ERROR("Unable to get IPv4 Address for interface:%s\n",query_info->ifname);
+	    close(fd);
             return -1;
         }
         
@@ -1152,19 +1158,22 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET, ipv4_src, &(local_addrv4.sin_addr)) != 1)
         {
             WANCHK_LOG_ERROR("Unable to assign ipv4 Address");
-            return -1;
+	    close(fd);
+	    return -1;
         }
         local_addrv4.sin_family = AF_INET;
         local_addrv4.sin_port = 0;
 
         if(setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char *)&flag,sizeof(flag))<0){
             WANCHK_LOG_ERROR("Error: Could not set reuse address option\n");
+	    close(fd);
             return -1;
         }
 
         if (bind(fd, (struct sockaddr *)&local_addrv4, sizeof(local_addrv4)) < 0)
         {
             WANCHK_LOG_ERROR("Unable to bind socket for interface :%s\n",query_info->ifname);
+	    close(fd);
             return -1;
         }
 
@@ -1173,6 +1182,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET, query_info->ns, &(serv_addrv4.sin_addr)) != 1)
         {
            WANCHK_LOG_ERROR("Unable to assign server ipv4 Address\n");
+	   close(fd);
            return -1;
         }
 
@@ -1180,6 +1190,7 @@ int send_query_create_udp_skt(struct query *query_info)
         {
             WANCHK_LOG_ERROR("connect socket for interface :%s failed for dst :%s\n",
                                                                 query_info->ifname,query_info->ns);
+	    close(fd);
             return -1;
         }
     }
@@ -1188,6 +1199,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (get_ipv6_addr(query_info->ifname,ipv6_src) !=0)
         {
            WANCHK_LOG_ERROR("Unable to get IPv6 Address for interface:%s\n",query_info->ifname);
+	   close(fd);
            return -1;
         }
 
@@ -1197,6 +1209,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET6, ipv6_src, &(local_addrv6.sin6_addr)) != 1)
         {
             WANCHK_LOG_ERROR("Unable to assign IPv6 Address\n");
+	    close(fd);
             return -1;
         }
         local_addrv6.sin6_family = AF_INET6;
@@ -1205,6 +1218,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (bind(fd, (struct sockaddr *)&local_addrv6, sizeof(local_addrv6)) < 0)
         {
             WANCHK_LOG_ERROR("Unable to bind socket for interface :%s\n",query_info->ifname);
+	    close(fd);
             return -1;
         }
         serv_addrv6.sin6_family = AF_INET6;
@@ -1212,18 +1226,21 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET6, query_info->ns, &(serv_addrv6.sin6_addr)) != 1)
         {
            WANCHK_LOG_ERROR("Unable to assign server ipv6 Address\n");
+	   close(fd);
            return -1;
         }
 
         if (connect(fd, (struct sockaddr *) &serv_addrv6, sizeof(serv_addrv6)) < 0)
         {
             WANCHK_LOG_ERROR("connect socket for interface :%s failed for dst :%s\n",query_info->ifname,query_info->ns);
+	    close(fd);
             return -1;
         }
     } 
     else
     {
         WANCHK_LOG_ERROR("Unsupported socket family\n");
+	close(fd);
         return -1;
     } 
     return fd;

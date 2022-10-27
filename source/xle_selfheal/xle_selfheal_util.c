@@ -63,7 +63,8 @@ char lte_wan_status[128] = {0};
 char lte_backup_enable[128] = {0};
 
 static char *g_Subsystem = "eRT." ;
-char InterfaceStatus[128] = {0};
+/* CID 282121 fix */
+char InterfaceStatus[256] = {0};
 #define MESH_IFNAME        "br-home"
 static void*    bus_handle = NULL;
 #define CELLULAR_COMPONENT_NAME  "eRT.com.cisco.spvtg.ccsp.cellularmanager"
