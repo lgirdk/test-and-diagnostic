@@ -3246,10 +3246,18 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                       do
                         confirmZombie=$(grep "State:" /proc/$zombiepid/status | grep -i "zombie")
                         if [ "$confirmZombie" != "" ] ; then
+                            if [ "$SELFHEAL_TYPE" = "SYSTEMD" ] ; then
+                                echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, stopping CcspXdns"
+                                systemctl stop CcspXdnsSsp.service
+                            fi
                             echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting dnsmasq"
                             t2CountNotify "SYS_ERROR_Zombie_dnsmasq"
                             kill -9 "$(busybox pidof dnsmasq)"
                             sysevent set dhcp_server-restart
+                            if [ "$SELFHEAL_TYPE" = "SYSTEMD" ] ; then
+                                echo_t "[RDKB_SELFHEAL] : Zombie instance of dnsmasq is present, restarting CcspXdns"
+                                systemctl start CcspXdnsSsp.service
+                            fi
                             break
                         fi
                       done
