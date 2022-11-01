@@ -120,18 +120,13 @@
 #define DEF_INTF_ENABLE FALSE
 #define DEF_PASSIVE_MONITOR_ENABLE FALSE
 #define DEF_PASSIVE_MONITOR_TIMEOUT 10000
-#define DEF_ACTIVE_MONITOR_ENABLE FALSE
+#define DEF_ACTIVE_MONITOR_PRIMARY_ENABLE TRUE
+#define DEF_ACTIVE_MONITOR_BACKUP_ENABLE FALSE
 #define DEF_ACTIVE_MONITOR_INTERVAL 5000
 #define DEF_QUERY_TIMEOUT 200
 #define DEF_QUERY_RETRY 2
-#ifndef ENHANCED_DNS_CONF_ENABLED
-#define DEF_QUERY_RECORDTYPE "A"
-#define DEF_QUERY_SERVERTYPE "IPv4"
-#else
 #define DEF_QUERY_RECORDTYPE "A+AAAA"
 #define DEF_QUERY_SERVERTYPE "IPv4+IPv6"
-#endif
-
 
 typedef enum _cfg_change_bitmask {
     /* config bit masks*/
@@ -264,6 +259,21 @@ _COSA_DATAMODEL_WANCNCTVTY_CHK
 }
 COSA_DATAMODEL_WANCNCTVTY_CHK,  *PCOSA_DATAMODEL_WANCNCTVTY_CHK;
 
+typedef enum _dns_record_type {
+        IPV4_ONLY  = 1,
+        IPV6_ONLY  = 2,
+        BOTH_IPV4_IPV6    = 3,
+        EITHER_IPV4_IPV6  = 4,
+        RECORDTYPE_INVALID
+} recordtype_t;
+
+typedef enum _dns_server_type {
+        SRVR_IPV4_ONLY  = 1,
+        SRVR_IPV6_ONLY  = 2,
+        SRVR_BOTH_IPV4_IPV6    = 3,
+        SRVR_EITHER_IPV4_IPV6  = 4,
+        SRVR_TYPE_INVALID
+} servertype_t;
 
 typedef  struct
 _COSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT
@@ -273,8 +283,8 @@ _COSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT
     ULONG     QueryRetry;
     unsigned int DnsServerCount;
     unsigned int url_count;
-    UCHAR     RecordType[MAX_RECORD_TYPE_SIZE];
-    UCHAR     ServerType[MAX_SERVER_TYPE_SIZE];
+    recordtype_t RecordType;
+    servertype_t ServerType;
     UCHAR     InterfaceName[MAX_INTF_NAME_SIZE];
     UCHAR     Alias[MAX_INTF_NAME_SIZE];
     char      **url_list;

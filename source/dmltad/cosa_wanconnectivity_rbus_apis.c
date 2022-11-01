@@ -80,19 +80,15 @@ rbusDataElement_t WANCHK_Feature_Enabled_RbusElements[] =
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.PassiveMonitor", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.PassiveMonitorTimeout", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
 #endif
-#ifdef ACTIVE_MONITOR_ENABLED
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ActiveMonitor", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ActiveMonitorInterval", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.MonitorResult", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, NULL, NULL, NULL,WANCNCTVTYCHK_SubHandler , NULL} },
-#endif
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryNow", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryNowResult", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, NULL, NULL, NULL,WANCNCTVTYCHK_SubHandler , NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryTimeout", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
-    { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryRetry", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} }
-#ifdef ENHANCED_DNS_CONF_ENABLED
+    { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryRetry", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.RecordType", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ServerType", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} }
-#endif
 };
 
 /**********************************************************************
@@ -350,13 +346,30 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
           WANCHK_LOG_ERROR("%s:Unable to fetch current values from syscfg",__FUNCTION__);
         }
 
-        if ( (CurrentCfg.Enable == FALSE) && ((pIPInterface->QueryNow == TRUE) ||
-                                              (pIPInterface->PassiveMonitor == TRUE) ||
-                                              (pIPInterface->ActiveMonitor == TRUE)) )
+        if ( (pIPInterface->Cfg_bitmask & INTF_CFG_ACTIVE_ENABLE) || 
+                (pIPInterface->Cfg_bitmask & INTF_CFG_QUERYNOW_ENABLE) ||
+                  (pIPInterface->Cfg_bitmask & INTF_CFG_PASSIVE_ENABLE) )
         {
-            WANCHK_LOG_ERROR("Wan connectivity check for Interface %s not Enabled,Operation not Permitted\n",
+            if((CurrentCfg.Enable == FALSE) && ((pIPInterface->QueryNow == TRUE) ||
+                                                  (pIPInterface->PassiveMonitor == TRUE) ||
+                                                  (pIPInterface->ActiveMonitor == TRUE)) )
+            {
+                WANCHK_LOG_ERROR("Wan connectivity check for Interface %s not Enabled,Operation not Permitted\n",
+                                                                        pIPInterface->InterfaceName);
+                return ANSC_STATUS_FAILURE;
+            }
+        }
+
+        if ( pIPInterface->Cfg_bitmask & INTF_CFG_ACTIVE_INTERVAL)
+        {
+            WANCHK_LOG_INFO("ActiveMonitorInterval:%ld\n",pIPInterface->ActiveMonitorInterval);
+            if ( (pIPInterface->ActiveMonitorInterval < 0) || (pIPInterface->ActiveMonitorInterval == 0) 
+                                || (pIPInterface->ActiveMonitorInterval < 1000))
+            {
+                WANCHK_LOG_ERROR("ActiveMonitor Interval Provided is invalid for interface %s,Operation not Permitted\n",
                                                                     pIPInterface->InterfaceName);
-            return ANSC_STATUS_FAILURE;
+                return ANSC_STATUS_FAILURE;
+            } 
         }
 
         /* store it to syscfg*/
@@ -470,7 +483,6 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
             }
         }
 #endif
-#ifdef ACTIVE_MONITOR_ENABLED
         /* Active Monitor status*/
         if ((CurrentCfg.ActiveMonitor == TRUE) && (pIPInterface->ActiveMonitor == FALSE))
         {
@@ -516,7 +528,6 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
             WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
             return ANSC_STATUS_FAILURE;
         }
-#endif
     }
     return ANSC_STATUS_SUCCESS;
 }
@@ -598,6 +609,7 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const cha
     PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
     PCOSA_CONTEXT_LINK_OBJECT       pCxtLink          = NULL;
     PCOSA_DML_WANCNCTVTY_CHK_URL_INFO pUrlInfo        = NULL;
+    ANSC_STATUS returnStatus                          = ANSC_STATUS_SUCCESS;
 
     rc = sprintf_s(paramName,sizeof(paramName),"wanconnectivity_chk_url_%d",InstanceNumber);
     if (rc < EOK)
@@ -688,6 +700,27 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const cha
            ERR_CHK(rc);
            pthread_mutex_unlock(&gUrlAccessMutex);
            return ANSC_STATUS_FAILURE;
+        }
+
+        unsigned int Instance = 1;
+        WANCHK_LOG_INFO("%s: URL list updated,Restarting threads\n",__FUNCTION__);
+        /* In progress QueryNow we can't do anything,restart active monitor if running*/
+        for (Instance=1;Instance <= MAX_NO_OF_INTERFACES;Instance++)
+        {
+            returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
+            if (returnStatus != ANSC_STATUS_SUCCESS)
+            {
+                WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+                return ANSC_STATUS_FAILURE;
+            }
+
+            /* this will start active*/
+            returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
+            if (returnStatus != ANSC_STATUS_SUCCESS)
+            {
+                WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+                return ANSC_STATUS_FAILURE;
+            }
         }
     }
 

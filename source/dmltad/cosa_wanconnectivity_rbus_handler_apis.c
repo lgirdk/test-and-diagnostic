@@ -32,6 +32,8 @@ extern ULONG   gulUrlNextInsNum;
 extern ULONG   gIntfCount;
 extern SLIST_HEADER    gpUrlList;
 extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES];
+extern ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t type);
+extern ANSC_STATUS wancnctvty_chk_stop_threads(ULONG InstanceNumber,service_type_t type);
 
 /**********************************************************************
     function:
@@ -767,6 +769,7 @@ rbusError_t WANCNCTVTYCHK_TableRemoveRowHandler(rbusHandle_t handle, char const*
     PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
     PCOSA_CONTEXT_LINK_OBJECT       pCxtLink          = NULL;
     PCOSA_DML_WANCNCTVTY_CHK_URL_INFO pUrlInfo        = NULL;
+    ANSC_STATUS returnStatus                          = ANSC_STATUS_SUCCESS;
     WANCHK_LOG_INFO("RowName = %s\n", rowName);
     if (!rowName)
     {
@@ -820,6 +823,26 @@ rbusError_t WANCNCTVTYCHK_TableRemoveRowHandler(rbusHandle_t handle, char const*
         return RBUS_ERROR_INVALID_INPUT;
     }
     CosaWanCnctvtyChk_URL_delDBEntry(instNum);
+    WANCHK_LOG_INFO("%s: URL Entry deleted,Restarting threads\n",__FUNCTION__);
+    unsigned int Instance = 1;
+    /* In progress QueryNow we can't do anything,restart active monitor if running*/
+    for (Instance=1;Instance <= MAX_NO_OF_INTERFACES;Instance++)
+    {
+        returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+            return ANSC_STATUS_FAILURE;
+        }
+
+        /* this will start active*/
+        returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+            return ANSC_STATUS_FAILURE;
+        }
+    }
     return RBUS_ERROR_SUCCESS;
 }
 

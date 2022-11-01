@@ -40,6 +40,8 @@
 #include <cosa_wanconnectivity_apis.h>
 #include "ev.h"
 #include <linux/filter.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/icmp6.h>
 
 /* Generated with tcpdump -dd "udp src port 53" */
 struct sock_filter dns_packet_filter[] = {
@@ -68,19 +70,6 @@ struct sock_filter dns_packet_filter[] = {
 #define SIZE_OF_PACKET_FILTER(filter) (sizeof(filter)/sizeof(struct sock_filter))
 #define DNS_PACKET_FILTER_SIZE SIZE_OF_PACKET_FILTER(dns_packet_filter)
 
-typedef enum _dns_record_type {
-        IPV4_ONLY  = 1,
-        IPV6_ONLY  = 2,
-        EITHER_IPV4_IPV6  = 3,
-        BOTH_IPV4_IPV6     = 4
-} recordtype_t;
-
-typedef enum _dns_server_type {
-        SRVR_IPV4_ONLY  = 1,
-        SRVR_IPV6_ONLY  = 2,
-        SRVR_EITHER_IPV4_IPV6  = 3,
-        SRVR_BOTH_IPV4_IPV6     = 4
-} servertype_t;
 
 typedef enum _queryinvoke_type {
         QUERYNOW_INVOKE  = 1,
@@ -128,6 +117,12 @@ typedef struct _wan_chk_active_monitor
     ev_timer           actvtimer;             /* background dns response monitor timer*/
 }
 WAN_CNCTVTY_CHK_ACTIVE_MONITOR,*PWAN_CNCTVTY_CHK_ACTIVE_MONITOR;
+
+typedef struct ping_packet {
+      struct icmphdr hdr;
+      char msg[64-sizeof(struct icmphdr)];
+}
+WAN_CNCTVTY_CHK_PING_PKT,*PWAN_CNCTVTY_CHK_PING_PKT;
 
 
 
