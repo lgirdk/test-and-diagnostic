@@ -28,7 +28,7 @@ then
 fi
 
 CM_INTERFACE="wan0"
-WAN_INTERFACE=$(getWanInterfaceName)
+WAN_INTERFACE="erouter0"
 Check_CM_Ip=0
 Check_WAN_Ip=0
 
@@ -274,21 +274,27 @@ if [ "$backupenable" == "true" ]
 then   
 
 if [ "$WAN_TYPE" != "EPON" ]; then
-# Check for CM IP Address 
-	 	isIPv4=`ifconfig $CM_INTERFACE | grep inet | grep -v inet6`
-		 if [ "$isIPv4" == "" ]
-		 then
-	        	 isIPv6=`ifconfig $CM_INTERFACE | grep inet6 | grep "Scope:Global"`
-	        	 if [ "$isIPv6" != "" ]
-			 then
+# Check for CM IP Address
+	ifConInfo=`ifconfig $CM_INTERFACE 2> /dev/null`
+	if [ -n "$ifConInfo" ]; then
+		isIPv4=`echo "$ifConInfo" | grep inet | grep -v inet6`
+		if [ "$isIPv4" == "" ]
+		then
+			isIPv6=`echo "$ifConInfo" | grep inet6 | grep "Scope:Global"`
+			if [ "$isIPv6" != "" ]
+			then
 				Check_CM_Ip=1
-			 else
+			else
 			   	Check_CM_Ip=0
 				echo_t "RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
-			 fi
-		 else
+			fi
+		else
 			Check_CM_Ip=1
-		 fi
+		fi
+	else
+		Check_CM_Ip=0
+		echo_t "RDKB_SELFHEAL_BOOTUP : CM interface doesn't have IP"
+	fi
 
 #Check whether system time is in 1970's
 		
@@ -305,21 +311,30 @@ fi
 isIPv4=""
 isIPv6=""
 # Check for WAN IP Address 
+	if [ -f /etc/waninfo.sh ]; then
+		WAN_INTERFACE=$(getWanInterfaceName)
+	fi
 
-	 isIPv4=`ifconfig $WAN_INTERFACE | grep inet | grep -v inet6`
-	 if [ "$isIPv4" == "" ]
-	 then
-        	 isIPv6=`ifconfig $WAN_INTERFACE | grep inet6 | grep "Scope:Global"`
-        	 if [ "$isIPv6" != "" ]
-		 then
+	ifConInfo=`ifconfig $WAN_INTERFACE 2> /dev/null`
+	if [ -n "$ifConInfo" ]; then
+		isIPv4=`ifconfig "$ifConInfo" | grep inet | grep -v inet6`
+		if [ "$isIPv4" == "" ]
+		then
+			isIPv6=`ifconfig "$ifConInfo" | grep inet6 | grep "Scope:Global"`
+			if [ "$isIPv6" != "" ]
+			then
+				Check_WAN_Ip=1
+			else
+				Check_WAN_Ip=0
+				echo_t "RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
+			fi
+		else
 			Check_WAN_Ip=1
-		 else
-		   	Check_WAN_Ip=0
-			echo_t "RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
-		 fi
-	 else
-		Check_WAN_Ip=1
-	 fi
+		fi
+	else
+		Check_WAN_Ip=0
+		echo_t "RDKB_SELFHEAL_BOOTUP : WAN interface doesn't have IP"
+	fi
 
 if [ "$BOX_TYPE" = "XB3" ]
 then
