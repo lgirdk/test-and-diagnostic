@@ -611,6 +611,13 @@ self_heal_dibbler_server()
                             t2CountNotify "SYS_SH_Dibbler_restart"
                         fi
                         if [ -f "/etc/dibbler/server.conf" ]; then
+                            #CBR2-1372 adding log for brlan0 not having link scope address 
+                            if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                                BRLAN_CHKIPV6_LINK_ADDR=$(ip -6 addr show dev $PRIVATE_LAN| grep "scope link" )
+                                if [ "$BRLAN_CHKIPV6_LINK_ADDR" == "" ]; then
+                                   echo_t "DIBBLER: brlan0 does not have link scope address"
+                                fi  
+                            fi
                             BRLAN_CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $PRIVATE_LAN | grep "scope link" | grep "tentative" | grep "dadfailed")
                             if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                                 echo "DADFAILED : BRLAN0_DADFAILED"
