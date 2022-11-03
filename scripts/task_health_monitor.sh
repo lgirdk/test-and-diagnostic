@@ -953,7 +953,17 @@ case $SELFHEAL_TYPE in
             echo_t "os-wanmanager enabled"
             if [ -f $OS_WANMANGR_DIR ];then
                 # Checking wanmanager's PID
-                WANMANAGER_PID=$(busybox pidof wanmanager)
+                for ((val=1;val<12;val++))
+                do
+                    WANMANAGER_PID=$(busybox pidof wanmanager)
+                    if [ "$WANMANAGER_PID" = "" ]; then
+                        echo_t "WANMANAGER_process is not running, check after 5sec. retry : $val"
+                        sleep 5
+                    else
+                        echo_t "wanmanager process found $WANMANAGER_PID "
+                        break;
+                    fi
+                done
                 if [ "$WANMANAGER_PID" = "" ]; then
                     echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, need CPE reboot"
                     t2CountNotify "SYS_ERROR_wanmanager_crash_reboot"
