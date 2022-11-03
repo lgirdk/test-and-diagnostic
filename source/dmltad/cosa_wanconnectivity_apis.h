@@ -349,6 +349,8 @@ BOOL CosaWanCnctvtyChk_GetPrimary_IntfName(char *);
 BOOL CosaWanCnctvtyChk_GetSecondary_IntfName(char *);
 ANSC_STATUS CosaWanCnctvtyChk_SubscribeRbus(void);
 ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeRbus(void);
+ANSC_STATUS CosaWanCnctvtyChk_SubscribeActiveGW(void);
+ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeActiveGW(void);
 void handle_dns_srvrcnt_event (char *InterfaceName,unsigned int new_dns_server_count);
 void handle_dns_srv_addrchange_event (char *InterfaceName,int dns_srv_index,
                                                                     const char *newValue);

@@ -63,12 +63,13 @@ static async_id_t current_wan_asyncid;
 static async_id_t backupwan_router_addr_asyncid;
 static async_id_t MeshWANInterface_UlaAddr_asyncid;
 static char subscribe_userData[MAX_INTF_NAME_SIZE] ={0};
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
 const char* sub_event_param[] = {CURRENT_PRIMARY_INTF_DML,
-#ifdef ACTIVE_GATEWAY_CHECK
-                                ACTIVE_GATEWAY_DML,
-#endif
                                 CURRENT_STANDBY_INTF_DML};
+#endif
+
+#ifdef GATEWAY_FAILOVER_SUPPORTED
+const char* sub_activegwevent_param[] = {ACTIVE_GATEWAY_DML};
 #endif
 
 extern rbusError_t CosaWanCnctvtyChk_RbusInit(VOID);
@@ -241,10 +242,11 @@ ANSC_STATUS CosaWanCnctvtyChk_Init (VOID)
            {
                WANCHK_LOG_ERROR("%s: Interface Table Init failed\n",__FUNCTION__);
            }
+           /* Lets start the subscription and listen for events*/
+           CosaWanCnctvtyChk_SubscribeRbus();
+           CosaWanCnctvtyChk_StartSysevent_listener();
         }
-        /* Lets start the subscription and listen for events*/
-        CosaWanCnctvtyChk_SubscribeRbus();
-        CosaWanCnctvtyChk_StartSysevent_listener();
+        CosaWanCnctvtyChk_SubscribeActiveGW();
     }
 
     return ANSC_STATUS_SUCCESS;
@@ -833,13 +835,14 @@ ANSC_STATUS CosaWanCnctvtyChk_GetDNS_PeerInfo(char *InterfaceName)
 BOOL CosaWanCnctvtyChk_GetActive_Status(void)
 {
 
-#ifdef ACTIVE_GATEWAY_CHECK
+#ifdef GATEWAY_FAILOVER_SUPPORTED
    ANSC_STATUS ret = ANSC_STATUS_SUCCESS;
    char Value[128] = {0};
    errno_t      rc = -1;
    int ind         = -1;
 
    ret = WanCnctvtyChk_GetParameterValue(ACTIVE_GATEWAY_DML,Value);
+
    if (ret == ANSC_STATUS_SUCCESS)
    {
        if (Value[0] != '\0')
@@ -946,7 +949,7 @@ errno_t      rc = -1;
 BOOL CosaWanCnctvtyChk_GetSecondary_IntfName(char *Output)
 {
 
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
    ANSC_STATUS ret = ANSC_STATUS_SUCCESS;
    char Value[MAX_INTF_NAME_SIZE] = {0};
    errno_t      rc = -1;
@@ -978,7 +981,7 @@ BOOL CosaWanCnctvtyChk_GetSecondary_IntfName(char *Output)
 
 ANSC_STATUS CosaWanCnctvtyChk_SubscribeRbus(void)
 {
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
     int ret = RBUS_ERROR_SUCCESS;
     int iter=0;
     for(iter=0;iter<ARRAY_SZ(sub_event_param);iter++)
@@ -997,7 +1000,7 @@ ANSC_STATUS CosaWanCnctvtyChk_SubscribeRbus(void)
 
 ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeRbus(void)
 {
-#ifdef WAN_FAILOVER_SUPPORTED
+#if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
     int ret = RBUS_ERROR_SUCCESS;
     int iter=0;
     for(iter=0;iter<ARRAY_SZ(sub_event_param);iter++)
@@ -1007,6 +1010,45 @@ ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeRbus(void)
        {
            WANCHK_LOG_ERROR("WanCnctvtyChkEventConsumer: rbusEvent_Unsubscribe failed for %s ret: %d\n",
                                                             sub_event_param[iter],ret);
+           return ANSC_STATUS_FAILURE;
+       }
+    }
+#endif
+    return ANSC_STATUS_SUCCESS;
+}
+
+
+ANSC_STATUS CosaWanCnctvtyChk_SubscribeActiveGW(void)
+{
+#ifdef GATEWAY_FAILOVER_SUPPORTED
+    int ret = RBUS_ERROR_SUCCESS;
+    int iter=0;
+    for(iter=0;iter<ARRAY_SZ(sub_activegwevent_param);iter++)
+    {
+       ret = rbusEvent_Subscribe(rbus_handle, sub_activegwevent_param[iter], eventReceiveHandler, NULL, 0);
+       if(ret != RBUS_ERROR_SUCCESS)
+       {
+           WANCHK_LOG_ERROR("WanCnctvtyChkEventConsumer: rbusEvent_Subscribe failed for %s ret: %d\n",
+                                                            sub_activegwevent_param[iter],ret);
+           return ANSC_STATUS_FAILURE;
+       }
+    }
+#endif
+    return ANSC_STATUS_SUCCESS;
+}
+
+ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeActiveGW(void)
+{
+#ifdef GATEWAY_FAILOVER_SUPPORTED
+    int ret = RBUS_ERROR_SUCCESS;
+    int iter=0;
+    for(iter=0;iter<ARRAY_SZ(sub_activegwevent_param);iter++)
+    {
+       ret = rbusEvent_Unsubscribe(rbus_handle, sub_activegwevent_param[iter]);
+       if(ret != RBUS_ERROR_SUCCESS)
+       {
+           WANCHK_LOG_ERROR("WanCnctvtyChkEventConsumer: rbusEvent_Unsubscribe failed for %s ret: %d\n",
+                                                            sub_activegwevent_param[iter],ret);
            return ANSC_STATUS_FAILURE;
        }
     }
@@ -1309,12 +1351,35 @@ void handle_actv_status_event (BOOL new_status)
        if (new_status)
        {
           /* we are already in disabled state, no need to free any memory*/
-          CosaWanCnctvtyChk_Init_IntfTable ();
+          g_wanconnectivity_check_active = TRUE;
+          if (CosaWanCnctvtyChk_Init_URLTable () != ANSC_STATUS_SUCCESS)
+          {
+              WANCHK_LOG_ERROR("%s: Unable to init URL table\n", __FUNCTION__);
+          }
+          if (CosaWanCnctvtyChk_Init_IntfTable () != ANSC_STATUS_SUCCESS)
+          {
+              WANCHK_LOG_ERROR("%s: Unable to init interface table\n", __FUNCTION__);
+          }
+          CosaWanCnctvtyChk_SubscribeRbus();
+          CosaWanCnctvtyChk_StartSysevent_listener();
        }
        else
        {
      /* we are moving to disabled state, bring down*/
-          CosaWanCnctvtyChk_DeInit_IntfTable ();
+        CosaWanCnctvtyChk_UnSubscribeRbus();
+        CosaWanCnctvtyChk_StopSysevent_listener();
+        /* Deinit interface Table*/
+        if (CosaWanCnctvtyChk_DeInit_IntfTable() != ANSC_STATUS_SUCCESS)
+        {
+             WANCHK_LOG_ERROR("%s: Unable to deinit interface table\n", __FUNCTION__);
+        }
+        /* Deinit URL list*/
+        if (CosaWanCnctvtyChk_Remove_Urllist() != ANSC_STATUS_SUCCESS)
+        {
+             WANCHK_LOG_ERROR("%s: Unable to remove URL list\n", __FUNCTION__);
+        }
+        g_wanconnectivity_check_active = FALSE;
+        // CosaWanCnctvtyChk_UnReg_elements(FEATURE_ENABLED_DML);
        }
     }
 }

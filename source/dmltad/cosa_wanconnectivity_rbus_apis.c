@@ -65,9 +65,7 @@ coming sprints for test*/
 rbusDataElement_t WANCHK_Feature_Enabled_RbusElements[] =
 {
 //RBUS_TABLE
-#ifdef ACTIVE_GATEWAY_CHECK
     { "Device.Diagnostics.X_RDK_DNSInternet.Active", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetHandler, NULL, NULL, NULL, WANCNCTVTYCHK_SubHandler, NULL} },
-#endif
     { "Device.Diagnostics.X_RDK_DNSInternet.TestURLNumberOfEntries", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetURLHandler,NULL, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.TestURL.{i}.", RBUS_ELEMENT_TYPE_TABLE, {NULL, NULL, WANCNCTVTYCHK_TableAddRowHandler, WANCNCTVTYCHK_TableRemoveRowHandler, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.TestURL.{i}.URL", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetURLHandler, WANCNCTVTYCHK_SetURLHandler, NULL, NULL, NULL, NULL} },
@@ -248,6 +246,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value)
             WANCHK_LOG_INFO("wanconnectivity_chk status changed to disable from enable\n");
           /* Un subscribe from events for RBUS to avoid race conditions*/
            CosaWanCnctvtyChk_UnSubscribeRbus();
+           CosaWanCnctvtyChk_UnSubscribeActiveGW();
            CosaWanCnctvtyChk_StopSysevent_listener();
            /* Deinit interface Table*/
            if (CosaWanCnctvtyChk_DeInit_IntfTable() != ANSC_STATUS_SUCCESS)
@@ -281,6 +280,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value)
                     WANCHK_LOG_ERROR("%s: Unable to init interface table\n", __FUNCTION__);
                 }
                 CosaWanCnctvtyChk_SubscribeRbus();
+                CosaWanCnctvtyChk_SubscribeActiveGW();
                 CosaWanCnctvtyChk_StartSysevent_listener();
             }
         }
