@@ -244,6 +244,18 @@ CompareStoredAndCurrGWHealthStatus()
 	echo_t "IsNeedtoRebootDevice = $IsNeedtoRebootDevice"
 }
 
+RfcRebootDebug()
+{
+	list1=`ls -l /var/`
+	list2=`ls -l /var/run/`
+	mount=`mount`
+	echo_t "####### /var List #######"
+	echo "$list1"
+	echo_t "####### /var/run List #######"
+	echo "$list2"
+	echo_t "####### mount List #######"
+	echo "$mount"
+}
 CheckandRebootBasedOnCurrentHealth()
 {
 #	echo_t "RDKB_SELFHEAL_BOOTUP : gw_health inside CheckandRebootBasedOnCurrentHealth"
@@ -270,6 +282,7 @@ fi
 	    syscfg set X_RDKCENTRAL-COM_LastRebootCounter "1"
 	    syscfg set gw_health "$bitmask"
 	    syscfg commit
+	    RfcRebootDebug
 	    /rdklogger/backupLogs.sh true
 	fi
 }
@@ -305,7 +318,7 @@ case "$1" in
 
 	LastrebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
 	echo_t "LastrebootReason = $LastrebootReason"
-	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ] || [ "PROVISIONING_Image_Upgrade" == "$LastrebootReason" ]; then
+	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ] || [ "PROVISIONING_Image_Upgrade" == "$LastrebootReason" ] || [ "rfc_reboot" == "$LastrebootReason" ]; then
 		echo_t "Wan Link Heal for bootup-check invoked"
 		CheckandRebootBasedOnCurrentHealth
 	fi
