@@ -18,6 +18,8 @@
 # limitations under the License.
 #######################################################################################
 
+bridge_mode=`sysevent get bridge_mode`
+if [ "0" = "$bridge_mode" ]; then
 UPTIME=$(cut -d. -f1 /proc/uptime)
 
 if [ "$UPTIME" -lt 3600 ]
@@ -31,4 +33,5 @@ source /etc/utopia/service.d/log_capture_path.sh
 echo_t "Gateway started to send DHCP discover message on the MoCA interface"
 /usr/bin/dhcpsrv_detect
 echo_t "Gateway sends out DHCP discover message on the MoCA interface"
+fi
 
