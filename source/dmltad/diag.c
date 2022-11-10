@@ -546,6 +546,13 @@ static void *diag_task(void *arg)
     }
     pthread_mutex_unlock(&diag->mutex);
 
+    // Notify TR69 that diagnosis is complete.
+    // If request not initiated by the ACS, it will be dropped.
+    if (CcspBaseIf_SenddiagCompleteSignal(bus_handle) != CCSP_SUCCESS)
+    {
+        fprintf(stderr, "%s: diag complete signal was not send!\n", __FUNCTION__);
+    }
+
     return NULL;
 }
 
