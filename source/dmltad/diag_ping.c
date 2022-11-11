@@ -257,7 +257,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
 
     if((sent > 0) && (st->u.ping.success == 0)) {
         st->u.ping.failure = sent - st->u.ping.success;
-        return DIAG_ERR_OK;
+        return DIAG_ERR_OTHER;
     }
 
     if (copy == 5 || copy == 2) { /* RTT may not exist */
