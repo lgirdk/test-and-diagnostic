@@ -3557,7 +3557,12 @@ if [ "$xle_device_mode" -ne "1" ]; then
                     syscfg commit
                     sleep 2
                     #need to restart dhcp client to generate dibbler conf
-                    Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    if [ "$dibbler_client_enable" = "true" ]; then
+                        Dhcpv6_Client_restart "dibbler-client" "Idle"
+                    else
+                        Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    fi
                 elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                     #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
                     echo_t "DIBBLER : Non IPv6 mode dibbler server.conf file not present"
@@ -3740,7 +3745,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             ;;
         esac
         rm -rf $DHCPV6_ERROR_FILE
-	Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+        dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+        if [ "$dibbler_client_enable" = "true" ]; then
+            Dhcpv6_Client_restart "dibbler-client" "Idle"
+        else
+            Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+        fi
     fi
 fi
 #Logic added in reference to RDKB-25714
@@ -3829,8 +3839,8 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
-            UDHCPC_Enable=$(syscfg get UDHCPEnable)
-            dibbler_client_enable=$(syscfg get dibbler_client_enable)
+            UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
+            dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
             if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
                 check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
@@ -3934,7 +3944,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Arris" ] || [ "$BOX_TYPE" = "XB3" ]; then
 
                         if [ "$UDHCPC_Enable" = "true" ]; then
-                            V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
+                            V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                         else
                             DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
@@ -3960,7 +3970,12 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-		    Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    if [ "$dibbler_client_enable" = "true" ]; then
+                        Dhcpv6_Client_restart "dibbler-client" "Idle"
+                    else
+                        Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    fi
                 fi
                 wan_dhcp_client_v6=1
             fi
@@ -4069,7 +4084,7 @@ case $SELFHEAL_TYPE in
                     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
 
                         if [ "$UDHCPC_Enable" = "true" ]; then
-                            V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /usr/bin/service_udhcpc"
+                            V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                         else
                             #For AXB6 b -4 option is added to avoid timeout.
                             DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
@@ -4139,7 +4154,12 @@ case $SELFHEAL_TYPE in
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-		    Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    if [ "$dibbler_client_enable" = "true" ]; then
+                        Dhcpv6_Client_restart "dibbler-client" "Idle"
+                    else
+                        Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    fi
                 fi
                 wan_dhcp_client_v6=1
             fi
