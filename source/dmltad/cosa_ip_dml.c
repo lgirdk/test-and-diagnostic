@@ -6775,7 +6775,7 @@ SpeedTest_GetParamUlongValue
     } else
     if (strcmp(ParamName, "Status") == 0)
     {
-            AnscTraceFlow(("%s Status Speedtest : %d \n", __FUNCTION__, g_status_speedtest));
+            //AnscTraceFlow(("%s Status Speedtest : %d \n", __FUNCTION__, g_status_speedtest));
             *pUlong = g_status_speedtest;
             return TRUE;
     }
