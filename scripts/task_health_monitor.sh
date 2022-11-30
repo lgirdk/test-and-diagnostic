@@ -129,9 +129,7 @@ get_from_syscfg_cache() {
 
 check_component_status(){
 
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-            echo_t "BWG doesn't support voice"
-        else
+        if [ "$BOX_TYPE" != "MV3" ]; then
             MTA_PID=$(get_pid CcspMtaAgentSsp)
             if [ "$MTA_PID" = "" ]; then
                 #       echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : MTA_process is not running, restarting it"
@@ -142,7 +140,7 @@ check_component_status(){
         fi
 
         # Checking CM's PID
-        if [ "$WAN_TYPE" != "EPON" ]; then
+        if [ "$BOX_TYPE" != "MV3" ]; then
             CM_PID=$(get_pid CcspCMAgentSsp)
             if [ "$CM_PID" = "" ]; then
                 #           echo "[$(getDateTime)] RDKB_PROCESS_CRASHED : CM_process is not running, restarting it"
@@ -1548,12 +1546,14 @@ case $SELFHEAL_TYPE in
             t2CountNotify "SYS_SH_PAM_CRASH_RESTART"
         fi
 
-        # Checking MTA's PID
-        MTA_PID=$(get_pid CcspMtaAgentSsp)
-        if [ "$MTA_PID" = "" ]; then
-            echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
-            resetNeeded mta CcspMtaAgentSsp
-            t2CountNotify "SYS_SH_MTA_restart"
+        if [ "$BOX_TYPE" != "MV3" ]; then
+            # Checking MTA's PID
+            MTA_PID=$(get_pid CcspMtaAgentSsp)
+            if [ "$MTA_PID" = "" ]; then
+                echo_t "RDKB_PROCESS_CRASHED : MTA_process is not running, need restart"
+                resetNeeded mta CcspMtaAgentSsp
+                t2CountNotify "SYS_SH_MTA_restart"
+            fi
         fi
 
         WiFi_Flag=false
