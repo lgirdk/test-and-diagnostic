@@ -316,6 +316,10 @@ case "$1" in
 
    bootup-check)
 
+	if [ -f "/nvram/reboot_due_to_sw_upgrade" ]; then
+		echo_t "Device is waiting for reboot after CDL , Exiting Wan Link Heal bootup-check"
+		exit 0
+	fi
 	LastrebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
 	echo_t "LastrebootReason = $LastrebootReason"
 	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ] || [ "PROVISIONING_Image_Upgrade" == "$LastrebootReason" ] || [ "rfc_reboot" == "$LastrebootReason" ]; then
