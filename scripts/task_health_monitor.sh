@@ -2841,6 +2841,12 @@ if [ $BR_MODE -eq 1 ]; then
     t2CountNotify "SYS_INFO_BridgeMode"
 fi
 echo_t "[RDKB_SELFHEAL] : FIREWALL_ENABLED is $FIREWALL_ENABLED"
+if [ "$FIREWALL_ENABLED" = "" ] || [ $FIREWALL_ENABLED -ne 1 ]; then
+   echo_t "[RDKB_PLATFORM_ERROR] : firewall_enabled corrupted in DB,enable and restart firewall."
+   syscfg set firewall_enabled 1
+   syscfg commit
+   sysevent set firewall-restart
+fi   
 
 #Check whether private SSID's are broadcasting during bridge-mode or not
 #if broadcasting then we need to disable that SSID's for pseduo mode(2)
