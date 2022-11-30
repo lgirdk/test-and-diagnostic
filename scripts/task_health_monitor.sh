@@ -663,33 +663,36 @@ case $SELFHEAL_TYPE in
 
         fi
 	
-        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
-          HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
-          if [ "$HOME_LAN_ISOLATION" = "0" ];then
-              #ARRISXB6-9443 temp fix. Need to generalize and improve.
-                  if [ "x$ovs_enable" = "xtrue" ];then
-                      ovs-vsctl list-ifaces brlan0 |grep "moca0" >> /dev/null
-                  else
-                      brctl show brlan0 | grep "moca0" >> /dev/null
-                  fi
-                  if [ $? -ne 0 ] ; then
-                      echo_t "Moca is not part of brlan0.. adding it"
-                      t2CountNotify "SYS_SH_MOCA_add_brlan0"
-                      sysevent set multinet-syncMembers 1
-                  fi
+        if [ 0 = $(syscfg get bridge_mode) ];then
 
-          else
-                  if [ "x$ovs_enable" = "xtrue" ];then
-                      ovs-vsctl list-ifaces brlan10 |grep "moca0" >> /dev/null
-                  else
-                      brctl show brlan10 | grep "moca0" >> /dev/null
-                  fi
-                  if [ $? -ne 0 ] ; then
-                      echo_t "Moca is not part of brlan10.. adding it"
-                      #t2CountNotify "SYS_SH_MOCA_add_brlan10"
-                      sysevent set multinet-syncMembers 9
-                  fi
-          fi
+            if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ]; then
+              HOME_LAN_ISOLATION=`psmcli get dmsb.l2net.HomeNetworkIsolation`
+              if [ "$HOME_LAN_ISOLATION" = "0" ];then
+                  #ARRISXB6-9443 temp fix. Need to generalize and improve.
+                      if [ "x$ovs_enable" = "xtrue" ];then
+                          ovs-vsctl list-ifaces brlan0 |grep "moca0" >> /dev/null
+                      else
+                          brctl show brlan0 | grep "moca0" >> /dev/null
+                      fi
+                      if [ $? -ne 0 ] ; then
+                          echo_t "Moca is not part of brlan0.. adding it"
+                          t2CountNotify "SYS_SH_MOCA_add_brlan0"
+                          sysevent set multinet-syncMembers 1
+                      fi
+
+              else
+                      if [ "x$ovs_enable" = "xtrue" ];then
+                          ovs-vsctl list-ifaces brlan10 |grep "moca0" >> /dev/null
+                      else
+                          brctl show brlan10 | grep "moca0" >> /dev/null
+                      fi
+                      if [ $? -ne 0 ] ; then
+                          echo_t "Moca is not part of brlan10.. adding it"
+                          #t2CountNotify "SYS_SH_MOCA_add_brlan10"
+                          sysevent set multinet-syncMembers 9
+                      fi
+              fi
+        fi
 	fi
     ;;
 esac
