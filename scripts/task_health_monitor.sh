@@ -4211,3 +4211,44 @@ if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGM4140COM" ]; then
                 fi
         fi
 fi
+
+#pre-condition check for mesh enablement
+precondition_check_mesh=-1
+
+#Check for the pre-conditions, if mesh enabled and the mesh services not started
+if [ "$(syscfg get mesh_enable)" = "true" ]; then
+    if [ "$(busybox pidof dm)" = "" ]; then
+        echo_t "[RDKB_SELFHEAL] : Mesh is enabled, check for the pre-conditions"
+        check_device_in_bridge_mode=$(syscfg get bridge_mode)
+        if [ "$check_device_in_bridge_mode" = "0" ]; then
+            # Check the status if 2.4GHz Wifi Radio
+            RadioStatus_2=$(dmcli eRT getv Device.WiFi.Radio.1.Status | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+
+            # Check the status if 5GHz Wifi Radio
+            RadioStatus_5=$(dmcli eRT getv Device.WiFi.Radio.2.Status | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+
+            if [ "$RadioStatus_2" = "Up" ] && [ "$RadioStatus_5" = "Up" ]; then
+                precondition_check_mesh=1
+                echo_t "[RDKB_SELFHEAL] : precondition_check_mesh passed"
+            else
+                precondition_check_mesh=0
+                echo_t "[RDKB_SELFHEAL] : precondition_check_mesh failed"
+            fi
+        fi
+    else
+       rm -rf /tmp/meshenable_selfheal
+    fi
+fi
+
+if [ $precondition_check_mesh -eq 1 ]; then
+    if [ -f /tmp/meshenable_selfheal ]; then
+        if [ "$(busybox pidof dm)" = "" ] ; then
+            echo_t "[RDKB_SELFHEAL] : The pre-conditions are passed, so starting the mesh service"
+            systemctl start meshwifi.service
+            rm -rf /tmp/meshenable_selfheal
+        fi
+    else
+    touch /tmp/meshenable_selfheal
+    fi
+fi
+
