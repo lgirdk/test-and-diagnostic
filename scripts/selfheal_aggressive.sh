@@ -1290,6 +1290,46 @@ self_heal_ccspwifissp_hung()
     esac
 }
 
+#selfheal to assign WAN IP as NAS IP for ccsp-wifi-agent process, as NAS IP is getting Loopback IP
+self_heal_nas_ip()
+{
+    case $SELFHEAL_TYPE in
+                "SYSTEMD")
+             wifi_process=$(ps | grep -i "OneWifi" | grep -v grep | head -n1 | cut -d" " -f14 | \
+             cut -d"/" -f4)
+             hostapd_enable=$(ps | grep -i hostapd | grep -v grep)
+             if [ "$wifi_process" != "OneWifi" ] && [ "$hostapd_enable" != "" ]; then #issue seen only in selfheal, also hostapd should run while checking this, hence this condition
+                 if [ "$MODEL_NUM" == "CGM4331COM" ] || [ "$MODEL_NUM" == "CGM4981COM" ]; then
+                     WAN_INTERFACE=`sysevent get current_wan_ifname`
+                     if [ "$WAN_INTERFACE" = "" ]; then
+                         WAN_INTERFACE="erouter0"
+                     fi
+                     WAN_IPv4_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6" | \
+                                     cut -d":" -f2 | cut -d" " -f1)
+                     LPBK_IPv4_Addr=127.0.0.1
+
+                     for i in 9 10 11 12; do  #checking xfisec hotspot and LnFsec
+                         SSID_ENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | \
+                                       cut -f3 -d":" | cut -f2 -d" ")
+                         WL_INTERFACE=$(dmcli eRT getv Device.WiFi.SSID.$i.Alias | grep "value" | \
+                                        cut -f3 -d":" | cut -f2 -d" ")
+
+                         if [ "$SSID_ENABLE" = "true" ]; then #check only if VAP is enabled
+                             IP_SEC=`hostapd_cli -i $WL_INTERFACE get own_ip_addr 2>&1`
+                             if [ "$IP_SEC" != "Failed to connect to hostapd - wpa_ctrl_open: No such file or directory" ]; then
+                                 if [ $IP_SEC == $LPBK_IPv4_Addr ]; then
+                                     echo_t "[RDKB_AGG_SELFHEAL] : NAS IP of VAP $i is Loopback, changing to WAN IP"
+                                     hostapd_cli -i $WL_INTERFACE set own_ip_addr $WAN_IPv4_Addr > /dev/null 2>&1 & #hostapd set only when NAS IP is loopback
+                                 fi
+                             fi
+                         fi
+                     done
+                 fi
+             fi
+         ;;
+    esac
+}
+
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -1351,6 +1391,7 @@ do
     self_heal_dhcp_clients
     self_heal_dropbear
     self_heal_ccspwifissp_hung
+    self_heal_nas_ip
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
