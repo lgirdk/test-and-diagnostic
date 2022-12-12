@@ -4417,6 +4417,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             if [ "$WAN_IPv4_Addr" = "" ] ; then
                 echo_t "erouter ipv4 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv4_loss"
+                /usr/bin/logger -p local0.notice -t NETWORK "$(date +'%a %b %d %T %Y') Gateway ipv4 address is empty"
                 sysevent set dhcp_client-restart
             fi
         fi
@@ -4424,6 +4425,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
             if [ "$WAN_IPv6_Addr" = "" ] ; then
                 echo_t "erouter ipv6 address is empty"
+                /usr/bin/logger -p local0.notice -t NETWORK "$(date +'%a %b %d %T %Y') Gateway ipv6 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv6_loss"
                 t2CountNotify "SYS_SH_ti_dhcp6c_restart"
                 echo_t "restart dibbler-client"
