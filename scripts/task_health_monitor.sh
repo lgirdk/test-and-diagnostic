@@ -72,6 +72,11 @@ case $BOX_TYPE in
         SELFHEAL_TYPE="BASE";;
 esac
 
+case $MODEL_NUM in
+            "CGA4332COM") SELFHEAL_TYPE="SYSTEMD";;
+            *) ;;
+esac
+
 case $SELFHEAL_TYPE in
     "BASE")
         grePrefix="gretap0"
@@ -893,7 +898,7 @@ case $SELFHEAL_TYPE in
         #   fi
 
         # Checking TR69's PID
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
             echo_t "BWG doesn't support TR069Pa "
         else
             TR69_PID=$(busybox pidof CcspTr069PaSsp)
@@ -1098,7 +1103,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
 else
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
