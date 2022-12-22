@@ -2725,6 +2725,11 @@ case $SELFHEAL_TYPE in
                             ipv4_status=$(sysevent get ipv4_4-status)
                             lan_status=$(sysevent get lan-status)
 
+                            #setting sysevent ipv4_4-status to empty string is needed to recover the brlan0 interface.
+                            if [ "$check_if_brlan0_hasip" = "" ] && [ "$ipv4_status" = "up" ]; then
+                                sysevent set ipv4_4-status ""
+                            fi
+
                             if [ "$lan_status" != "started" ]; then
                                 if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
                                     echo_t "[RDKB_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
