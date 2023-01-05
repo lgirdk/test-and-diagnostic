@@ -4252,3 +4252,77 @@ if [ $precondition_check_mesh -eq 1 ]; then
     fi
 fi
 
+
+#Restart MeshWifi services, if the Wifi_VIf_Config and Wifi_VIF_State parameters are not matching
+
+handle_mesh_restart() {
+     if [ -f /tmp/meshwifi_restart ];then
+         rm -rf /tmp/meshwifi_restart
+         echo_t "Mesh: Previous and current config drift seen, Restart Mesh Service"
+         echo_t "Mesh: Previous and current config drift seen, Restart Mesh Service" >> /rdklogs/logs/MeshAgentLog.txt.0
+         systemctl restart meshwifi.service
+     else
+         echo_t "Mesh: Waiting for next iteration to restart Mesh service"
+         touch /tmp/meshwifi_restart
+     fi
+}
+
+drift=false
+if [ "$(syscfg get mesh_enable)" = "true" ] && [ "$(busybox pidof dm)" != "" ];then
+    isOneWiFi=`grep OneWiFiEnabled /etc/device.properties | cut -d "=" -f 2`
+    if [ "$isOneWiFi" = "true" ]; then
+        echo_t "Using OneWiFi interfaces for WiFi back-haul"
+        MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.OneWiFi`
+        MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.OneWiFi`
+    else
+        MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.WiFi`
+        MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.WiFi`
+    fi
+    if [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_24"`" = "" ] && [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_24"`" = "" ]; then
+       echo_t "Mesh: $MESH_VAP_24 & $MESH_VAP_50 is not present, try with cloud ifnmaes"
+       MESH_VAP_24='bhaul-ap-24'
+       MESH_VAP_50='bhaul-ap-50'
+    fi
+
+    ifaces="$MESH_VAP_24 $MESH_VAP_50"
+
+    for iface in $ifaces;do
+        if [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep if_name | cut -d'|' -f2`" != "" ]; then
+            echo_t "Mesh: Checking Duplicate interface name present for $iface"
+            if [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep if_name | cut -d'|' -f3`" != "" ]; then
+             echo_t "Mesh: Duplicate interface name present for $iface"
+             handle_mesh_restart
+             drift=true
+             break
+           fi
+        fi
+
+     #Config table
+     ENABLED_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep enabled | awk '{print $3}'`"
+     MAC_LIST_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep mac_list | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`"
+     MAC_LIST_TYPE_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep mac_list_type | awk '{print $3}'`"
+     SSID_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep "ssid " | awk '{print $3}'`"
+
+     #State table
+     ENABLED_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep enabled | awk '{print $3}'`"
+     MAC_LIST_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep mac_list | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`"
+     MAC_LIST_TYPE_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep mac_list_type | awk '{print $3}'`"
+     SSID_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep "ssid " | awk '{print $3}'`"
+
+     echo_t "$iface| config_enable $ENABLED_CONFIG state_enable $ENABLED_STATE  config_maclist $MAC_LIST_CONFIG state_maclist $MAC_LIST_STATE config_mactype $MAC_LIST_TYPE_CONFIG state_mactype $MAC_LIST_TYPE_STATE config_ssid $SSID_CONFIG  state_ssid $SSID_STATE"
+     if [ "$ENABLED_CONFIG" != "$ENABLED_STATE" ] ||  [ "$MAC_LIST_CONFIG" != "$MAC_LIST_STATE" ] ||  [ "$MAC_LIST_TYPE_CONFIG" != "$MAC_LIST_TYPE_STATE" ] || [ "$SSID_CONFIG" != "$SSID_STATE" ]; then
+          echo_t "Mesh: Config and State are mismatching for $iface"
+          handle_mesh_restart
+          drift=true
+          break
+     else
+          echo_t "Mesh: Config and State are matching for $iface"
+     fi
+     done
+fi
+
+if [ $drift = false ];then
+   echo_t "Mesh: Both Bhauls are good"
+   rm -rf /tmp/meshwifi_restart
+fi
+
