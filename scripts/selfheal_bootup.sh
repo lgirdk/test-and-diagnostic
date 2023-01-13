@@ -56,7 +56,8 @@ source $UTOPIA_PATH/log_env_var.sh
 source /etc/log_timestamp.sh
 
 T2_MSG_CLIENT=/usr/bin/telemetry2_0_client
-if [ -f /etc/onewifi_enabled ] || [ -d /sys/module/openvswitch ]; then
+if [ -f /etc/onewifi_enabled ] || [ -d /sys/module/openvswitch ] ||
+                                  [ -f /etc/WFO_enabled ]; then
     ovs_enable="true"
 else
     ovs_enable=`syscfg get mesh_ovs_enable`
