@@ -312,16 +312,6 @@ ANSC_STATUS WanCnctvtyChk_IDM_Invoke(idm_invoke_method_Params_t *IDM_request,BOO
     rbusValue_Release(value);
 
     rbusValue_Init(&value);
-    rbusValue_SetString(value, IDM_request->pComponent_name);
-    rbusObject_SetValue(inParams, "pComponent", value);
-    rbusValue_Release(value);
-
-    rbusValue_Init(&value);
-    rbusValue_SetString(value, IDM_request->pBus_path);
-    rbusObject_SetValue(inParams, "pBus", value);
-    rbusValue_Release(value);
-
-    rbusValue_Init(&value);
     rbusValue_SetInt32(value, IDM_request->timeout);
     rbusObject_SetValue(inParams, "Timeout", value);
     rbusValue_Release(value);

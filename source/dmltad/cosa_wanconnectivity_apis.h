@@ -184,8 +184,6 @@ typedef struct _idm_invoke_method_Params
     char Mac_dest[18];
     char param_name[128];
     char param_value[2048];
-    char pComponent_name[128];
-    char pBus_path[128];
     uint timeout;
     enum dataType_e type;
     rbusMethodAsyncHandle_t asyncHandle;
