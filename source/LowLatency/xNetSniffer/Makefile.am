@@ -1,4 +1,3 @@
-##########################################################################
 # If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
@@ -16,8 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = TandDSsp dmltad util xle_selfheal ImageHealthChecker LowLatency
-
-if WITH_GTEST_SUPPORT
-SUBDIRS += test
-endif
+bin_PROGRAMS = xNetSniffer
+xNetSniffer_SOURCES = xNetSniffer.c
+xNetSniffer_LDFLAGS = -lpcap
