@@ -1353,7 +1353,7 @@ esac
 
 HOTSPOT_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_COMCAST_COM_xfinitywifiEnable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
 
-if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ]; then
+if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ] && [ ! -f /tmp/.hotspot_blob_inprogress ]; then
     DHCP_ARP_PID=$(busybox pidof hotspot_arpd)
     if [ "$DHCP_ARP_PID" = "" ] && [ -f /tmp/hotspot_arpd_up ] && [ ! -f /tmp/tunnel_destroy_flag ] ; then
         echo_t "RDKB_PROCESS_CRASHED : DhcpArp_process is not running, need restart"
