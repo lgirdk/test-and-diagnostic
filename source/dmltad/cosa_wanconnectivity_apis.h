@@ -67,7 +67,6 @@
 
 #include "cosa_apis.h"
 #include "ccsp_base_api.h"
-#include <rbus/rbus_value.h>
 #include <rbus/rbus.h>
 #include "sysevent/sysevent.h"
 
