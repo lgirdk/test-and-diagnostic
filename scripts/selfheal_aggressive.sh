@@ -52,6 +52,34 @@ fi
 exec 5>&1 6>&2 >> /rdklogs/logs/SelfHealAggressive.txt 2>&1
 
 Unit_Activated=$(syscfg get unit_activated)
+
+
+isDropbearRunningWithIpv6()
+{
+    dropbearRunningWithIPv6=0
+    dropbearpids=`pidof dropbear`
+    indexCount=0
+    while :
+    do
+        isIpv6Available=`echo $dropbearpids | cut -d ' ' -f$indexCount`
+        if [ ! -z $isIpv6Available ]; then
+            isIpv6Available=`cat /proc/$isIpv6Available/cmdline | awk -F'[][]' '{print $2}'`
+            eRouter0Ipv6=`echo $isIpv6Available | cut -d ' ' -f2`
+            if [[ "$eRouter0Ipv6" == "$1" ]]; then
+                dropbearRunningWithIPv6=$((dropbearRunningWithIPv6+1))
+            fi
+        else
+            break
+        fi
+        indexCount=$((indexCount+1))
+    done
+
+    if [ "$dropbearRunningWithIPv6" -lt 1 ]; then
+       echo_t "Dropbear was running with eRouter0Ipv6:$eRouter0Ipv6, but not with:$1 restart the sshd service"
+       /etc/utopia/service.d/service_sshd.sh sshd-restart
+    fi
+}
+
 #function to restart Dhcpv6_Client
 Dhcpv6_Client_restart ()
 {
@@ -897,6 +925,8 @@ self_heal_dhcp_clients()
             esac
         elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
+                erouter0_globalv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d"/")
+                isDropbearRunningWithIpv6 $erouter0_globalv6
         else
                 if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
                    echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 not present or WAN Status Not Started: $WAN_STATUS"
