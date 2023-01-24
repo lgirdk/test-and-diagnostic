@@ -33,6 +33,7 @@ CcspTandDWanCnctvtyChk_gtest_bin_CPPFLAGS = -I$(PKG_CONFIG_SYSROOT_DIR)$(include
                                             -I$(PKG_CONFIG_SYSROOT_DIR)$(includedir)/ccsp \
                                             -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus \
                                             -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/libsafec \
+                                            -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/safeclib \
                                             -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/syscfg \
                                             -I${PKG_CONFIG_SYSROOT_DIR}$(includedir) \
                                             -I$(top_srcdir)/source/diagnostic/include \
