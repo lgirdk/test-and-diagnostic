@@ -1228,7 +1228,7 @@ self_heal_dropbear()
          ;;
          "TCCBR")
              #Check dropbear is alive to do rsync/scp to/fro ATOM
-             if [ "$ARM_INTERFACE_IP" != "" ]; then
+             if [ "$ARM_INTERFACE_IP" != "" ] && [ ! -f "/nvram/ETHWAN_ENABLE" ]; then
                  DROPBEAR_ENABLE=$(ps -ww | grep "dropbear" | grep "$ARM_INTERFACE_IP")
                  if [ "$DROPBEAR_ENABLE" = "" ]; then
                      echo_t "RDKB_PROCESS_CRASHED : rsync_dropbear_process is not running, need restart"
