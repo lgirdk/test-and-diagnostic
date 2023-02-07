@@ -1,7 +1,7 @@
 #!/bin/sh
 source /etc/log_timestamp.sh
 
-tmp_file=$(find /tmp -name "jst_sess*")
+tmp_file=$(find /tmp -name "*sess*")
 for file in $tmp_file
 do
         diff=$((($(date +%s) - $(stat $file -c %Y)) / 60 ))
