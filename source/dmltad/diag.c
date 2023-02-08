@@ -409,21 +409,15 @@ static const char *assign_iface(const char *host, char *buf, size_t size)
         if (inet6_nexthop_not_def(&in6addr))
             return NULL;
     }
-    char wan_ifname[32] ;
-    rc= memset_s(wan_ifname,sizeof(wan_ifname),0,sizeof(wan_ifname));
-    ERR_CHK(rc);
 
-    commonSyseventGet("current_wan_ifname",wan_ifname,sizeof(wan_ifname));
-    CcspTraceInfo(("%s: current_wan_ifname is %s\n", __FUNCTION__,wan_ifname));
-    if (wan_ifname[0] != '\0')
+    commonSyseventGet("current_wan_ifname", buf, size);
+    CcspTraceInfo(("%s: current_wan_ifname is %s\n", __FUNCTION__, buf));
+    if (buf[0] == '\0')
     {
-       rc = strcpy_s(buf, size, wan_ifname);
+        rc = strcpy_s(buf, size, "erouter0");
+        ERR_CHK(rc);
     }
-    else
-    {
-         rc = strcpy_s(buf, size, "erouter0");
-    }
-    ERR_CHK(rc);
+
     return buf;
 }
 
