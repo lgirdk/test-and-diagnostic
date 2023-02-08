@@ -6404,13 +6404,12 @@ RDK_SpeedTest_GetParamUlongValue
     {
             if((syscfg_get( NULL, "Speedtest_SubUnPauseTimeOut", TO_buf, sizeof(TO_buf)) == 0 ) && (TO_buf[0] != '\0') )
             {
-                AnscTraceFlow(("%s SubscriberUnPauseTimeOut value : %s \n", __FUNCTION__, TO_buf));
                 *pUlong = atoi(TO_buf);
                 return TRUE;
             }
             else
             {
-                AnscTraceFlow(("%s syscfg_get SubscriberUnPauseTimeOut Failed \n", __FUNCTION__));
+                AnscTraceWarning(("!!! %s syscfg_get SubscriberUnPauseTimeOut Failed \n", __FUNCTION__));
             }
     }
     else
