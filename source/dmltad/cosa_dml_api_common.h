@@ -75,30 +75,9 @@
 #include "ansc_platform.h"
 
 
-#ifdef   _ANSC_ENABLE_PRAGMA_
-#pragma  pack(1)
-#endif
-
-#ifdef  __GNUC__
-
-    #ifndef  _struct_pack_
-    #define  _struct_pack_                          __attribute__ ((__packed__))
-    #endif
-
-#else
-
-    #ifndef  _struct_pack_
-    #define  _struct_pack_
-    #endif
-
-#endif
-
-
 /**********************************************************************
                 STRUCTURE AND CONSTANT DEFINITIONS
 **********************************************************************/
-
-#define  COSA_DML_IF_NAME_LENGTH                    512
 
 typedef  enum
 _COSA_DML_IF_STATUS
