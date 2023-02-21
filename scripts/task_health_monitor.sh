@@ -4290,6 +4290,7 @@ handle_mesh_restart() {
 }
 
 drift=false
+probable_no_pod=false
 if [ "$(syscfg get mesh_enable)" = "true" ] && [ "$(busybox pidof dm)" != "" ];then
     isOneWiFi=`grep OneWiFiEnabled /etc/device.properties | cut -d "=" -f 2`
     if [ "$isOneWiFi" = "true" ]; then
@@ -4325,6 +4326,10 @@ if [ "$(syscfg get mesh_enable)" = "true" ] && [ "$(busybox pidof dm)" != "" ];t
      MAC_LIST_TYPE_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep mac_list_type | awk '{print $3}'`"
      SSID_CONFIG="`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$iface" | grep "ssid " | awk '{print $3}'`"
 
+     if [ "$ENABLED_CONFIG" != "true" ] && [ "$iface" == "$MESH_VAP_24" ];then
+         probable_no_pod=true;
+     fi
+
      #State table
      ENABLED_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep enabled | awk '{print $3}'`"
      MAC_LIST_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep mac_list | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'`"
@@ -4332,14 +4337,20 @@ if [ "$(syscfg get mesh_enable)" = "true" ] && [ "$(busybox pidof dm)" != "" ];t
      SSID_STATE="`/usr/opensync/tools/ovsh s Wifi_VIF_State -w if_name=="$iface" | grep "ssid " | awk '{print $3}'`"
 
      echo_t "$iface| config_enable $ENABLED_CONFIG state_enable $ENABLED_STATE  config_maclist $MAC_LIST_CONFIG state_maclist $MAC_LIST_STATE config_mactype $MAC_LIST_TYPE_CONFIG state_mactype $MAC_LIST_TYPE_STATE config_ssid $SSID_CONFIG  state_ssid $SSID_STATE"
-     if [ "$ENABLED_CONFIG" != "$ENABLED_STATE" ] ||  [ "$MAC_LIST_CONFIG" != "$MAC_LIST_STATE" ] ||  [ "$MAC_LIST_TYPE_CONFIG" != "$MAC_LIST_TYPE_STATE" ] || [ "$SSID_CONFIG" != "$SSID_STATE" ]; then
-          echo_t "Mesh: Config and State are mismatching for $iface"
-          handle_mesh_restart
-          drift=true
-          break
+    
+     if [ $probable_no_pod = false ];then
+         if [ "$ENABLED_CONFIG" != "$ENABLED_STATE" ] ||  [ "$MAC_LIST_CONFIG" != "$MAC_LIST_STATE" ] ||  [ "$MAC_LIST_TYPE_CONFIG" != "$MAC_LIST_TYPE_STATE" ] || [ "$SSID_CONFIG" != "$SSID_STATE" ]; then
+              echo_t "Mesh: Config and State are mismatching for $iface"
+              handle_mesh_restart
+              drift=true
+              break
+         else
+              echo_t "Mesh: Config and State are matching for $iface"
+         fi
      else
-          echo_t "Mesh: Config and State are matching for $iface"
+         echo_t "Mesh: Skipping drift check since bhaul-ap-24 is down, pods may not be present"
      fi
+ 
      done
 fi
 
