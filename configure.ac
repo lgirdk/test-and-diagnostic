@@ -84,17 +84,19 @@ esac],[core_net_lib_feature_support=false])
 AM_CONDITIONAL(CORE_NET_LIB_FEATURE_SUPPORT, test x"$core_net_lib_feature_support" = x"true")
 
 AC_CONFIG_FILES(
+  source/LatencyMeasurement/ServiceMonitor/Makefile
 	source/TandDSsp/Makefile
 	source/dmltad/Makefile
 	source/util/Makefile
 	source/Makefile
 	source/xle_selfheal/Makefile
-        source-arm/diagnostic/BbhmDiagIpPing/Makefile
-        source-arm/dmltad/Makefile
-        source/ImageHealthChecker/Makefile
-  source/LowLatency/xNetSniffer/Makefile 
-  source/LowLatency/Makefile
-  source/LowLatency/xNetDP/Makefile
+  source-arm/diagnostic/BbhmDiagIpPing/Makefile
+  source-arm/dmltad/Makefile
+  source/ImageHealthChecker/Makefile
+  source/LatencyMeasurement/Makefile
+  source/LatencyMeasurement/TR-181/Makefile
+  source/LatencyMeasurement/xNetSniffer/Makefile 
+  source/LatencyMeasurement/xNetDP/Makefile
 	Makefile
 )
 

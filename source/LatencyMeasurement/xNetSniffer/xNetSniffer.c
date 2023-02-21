@@ -66,6 +66,9 @@ struct mesg_buffer {
     long long tv_sec;
     long long tv_usec;
     char    mac[18];
+    u_int   ip_type; 
+    u_short th_dport;
+
 } message;
   /*
   struct mesg_buffer {
@@ -76,6 +79,12 @@ struct mesg_buffer {
     int msgid;
 int ack_req = TRUE;
 
+
+enum ip_family
+{
+    IPV4=0,
+    IPV6=1 
+};
 
 /* default snap length (maximum bytes per packet to capture) */
 #define SNAP_LEN 1518
@@ -159,6 +168,7 @@ struct option longopts[] =
   { "IPFamily",             required_argument,       NULL, 'f'},
   { "DebugMode",            no_argument,       NULL, 'D'},
   { "FilePath",             required_argument, NULL, 'F'},
+  { "LanPrefix",            required_argument, NULL, 'p'},
   { "help",                 no_argument,       NULL, 'h'},
   { 0 }
 };
@@ -176,6 +186,7 @@ typedef struct Params
   bool dbg_mode;  
   char interface_name[32];
   char log_file[64];
+  char lan_prefix[128];
   char family[8];
 }Param;
 
@@ -193,6 +204,9 @@ Param data;
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet);
 
+
+
+#if 0
 void
 print_payload(const u_char *payload, int len);
 
@@ -218,7 +232,7 @@ print_hex_ascii_line(const u_char *payload, int len, int offset)
     /* hex */
     ch = payload;
     for(i = 0; i < len; i++) {
-        printf("%02x ", *ch);
+        dbg_log("%02x ", *ch);
         ch++;
         /* print extra space after 8th byte for visual aid */
         if (i == 7)
@@ -308,6 +322,7 @@ long long current_timestamp() {
     // printf("milliseconds: %lld\n", milliseconds);
     return milliseconds;
 }
+#endif
 
 /*
  * dissect/print packet
@@ -351,6 +366,9 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
         }
         else
             return;
+
+        message.ip_type = IPV6;
+
     }
     else if(ntohs(ethernet->ether_type) == ETHER_TYPE_IP)
     {
@@ -390,6 +408,8 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
             dbg_log("   * Invalid TCP header length: %u bytes\n", size_tcp);
             return;
         }
+
+        message.ip_type = IPV4;
              //printf("       From: %s\n", inet_ntoa(ip->ip_src));
             //printf("         To: %s\n", inet_ntoa(ip->ip_dst));
     }
@@ -401,7 +421,6 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
      *  OK, this packet is TCP.
      */
 
-
     //if(ip->ip_p == IPPROTO_TCP )
     {
         if ((tcp->th_flags & TH_SYN) != 0)
@@ -411,7 +430,6 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
                 dbg_log("  ----- Packet SYN_ACK FLAG \n");
                 message.mesg_type = 1;
                 sprintf(message.mac,"%02x:%02x:%02x:%02x:%02x:%02x", ethernet->ether_dhost[0],ethernet->ether_dhost[1],ethernet->ether_dhost[2],ethernet->ether_dhost[3],ethernet->ether_dhost[4],ethernet->ether_dhost[5]);
-
                 allowAck += 5;
                 dbg_log("  ----- Packet SYN_ACK FLAG allowAck %d\n", allowAck);
 
@@ -421,9 +439,6 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
                 message.mesg_type = 1;
                 dbg_log("  ------  Packet SYN FLAG -----\n");
                 sprintf(message.mac,"%02x:%02x:%02x:%02x:%02x:%02x", ethernet->ether_shost[0],ethernet->ether_shost[1],ethernet->ether_shost[2],ethernet->ether_shost[3],ethernet->ether_shost[4],ethernet->ether_shost[5]);
-
-            
-
             }
 
             //exit(0);
@@ -476,10 +491,11 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 
             message.tv_sec = header->ts.tv_sec;
             message.tv_usec = header->ts.tv_usec;
+            message.th_dport = ntohs(tcp->th_dport);
 
             dbg_log(" -------------- Ready to send ------------------ \n");
-            dbg_log("Data Received is : %d \nFLAG: %d \nACK: %u\nSeq %u\n TS: %lld.%06lld\n", 
-                        message.mesg_type,message.th_flag,message.th_ack,message.th_seq,message.tv_sec,message.tv_usec);
+            dbg_log("Data Received is : %d \nFLAG: %d \nACK: %u\nSeq %u\n Port %d\n TS: %lld.%06lld\n", 
+                        message.mesg_type,message.th_flag,message.th_ack,message.th_seq,message.th_dport,message.tv_sec,message.tv_usec);
             // msgsnd to send message
             msgsnd(msgid, &message, sizeof(message), 0);
       
@@ -504,6 +520,7 @@ usage (char *progname, int status)
               "-f,   IP Family\n"\
               "-D,   Debug Mode\n"\
               "-F,   Log File\n"\
+              "-p,   Lan prefix\n"\
               "-h,   Display this help and exit\n"\
               "\n",progname
               );
@@ -524,7 +541,7 @@ int checkIfExists(char* iface_name)
             close(fd);
             return INTERFACE_NOT_EXIST;
         }
-}
+    }
     close(fd);
     return INTERFACE_EXIST;
 }
@@ -536,6 +553,12 @@ int validateParams(Param data)
         printf("Interface validation failed\n");
         return VALIDATION_FAILED;
     }
+        if ( strlen(data.lan_prefix) == 0 )
+    {
+        printf("Lan Prefix validation failed\n");
+        return VALIDATION_FAILED;
+    }
+
     if ( (strcmp(data.family,"IPv4") != 0) && (strcmp(data.family,"IPv6") != 0 ) )
     {
         printf("Ip family validation failed\n");
@@ -549,7 +572,7 @@ int main(int argc, char **argv)
 {
     char errbuf[PCAP_ERRBUF_SIZE];      /* error buffer */
     pcap_t *handle;             /* packet capture handle */
-    char filter_exp[100] = " "; 
+    char filter_exp[256]; 
     //char filter_exp[] = ""; 
     //char filter_exp[] = "tcp[tcpflags] & (tcp-syn|tcp-ack) != 0";       /* filter expression [2] and [18] */
     struct bpf_program fp;          /* compiled filter program (expression) */
@@ -571,7 +594,7 @@ int main(int argc, char **argv)
 
     while (1)
     {
-      opt = getopt_long (argc, argv, "Dhi:f:F:", longopts, 0);
+      opt = getopt_long (argc, argv, "Dhi:f:F:p:", longopts, 0);
 
       if (opt == EOF)
       {
@@ -588,19 +611,15 @@ int main(int argc, char **argv)
             case 'f':
               //data.family = optarg;
               strcpy(data.family,optarg);
-              if(strcmp(data.family,"IPv4") == 0)
-              {
-                strcpy(filter_exp,"tcp[tcpflags] & (tcp-syn|tcp-ack) != 0");
-              }
-              else if(strcmp(data.family,"IPv6") == 0)
-              {
-                strcpy(filter_exp,"(ip6[6] = 6) and (ip6[53] & 0x12 != 0)");
-              }
               break;
             case 'F':
              // data.log_file = optarg;
               strcpy(data.log_file,optarg);
               logFp = fopen(data.log_file,"w+");
+              break;
+            case 'p':
+             // data.log_file = optarg;
+              strcpy(data.lan_prefix,optarg);
               break;
             case 'h':
               usage (progname, 0);
@@ -608,7 +627,6 @@ int main(int argc, char **argv)
             default:
               usage (progname, 1);
               break;  
-
         }
     }
     printf("data.dbg_mode is %d\n",data.dbg_mode);
@@ -622,21 +640,42 @@ int main(int argc, char **argv)
         exit(1);
 
     }
+    memset(filter_exp,0,sizeof(filter_exp));
+    if(strcmp(data.family,"IPv4") == 0)
+    {
+        if (strlen(data.lan_prefix) != 0 )
+            snprintf(filter_exp,sizeof(filter_exp),"tcp[tcpflags] & (tcp-syn|tcp-ack) != 0 and net %s",data.lan_prefix);
+        else
+            snprintf(filter_exp,sizeof(filter_exp),"tcp[tcpflags] & (tcp-syn|tcp-ack) != 0");
+    }
+    else if(strcmp(data.family,"IPv6") == 0)
+    {
+        if (strlen(data.lan_prefix) != 0 )
+            snprintf(filter_exp,sizeof(filter_exp),"(ip6[6] = 6) and (ip6[53] & 0x12 != 0) and net %s",data.lan_prefix);
+        else
+            snprintf(filter_exp,sizeof(filter_exp),"(ip6[6] = 6) and (ip6[53] & 0x12 != 0)");
+    }
+
     /* get network number and mask associated with capture device */
     if (pcap_lookupnet(data.interface_name, &net, &mask, errbuf) == -1) {
         fprintf(stderr, "Couldn't get netmask for device %s: %s\n",
+            data.interface_name, errbuf);
+
+        dbg_log("Couldn't get netmask for device %s: %s\n",
             data.interface_name, errbuf);
         net = 0;
         mask = 0;
     }
 
     /* print capture info */
-    printf("Filter expression: %s\n", filter_exp);
+    dbg_log("Filter expression: %s\n", filter_exp);
 
     /* open capture device */
     handle = pcap_open_live(data.interface_name, SNAP_LEN, 1, 1000, errbuf);
     if (handle == NULL) {
         fprintf(stderr, "Couldn't open device %s: %s\n", data.interface_name, errbuf);
+                dbg_log("Couldn't open device %s: %s\n", data.interface_name, errbuf);
+
         exit(EXIT_FAILURE);
     }
      //printf("Timestamp type = %d\n",pcap_set_tstamp_type(handle, PCAP_TSTAMP_ADAPTER));
@@ -644,12 +683,17 @@ int main(int argc, char **argv)
     /* make sure we're capturing on an Ethernet device [2] */
     if (pcap_datalink(handle) != DLT_EN10MB) {
         fprintf(stderr, "%s is not an Ethernet\n", data.interface_name);
+                dbg_log("%s is not an Ethernet\n", data.interface_name);
+
         exit(EXIT_FAILURE);
     }
 
     /* compile the filter expression */
     if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
         fprintf(stderr, "Couldn't parse filter %s: %s\n",
+            filter_exp, pcap_geterr(handle));
+
+        dbg_log("Couldn't parse filter %s: %s\n",
             filter_exp, pcap_geterr(handle));
         exit(EXIT_FAILURE);
     }
@@ -658,17 +702,18 @@ int main(int argc, char **argv)
     if (pcap_setfilter(handle, &fp) == -1) {
         fprintf(stderr, "Couldn't install filter %s: %s\n",
             filter_exp, pcap_geterr(handle));
+
+        dbg_log("Couldn't install filter %s: %s\n",
+            filter_exp, pcap_geterr(handle));
         exit(EXIT_FAILURE);
     }
 
-    
     // ftok to generate unique key
     key = ftok("progfile", 65);
   
     // msgget creates a message queue
     // and returns identifier
     msgid = msgget(key, 0666 | IPC_CREAT);
-
 
     /* now we can set our callback function */
     pcap_loop(handle, num_packets, got_packet, NULL);
@@ -682,6 +727,6 @@ int main(int argc, char **argv)
         fclose(logFp);
         logFp=NULL;
     }
-    printf("\nCapture complete.\n");
+    dbg_log("\nCapture complete.\n");
     return 0;
 }

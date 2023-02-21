@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = TandDSsp dmltad util xle_selfheal ImageHealthChecker LowLatency
+SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker 
 
 if WITH_GTEST_SUPPORT
 SUBDIRS += test

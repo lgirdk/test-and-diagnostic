@@ -45,6 +45,9 @@
 #endif
 #include "stdlib.h"
 #include "safec_lib_common.h"
+#include "ServiceMonitor.h"
+#include "tad_rbus_apis.h"
+#include "lowlatency_apis.h"
 
 PDSLH_CPE_CONTROLLER_OBJECT     pDslhCpeController      = NULL;
 PCOMPONENT_COMMON_DM            g_pComponent_Common_Dm  = NULL;
@@ -53,7 +56,7 @@ PCCSP_CCD_INTERFACE             pTadCcdIf               = (PCCSP_CCD_INTERFACE  
 PCCC_MBI_INTERFACE              pTadMbiIf               = (PCCC_MBI_INTERFACE          )NULL;
 char                            g_Subsystem[32]         = {0};
 BOOL                            g_bActive               = FALSE;
-
+//extern int Xnet_Services_Config_Init();
 int  cmd_dispatch(int  command)
 {
     char*                           pParamNames[]      = {"Device.IP.Diagnostics.IPPing."};
@@ -331,6 +334,7 @@ int main(int argc, char* argv[])
 #ifdef INCLUDE_BREAKPAD
     breakpad_ExceptionHandler();
 #else
+
     signal(SIGTERM, sig_handler);
     signal(SIGINT, sig_handler);
     /*signal(SIGCHLD, sig_handler);*/
@@ -346,12 +350,16 @@ int main(int argc, char* argv[])
     signal(SIGHUP, sig_handler);
     signal(SIGPIPE, SIG_IGN);
 #endif
-
 //    if (write_pid_file("/var/tmp/CcspTandDSsp.pid") != 0)
 //        fprintf(stderr, "%s: fail to write PID file\n", argv[0]);
 
     cmd_dispatch('e');
 
+    /* Init TAD Rbus */
+    tadRbusInit();
+
+    // Init LatencyMeasurent
+    LatencyMeasurementInit();
     if ( bRunAsDaemon )
     {
         while(1)
