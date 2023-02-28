@@ -17,6 +17,12 @@
  * limitations under the License.
 */
 
+/*
+Based on code from https://www.tcpdump.org/other/sniffex.c which is:
+Copyright (c) 2002 Tim Carsten
+Copyright (c) 2005 The Tcpdump Group
+Licensed under a BSD-3 style license reproduced in LICENSE
+*/
 
 #include <pcap.h>
 #include <stdio.h>
