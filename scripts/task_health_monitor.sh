@@ -1411,16 +1411,7 @@ if [ "$thisWAN_TYPE" != "EPON" ] && [ "$HOTSPOT_ENABLE" = "true" ] && [ ! -f /tm
 
     HOTSPOT_PID=$(busybox pidof CcspHotspot)
     if [ "$HOTSPOT_PID" = "" ]; then
-        isMaptEnabled=$(syscfg get MAPT_Enable)
-        MaptMode=$(sysevent get map_transport_mode)
-        if [ "true" = "$isMaptEnabled" ] && [ "MAPT" = "$MaptMode" ]; then
-            echo "Task_health_monitor.sh : Do not enable Hotspot in Mapt mode"
-            skipHotspot=true
-        else
-            echo "Task_health_monitor.sh : Mapt mode is not enabled, restart Hotspot"
-            skipHotspot=false
-        fi
-        if [ ! -f /tmp/tunnel_destroy_flag ] && [ "$skipHotspot" != "true" ]; then
+        if [ ! -f /tmp/tunnel_destroy_flag ] ; then
 
             primary=$(sysevent get hotspotfd-primary)
             secondary=$(sysevent get hotspotfd-secondary)

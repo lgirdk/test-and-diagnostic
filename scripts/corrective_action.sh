@@ -769,18 +769,12 @@ resetNeeded()
             elif [ "$ProcessName" = "CcspHotspot" ]; then
                 CCSPHOTSPOT_PID=$(busybox pidof CcspHotspot)
                 if [ "$CCSPHOTSPOT_PID" = "" ]; then
-                    isMaptEnabled=$(syscfg get MAPT_Enable)
-                    MaptMode=$(sysevent get map_transport_mode)
-                    if [ "true" = "$isMaptEnabled" ] && [ "MAPT" = "$MaptMode" ]; then
-                        echo "Corrective_Action.sh : Do not enable Hotspot in Mapt mode"
-                    else
-                        echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
-                        t2CountNotify "WIFI_SH_hotspot_restart"
-                        echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
-                        cd /usr/ccsp/hotspot
-                        $BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
-                        cd -
-                    fi
+                    echo_t "RDKB_PROCESS_CRASHED : CcspHotspot_process is not running, need restart"
+                    t2CountNotify "WIFI_SH_hotspot_restart"
+                    echo_t "RDKB_SELFHEAL : Resetting process $ProcessName"
+                    cd /usr/ccsp/hotspot
+                    $BINPATH/CcspHotspot -subsys $Subsys > /dev/null &
+                    cd -
                 else
                     echo_t "RDKB_SELFHEAL : $ProcessName is already running"
                 fi
