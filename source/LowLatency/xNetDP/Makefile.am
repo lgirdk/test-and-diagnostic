@@ -1,4 +1,3 @@
-##########################################################################
 # If not stated otherwise in this file or this component's Licenses.txt
 # file the following copyright and licenses apply:
 #
@@ -16,8 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
-SUBDIRS = TandDSsp dmltad util xle_selfheal ImageHealthChecker LowLatency
+bin_PROGRAMS = xNetDP
+xNetDP_CPPFLAGS = -I${PKG_CONFIG_SYSROOT_DIR}$(includedir)/rbus $(CPPFLAGS)
+xNetDP_SOURCES = xNetDP.c
+xNetDP_LDFLAGS = -lpcap -lrbus
 
-if WITH_GTEST_SUPPORT
-SUBDIRS += test
-endif
+

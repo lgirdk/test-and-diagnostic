@@ -92,6 +92,9 @@ AC_CONFIG_FILES(
         source-arm/diagnostic/BbhmDiagIpPing/Makefile
         source-arm/dmltad/Makefile
         source/ImageHealthChecker/Makefile
+  source/LowLatency/xNetSniffer/Makefile 
+  source/LowLatency/Makefile
+  source/LowLatency/xNetDP/Makefile
 	Makefile
 )
 
