@@ -4244,7 +4244,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
-                elif [ "$BOX_TYPE" = "MV1" ]; then
+                elif [ "$FIRMWARE_TYPE" = "OFW" ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
