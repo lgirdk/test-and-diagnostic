@@ -1333,6 +1333,37 @@ self_heal_ccspwifissp_hung()
 self_heal_nas_ip()
 {
     case $SELFHEAL_TYPE in
+                "TCCBR")
+                    hostapd_enable=$(ps | grep -i hostapd | grep -v grep)
+                    if [ "$hostapd_enable" != "" ]; then #issue seen only in selfheal, also hostapd should run while checking this, hence this condition
+                        if [ "$MODEL_NUM" == "CGA4332COM" ] ; then
+                              WAN_INTERFACE=`sysevent get current_wan_ifname`
+                           if [ "$WAN_INTERFACE" = "" ]; then
+                                WAN_INTERFACE="erouter0"
+                           fi
+                           WAN_IPv4_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6" | \
+                                     cut -d":" -f2 | cut -d" " -f1)
+                           LPBK_IPv4_Addr=127.0.0.1
+
+                           for i in 9 10; do  #checking xfisec hotspot 
+                              SSID_ENABLE=$(dmcli eRT getv Device.WiFi.SSID.$i.Enable | grep "value" | \
+                                       cut -f3 -d":" | cut -f2 -d" ")
+                              WL_INTERFACE=$(dmcli eRT getv Device.WiFi.SSID.$i.Alias | grep "value" | \
+                                        cut -f3 -d":" | cut -f2 -d" ")
+
+                              if [ "$SSID_ENABLE" = "true" ]; then #check only if VAP is enabled
+                                  IP_SEC=`hostapd_cli -i $WL_INTERFACE get own_ip_addr 2>&1`
+                                  if [ "$IP_SEC" != "Failed to connect to hostapd - wpa_ctrl_open: No such file or directory" ]; then
+                                     if [ $IP_SEC == $LPBK_IPv4_Addr ]; then
+                                        echo_t "[RDKB_AGG_SELFHEAL] : NAS IP of VAP $i is Loopback, changing to WAN IP"
+                                        hostapd_cli -i $WL_INTERFACE set own_ip_addr $WAN_IPv4_Addr > /dev/null 2>&1 & #hostapd set only when NAS IP is loopback
+                                     fi
+                                  fi
+                              fi
+                           done
+                        fi
+                    fi
+                ;;
                 "SYSTEMD")
              wifi_process=$(ps | grep -i "OneWifi" | grep -v grep | head -n1 | cut -d" " -f14 | \
              cut -d"/" -f4)
