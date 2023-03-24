@@ -213,6 +213,47 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
+
+check_xle_dns_route()
+{
+    need_dns_correction=0
+    cellular_manager_gw=$(sysevent get cellular_wan_v4_gw)
+    if [ "$cellular_manager_gw" != "0.0.0.0" ] && [ -n "$cellular_manager_gw" ] ;then
+        cellular_manager_dns1=$(sysevent get cellular_wan_v4_dns1)
+        cellular_manager_dns2=$(sysevent get cellular_wan_v4_dns2)
+        route_table=$(ip route show)
+        dns1_missing=$(echo "$route_table" | grep $cellular_manager_dns1)
+        dns2_missing=$(echo "$route_table" | grep $cellular_manager_dns2)
+        if [ -z "$dns1_missing" ] || [ -z "$dns2_missing" ] ;then
+            echo_t "[RDKB_SELFHEAL] : Ipv4 dns route missing"
+            need_dns_correction=1
+        fi
+    fi
+
+    cellular_manager_dns1=""
+    cellular_manager_dns2=""
+    dns1_missing=""
+    dns2_missing=""
+
+    cellular_manager_v6_gw=$(sysevent get cellular_wan_v6_gw | cut -d "/" -f 1)
+    if [ "$cellular_manager_v6_gw" != "::" ] && [ -n "$cellular_manager_v6_gw" ] ;then
+        cellular_manager_dns1=$(sysevent get cellular_wan_v6_dns1)
+        cellular_manager_dns2=$(sysevent get cellular_wan_v6_dns2)
+
+        routev6_table=$(ip -6 route show)
+        dns1_missing=$(echo "$routev6_table" | grep $cellular_manager_dns1)
+        dns2_missing=$(echo "$routev6_table" | grep $cellular_manager_dns2)
+        if [ -z "$dns1_missing" ] || [ -z "$dns2_missing" ] ;then
+            echo_t "[RDKB_SELFHEAL] : Ipv6 dns route missing"
+            need_dns_correction=1
+        fi
+    fi
+    if [ $need_dns_correction -eq 1 ];then
+        echo_t "[RDKB_SELFHEAL] : Correcting dns route"
+        sysevent set correct_dns_route
+    fi
+
+}
 xle_device_mode=0
 if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
     # checking device mode
@@ -223,6 +264,8 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
         echo_t "[RDKB_SELFHEAL] : Device is in router mode"
     fi
   /usr/bin/xle_selfheal $xle_device_mode &
+
+  check_xle_dns_route
 fi
 if [ "$xle_device_mode" = "0" ]; then
     #Find the DHCPv6 client type 
