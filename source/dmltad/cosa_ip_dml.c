@@ -7242,15 +7242,35 @@ X_RDKCENTRAL_COM_RxTxStats_GetParamStringValue
     PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
     PCOSA_DML_DIAG_RXTX_STATS     pRxTXStats   = (PCOSA_DML_DIAG_RXTX_STATS) pMyObject->pRxTxStats;
     errno_t                         rc           = -1;
-    if (strcmp(ParamName, "InterfaceList") == 0)
+    int                             ind          = -1;
+
+    rc = strcmp_s("InterfaceList", strlen("InterfaceList"), ParamName, &ind );
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
     {
         /* collect value */
         rc = strcpy_s(pValue, sizeof(pRxTXStats->Interfacelist), pRxTXStats->Interfacelist);
-        if(rc != EOK)
+        if (rc != EOK)
         {
             ERR_CHK(rc);
             return -1;
         }
+        *pUlSize = AnscSizeOfString(pValue);
+        return 0;
+    }
+
+    rc = strcmp_s("PortList", strlen("PortList"), ParamName, &ind );
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
+    {
+        /* collect value */
+        rc = strcpy_s(pValue, sizeof(pRxTXStats->Portlist), pRxTXStats->Portlist);
+        if (rc != EOK)
+        {
+            ERR_CHK(rc);
+            return -1;
+        }
+        *pUlSize = AnscSizeOfString(pValue);
         return 0;
     }
 
@@ -7283,6 +7303,17 @@ X_RDKCENTRAL_COM_RxTxStats_SetParamStringValue
         CcspTraceInfo(("[%s] SET RxTx Stats Interfacelist:[ %s ]\n",__FUNCTION__,pRxTXStats->Interfacelist));
         return TRUE;
     }
+
+    if (strcmp(ParamName, "PortList") == 0)
+    {
+        rc = memset_s(pRxTXStats->Portlist, sizeof(pRxTXStats->Portlist), 0, sizeof(pRxTXStats->Portlist));
+        ERR_CHK(rc);
+        rc = strcpy_s(pRxTXStats->Portlist, sizeof(pRxTXStats->Portlist), pValue);
+        ERR_CHK(rc);
+        CcspTraceInfo(("[%s] SET RxTx Stats Portlist:[ %s ]\n",__FUNCTION__,pRxTXStats->Portlist));
+        return TRUE;
+    }
+
     AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     return FALSE;
 }
@@ -7358,6 +7389,7 @@ X_RDKCENTRAL_COM_RxTxStats_Commit
 {
 
     char Interfacelist[RXTX_INTFLIST_SZ]={0};
+    char Portlist[RXTX_PORTLIST_SZ]={0};
     errno_t rc = -1;
 
     PCOSA_DATAMODEL_DIAG        pMyObject   = (PCOSA_DATAMODEL_DIAG)g_pCosaBEManager->hDiag;
@@ -7367,7 +7399,7 @@ X_RDKCENTRAL_COM_RxTxStats_Commit
     {
         AnscTraceWarning(("%s syscfg_set failed  for Rx stats interface list\n",__FUNCTION__));
         /*Rollback to previous value if any*/
-        if((syscfg_get( NULL, "rxtxstats_interface_list", Interfacelist, sizeof(Interfacelist)) == 0 ) 
+        if((syscfg_get( NULL, "rxtxstats_interface_list", Interfacelist, sizeof(Interfacelist)) == 0)
                 && (Interfacelist[0] != '\0') )
         {
             AnscTraceWarning(("%s Roll back Interfacelist to previous value %s\n",__FUNCTION__,Interfacelist));
@@ -7376,6 +7408,21 @@ X_RDKCENTRAL_COM_RxTxStats_Commit
         }
         return 1;
     }
+
+    if (syscfg_set_commit(NULL, "rxtxstats_port_list", pRxTXStats->Portlist) != 0)
+    {
+        AnscTraceWarning(("%s syscfg_set failed  for Rx stats port list\n",__FUNCTION__));
+        /*Rollback to previous value if any*/
+        if((syscfg_get( NULL, "rxtxstats_port_list", Portlist, sizeof(Portlist)) == 0)
+                && (Portlist[0] != '\0') )
+        {
+            AnscTraceWarning(("%s Roll back Portlist to previous value %s\n",__FUNCTION__,Portlist));
+            rc = strcpy_s(pRxTXStats->Portlist, sizeof(pRxTXStats->Portlist), Portlist);
+            ERR_CHK(rc);
+        }
+        return 1;
+    }
+
     return 0;
 }
 

@@ -35,7 +35,7 @@ endif
 
 RxTx100_SOURCES = rxtx_100.c
 RxTx100_CPPFLAGS = -I$(top_srcdir)/source -I$(top_srcdir)/source/util
-RxTx100_LDFLAGS = -lsyscfg -lsecure_wrapper -ltelemetry_msgsender
+RxTx100_LDFLAGS = -lsyscfg -lsecure_wrapper -ltelemetry_msgsender -lhal_platform
 if CORE_NET_LIB_FEATURE_SUPPORT
 RxTx100_LDFLAGS += -lnet
 endif

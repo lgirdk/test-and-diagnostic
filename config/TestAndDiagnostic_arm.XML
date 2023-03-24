@@ -874,6 +874,12 @@
                             <syntax>string</syntax>
                             <writable>true</writable>
                         </parameter>
+                        <parameter>
+                            <name>PortList</name>
+                            <type>string(256)</type>
+                            <syntax>string</syntax>
+                            <writable>true</writable>
+                        </parameter>
                     </parameters>
                 </object>
             </objects>

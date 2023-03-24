@@ -735,22 +735,23 @@ CosaDmlDiagGetARPTable
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
 
-/* To initialize Rxstats interface list, fetch from syscfg, if we have
+/* To initialize Rxstats interface and port list, fetch from syscfg, if we have
 entry copy to pRxTxStats*/
 
 ANSC_STATUS CosaDmlInitializeRxTxStats(PCOSA_DML_DIAG_RXTX_STATS pRxTxStats)
 {
-    char buf[RXTX_INTFLIST_SZ]={0};
+    char buf_interfacelist[RXTX_INTFLIST_SZ]={0};
+    char buf_portlist[RXTX_PORTLIST_SZ]={0};
     errno_t rc = -1;
 
     rc = memset_s(pRxTxStats->Interfacelist, sizeof(pRxTxStats->Interfacelist), 0, sizeof(pRxTxStats->Interfacelist));
     ERR_CHK(rc);
 
-    if (syscfg_get( NULL, "rxtxstats_interface_list", buf, sizeof(buf)) == 0)
+    if (syscfg_get( NULL, "rxtxstats_interface_list", buf_interfacelist, sizeof(buf_interfacelist)) == 0)
     {
-       if (buf[0] != '\0')
+       if (buf_interfacelist[0] != '\0')
        {
-            rc = strcpy_s(pRxTxStats->Interfacelist, sizeof(pRxTxStats->Interfacelist), buf);
+            rc = strcpy_s(pRxTxStats->Interfacelist, sizeof(pRxTxStats->Interfacelist), buf_interfacelist);
             ERR_CHK(rc);
             CcspTraceInfo(("[%s] RxTx Stats Interfacelist:[ %s ]\n",__FUNCTION__,pRxTxStats->Interfacelist));
        }
@@ -762,7 +763,23 @@ ANSC_STATUS CosaDmlInitializeRxTxStats(PCOSA_DML_DIAG_RXTX_STATS pRxTxStats)
         AnscTraceWarning(("%s syscfg_get failed  for RxTxStats Interfacelist\n",__FUNCTION__));
     }
 
+    rc = memset_s(pRxTxStats->Portlist, sizeof(pRxTxStats->Portlist), 0, sizeof(pRxTxStats->Portlist));
+    ERR_CHK(rc);
+
+    if (syscfg_get( NULL, "rxtxstats_port_list", buf_portlist, sizeof(buf_portlist)) == 0)
+    {
+       if (buf_portlist[0] != '\0')
+       {
+            rc = strcpy_s(pRxTxStats->Portlist, sizeof(pRxTxStats->Portlist), buf_portlist);
+            ERR_CHK(rc);
+            CcspTraceInfo(("[%s] RxTx Stats Portlist:[ %s ]\n",__FUNCTION__,pRxTxStats->Portlist));
+       }
+       else
+           CcspTraceInfo(("[%s] Syscfg RxTx Stats Portlist is empty\n",__FUNCTION__));
+    }
+    else
+    {
+        AnscTraceWarning(("%s syscfg_get failed for RxTxStats Portlist\n",__FUNCTION__));
+    }
     return ANSC_STATUS_SUCCESS;
 }
-
-
