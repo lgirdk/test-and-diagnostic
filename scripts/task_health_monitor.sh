@@ -2845,6 +2845,10 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         echo "$ssidEnable_2"
     fi
 
+    FILE_2G_HOSTAPD_RESTART_FLAG="/nvram/.restart_2G_hostapd_in_maintenace_window"
+    FILE_5G_HOSTAPD_RESTART_FLAG="/nvram/.restart_5G_hostapd_in_maintenace_window"
+    FILE_6G_HOSTAPD_RESTART_FLAG="/nvram/.restart_6G_hostapd_in_maintenace_window"
+
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
     if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED_2G -eq 0 ]; then
@@ -2865,6 +2869,33 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                             echo_t "[RDKB_SELFHEAL] : Both 2G Radio(Radio 1) and 2G Private SSID are in DOWN state"
                         else
                             echo_t "[RDKB_SELFHEAL] : 2G Radio(Radio 1) is in up state, only 2G Private SSID is in DOWN state"
+
+                            #### TCXB8-2119: 2G SSID down due to hostapd unresponsive
+                            if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                                buf=$(grep "2G hostapd is unresponsive" /rdklogs/logs/wifi_vendor_apps.log)
+                                if [[ "$buf" != "" ]]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : 2G hostapd is unresponsive"
+                                    if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "1" > "$FILE_2G_HOSTAPD_RESTART_FLAG"
+                                    else
+                                        echo "0" > "$FILE_2G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                fi
+                                if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
+                                    count=$(head -n1 "$FILE_2G_HOSTAPD_RESTART_FLAG" | sed -e 's/^[^0-9]*\([0-9][0-9]*\).*/\1/')
+                                    if [[ "$count" == "0" ]]; then
+                                        echo_t "[RDKB_SELFHEAL] : Resetting 2G hostapd now right away"
+                                        /usr/bin/wifi_setup.sh restart 0    # 0-2G, 1-5G, 2-6G
+                                    else
+                                        checkMaintenanceWindow
+                                        if [[ "$reb_window" == "1" ]]; then
+                                            echo_t "[RDKB_SELFHEAL] : Resetting 2G hostapd now within maintenance window"
+                                            /usr/bin/wifi_setup.sh restart 0    # 0-2G, 1-5G, 2-6G
+                                        fi
+                                    fi
+                                fi
+                            fi
+                            #### End of TCXB8-2119
                         fi
                     else
                         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2G Radio status."
@@ -2882,6 +2913,15 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
             t2CountNotify "WIFI_ERROR_DMCLI_crash_2G_Status"
             echo "$ssidStatus_2"
         fi
+    else
+        #### TCXB8-2119: 2G SSID down due to hostapd unresponsive
+        if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+            if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
+                echo_t "[RDKB_SELFHEAL] : 2G Private SSID is now up, removing $FILE_2G_HOSTAPD_RESTART_FLAG"
+                rm "$FILE_2G_HOSTAPD_RESTART_FLAG"
+            fi
+        fi
+        #### End of TCXB8-2119
     fi
 fi
 
