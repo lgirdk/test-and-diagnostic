@@ -856,6 +856,26 @@ if [ "$MODEL_NUM" = "TG3482G" ];then
 
 fi
 
+# XLE specific. Temporary selfheal for deleting extra APN profiles created for verizon network.
+if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
+    qmi_home_network=`qmicli -p -d /dev/cdc-wdm0 --nas-get-home-network | grep -i Verizon`
+    if [ "$qmi_home_network" != "" ];then
+		qmi_vzw_count=`qmicli -p -d /dev/cdc-wdm0 --device-open-proxy --wds-get-profile-list=3gpp | grep -i vzwinternet | wc -l`
+		echo_t "vzwinternet profile count : $qmi_vzw_count"
+		if [ "$qmi_vzw_count" != "1" ];then
+			qmicli -p -d /dev/cdc-wdm0 --wds-set-default-profile-number=3gpp,3
+			loop=1
+			while [ $loop -lt $qmi_vzw_count ]
+			do
+				profile_num=$((loop+6))
+				echo_t "Deleting profile : $profile_num"
+				qmicli --device=/dev/cdc-wdm0 --device-open-proxy --wds-delete-profile=3gpp,$profile_num
+				loop=$((loop+1))
+			done
+		fi
+	fi
+fi
+
 BBHM_CUR_PREV="/nvram/bbhm_cur_cfg.xml.prev"
 BBHM_BAK_PREV="/nvram/bbhm_bak_cfg.xml.prev"
 
