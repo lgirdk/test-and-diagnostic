@@ -2831,6 +2831,17 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                     echo_t "[RDKB_SELFHEAL] : Both 2G Radio(Radio 1) and 2G Private SSID are in DISABLED state"
                 else
                     echo_t "[RDKB_SELFHEAL] : 2G Radio(Radio 1) is Enabled, only 2G Private SSID is DISABLED"
+
+                    #### TCXB8-2152: 2G SSID disabled
+                    if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                        checkMaintenanceWindow
+                        if [[ "$reb_window" == "1" ]]; then
+                            echo_t "[RDKB_SELFHEAL] : Enabling 2G private SSID now within maintenance window"
+                            dmcli eRT setv Device.WiFi.SSID.1.Enable bool true
+                            dmcli eRT setv Device.WiFi.Radio.1.X_CISCO_COM_ApplySetting bool true
+                        fi
+                    fi
+                    #### End of TCXB8-2152
                 fi
              else
                 echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G Radio Enable"
