@@ -45,7 +45,7 @@
 #include "diag_inter.h"
 #include "safec_lib_common.h"
 
-#define PING_DEF_CNT        1
+#define PING_DEF_CNT        3
 #define PING_DEF_TIMO       10000       /* mSec */
 #define PING_DEF_SIZE       56
 
