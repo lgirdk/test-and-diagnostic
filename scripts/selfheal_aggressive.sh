@@ -1325,7 +1325,7 @@ self_heal_nas_ip()
                          if [ "$SSID_ENABLE" = "true" ]; then #check only if VAP is enabled
                              IP_SEC=`hostapd_cli -i $WL_INTERFACE get own_ip_addr 2>&1`
                              if [ "$IP_SEC" != "Failed to connect to hostapd - wpa_ctrl_open: No such file or directory" ]; then
-                                 if [ $IP_SEC == $LPBK_IPv4_Addr ]; then
+                                 if [ "$IP_SEC" = "$LPBK_IPv4_Addr" ]; then
                                      echo_t "[RDKB_AGG_SELFHEAL] : NAS IP of VAP $i is Loopback, changing to WAN IP"
                                      hostapd_cli -i $WL_INTERFACE set own_ip_addr $WAN_IPv4_Addr > /dev/null 2>&1 & #hostapd set only when NAS IP is loopback
                                  fi
