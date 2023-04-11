@@ -872,6 +872,8 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
 				qmicli --device=/dev/cdc-wdm0 --device-open-proxy --wds-delete-profile=3gpp,$profile_num
 				loop=$((loop+1))
 			done
+			echo_t "Restarting CellularManager on bootup"
+			systemctl restart RdkCellularManager.service
 		fi
 	fi
 fi
