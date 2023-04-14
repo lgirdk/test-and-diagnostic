@@ -864,6 +864,7 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
 		echo_t "vzwinternet profile count : $qmi_vzw_count"
 		if [ "$qmi_vzw_count" != "1" ];then
 			qmicli -p -d /dev/cdc-wdm0 --wds-set-default-profile-number=3gpp,3
+			qmicli -p -d /dev/cdc-wdm0 --wds-set-lte-attach-pdn-list=1,3
 			loop=1
 			while [ $loop -lt $qmi_vzw_count ]
 			do
