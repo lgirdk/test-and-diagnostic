@@ -205,9 +205,12 @@ BOOL Telemetry_Commit ( ANSC_HANDLE hInsContext )
                 CcspTraceInfo(("%s: Telemetry is enabled, downloading DCMConfigFile\n", __FUNCTION__));
                 CcspTraceInfo(("%s: Starting  Telemetry service\n", __FUNCTION__));
 #ifdef _PUMA6_ARM_
-                system("/usr/sbin/icu -R -B -p 192.168.254.253:2222; rpcclient2 '/usr/sbin/icu -R -B -p 192.168.254.254:2222'");
-#endif
+                system("nice -n 10 /usr/sbin/icu -R -B -p 192.168.254.253:2222 ; "
+                       "rpcclient2 '/usr/sbin/icu -R -B -p 192.168.254.254:2222' ; "
+                       "nice -n 10 /usr/bin/telemetry2_0 &");
+#else
                 system("/usr/bin/telemetry2_0 &");
+#endif
                 break;
             }
 	    case TELE_ST_STOP:
