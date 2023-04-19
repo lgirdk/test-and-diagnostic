@@ -154,7 +154,7 @@ runPingTest()
 
         IPv4_Gateway_addr=""
         IPv4_Gateway_addr=`sysevent get default_router`
-        
+	last_erouter_mode=`sysevent get last_erouter_mode` 
         IPv6_Gateway_addr=""
         erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d:`
 
@@ -326,7 +326,8 @@ runPingTest()
                   	 t2CountNotify "RF_ERROR_IPV4PingFailed"
                    	echo_t "PING_FAILED:$IPv4_Gateway_addr"
             fi
-                if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ]
+                if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ] && [ "$last_erouter_mode" -gt 1 ]
+
               	then
                   	 echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
 			 t2CountNotify "SYS_INFO_NoIPv6_Address"
@@ -379,7 +380,8 @@ runPingTest()
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
 		            t2CountNotify "RF_ERROR_IPV6PingFailed"
 		            echo_t "PING_FAILED:$IPv6_Gateway_addr"
-                else
+                elif [ $last_erouter_mode -gt 1 ]
+		then
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
 		    t2CountNotify "SYS_INFO_NoIPv6_Address"
                 fi
