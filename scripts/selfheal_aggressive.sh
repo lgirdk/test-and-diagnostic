@@ -1360,6 +1360,17 @@ self_heal_wifi()
     esac
 }
 
+self_heal_meshAgent ()
+{
+    cpu_max=20
+    mesh=`pidof meshAgent`
+    cpu=`top -n 1 | awk '/mesh/ {print $7}' | sed s/"%"//`
+    if [ ! -z "$cpu" ] && [ "$cpu" -gt "$cpu_max" ];then
+       echo_t "[RDKB_AGG_SELFHEAL] :meshAgent is consuming more CPU , restarting meshAgent CPU: $cpu"
+       systemctl restart meshAgent
+    fi
+}
+
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -1423,6 +1434,7 @@ do
     self_heal_ccspwifissp_hung
     self_heal_nas_ip
     self_heal_wifi
+    self_heal_meshAgent
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
