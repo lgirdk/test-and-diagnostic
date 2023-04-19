@@ -153,10 +153,21 @@ runPingTest()
 
 
         IPv4_Gateway_addr=""
-        IPv4_Gateway_addr=`sysevent get default_router`
-	last_erouter_mode=`sysevent get last_erouter_mode` 
+	#LTE-1335 ping to IPv4 address should be xb's br-403 IPV4 for xle.
+	if [ "$BOX_TYPE" = "WNXL11BWL" ] 
+	then
+		IPv4_Gateway_addr=`ip route show default | grep $WAN_INTERFACE | awk '{print $3}'`
+		echo_t "RDKB_SELFHEAL : $WAN_INTERFACE IPv4 address is $IPv4_Gateway_addr"		
+	else
+        	IPv4_Gateway_addr=`sysevent get default_router`
+	fi
+
         IPv6_Gateway_addr=""
-        erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d:`
+        #LTE-1335 ping Ipv6 not needed for XLE.
+	IPv6_Gateway_addr_global=""
+	if [ "$BOX_TYPE" != "WNXL11BWL" ]
+        then
+	erouterIP6=`ifconfig $WAN_INTERFACE | grep inet6 | grep Global | head -n1 | awk '{print $(NF-1)}' | cut -f1 -d:`
 
         if [ "$erouterIP6" != "" ]
         then
@@ -215,7 +226,7 @@ runPingTest()
               IPv6_Gateway_addr=`echo "$routeEntry" | grep lladdr |cut -f1 -d ' '` 	
     	   fi
 	fi	
-
+	fi #LTE-133 ping to ipv6 not needed for xle.
     if [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] ||  [ "$BOX_TYPE" = "SR213" ]
     then
         IPv6_Gateway_addr=`ip -6 neigh show | grep $WAN_INTERFACE | grep lladdr |cut -f1 -d ' '`
@@ -255,6 +266,9 @@ runPingTest()
         fi
     fi
 
+    	#LTE-1335 ping to ipv6 not needed for xle.
+	if [ "$BOX_TYPE" != "WNXL11BWL" ]
+	then
 	if [ "$IPv6_Gateway_addr" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ]
 	then
 		for IPv6_Gateway_addr in $IPv6_Gateway_addr
@@ -303,7 +317,7 @@ runPingTest()
 			ping6_failed=1
 		fi
 	fi
-
+	fi #LTE-1335 Ping to ipv6 not needed for xle.
     # For HUB4/SR300/SE501/SR213, Using IPOE Health Check Status
     if [ "$IPv6_Gateway_addr" != "" ] && ([ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ])
     then
@@ -326,6 +340,10 @@ runPingTest()
                   	 t2CountNotify "RF_ERROR_IPV4PingFailed"
                    	echo_t "PING_FAILED:$IPv4_Gateway_addr"
             fi
+	    	#LTE-1335 Ping to ipv6 not needed for xle.
+	        if [ "$BOX_TYPE" != "WNXL11BWL" ]
+		then
+	    	last_erouter_mode=$(sysevent get last_erouter_mode)
                 if [ "$IPv6_Gateway_addr" == "" ] && [ "$IPv6_Gateway_addr_global" == "" ] && [ "$last_erouter_mode" -gt 1 ]
 
               	then
@@ -335,8 +353,9 @@ runPingTest()
                       echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
                       t2CountNotify "RF_ERROR_IPV6PingFailed"
                       echo_t "PING_FAILED:$IPv6_Gateway_addr"
-            fi
- 
+                fi
+		fi #LTE-1335 Ping to ipv6 not needed for xle.
+	 				
 		# check if erouter0 is up
 		echo_t "RDKB_SELFHEAL : checking $WAN_INTERFACE status"
 		ifconfig $WAN_INTERFACE
@@ -373,7 +392,8 @@ runPingTest()
 			echo_t "RDKB_SELFHEAL : Taking corrective action"
 			resetNeeded "" PING
 		fi
-	elif [ "$ping6_success" -ne 1 ]
+	#LTE-1335 ping to ipv6 not needed for xle.
+	elif [ "$ping6_success" -ne 1 ] && [ "$BOX_TYPE" != "WNXL11BWL" ]
 	then
                 if [ "$IPv6_Gateway_addr" != "" ] || [ "$IPv6_Gateway_addr_global" != "" ]
                 then
@@ -394,8 +414,12 @@ runPingTest()
 	else
 		echo_t "[RDKB_SELFHEAL] : GW IP Connectivity Test Successfull"
 		echo_t "[RDKB_SELFHEAL] : IPv4 GW  Address is:$IPv4_Gateway_addr"
+		#LTE-1335  Ping to ipv6 not needed for xle.
+		if [ "$BOX_TYPE" != "WNXL11BWL" ]
+		then		
 		echo_t "[RDKB_SELFHEAL] : IPv6 GW  Address is:$IPv6_Gateway_addr"
 		echo_t "[RDKB_SELFHEAL] : IPv6 GW global Address is:$IPv6_Gateway_addr_global"
+		fi
 	fi	
 
 	ping4_success=0
@@ -572,7 +596,20 @@ do
 		then
 			WAN_INTERFACE_IPV4="map0"
 		fi
-		runPingTest
+		
+		#LTE-1335 runPingTest needs to be run only in extender mode for xle.
+		if [ "$BOX_TYPE" = "WNXL11BWL" ]
+		then
+			xle_device_mode=`syscfg get Device_Mode`
+			if [ "$xle_device_mode" -eq "1" ]; then
+				echo_t "RDKB_SELFHEAL : Device is in Extender mode, calling runPingTest."
+				runPingTest
+			else
+				echo_t "RDKB_SELFHEAL : Device is in Gateway mode, runPingTest is not needed."
+			fi
+		else
+			runPingTest
+		fi
 		runDNSPingTest
 	fi
 
