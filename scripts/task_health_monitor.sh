@@ -2782,6 +2782,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         ssidStatus_5=$(dmcli eRT getv Device.WiFi.SSID.2.Status)
         isExecutionSucceed=$(echo "$ssidStatus_5" | grep "Execution succeed")
         if [ "$isExecutionSucceed" != "" ]; then
+            FILE_5G_HOSTAPD_RESTART_FLAG="/nvram/.restart_5G_hostapd_in_maintenace_window"
 
             isUp=$(echo "$ssidStatus_5" | grep "Up")
             if [ "$isUp" = "" ]; then
@@ -2797,6 +2798,40 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                         else
                             echo_t "[RDKB_SELFHEAL] : 5G Radio(Radio 2) is in up state, only 5G Private SSID is in DOWN state"
                         fi
+
+                            #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
+                            if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                                buf=$(grep "5G hostapd is unresponsive" /rdklogs/logs/wifi_vendor_apps.log)
+                                if [[ "$buf" != "" ]]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : 5G hostapd is unresponsive"
+                                    if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "1" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    else
+                                        echo "0" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                else
+                                    # The log of "5G hostapd is unresponsive" may have been uploaded; therefore, no longer available.
+                                    # Perform the following only one time after detecting the SSID Status is Down
+                                    if [ ! -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "0" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                fi
+                                if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                                    count=$(head -n1 "$FILE_5G_HOSTAPD_RESTART_FLAG" | sed -e 's/^[^0-9]*\([0-9][0-9]*\).*/\1/')
+                                    if [[ "$count" == "0" ]]; then
+                                        echo_t "[RDKB_SELFHEAL] : Resetting 5G hostapd now right away"
+                                        echo "1" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                        /usr/bin/wifi_setup.sh restart 1    # 0-2G, 1-5G, 2-6G
+                                    else
+                                        checkMaintenanceWindow
+                                        if [[ "$reb_window" == "1" ]]; then
+                                            echo_t "[RDKB_SELFHEAL] : Resetting 5G hostapd now within maintenance window"
+                                            /usr/bin/wifi_setup.sh restart 1    # 0-2G, 1-5G, 2-6G
+                                        fi
+                                    fi
+                                fi
+                            fi
+                            #### End of TCXB8-2214
                     else
                         echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G Radio status."
                         echo "$radioStatus_5"
@@ -2807,6 +2842,16 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 5G status."
                     echo "$ssidStatus_5"
                 fi
+            else
+                #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
+                # 5G SSID is up, remove the hostapd restart flag
+                if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                    if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                        echo_t "[RDKB_SELFHEAL] : 5G Private SSID is now up, removing $FILE_5G_HOSTAPD_RESTART_FLAG"
+                        rm "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                    fi
+                fi
+                #### End of TCXB8-2214
             fi
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 5G status."
@@ -2856,16 +2901,13 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
         echo "$ssidEnable_2"
     fi
 
-    FILE_2G_HOSTAPD_RESTART_FLAG="/nvram/.restart_2G_hostapd_in_maintenace_window"
-    FILE_5G_HOSTAPD_RESTART_FLAG="/nvram/.restart_5G_hostapd_in_maintenace_window"
-    FILE_6G_HOSTAPD_RESTART_FLAG="/nvram/.restart_6G_hostapd_in_maintenace_window"
-
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
     if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED_2G -eq 0 ]; then
         ssidStatus_2=$(dmcli eRT getv Device.WiFi.SSID.1.Status)
         isExecutionSucceed_2=$(echo "$ssidStatus_2" | grep "Execution succeed")
         if [ "$isExecutionSucceed_2" != "" ]; then
+            FILE_2G_HOSTAPD_RESTART_FLAG="/nvram/.restart_2G_hostapd_in_maintenace_window"
 
             isUp=$(echo "$ssidStatus_2" | grep "Up")
             if [ "$isUp" = "" ]; then
@@ -2891,11 +2933,19 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                                     else
                                         echo "0" > "$FILE_2G_HOSTAPD_RESTART_FLAG"
                                     fi
+                                else
+                                    #### TCXB8-2182 2G private SSID down but the log of "hostapd is unresponsive" may have been uploaded
+                                    # Perform the following one time after detecting the interface is down
+                                    if [ ! -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "0" > "$FILE_2G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                    #### TCXB8-2182 2G private SSID down
                                 fi
                                 if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
                                     count=$(head -n1 "$FILE_2G_HOSTAPD_RESTART_FLAG" | sed -e 's/^[^0-9]*\([0-9][0-9]*\).*/\1/')
                                     if [[ "$count" == "0" ]]; then
                                         echo_t "[RDKB_SELFHEAL] : Resetting 2G hostapd now right away"
+                                        echo "1" > "$FILE_2G_HOSTAPD_RESTART_FLAG"
                                         /usr/bin/wifi_setup.sh restart 0    # 0-2G, 1-5G, 2-6G
                                     else
                                         checkMaintenanceWindow
@@ -2918,21 +2968,22 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                     echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking 2.4G status."
                     echo "$ssidStatus_2"
                 fi
+            else
+                #### TCXB8-2119: 2G SSID down due to hostapd unresponsive
+                # 2G SSID is up, remove the hostapd restart flag
+                if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                    if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
+                        echo_t "[RDKB_SELFHEAL] : 2G Private SSID is now up, removing $FILE_2G_HOSTAPD_RESTART_FLAG"
+                        rm "$FILE_2G_HOSTAPD_RESTART_FLAG"
+                    fi
+                fi
+                #### End of TCXB8-2119
             fi
         else
             echo_t "[RDKB_PLATFORM_ERROR] : dmcli crashed or something went wrong while checking 2.4G status."
             t2CountNotify "WIFI_ERROR_DMCLI_crash_2G_Status"
             echo "$ssidStatus_2"
         fi
-    else
-        #### TCXB8-2119: 2G SSID down due to hostapd unresponsive
-        if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
-            if [ -f "$FILE_2G_HOSTAPD_RESTART_FLAG" ]; then
-                echo_t "[RDKB_SELFHEAL] : 2G Private SSID is now up, removing $FILE_2G_HOSTAPD_RESTART_FLAG"
-                rm "$FILE_2G_HOSTAPD_RESTART_FLAG"
-            fi
-        fi
-        #### End of TCXB8-2119
     fi
 fi
 
