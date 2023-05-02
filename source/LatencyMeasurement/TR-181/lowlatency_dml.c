@@ -52,6 +52,14 @@ LatencyMeasure_GetParamBoolValue
 		return TRUE;
 	}
 
+	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable", TRUE))
+	{
+		if (!LowLatency_Get_Parameter_Struct_Value(LL_PERCENTILECALC_ENABLE, pBool)) {
+			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
+			return FALSE;
+		}
+		return TRUE;
+	}
 	CcspTraceWarning(("Unsupported parameter '%s'\n", pParamName));
 
     return FALSE;
@@ -79,6 +87,15 @@ LatencyMeasure_SetParamBoolValue
 	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_IPv6Enable", TRUE))
     {
 		if (0 != LowLatency_Set_IPv6Enable(bValue)) {
+			CcspTraceError(("%s result: value set failed, pParamName='%s'\n", __FUNCTION__, pParamName));
+			return FALSE;
+		}
+		return TRUE;
+    }
+
+	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable", TRUE))
+    {
+		if (0 != LowLatency_Set_PercentileCalc_Enable(bValue)) {
 			CcspTraceError(("%s result: value set failed, pParamName='%s'\n", __FUNCTION__, pParamName));
 			return FALSE;
 		}

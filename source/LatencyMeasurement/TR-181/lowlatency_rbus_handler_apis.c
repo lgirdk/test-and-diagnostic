@@ -38,7 +38,7 @@ rbusDataElement_t LatencyMeasurementRbusDataElements[] =
 	/* RBUS_BOOLEAN */
 	{LM_IPv4Enable, RBUS_ELEMENT_TYPE_PROPERTY, {TestDiagnostic_LatencyMeasure_GetBoolHandler, TestDiagnostic_LatencyMeasure_SetBoolHandler, NULL, NULL, NULL, NULL}},
 	{LM_IPv6Enable, RBUS_ELEMENT_TYPE_PROPERTY, {TestDiagnostic_LatencyMeasure_GetBoolHandler, TestDiagnostic_LatencyMeasure_SetBoolHandler, NULL, NULL, NULL, NULL}},
-	
+	{LM_PERCENTILECALC_ENABLE, RBUS_ELEMENT_TYPE_PROPERTY, {TestDiagnostic_LatencyMeasure_GetBoolHandler, TestDiagnostic_LatencyMeasure_SetBoolHandler, NULL, NULL, NULL, NULL}},
 	/* RBUS_UINT32 */
 	{LM_TCP_ReportInterval, RBUS_ELEMENT_TYPE_PROPERTY, {TestDiagnostic_LatencyMeasure_GetUintHandler, TestDiagnostic_LatencyMeasure_SetUintHandler, NULL, NULL, NULL, NULL}},
 

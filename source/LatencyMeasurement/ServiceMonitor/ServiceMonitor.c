@@ -40,6 +40,7 @@ pthread_cond_t Monitor_cond=PTHREAD_COND_INITIALIZER;
 char IPv6_addr[ARRAY_LEN],IPv4_addr[ARRAY_LEN];
 int curr_wan_mode=0;
 char current_wan_ifname[64]={0};
+bool Percentile_Enable=false;
 int IPv4PID=-1,IPV6PID=-1,DP_PID=-1;
 void Get_IPv4_addr( );
 static int sysevent_fd_g = -1;
@@ -177,7 +178,7 @@ void MonitorLatencyMeasurementServices()
 			{
 				CcspTraceInfo(("%s: Reporting interval is updated, restarting xNetDP service\n", __FUNCTION__));
 				v_secure_system("killall xNetDP");
-				v_secure_system("/usr/bin/xNetDP -t 1 -i %d -n %s &",ReportInterval,report_name);
+				v_secure_system("/usr/bin/xNetDP -t 1 -i %d -n %s  &",ReportInterval,report_name);
 				CheckLatencyMeasurementServiceStatus(DP_SERVICE,ServicePID);
 				DP_PID=atoi(ServicePID);
 			}	
@@ -514,6 +515,8 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 	sysevent_setnotification(sysevent_fd, sysevent_token,"current_wan_mode_update",  &interface_asyncid);
 	sysevent_set_options(sysevent_fd, sysevent_token, LATENCY_MEASUREMENT_DISABLE, TUPLE_FLAG_EVENT);
 	sysevent_setnotification(sysevent_fd, sysevent_token,LATENCY_MEASUREMENT_DISABLE,  &interface_asyncid);
+	sysevent_set_options(sysevent_fd, sysevent_token,"LatencyMeasure_PercentileCalc_Enable",TUPLE_FLAG_EVENT);
+	sysevent_setnotification(sysevent_fd, sysevent_token,"LatencyMeasure_PercentileCalc_Enable",  &interface_asyncid);
 	/*Get_IPv4_addr();LATENCY_MEASUREMENT_DISABLE
 	sysevent_get(sysevent_fd, sysevent_token, "lan_prefix", IPv6_addr, sizeof(IPv6_addr));*/
 	while(1)
@@ -581,10 +584,10 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 					strncpy(IPv6_addr,value,sizeof(IPv6_addr)-1);
 				}
 			}
-			else if(strcmp(name,"current_wan_ifname")==0)
+			else if((strcmp(name,"current_wan_ifname")==0)||(strcmp(name,"LatencyMeasure_PercentileCalc_Enable")==0))
 			{
 				CcspTraceInfo(("%s current_wan_ifname %s value:%s\n",__func__,current_wan_ifname,value));
-				if(strcmp(value,current_wan_ifname)!=0)
+				if((strcmp(value,current_wan_ifname)!=0)||(atoi(value)!=Percentile_Enable))
 				{
 					Stop_all_LatencyMeasurement_Services();
 					/*******************start the xnet services *****/
@@ -593,6 +596,7 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 						SendConditional_pthread_cond_signal();
 					}
 					strncpy(current_wan_ifname,value,sizeof(current_wan_ifname)-1);
+					Percentile_Enable=atoi(value);
 				}
 			}
 			else if(strcmp(name,"current_wan_mode_update")==0)

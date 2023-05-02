@@ -19,7 +19,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sysevent/sysevent.h>
+#include <sys/sysinfo.h>
 #include "syscfg/syscfg.h"
+#include <sys/statvfs.h>
 #include "safec_lib_common.h"
 #include "lowlatency_rbus_handler_apis.h"
 #include "lowlatency_apis.h"
@@ -30,13 +33,15 @@ lowLatencyInfo LowLatencyInfo;
 
 char *g_pTCPStatsReport = NULL;
 int latencyMeasurementCount=0;
-
+static int sysevent_fd 	  = -1;
+static token_t sysevent_token = 0;
 void LatencyMeasurementInit()
 {
 	char Count[ARRAY_LEN];
 	//int latencyMeasurementCount=0;
 	LatencyMeasurementRbusInit();
 	initLatencyMeasurementInfo();
+	LatencyMeasurement_SyseventInit();
 	syscfg_get(NULL,LATENCY_MEASUREMENT_ENABLE_COUNT, Count, sizeof(Count));
 	latencyMeasurementCount=atoi(Count);
 	if(latencyMeasurementCount>0)
@@ -57,7 +62,7 @@ void initLatencyMeasurementInfo()
 	/* init RBUS_BOOLEAN parameters */
 	LowLatency_GetValueFromDb(IPV4_LATENCY_MEASUREMENT_ENABLE, &(LowLatencyInfo.IPv4Enable), RBUS_BOOLEAN, SYSCFG_DB);
 	LowLatency_GetValueFromDb(IPV6_LATENCY_MEASUREMENT_ENABLE, &(LowLatencyInfo.IPv6Enable), RBUS_BOOLEAN, SYSCFG_DB);
-	
+	LowLatency_GetValueFromDb(PERCENTILE_CALCULATION_ENABLE, &(LowLatencyInfo.PercentileCalc_Enable), RBUS_BOOLEAN, SYSCFG_DB);
 	/* init RBUS_UINT32 parameters */
 	LowLatency_GetValueFromDb(TCPREPORTINTERVAL, &(LowLatencyInfo.TCP_ReportInterval), RBUS_UINT32, SYSCFG_DB);
 }
@@ -99,6 +104,10 @@ LowLatency_Get_Parameter_Struct_Value
 			
 		case LL_TCP_REPORTINTERVAL:
             *((uint32_t*)pValue) = LowLatencyInfo.TCP_ReportInterval;
+			ret = TRUE;
+            break;
+		case LL_PERCENTILECALC_ENABLE:
+            *((uint32_t*)pValue) = LowLatencyInfo.PercentileCalc_Enable;
 			ret = TRUE;
             break;
 
@@ -227,4 +236,57 @@ int LowLatency_Set_TCP_Stats_Report(char* new_val) {
 		strcpy(g_pTCPStatsReport, new_val);	
 	}
 	return 0;
+}
+
+/*********************************************************************************
+
+	Api					-	int LowLatency_Set_PercentileCalc_Enable(bool new_val)
+	Function			-	LowLatency Set Functionality
+	Parameter			-	Device.QOS.X_RDK_LatencyMeasure.PercentileCalc_Enable
+	Supported Values	-	True or False
+
+**********************************************************************************/
+int LowLatency_Set_PercentileCalc_Enable(bool new_val)
+{
+	CcspTraceInfo(("'%s': setting value '%d'\n", __FUNCTION__, new_val));
+	// fetch previous value
+	bool old_val = LowLatencyInfo.PercentileCalc_Enable;
+	//update and publish the value
+	if (old_val != new_val) {
+		CcspTraceInfo(("%s: request for value update\n", __FUNCTION__));
+		if (!LowLatency_SetValueToDb(PERCENTILE_CALCULATION_ENABLE, new_val? "true":"false", SYSCFG_DB)) {
+			CcspTraceError(("%s: db set failed for value '%s'\n", __FUNCTION__, new_val? "true":"false"));
+			return 1;
+		}
+
+		if (0 > sysevent_fd)
+		{
+			CcspTraceError(("Failed to execute sysevent_set. sysevent_fd have no value:'%d'\n", sysevent_fd));
+			return FALSE;
+		}
+		
+		if(sysevent_set(sysevent_fd, sysevent_token, PERCENTILE_CALCULATION_ENABLE, new_val? "true":"false", 0) != 0)
+		{
+			CcspTraceError(("Failed to execute sysevent_set from %s:%d\n", __FUNCTION__, __LINE__));
+			return FALSE;
+		}
+		LowLatencyInfo.PercentileCalc_Enable = new_val;
+	}
+	return 0;
+}
+
+bool LatencyMeasurement_SyseventInit()
+{		
+	if (0 > sysevent_fd)
+	{
+		if ((sysevent_fd = sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION, "CcspTandDSsp", &sysevent_token)) < 0)
+		{
+			CcspTraceError(("Failed to open sysevent.\n"));
+			return FALSE;
+		}
+		CcspTraceInfo(("sysevent_open success.\n"));
+		return TRUE;
+	}
+	CcspTraceInfo(("Failed to open sysevent. sysevent_fd already have a value '%d'\n", sysevent_fd));
+	return FALSE;
 }

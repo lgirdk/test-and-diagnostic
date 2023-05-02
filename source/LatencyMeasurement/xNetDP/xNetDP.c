@@ -40,9 +40,18 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <errno.h>
-
+#include <math.h>
 #include <rbus/rbus.h>
-
+#include "syscfg/syscfg.h"
+#define ADD_MAX_SAMPLE 10
+#define MAX_SAMPLE 50
+#define MIN_SAMPLE 10
+#define swap(T, x, y) \
+    {                 \
+        T tmp = x;    \
+        x = y;        \
+        y = tmp;      \
+    }
 static rbusHandle_t bus_handle_rbus = NULL;
 
 pthread_mutex_t latency_report_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -64,7 +73,7 @@ pthread_mutex_t latency_report_lock = PTHREAD_MUTEX_INITIALIZER;
 
 #define TRUE 1
 #define FALSE 0
-
+#define BUF_SIZE 200
 enum ip_family
 {
     IPV4=0,
@@ -108,6 +117,17 @@ typedef struct TCP_SNIFFER_ {
     u_int   ip_type;
     u_short th_dport;
 }TcpSniffer;
+typedef struct {
+	long long Samples[SIZE];
+	long long Samples_age[SIZE];
+	long long Number_of_Samples;
+	double Percentile;
+}Calt_Percentile_info;
+typedef enum{
+    LAN_PERCENTILE,
+    WAN_PERCENTILE
+}percentleType;
+
 msg message;
 u_int g_HashCount = 0;
 //msg PcktHashTable[SIZE];
@@ -212,6 +232,14 @@ typedef struct LatencyTable
     bool   bHasLatencyEntry;
     int port[MAX_PORTS];
     int num_of_ports;
+    long long wanSamples[BUF_SIZE];
+    long long lanSamples[BUF_SIZE];
+    long long SamplesAges[BUF_SIZE];
+    long long Num_of_Sample;
+    long long SampleAge;
+    long long NthMaxValue;
+    int atFirstInitTime;
+    Calt_Percentile_info Percentile_info[2];
 }LatencyTable;
 
 #define MAX_NUM_OF_CLIENTS 100
@@ -220,6 +248,121 @@ LatencyTable Ipv4HashLatencyTable[MAX_NUM_OF_CLIENTS];
 LatencyTable Ipv6HashLatencyTable[MAX_NUM_OF_CLIENTS];
 
 #define FILTER_BUF_SIZE 128
+#define PERCENTILE_CALCULATION_ENABLE 		"LatencyMeasure_PercentileCalc_Enable"
+bool PercentileCalculationEnable=0;
+int PercentileValue=95;
+int print_Samples(long long arr[],long long age[], long long size);
+/****************percentile calculation code part***********************************/
+/*********************************************************************************
+	Api					-	bool isLowLatency_PercentileCalculationEnable()
+	Function			-	check percentile calculation enable or not 
+	Supported Values	-	true or false
+**********************************************************************************/
+bool isLowLatency_PercentileCalculationEnable()
+{
+    char out_value[64] = {0};
+	memset(out_value, 0, sizeof(out_value));
+    dbg_log("Enter %s :\n",__FUNCTION__);
+    if(!syscfg_get(NULL, PERCENTILE_CALCULATION_ENABLE, out_value, sizeof(out_value))) {
+        if(strncmp(out_value,"true",strlen("true"))==0)
+        {
+            return true;
+        }
+	}
+    return false;
+}
+// Partition the array using the last element as the pivot
+int partition(int low, int high,Calt_Percentile_info *Percentile_info) {
+	long long pivot = Percentile_info->Samples[high];
+	int i = (low - 1);
+    //printf("partition:%d\n",t++);
+	for (int j = low; j <= high - 1; j++) {
+		if (Percentile_info->Samples[j] < pivot) {
+			i++;
+			swap(long long,Percentile_info->Samples[i],Percentile_info->Samples[j]);
+			swap(int,Percentile_info->Samples_age[i],Percentile_info->Samples_age[j]);
+		}
+	}
+	swap(long long,Percentile_info->Samples[i + 1], Percentile_info->Samples[high]);
+	swap(int,Percentile_info->Samples_age[i+1],Percentile_info->Samples_age[high]);
+	return (i + 1);
+}
+/*********************************************************************************
+	Api					-	int Sorting_ascending_order(int low, int high,Calt_Percentile_info *Percentile_info)
+	Function			-	sort the samples in ascending order
+	arg			        -	arg3->lower sample value arg3->higer sample value 
+                            arg3-> Percentile structure 
+	Supported Values	-	calculated percentile value
+**********************************************************************************/
+int Sorting_ascending_order(int low, int high,Calt_Percentile_info *Percentile_info)
+{
+    // Function to implement Quick Sort
+	if (low < high) {
+		int pi = partition(low, high,Percentile_info);
+		Sorting_ascending_order( low, pi - 1,Percentile_info);
+		Sorting_ascending_order( pi + 1, high,Percentile_info);
+	}
+	return 0;
+}
+/*********************************************************************************
+	Api					-	long long Calculate_Percentile(Calt_Percentile_info *Percentile_info)
+	Function			-	Remove old latency samples and add new samples
+	arg			        -	arg1-> Percentile structure 
+	Supported Values	-	calculated percentile value
+**********************************************************************************/
+long long Calculate_Percentile(Calt_Percentile_info *Percentile_info)
+{
+	int percentile_index=0;
+	Percentile_info->Percentile=(Percentile_info->Percentile/100);
+	dbg_log("before sort :\n");
+	dbg_log("%d\n",print_Samples(Percentile_info->Samples,Percentile_info->Samples_age,Percentile_info->Number_of_Samples));
+	Sorting_ascending_order(0,(Percentile_info->Number_of_Samples-1),Percentile_info);
+	//dbg_log("Percentile_info.Percentile:%f\n",Percentile_info->Percentile);
+	dbg_log("after sort :\n");
+	dbg_log("%d\n",print_Samples(Percentile_info->Samples,Percentile_info->Samples_age, Percentile_info->Number_of_Samples));
+	percentile_index=(int)round(Percentile_info->Number_of_Samples*Percentile_info->Percentile);
+
+	dbg_log("Percentile_info.Samples:%lld,percentile_index:%d \n",Percentile_info->Samples[percentile_index-1],(percentile_index-1));
+    return Percentile_info->Samples[percentile_index-1];
+}
+/*********************************************************************************
+	Api					-	int Remove_OldSample_Add_NewSample(Calt_Percentile_info *Percentile_info,long long New_Sample[],
+                                    long long SamplesAge[],int NthMaxValue)
+	Function			-	Remove old latency samples and add new samples
+	arg			        -	arg1-> Percentile structure arg2 -> new latency sample 
+                            arg3 -> new latency sample age arg4-> Nth max
+	Supported Values	-	True or False
+**********************************************************************************/
+int Remove_OldSample_Add_NewSample(Calt_Percentile_info *Percentile_info,long long New_Sample[],long long SamplesAge[],long long NthMaxValue)
+{
+    int Sample_Index=0,index=0;
+    dbg_log("NthMaxValue:%lld\n",NthMaxValue);
+    for(Sample_Index=0;Sample_Index<Percentile_info->Number_of_Samples;Sample_Index++)
+    {
+        if(Percentile_info->Samples_age[Sample_Index] < NthMaxValue)
+        {
+			dbg_log("old Samples :%lld New_Sample: %lld\n", Percentile_info->Samples[Sample_Index],New_Sample[index]);
+            Percentile_info->Samples[Sample_Index]=New_Sample[index];
+            Percentile_info->Samples_age[Sample_Index]=SamplesAge[index++];
+        }
+    }
+    return 0;
+}
+/*********************************************************************************
+	Api					-	int print_Samples(long long arr[],long long age[], int size)
+	Function			-	Prints debug logs regarding Latency samples and respective age
+	arg			        -	arg1-> Latency sample arg2 -> latency sample age arg3-> length
+	Supported Values	-	True or False
+**********************************************************************************/
+int print_Samples(long long arr[],long long age[], long long size)
+{
+    int i;
+    for (i = 0; i < size; i++)
+        dbg_log("sample:%lld age:%lld \n", arr[i],age[i]);
+    dbg_log("\n");
+    return 0;
+}
+/************************/
 static unsigned int hash_latency (const char *str)
 {
     unsigned int hash = 5381 % MAX_NUM_OF_CLIENTS;
@@ -355,6 +498,7 @@ void display() {
 
             if(hashArray[i].key != 0)
             {
+
            /*  printf("\nHashTable - %d MAC: %s   Latency   : %lld.%06ld\n        SYN FLAG    : %d ACK: %lu Seq: %lu TS: %lld.%06ld\n        SYN ACK FLAG: %d ACK: %lu Seq: %lu TS: %lld.%06ld\n", 
                     i,hashArray[i].mac,hashArray[i].latency_sec,hashArray[i].latency_usec,
                     hashArray[i].TcpInfo[INDEX_SYN].th_flag,hashArray[i].TcpInfo[INDEX_SYN].th_ack,hashArray[i].TcpInfo[INDEX_SYN].th_seq,hashArray[i].TcpInfo[INDEX_SYN].tv_sec,hashArray[i].TcpInfo[INDEX_SYN].tv_usec,
@@ -417,8 +561,62 @@ void UpdateReportingTable(int hashIndex)
 
     if ( index < MAX_NUM_OF_CLIENTS )
     {
+       
         if (strcmp(hashLatencyTable[index].mac,hashArray[hashIndex].mac) == 0)
         {
+
+            if(PercentileCalculationEnable)
+            {
+                hashLatencyTable[index].wanSamples[hashLatencyTable[index].Num_of_Sample]=latency_in_microsecond(hashArray[hashIndex].latency_sec,hashArray[hashIndex].latency_usec);
+                hashLatencyTable[index].lanSamples[hashLatencyTable[index].Num_of_Sample]=latency_in_microsecond(hashArray[hashIndex].Lan_latency_sec,hashArray[hashIndex].Lan_latency_usec);
+                dbg_log("lanSamples:%lld wanSamples:%lld \n", hashLatencyTable[index].lanSamples[ hashLatencyTable[index].Num_of_Sample],hashLatencyTable[index].wanSamples[ hashLatencyTable[index].Num_of_Sample]);
+                hashLatencyTable[index].SamplesAges[ hashLatencyTable[index].Num_of_Sample++]= hashLatencyTable[index].SampleAge++;
+                dbg_log("hashIndex:%d,index:%d,atFirstInitTime:%d Num_of_Sample:%lld\n",hashIndex,index, hashLatencyTable[index].atFirstInitTime, hashLatencyTable[index].Num_of_Sample);
+                if(( hashLatencyTable[index].atFirstInitTime==0)&&( hashLatencyTable[index].Num_of_Sample<=MAX_SAMPLE &&  hashLatencyTable[index].Num_of_Sample>=MIN_SAMPLE))
+                {
+                    dbg_log("SynAck_95_PercentileLatency: \n");
+                    /***** pecentaile calculation for wan******/
+                    memcpy( hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Samples,hashLatencyTable[index].wanSamples,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    memcpy( hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Samples_age,hashLatencyTable[index].SamplesAges,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Number_of_Samples= hashLatencyTable[index].Num_of_Sample;
+                    hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Percentile=PercentileValue;
+                    hashLatencyTable[index].SynAckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE]);
+                    /***** pecentaile calculation for lan******/
+                    dbg_log("Ack_95_PercentileLatency: \n");
+                    memcpy( hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Samples,hashLatencyTable[index].lanSamples,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    memcpy( hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Samples_age,hashLatencyTable[index].SamplesAges,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Number_of_Samples= hashLatencyTable[index].Num_of_Sample;
+                    hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Percentile=PercentileValue;
+                    hashLatencyTable[index].AckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE]);
+                    dbg_log("Index:%d Ack_Percentile_95:%lld SyncACk_Percentile_95::%lld\n",index,hashLatencyTable[index].AckPercentileLatency,hashLatencyTable[index].SynAckPercentileLatency);
+                    if( hashLatencyTable[index].Num_of_Sample>=MAX_SAMPLE)
+                    {
+                        hashLatencyTable[index].atFirstInitTime=1;
+                        memset(hashLatencyTable[index].wanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                        memset(hashLatencyTable[index].lanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                        hashLatencyTable[index].Num_of_Sample=0;
+                    }
+                }
+                else if(( hashLatencyTable[index].Num_of_Sample>=ADD_MAX_SAMPLE)&&( hashLatencyTable[index].atFirstInitTime==1))
+                {
+                    hashLatencyTable[index].NthMaxValue= hashLatencyTable[index].NthMaxValue+ hashLatencyTable[index].Num_of_Sample;
+                    dbg_log("SynAck_95_PercentileLatency: \n");
+                    Remove_OldSample_Add_NewSample(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE],hashLatencyTable[index].wanSamples,hashLatencyTable[index].SamplesAges, hashLatencyTable[index].NthMaxValue);
+                    hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Percentile=PercentileValue;
+                    hashLatencyTable[index].SynAckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE]);
+                    /***** pecentaile calculation for lan******/
+                    dbg_log("Ack_95_PercentileLatency: \n");
+                    Remove_OldSample_Add_NewSample(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE],hashLatencyTable[index].lanSamples,hashLatencyTable[index].SamplesAges, hashLatencyTable[index].NthMaxValue);
+                    hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Percentile=PercentileValue;
+                    hashLatencyTable[index].AckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE]);
+                    dbg_log("index:%d Ack_Percentile_95:%lld SynACk_Percentile_95::%lld\n",index,hashLatencyTable[index].AckPercentileLatency, hashLatencyTable[index].SynAckPercentileLatency);
+                    memset(hashLatencyTable[index].wanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    memset(hashLatencyTable[index].lanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
+                    hashLatencyTable[index].Num_of_Sample=0;
+                }
+            }
+
+
             dbg_log("Before comparing latency, SynAckMinLatency is %lld.%06lld,SynAckMinLatency %lld.%06lld\n",
                         hashLatencyTable[index].SynAckMinLatency_sec,hashLatencyTable[index].SynAckMinLatency_usec,
                         hashLatencyTable[index].SynAckMaxLatency_sec,hashLatencyTable[index].SynAckMaxLatency_usec 
@@ -501,6 +699,9 @@ void UpdateReportingTable(int hashIndex)
         hashLatencyTable[index].AckPercentileLatency = -1 ;
 
         hashLatencyTable[index].bHasLatencyEntry = true ;
+        hashLatencyTable[index].wanSamples[ hashLatencyTable[index].Num_of_Sample]=latency_in_microsecond(hashArray[hashIndex].latency_sec,hashArray[hashIndex].latency_usec);
+        hashLatencyTable[index].lanSamples[ hashLatencyTable[index].Num_of_Sample]=latency_in_microsecond(hashArray[hashIndex].Lan_latency_sec,hashArray[hashIndex].Lan_latency_usec);
+        hashLatencyTable[index].SamplesAges[ hashLatencyTable[index].Num_of_Sample++]= hashLatencyTable[index].SampleAge++;        
     }
 
 LOG_MINMAX_LATENCY :
@@ -603,7 +804,6 @@ void* LatencyReportThread(void* arg)
     int num_of_ipv6_clients = 0;  
     char *report_buf = NULL ;
     char *tmp_report_buf = NULL ;
-
     report_buf = (char*) malloc (MAX_REPORT_SIZE);
     if (report_buf == NULL )
         return NULL;
@@ -665,6 +865,7 @@ void* LatencyReportThread(void* arg)
                     if((byteCount+tempCount+port_sz_count) < (MAX_REPORT_SIZE-FILTER_BUF_SIZE))
                     {
                         byteCount += tempCount+port_sz_count;
+                        dbg_log("Flush Ipv4HashLatencyTable\n");
                         memset(&Ipv4HashLatencyTable[i],0,sizeof(LatencyTable));
                         strcat(tmp_report_buf,str);
                         strcat(tmp_report_buf,port_buff);
@@ -728,6 +929,7 @@ void* LatencyReportThread(void* arg)
                     if((byteCount+tempCount+port_sz_count) < (MAX_REPORT_SIZE-FILTER_BUF_SIZE))
                     {
                         byteCount += tempCount+port_sz_count;
+                        dbg_log("Flush Ipv6HashLatencyTable\n");
                         memset(&Ipv6HashLatencyTable[i],0,sizeof(LatencyTable));
                         strcat(tmp_report_buf,str);
                         strcat(tmp_report_buf,port_buff);
@@ -778,9 +980,8 @@ void* LatencyReportThread(void* arg)
             dbg_log("Report generated - Dislpay\n");
             display();     
         }
-
     }
-
+   
     if (report_buf != NULL )
     {
         free(report_buf);
@@ -1002,7 +1203,7 @@ int main(int argc,char **argv)
 
       char *progname;
   char *p;
-
+ 
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
   if(argc == 1 )
@@ -1102,7 +1303,7 @@ int main(int argc,char **argv)
     //if((msgid = msgget(12345, 0666 | IPC_CREAT)) == -1)
     //perror( "server: Failed to create message queue:" );
 
-  
+    PercentileCalculationEnable=isLowLatency_PercentileCalculationEnable();
     // msgrcv to receive message
     //msgrcv(msgid, &message, sizeof(message), 1, 0);
     while(msgrcv(msgid, &message, sizeof(message), 1, 0))

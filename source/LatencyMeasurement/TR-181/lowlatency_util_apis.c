@@ -45,6 +45,8 @@ char* getLatencyParamName(lowLatencyParam_t param) {
             return LM_TCP_ReportInterval;
 		case LL_TCP_STATS_REPORT:
             return LM_TCP_Stats_Report;
+		case LL_PERCENTILECALC_ENABLE:
+			return LM_PERCENTILECALC_ENABLE;
         default:
             return NULL;
     }

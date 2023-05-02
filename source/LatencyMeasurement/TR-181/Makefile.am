@@ -36,7 +36,7 @@ libLowLatency_la_CPPFLAGS = -I$(top_srcdir)/source/LatencyMeasurement/ \
 
 libLowLatency_la_SOURCES = lowlatency_util_apis.c lowlatency_apis.c lowlatency_dml.c lowlatency_rbus_handler_apis.c
 
-libLowLatency_la_LDFLAGS = -lccsp_common -lsyscfg -lrbus
+libLowLatency_la_LDFLAGS = -lccsp_common -lsyscfg -lrbus -lsysevent
 
 libLowLatency_DEPENDENCIES = ${top_builddir}/source/LatencyMeasurement/ServiceMonitor/libCcspTandDSsp_ServiceMonitor.la
 						

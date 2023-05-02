@@ -29,7 +29,7 @@
 #define LM_IPv6Enable "Device.QOS.X_RDK_LatencyMeasure_IPv6Enable"
 #define LM_TCP_ReportInterval "Device.QOS.X_RDK_LatencyMeasure_TCP_ReportInterval"
 #define LM_TCP_Stats_Report "Device.QOS.X_RDK_LatencyMeasure_TCP_Stats_Report"
-
+#define LM_PERCENTILECALC_ENABLE "Device.QOS.X_RDK_LatencyMeasure_PercentileCalc_Enable"
 int LatencyMeasurementRbusInit(); 
 
 rbusError_t TestDiagnostic_LatencyMeasure_GetBoolHandler(rbusHandle_t handle, rbusProperty_t property, rbusGetHandlerOptions_t* opts);

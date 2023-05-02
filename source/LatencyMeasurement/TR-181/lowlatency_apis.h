@@ -36,11 +36,13 @@
 #define	TCPREPORTINTERVAL					"LatencyMeasure_TCPReportInterval"
 #define	LATENCY_MEASUREMENT_ENABLE_COUNT	"LatencyMeasure_EnableCount"
 #define LATENCY_MEASUREMENT_DISABLE			"LatencyMeasure_Disable"
+#define PERCENTILE_CALCULATION_ENABLE 		"LatencyMeasure_PercentileCalc_Enable"
 typedef struct 
 _lowLatencyInfo
 {
 	bool IPv4Enable;
 	bool IPv6Enable;
+	bool PercentileCalc_Enable;
 	uint32_t TCP_ReportInterval;
 	uint32_t LatencyMeasurementEnableCount;
 
@@ -52,7 +54,8 @@ typedef enum _lowLatencyParam
 	LL_IPv4ENABLE = 0,
 	LL_IPv6ENABLE,
 	LL_TCP_REPORTINTERVAL,
-	LL_TCP_STATS_REPORT
+	LL_TCP_STATS_REPORT,
+	LL_PERCENTILECALC_ENABLE
 } lowLatencyParam_t;
 
 typedef enum _paramDbName
@@ -64,7 +67,7 @@ typedef enum _paramDbName
 
 void LatencyMeasurementInit();
 void initLatencyMeasurementInfo(); 
-
+bool LatencyMeasurement_SyseventInit();
 /****************************************************************************
 
 	Api				-	int 
@@ -137,6 +140,15 @@ LowLatency_Set_TCP_ReportInterval
 
 **********************************************************************************/
 int LowLatency_Set_TCP_Stats_Report(char* new_val); 
+/*********************************************************************************
+
+	Api					-	int LowLatency_Set_PercentileCalc_Enable(bool new_val)
+	Function			-	LowLatency Set Functionality
+	Parameter			-	Device.QOS.X_RDK_LatencyMeasure_PercentileCalc_Enable
+	Supported Values	-	True or False
+
+**********************************************************************************/
+int LowLatency_Set_PercentileCalc_Enable(bool new_val);
 
 #endif
 
