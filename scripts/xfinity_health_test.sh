@@ -19,27 +19,46 @@
 #######################################################################################
 source /usr/ccsp/tad/corrective_action.sh
 xfinitytestlogfile=/rdklogs/logs/xfinityTestAgent.log
-xfinityenable=`psmcli get dmsb.hotspot.enable`
-testenable=`syscfg get XfinityHealthCheckEnable`
-testcadence=`syscfg get XfinityHealthCheckCadence`
-daystotest=`syscfg get XfinityHealthCheckRemDays`
-donetoday=`syscfg get XfinityHealthCheckDone`
+xfinityenable="`psmcli get dmsb.hotspot.enable`"
+testenable="`syscfg get XfinityHealthCheckEnable`"
+testcadence="`syscfg get XfinityHealthCheckCadence`"
+daystotest="`syscfg get XfinityHealthCheckRemDays`"
+donetoday="`syscfg get XfinityHealthCheckDone`"
 grestatus="`ip link show gretap0 | grep DOWN`"
+daystillreset="`syscfg get XfinityHealthCheckReset`"
 
 if [ "$xfinityenable" = "1" ] && [ "$testenable" = "true" ];then
     checkMaintenanceWindow
     if [ $reb_window -eq 1 ];then
         if [ "$donetoday" = "false" ];then
+            if [ "$daystillreset" = "0" ]; then
+                syscfg set XfinityHealthCheckReset $((testcadence-1))
+                RAND_DAY=$((RANDOM%testcadence))
+                syscfg set XfinityHealthCheckRemDays $RAND_DAY
+                daystotest=$RAND_DAY
+                echo `date` ": HOTSPOT_HEALTHCHECK : Resetting the cycle. Healthcheck will be done in $RAND_DAY day(s)" >> $xfinitytestlogfile
+            else
+                echo `date` ": HOTSPOT_HEALTHCHECK : $daystillreset day(s) left in current cycle" >> $xfinitytestlogfile
+                syscfg set XfinityHealthCheckReset  $((--daystillreset))
+            fi
             if [ "$daystotest" = "0" ];then
                 if [ "$grestatus" = "" ];then
-                    /usr/bin/xfinitytest brTest 4091
+                    RAND_NUMBER=$((RANDOM<<15|RANDOM))
+                 # Start the test at a random time between 0 and 60M micro-seconds
+                    RAND_DELAY=$((RAND_NUMBER%60000000))
+                    usleep $RAND_DELAY
+                    if [ "`pidof xfinitytest`" != "" ] ; then
+                        echo `date` ": HOTSPOT_HEALTHCHECK : Healthcheck is Already running" >> $xfinitytestlogfile
+                    else
+                        /usr/bin/xfinitytest brTest 4091
+                    fi
                 else
                     echo `date` ": HOTSPOT_HEALTHCHECK : GRE tunnel is down" >> $xfinitytestlogfile
                 fi
-                syscfg set XfinityHealthCheckRemDays $((--testcadence));
+                syscfg set XfinityHealthCheckRemDays -1
             else
-                syscfg set XfinityHealthCheckRemDays $((--daystotest));
-                echo `date` ": HOTSPOT_HEALTHCHECK :" $daystotest "days till Healthcheck" >> $xfinitytestlogfile
+                echo `date` ": HOTSPOT_HEALTHCHECK : $daystotest day(s) till Healthcheck" >> $xfinitytestlogfile
+                syscfg set XfinityHealthCheckRemDays $((--daystotest))
             fi
             syscfg set XfinityHealthCheckDone true;syscfg commit
         fi
