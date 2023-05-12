@@ -30,7 +30,7 @@ extern "C" {
 #include "safec_lib_common.h"
 #include "cosa_wanconnectivity_apis.h"
 #include <rbus/rbus.h>
-#include "syscfg.h"
+#include <syscfg/syscfg.h>
 
 char                                g_Subsystem[32] = "eRT.";
 typedef ANSC_STATUS
