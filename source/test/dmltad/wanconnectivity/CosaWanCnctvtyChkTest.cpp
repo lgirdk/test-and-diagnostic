@@ -24,7 +24,7 @@ extern "C" {
 #include "safec_lib_common.h"
 #include "cosa_wanconnectivity_operations.h"
 #include <rbus/rbus.h>
-#include "syscfg.h"
+#include <syscfg/syscfg.h>
 #include <ifaddrs.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
