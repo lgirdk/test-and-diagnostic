@@ -55,7 +55,11 @@ fi
 WFO_ARG=
 # Skip first iteration since device would be still initializing.
 UPTIME=`cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1`
-if [ "$UPTIME" -gt 600 ]; then
+
+# Device reporting cpu issue, hence skipping for now : RDKB-49082 
+skip_blackbox=false
+if $skip_blackbox; then
+ if [ "$UPTIME" -gt 600 ]; then
     if [ "$MODEL_NUM" == "CGM4331COM" ] || [ "$MODEL_NUM" == "TG4482A" ]; then
         ACT_IFACE=`dmcli eRT getv Device.X_RDK_WanManager.CurrentActiveInterface | grep 'value: ' | cut -d':' -f3 | xargs`
         if [ "$ACT_IFACE" == "brRWAN" ]; then
@@ -73,4 +77,7 @@ if [ "$UPTIME" -gt 600 ]; then
         echo  "================== Periodic xmesh_diagnostics logging ==================" >> /rdklogs/logs/MeshBlackboxDumps.log
         xmesh_diagnostics -d $WFO_ARG
     fi
+ fi
+else 
+ echo  " Skipped periodic Xmesh checks: Unsupported Mode" >> /rdklogs/logs/MeshBlackbox.log
 fi
