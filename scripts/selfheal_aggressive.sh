@@ -717,7 +717,7 @@ self_heal_dibbler_server()
                         syscfg commit
                         sleep 2
                         #need to restart dhcp client to generate dibbler conf
-                        dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                        dibbler_client_enable="true"
                         if [ "$dibbler_client_enable" = "true" ]; then
                             Dhcpv6_Client_restart "dibbler-client" "Idle"
                         else
@@ -863,7 +863,7 @@ self_heal_dhcp_clients()
                     ;;
             esac
             rm -rf $DHCPV6_ERROR_FILE
-            dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+            dibbler_client_enable="true"
             if [ "$dibbler_client_enable" = "true" ]; then
                 Dhcpv6_Client_restart "dibbler-client" "Idle"
             else
@@ -1000,7 +1000,7 @@ self_heal_dhcp_clients()
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
                 UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
-                dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                dibbler_client_enable="true"
 
 		if ( ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                     check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
@@ -1168,7 +1168,7 @@ self_heal_dhcp_clients()
                         echo_t "Calling dibbler_starter.sh to restart dibbler-client "
                         sh /usr/ccsp/dibbler_starter.sh
                     else
-                        dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                        dibbler_client_enable="true"
                         if [ "$dibbler_client_enable" = "true" ]; then
                             Dhcpv6_Client_restart "dibbler-client" "Idle"
                         else
@@ -1278,7 +1278,7 @@ self_heal_dhcp_clients()
                 echo_t "Calling dibbler_starter.sh to restart dibbler-client "
                 sh /usr/ccsp/dibbler_starter.sh
             else
-                dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                dibbler_client_enable="true"
                 if [ "$dibbler_client_enable" = "true" ] && [ $DHCPV6C_STATUS != "false" ]; then
                     Dhcpv6_Client_restart "dibbler-client" "Idle"
                 else
