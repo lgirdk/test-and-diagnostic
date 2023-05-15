@@ -3683,7 +3683,7 @@ if [ "$xle_device_mode" -ne "1" ]; then
                     syscfg commit
                     sleep 2
                     #need to restart dhcp client to generate dibbler conf
-                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    dibbler_client_enable="true"
                     if [ $DHCPV6C_STATUS != "false" ]; then
                         if [ "$dibbler_client_enable" = "true" ]; then
                             Dhcpv6_Client_restart "dibbler-client" "Idle"
@@ -3873,7 +3873,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             ;;
         esac
         rm -rf $DHCPV6_ERROR_FILE
-        dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+        dibbler_client_enable="true"
         if [ "$dibbler_client_enable" = "true" ]; then
             Dhcpv6_Client_restart "dibbler-client" "Idle"
         else
@@ -3968,7 +3968,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
             UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
-            dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+            dibbler_client_enable="true"
 
             if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
                 check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
@@ -4098,7 +4098,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    dibbler_client_enable="true"
                     if [ "$dibbler_client_enable" = "true" ]; then
                         Dhcpv6_Client_restart "dibbler-client" "Idle"
                     else
@@ -4287,7 +4287,7 @@ case $SELFHEAL_TYPE in
                     echo "Calling dibbler_starter.sh to restart dibbler-client "
                     sh /usr/ccsp/dibbler_starter.sh
                 else
-                    dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                    dibbler_client_enable="true"
                     if [ "$dibbler_client_enable" = "true" ]; then
                         Dhcpv6_Client_restart "dibbler-client" "Idle"
                     else
