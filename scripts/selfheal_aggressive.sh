@@ -830,7 +830,7 @@ self_heal_dhcp_clients()
         if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
             case $SELFHEAL_TYPE in
                 "SYSTEMD")
-                    udhcpc_enable=`syscfg get UDHCPEnable_v2`
+                    udhcpc_enable="true"
                     if [ "$erouter0_up_check" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
@@ -924,7 +924,7 @@ self_heal_dhcp_clients()
         wan_dhcp_client_v6=1
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
+                UDHCPC_Enable="true"
                 dibbler_client_enable="true"
 
                 if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
