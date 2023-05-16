@@ -3983,7 +3983,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE"|"SYSTEMD")
-            UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
+            UDHCPC_Enable="true"
             dibbler_client_enable="true"
 
             if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
