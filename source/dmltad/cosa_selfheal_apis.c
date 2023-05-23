@@ -309,7 +309,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf ,sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Host_Dma", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->dma , sizeof(pCpuMemFragDma->dma), buf );
                 	ERR_CHK(rc);
@@ -318,7 +318,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Host_Dma32", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->dma32 , sizeof(pCpuMemFragDma->dma32), buf );
                 	ERR_CHK(rc);
@@ -327,7 +327,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Host_Normal", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->normal, sizeof(pCpuMemFragDma->normal), buf );
                 	ERR_CHK(rc);
@@ -336,7 +336,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Host_Highmem", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->highmem, sizeof(pCpuMemFragDma->highmem), buf );
                 	ERR_CHK(rc);
@@ -352,7 +352,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Peer_Dma", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->dma , sizeof(pCpuMemFragDma->dma), buf );
                 	ERR_CHK(rc);
@@ -361,7 +361,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Peer_Dma32", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                     rc = strcpy_s(pCpuMemFragDma->dma32 , sizeof(pCpuMemFragDma->dma32), buf );
                     ERR_CHK(rc);
@@ -370,7 +370,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Peer_Normal", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                     rc = strcpy_s(pCpuMemFragDma->normal , sizeof(pCpuMemFragDma->normal), buf );
                     ERR_CHK(rc);
@@ -379,7 +379,7 @@ void CosaDmlGetSelfHealCpuMemFragData(PCOSA_DML_CPU_MEM_FRAG_DMA pCpuMemFragDma 
 		rc = memset_s(buf , sizeof(buf), 0 ,sizeof(buf));
 		ERR_CHK(rc);
 		syscfg_get( NULL, "CpuMemFrag_Peer_Highmem", buf, sizeof(buf));
-                if(buf != NULL)
+                if(strlen(buf) != 0)
                 {
                 	rc = strcpy_s(pCpuMemFragDma->highmem , sizeof(pCpuMemFragDma->highmem), buf );
                 	ERR_CHK(rc);
