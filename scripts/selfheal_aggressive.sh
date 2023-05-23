@@ -1250,6 +1250,21 @@ self_heal_dropbear()
                          if [ "$NUMPROC_DROPBEAR_IPV6" -gt 0 -a "$NS_DROPBEAR_IPV6" -eq "0" ]; then
                               echo_t "Dropbear not listening on ipv6 address, restarting dropbear "
                               sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+                         else
+                             #Check dropbear is running with correct erouter0 IPv6 address or not
+                             NUM_OF_DROPBEAR_WITH_IPV6=$(echo $PS_DROPBEAR | pgrep -f dropbear.pid | wc -l)
+                             DROPBEAR_INTERFACE=$(cat /etc/device.properties | grep -i DROPBEAR_INTERFACE | cut -d '=' -f2)
+                             if [ "$DROPBEAR_INTERFACE" = "erouter0" -a "$NUM_OF_DROPBEAR_WITH_IPV6" -ge 1 ] ; then
+                                 DROPBEAR_PIDS_WITH_IPV6=$(echo $PS_DROPBEAR | pgrep -f dropbear.pid)
+                                 DROPBEAR_PID_WITH_IPV6=$(echo $DROPBEAR_PIDS_WITH_IPV6 | awk 'NR==1{print $1}')
+                                 DROPBEAR_IPv6=$(cat /proc/$DROPBEAR_PID_WITH_IPV6/cmdline | awk -F"[][]" '{print $2}' | grep -i 2001)
+                                 erouter0_globalv6=$(ip -6 addr show dev erouter0 | grep -i "scope global dynamic $")
+                                 erouter0_globalv6=$(echo $erouter0_globalv6 | awk '{print $2}' | cut -f1 -d"/")
+                                 if [ "$DROPBEAR_IPv6" != "$erouter0_globalv6" ]; then
+                                     echo_t "Dropbear was running with eRouter0Ipv6:$DROPBEAR_IPv6, but not with:$erouter0_globalv6 restart the sshd service"
+                                     sh /etc/utopia/service.d/service_sshd.sh sshd-restart &
+                                 fi
+                             fi
                          fi
                      fi
                  fi
