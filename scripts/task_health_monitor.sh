@@ -737,6 +737,10 @@ case $SELFHEAL_TYPE in
                       fi
                       if [ $? -ne 0 ] ; then
                           echo_t "Moca is not part of brlan0.. adding it"
+                          psm_check="`psmcli get dmsb.l2net.1.Members.Moca`"
+                          if [ "x$psm_check" = "x" ];then 
+                              psmcli set dmsb.l2net.1.Members.Moca nmoca0
+                          fi
                           t2CountNotify "SYS_SH_MOCA_add_brlan0"
                           sysevent set multinet-syncMembers 1
                       fi
