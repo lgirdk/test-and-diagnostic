@@ -238,8 +238,8 @@ ANSC_STATUS WanCnctvtyChk_GetRemoteParameterValue( char *mac_addr,
     memset(&IDM_request,0, sizeof(idm_invoke_method_Params_t));
 
     /* Update request parameters */
-    strcpy(IDM_request.Mac_dest, mac_addr);
-    strcpy(IDM_request.param_name, pParamName);
+    strncpy(IDM_request.Mac_dest, mac_addr, sizeof(IDM_request.Mac_dest)-1);
+    strncpy(IDM_request.param_name, pParamName, sizeof(IDM_request.param_name)-1);
     IDM_request.timeout = 20;
     IDM_request.operation = IDM_GET;
 
@@ -860,6 +860,3 @@ uint8_t *WanCnctvtyChk_get_transport_header(struct ip6_hdr *ip6h,uint8_t target,
         cur_pos = NULL;
     return cur_pos;
 }
-
-
-

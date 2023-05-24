@@ -533,6 +533,10 @@ int checkIfExists(char* iface_name)
 {
     struct ifreq ifr;
     int fd;
+    if (strlen(iface_name) >= sizeof(ifr.ifr_name)) {
+        printf("%s interface name too long \n",iface_name);
+        return INTERFACE_NOT_EXIST;
+    }
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     strcpy(ifr.ifr_name, iface_name);
     if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {

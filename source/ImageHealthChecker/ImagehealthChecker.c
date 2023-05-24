@@ -1823,7 +1823,11 @@ int main(int argc,char* argv[])
         IHC_PRINT("Invalid argument ... Please Enter the proper argument name..... \n");
         exit(0);
     }
-    syscfg_init();
+    if (syscfg_init() != 0)
+    {
+        IHC_PRINT("syscfg_init failed \n");
+        return -1;
+    }
     t2_init("TandD");
     ccsp_hdl_ret = ccsp_handler_init();
     if ( 0 != ccsp_hdl_ret )

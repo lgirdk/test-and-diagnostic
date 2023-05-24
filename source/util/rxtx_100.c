@@ -176,10 +176,24 @@ int start_rxtx()
     }
 
     /* Print the interface list, for readability and to check interfaces taken for consideration*/
-    sprintf_s(print_list,BUFFER_SZ, "RxTx Interface list to collect stats : ");
+    rc = sprintf_s(print_list,BUFFER_SZ, "RxTx Interface list to collect stats : ");
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+        write_to_logfile("Error in populating print_list buffer\n");
+        goto EXIT;
+    }
     for (i=0;i < no_of_interfaces;i++)
-	sprintf_s(print_list+strlen(print_list),BUFFER_SZ-strlen(print_list), "%s,",
+    {
+        rc = sprintf_s(print_list+strlen(print_list),BUFFER_SZ-strlen(print_list), "%s,",
 							current_interface_list[i]);
+        if (rc < EOK)
+        {
+            ERR_CHK(rc);
+            write_to_logfile("Error in populating print_list buffer\n");
+            goto EXIT;
+        }
+    }
     print_list[strlen(print_list)-1] = '\n';
 
     write_to_logfile("%s",print_list);

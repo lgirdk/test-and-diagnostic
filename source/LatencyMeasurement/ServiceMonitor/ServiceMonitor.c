@@ -672,7 +672,12 @@ void* LatencyMeasurement_MonitorService(void *arg)
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		ts.tv_nsec = 0;
 		ts.tv_sec +=TIMERINTERVEL;
-		pthread_cond_timedwait(&Monitor_cond,&lock,&ts);
+		if(pthread_cond_timedwait(&Monitor_cond,&lock,&ts) != 0)
+		{
+			CcspTraceInfo(("%s pthread_cond_timedwait failed\n",__func__));
+			pthread_mutex_unlock(&lock);
+			continue;
+		}
 		if(ROUTER_MODE == Get_Status_of_bridge_mode())
 		{
 			CcspTraceInfo(("%s Device in router mode, calling MonitorLatencyMeasurementServices\n",__func__));
