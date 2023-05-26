@@ -474,8 +474,6 @@ void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents)
         WANCHK_LOG_ERROR("%s:pActive is NULL\n", __FUNCTION__);
         return;
     }
-    PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = 
-                            (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)pActive->actvtimer.data;
     if (w->attr.st_nlink)
     {
         /* File is touched, pause the timer running in active monitor */
@@ -484,7 +482,6 @@ void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents)
     else
     {
         /* File is removed, restart the active monitor timer*/
-        pActvQueryCtxt->doInfoLogOnce = TRUE;
         ev_timer_again(pActive->loop, &pActive->actvtimer);
     }
 }
@@ -765,7 +762,7 @@ wanchk_bgtimeout_cb (EV_P_ ev_timer *w, int revents)
     ActiveMonitor = gIntfInfo->IPInterface.ActiveMonitor;
     pthread_mutex_unlock(&gIntfAccessMutex);
 
-    WANCHK_LOG_INFO("%s:No DNS Activity detected for interface %s,%s\n",__FUNCTION__, pPassive->InterfaceName,
+    WANCHK_LOG_DBG("%s:No DNS Activity detected for interface %s,%s\n",__FUNCTION__, pPassive->InterfaceName,
                                         (ActiveMonitor == FALSE)?"Update MonitorResult":"Allow ActiveMntr");
     if (ActiveMonitor == FALSE)
     {
@@ -1030,10 +1027,20 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                     ((pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
                     ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
                 {
-                    WANCHK_LOG_INFO("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
-                                        (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                                                                    pQuerynowCtxt->url_list[url_index],
-                                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                    if (invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+                    {
+                        WANCHK_LOG_INFO("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
+                                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                                                        pQuerynowCtxt->url_list[url_index],
+                                        pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                    }
+                    else
+                    {
+                        WANCHK_LOG_DBG("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
+                                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                                                        pQuerynowCtxt->url_list[url_index],
+                                        pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                    }
                     if (invoke_type == QUERYNOW_INVOKE)
                     {
                         wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
@@ -1549,7 +1556,7 @@ wait_for_response:
 
             rcode = dns_payload[3] & 0x0f;
             if (rcode != 0) {
-                WANCHK_LOG_WARN("Unexpected response code:%d for interface: %s\n",rcode,
+                WANCHK_LOG_DBG("Unexpected response code:%d for interface: %s\n",rcode,
                                                                                 query_info->ifname);
                 ret = -1;
                 /* ??? Retry or Abort, For now go for retry*/
@@ -1765,7 +1772,7 @@ static void dns_response_callback(
     WANCHK_LOG_DBG("response code:%d\n",rcode);
     if (rcode != 0)
     {
-        WANCHK_LOG_WARN("Unexpected response code:%d,Skip\n", rcode);
+        WANCHK_LOG_DBG("Unexpected response code:%d,Skip\n", rcode);
         return;
     }
     else
@@ -1842,7 +1849,7 @@ static void dns_response_callback(
            no activity to activity*/
         if (access(filename, F_OK) != 0)
         {
-            WANCHK_LOG_INFO("PassiveMonitor DNS Activity detected for intf %s,Pause ActiveMntr\n",pPassive->InterfaceName);
+            WANCHK_LOG_DBG("PassiveMonitor DNS Activity detected for intf %s,Pause ActiveMntr\n",pPassive->InterfaceName);
         }
         wancnctvty_chk_monitor_result_update(pPassive->InstanceNumber,
                                                           MONITOR_RESULT_CONNECTED);
