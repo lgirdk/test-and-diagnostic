@@ -267,17 +267,17 @@ ANSC_STATUS WanCnctvtyChk_GetRemoteParameterValue( char *mac_addr,
     {
         pStrVal = rbusValue_ToString(value, NULL, 0);
     }
-
-    strncpy( pReturnVal, pStrVal, strlen( pStrVal ) + 1 );
-
     if (pStrVal)
+    {
+        strncpy( pReturnVal, pStrVal, strlen( pStrVal ) + 1 );
         free(pStrVal);
+        pStrVal = NULL;
+    }
 
     rbusObject_Release(outParams);
 
     WANCHK_LOG_INFO("%s %d - paramname=%s value=%s\n", __FUNCTION__, __LINE__,
                                                                             pParamName,pReturnVal);
-
     return ANSC_STATUS_SUCCESS;
 }
 
