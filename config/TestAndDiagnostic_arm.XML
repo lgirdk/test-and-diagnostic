@@ -190,7 +190,7 @@
                         </parameter>
                         <parameter>
                             <name>DataBlockSize</name>
-                            <type>unsignedInt[1:65535]</type>
+                            <type>unsignedInt[64:1518]</type>
                             <syntax>uint32</syntax>
                             <writable>true</writable>
                         </parameter>
@@ -288,7 +288,7 @@
                         </parameter>
                         <parameter>
                             <name>DataBlockSize</name>
-                            <type>unsignedInt[1:65535]</type>
+                            <type>unsignedInt[64:1518]</type>
                             <syntax>uint32</syntax>
                             <writable>true</writable>
                         </parameter>
