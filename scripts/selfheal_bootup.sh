@@ -46,6 +46,7 @@ crash_count=0
 MF_WiFi_Index="5 6 9 10"
 PSM_CONFIG="/tmp/bbhm_cur_cfg.xml"
 WiFi_INIT_FILE="/tmp/wifi_initialized"
+PROCESS_RESTART_LOG=/rdklogs/logs/systemd_processRestart.log
 xle_device_mode=0
 if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
     xle_device_mode=`syscfg get Device_Mode`
@@ -308,6 +309,16 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 			fi
 		 fi
 fi
+
+#LTE-1639 log-assoclist.service should not be in failed state.
+if [ "$BOX_TYPE" = "WNXL11BWL" ];then
+	log_assoclist_service_status=`systemctl status log-assoclist.service | grep -i "Active:" | awk -F"Active:|since" '{print $2}'`
+	if [ "$(echo "$log_assoclist_service_status" | grep -i "active (exited)")" = "" ]; then	
+		echo_t "log-assoclist.service is not in active (exited) state it is in $log_assoclist_service_status state.Hence restarting the service" >> $PROCESS_RESTART_LOG
+		systemctl restart log-assoclist.service
+	fi
+fi
+
 
 isIPv4=""
 isIPv6=""
