@@ -113,6 +113,7 @@ typedef struct _wan_chk_passive_monitor
     UCHAR              InterfaceName[MAX_INTF_NAME_SIZE];
     /* To check passive monitor running on primary or backup interface */
     BOOL               IsPrimary;
+    BOOL               doInfoLogOnce;
 }
 WAN_CNCTVTY_CHK_PASSIVE_MONITOR,*PWAN_CNCTVTY_CHK_PASSIVE_MONITOR;
 

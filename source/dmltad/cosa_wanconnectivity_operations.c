@@ -638,15 +638,16 @@ void *wancnctvty_chk_passive_thread( void *arg )
     char *filter = NULL;
     PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = NULL;
     pPassive = (PWAN_CNCTVTY_CHK_PASSIVE_MONITOR)AnscAllocateMemory(sizeof(WAN_CNCTVTY_CHK_PASSIVE_MONITOR));
-    char errbuf[PCAP_ERRBUF_SIZE];
-    const char *source = pIPInterface->InterfaceName;
-    errno_t rc = -1;
-    int ind = -1;
     if (!pPassive)
     {
         WANCHK_LOG_ERROR("%s:Unable to allocate memory",__FUNCTION__);
         return NULL;
     }
+    pPassive->doInfoLogOnce = TRUE;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    const char *source = pIPInterface->InterfaceName;
+    errno_t rc = -1;
+    int ind = -1;
     pPassive->InstanceNumber = pIPInterface->InstanceNumber;
     rc = strcpy_s(pPassive->InterfaceName, MAX_INTF_NAME_SIZE , pIPInterface->InterfaceName);
     ERR_CHK(rc);
@@ -817,24 +818,52 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     BOOL  use_ipv6_dns = FALSE;
     unsigned int dns_server_count = 0;
     int ret = ANSC_STATUS_SUCCESS;
-
+    BOOL v4_query = FALSE;
+    BOOL v6_query = FALSE;
+    int no_of_queries = 0;
+    BOOL URL_v4_resolved = FALSE;
+    BOOL URL_v6_resolved = FALSE;
+    BOOL use_raw_socket = FALSE;
+    BOOL disable_info_log = FALSE;
+  
     if (!pQuerynowCtxt)
     {
-       WANCHK_LOG_ERROR("pQuerynowCtxt data is NULL,unable to execute query\n");
+       if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+       {
+           WANCHK_LOG_ERROR("pQuerynowCtxt data is NULL,unable to execute query\n");
+       }
+       else
+       {
+           WANCHK_LOG_DBG("pQuerynowCtxt data is NULL,unable to execute query\n");
+       }
        ret = ANSC_STATUS_FAILURE;
        goto EXIT;
     }
 
     if (!pQuerynowCtxt->url_count || !pQuerynowCtxt->url_list)
     {
-        WANCHK_LOG_ERROR("URL list is empty, Abort query\n");
+        if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+        {
+            WANCHK_LOG_ERROR("URL list is empty, Abort query\n");
+        }
+        else
+        {
+            WANCHK_LOG_DBG("URL list is empty, Abort query\n");
+        }
         ret = ANSC_STATUS_FAILURE;
         goto EXIT;
     }
 
     if (!pQuerynowCtxt->DnsServerCount)
     {
-        WANCHK_LOG_ERROR("No Dns servers found, Abort query\n");
+        if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+        {
+            WANCHK_LOG_ERROR("No Dns servers found, Abort query\n");
+        }
+        else
+        {
+            WANCHK_LOG_DBG("No Dns servers found, Abort query\n");
+        }
         ret = ANSC_STATUS_FAILURE;
         goto EXIT;
     }
@@ -864,21 +893,22 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     }
     else
     {
-        WANCHK_LOG_ERROR("Unable to fetch server type info, abort query on interface:%s\n",
+        if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+        {
+            WANCHK_LOG_ERROR("Unable to fetch server type info, abort query on interface:%s\n",
                                                                   pQuerynowCtxt->InterfaceName);
+        }
+        else
+        {
+            WANCHK_LOG_DBG("Unable to fetch server type info, abort query on interface:%s\n",
+                                                                  pQuerynowCtxt->InterfaceName);
+        }
         ret = ANSC_STATUS_FAILURE;
         goto EXIT;
     }
 
 // Frame Query based on Record Type
 
-    BOOL v4_query = FALSE;
-    BOOL v6_query = FALSE;
-    int no_of_queries = 0;
-    BOOL URL_v4_resolved = FALSE;
-    BOOL URL_v6_resolved = FALSE;
-    BOOL use_raw_socket = FALSE;
-    BOOL disable_info_log = FALSE;
     if ( pQuerynowCtxt->RecordType != RECORDTYPE_INVALID)
     {
         if ((pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6) || 
@@ -1056,9 +1086,16 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                     goto EXIT;
                 }
             }
-
-            WANCHK_LOG_ERROR("Resolution Failed for URL %s, lets try next URL\n",
+            if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+            {
+                WANCHK_LOG_ERROR("Resolution Failed for URL %s, lets try next URL\n",
                                                                 pQuerynowCtxt->url_list[url_index]);
+            }
+            else
+            {
+                WANCHK_LOG_DBG("Resolution Failed for URL %s, lets try next URL\n",
+                                                                pQuerynowCtxt->url_list[url_index]);
+            }
             ret = ANSC_STATUS_FAILURE;
         }
     }
@@ -1072,9 +1109,18 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
 EXIT:
     if (ret == ANSC_STATUS_FAILURE)
     {
-        WANCHK_LOG_ERROR("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
-                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor", 
+        if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+        {
+            WANCHK_LOG_ERROR("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
+                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
                     pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+        }
+        else
+        {
+            WANCHK_LOG_DBG("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
+                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+        }
         if (invoke_type == QUERYNOW_INVOKE)
         {
             wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
@@ -1620,8 +1666,16 @@ EXIT:
     }
     else
     {
-        WANCHK_LOG_WARN("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+        if(disable_info_log == FALSE)
+        {
+            WANCHK_LOG_WARN("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
                         query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+        }
+        else
+        {
+            WANCHK_LOG_DBG("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+        }
         ret = -1;
     }
 
@@ -1754,7 +1808,14 @@ static void dns_response_callback(
     {
         if (get_dns_payload(AF_INET, payload, len, dns_payload, &dns_payload_len) < 0)
         {
-            WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            if(pPassive->doInfoLogOnce)
+            {
+                WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            }
+            else
+            {
+                WANCHK_LOG_DBG("Unable to fetch dns payload\n");
+            }
             return;
         }
         response_from_v4_server = TRUE;
@@ -1763,7 +1824,14 @@ static void dns_response_callback(
     {
         if (get_dns_payload(AF_INET6, payload, len, dns_payload, &dns_payload_len) < 0)
         {
-            WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            if(pPassive->doInfoLogOnce)
+            {
+                WANCHK_LOG_ERROR("Unable to fetch dns payload\n");
+            }
+            else
+            {
+                WANCHK_LOG_DBG("Unable to fetch dns payload\n");
+            }
             return;
         }
         response_from_v6_server = TRUE;
@@ -1858,6 +1926,8 @@ static void dns_response_callback(
         ev_timer_again (pPassive->loop,&pPassive->bgtimer);
         pcap_breakloop(pPassive->pcap);
     }
+    if(pPassive->doInfoLogOnce)
+       pPassive->doInfoLogOnce = FALSE;
 
     return;
 }
