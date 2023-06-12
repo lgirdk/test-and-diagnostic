@@ -490,14 +490,13 @@ static void cleanup_activemonitor_ev(void *arg)
 {
     PWAN_CNCTVTY_CHK_ACTIVE_MONITOR   pActive = (PWAN_CNCTVTY_CHK_ACTIVE_MONITOR)arg;
     WANCHK_LOG_INFO("stopping active monitor loop\n");
+    if (!pActive)
+        return;
     ev_timer_stop(pActive->loop, &pActive->actvtimer);
     ev_break(pActive->loop,EVBREAK_ALL);
     ev_loop_destroy(pActive->loop);
-    if (pActive)
-    {
-        AnscFreeMemory(pActive);
-        pActive = NULL;
-    }
+    AnscFreeMemory(pActive);
+    pActive = NULL;
 }
 
 static void cleanup_passivemonitor_ev(void *arg)
