@@ -503,6 +503,8 @@ static void cleanup_passivemonitor_ev(void *arg)
 {
     PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = (PWAN_CNCTVTY_CHK_PASSIVE_MONITOR)arg;
     WANCHK_LOG_INFO("stopping passive monitor loop\n");
+    if (!pPassive)
+        return;
     if (pPassive->bgtimer.data == pPassive)
     {
         ev_timer_stop(pPassive->loop, &pPassive->bgtimer);
@@ -519,11 +521,8 @@ static void cleanup_passivemonitor_ev(void *arg)
         ev_loop_destroy(pPassive->loop);
     }
     v_secure_system("rm -f /tmp/actv_mon_pause_%s", pPassive->InterfaceName);
-    if (pPassive)
-    {
-        AnscFreeMemory(pPassive);
-        pPassive = NULL;
-    }
+    AnscFreeMemory(pPassive);
+    pPassive = NULL;
 }
 
 static void cleanup_activequery(void *arg)
