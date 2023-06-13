@@ -576,6 +576,9 @@ static void cleanup_querynow(void *arg)
 {
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt =
                                             (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)arg;
+    if (pQuerynowCtxt == NULL)
+        return;
+  
     WANCHK_LOG_DBG("Cleanup querynow for interface %s\n",pQuerynowCtxt->InterfaceName);
     if (pQuerynowCtxt->DnsServerList)
     {
@@ -593,17 +596,14 @@ static void cleanup_querynow(void *arg)
         free(pQuerynowCtxt->url_list);
         pQuerynowCtxt->url_list = NULL;
     }
-    if (pQuerynowCtxt)
-    {
-        /* Clear tid and state*/
-        pthread_mutex_lock(&gIntfAccessMutex);
-        PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[pQuerynowCtxt->InstanceNumber-1];
-        gIntfInfo->QueryNow_Running = FALSE;
-        gIntfInfo->wancnctvychkquerynowthread_tid = 0;
-        pthread_mutex_unlock(&gIntfAccessMutex);
-        AnscFreeMemory(pQuerynowCtxt);
-        pQuerynowCtxt = NULL;
-    }
+    /* Clear tid and state*/
+    pthread_mutex_lock(&gIntfAccessMutex);
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[pQuerynowCtxt->InstanceNumber-1];
+    gIntfInfo->QueryNow_Running = FALSE;
+    gIntfInfo->wancnctvychkquerynowthread_tid = 0;
+    pthread_mutex_unlock(&gIntfAccessMutex);
+    AnscFreeMemory(pQuerynowCtxt);
+    pQuerynowCtxt = NULL;
 }
 
 /* Logic
