@@ -1402,6 +1402,23 @@ self_heal_meshAgent ()
     fi
 }
 
+self_heal_dual_cron(){
+    CRONTAB_DIR="/var/spool/cron/crontabs/"
+    CRON_FILE_BK="/tmp/cron_tab$$.txt"
+
+    #This is to enable logging if duplicate/dual cron jobs are detected in crontab.
+    crontab_count=$(crontab -l -c $CRONTAB_DIR | wc -l)
+    crontab_count_unique=$(crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' | wc -l)
+    if [[ $crontab_count -ne $crontab_count_unique ]]
+    then
+        echo_t "[RDKB_AGG_SELFHEAL] : Duplicate crontab detected. Removing Duplicates."
+        t2CountNotify "SYS_ERROR_Duplicate_crontab"
+        crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' > $CRON_FILE_BK
+        crontab $CRON_FILE_BK -c $CRONTAB_DIR
+        rm -rf $CRON_FILE_BK
+    fi
+}
+
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -1466,6 +1483,7 @@ do
     self_heal_nas_ip
     self_heal_wifi
     self_heal_meshAgent
+    self_heal_dual_cron
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
