@@ -317,6 +317,17 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ];then
 		echo_t "log-assoclist.service is not in active (exited) state it is in $log_assoclist_service_status state.Hence restarting the service" >> $PROCESS_RESTART_LOG
 		systemctl restart log-assoclist.service
 	fi
+        
+	#LTE-1648 extenderModeWait.sh process is not running after bootup.
+	xle_device_mode=`syscfg get Device_Mode`
+	if [ "$xle_device_mode" -eq "1" ]; then
+		EXTENDERMODEWAIT_PID=$(busybox pidof extenderModeWait.sh)
+		ccsplmlite_service_status=`systemctl status CcspLMLite.service | grep -i "Active:" | awk -F"Active:|since" '{print $2}'`
+		if [ "$EXTENDERMODEWAIT_PID" == "" ]; then
+			echo_t "extenderModeWait.sh is not runnning in the extender mode & CcspLMLite.service is in $ccsplmlite_service_status state. so starting the CcspLMLite.service" >> $PROCESS_RESTART_LOG
+			systemctl start CcspLMLite.service
+		fi
+	fi
 fi
 
 
