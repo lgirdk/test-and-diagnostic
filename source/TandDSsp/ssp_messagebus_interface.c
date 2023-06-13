@@ -218,11 +218,9 @@ ssp_TadMbi_Initialize
         void * user_data
     )
 {
-    ANSC_STATUS             returnStatus    = ANSC_STATUS_SUCCESS;
-
     printf("In %s()\n", __FUNCTION__);
 
-    return ( returnStatus == ANSC_STATUS_SUCCESS ) ? 0 : 1;
+    return 0;
 }
 
 int
