@@ -41,6 +41,9 @@ else
     DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 fi
 
+DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
+DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
+
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
 source /etc/utopia/service.d/event_handler_functions.sh
@@ -309,7 +312,7 @@ Dhcpv6_Client_restart ()
 			process_restart_need=1
 		fi
 	fi
-	if [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ];then
+	if ( [ "$process_restart_need" = "1" ] || [ "$2" = "Idle" ] ) && [ $DHCPV6C_STATUS != "false" ];then
 		sysevent set dibbler_server_conf-status ""
 		if [ "$1" = "dibbler-client" ];then
 			dibbler-client stop
@@ -3564,10 +3567,12 @@ if [ "$xle_device_mode" -ne "1" ]; then
                     sleep 2
                     #need to restart dhcp client to generate dibbler conf
                     dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
-                    if [ "$dibbler_client_enable" = "true" ]; then
-                        Dhcpv6_Client_restart "dibbler-client" "Idle"
-                    else
-                        Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                    if [ $DHCPV6C_STATUS != "false" ]; then
+                        if [ "$dibbler_client_enable" = "true" ]; then
+                            Dhcpv6_Client_restart "dibbler-client" "Idle"
+                        else
+                            Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                        fi
                     fi
                 elif [ "$routerMode" = "1" ] || [ "$routerMode" = "" ] || [ "$Unit_Activated" = "0" ]; then
                     #TCCBR-4398 erouter0 not getting IPV6 prefix address from CMTS so as brlan0 also not getting IPV6 address.So unable to start dibbler service.
@@ -3598,7 +3603,7 @@ if [ "$xle_device_mode" -ne "1" ]; then
                                 sleep 1
                                 dibbler-server start
                                 sleep 5
-                            elif [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                            elif ( [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] ) && [ $DHCPV6C_STATUS != "false" ]; then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 # save global ipv6 address before disable it
                                 v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
@@ -3738,7 +3743,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ] && [ $DHCPV6C_STATUS != "false" ]; then
     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
     echo_t "isIPv6 = $isIPv6"
     if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
@@ -3767,7 +3772,7 @@ erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
 erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
 erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
 IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
+if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV6C_STATUS != "false" ]; then
     case $SELFHEAL_TYPE in
         "SYSTEMD")
             if [ "$erouter0_up_check" = "" ]; then
@@ -3899,7 +3904,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     esac
 
     #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-    if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ] && [ "$MAPT_CONFIG" != "set" ]; then
+    if [ "x$check_wan_dhcp_client_v4" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x2" ] && [ "$MAPT_CONFIG" != "set" ] && [ $DHCPV4C_STATUS != "false" ]; then
           echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
           t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
 	  wan_dhcp_client_v4=0
@@ -3908,7 +3913,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     if [ "$thisWAN_TYPE" != "EPON" ]; then
                     
         #Intel Proposed RDKB Generic Bug Fix from XB6 SDK
-	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ]; then
+	if [ "x$check_wan_dhcp_client_v6" = "x" ] && [ "x$LAST_EROUTER_MODE" != "x1" ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
         t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
 		wan_dhcp_client_v6=0
@@ -3921,7 +3926,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
         if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
 
             echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
-            if ([ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]) || [ $wan_dhcp_client_v6 -eq 0 ]; then
+            if ([ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ] && [ $DHCPV4C_STATUS != "false" ]) || ([ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ] ); then
                 case $SELFHEAL_TYPE in
                     "BASE"|"TCCBR")
                         echo_t "DHCP_CLIENT : DHCPStatus is not Bound, restarting WAN"
@@ -4079,7 +4084,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
+        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV4C_STATUS != "false" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
@@ -4111,7 +4116,7 @@ case $SELFHEAL_TYPE in
 
             #ARRISXB6-8319
             #check if interface is down or default route is missing.
-            if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ] && [ "$MAPT_CONFIG" != "set" ]; then
+            if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ] && [ "$MAPT_CONFIG" != "set" ] && [ $DHCPV4C_STATUS != "false" ]; then
                 ip route show default | grep "default"
                 if [ $? -ne 0 ] ; then
                     ifconfig $WAN_INTERFACE up
@@ -4150,7 +4155,7 @@ case $SELFHEAL_TYPE in
                 fi
             fi
 
-            if [ $wan_dhcp_client_v6 -eq 0 ]; then
+            if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                 if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
                     /lib/rdk/dibbler-init.sh

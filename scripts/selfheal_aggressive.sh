@@ -768,6 +768,8 @@ self_heal_dhcp_clients()
     DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
+    DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
+    DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
 
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
@@ -825,7 +827,7 @@ self_heal_dhcp_clients()
                     if [ "$erouter0_up_check" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
-                        if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] ) || [ "$udhcpc_enable" = "true" ]; then
+                        if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV4C_STATUS != "false" ]) || [ "$udhcpc_enable" = "true" ]; then
                         #Adding to kill ipv4 process to solve RDKB-27177
                         task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
                         if [ "x$task_to_kill" = "x" ]; then
@@ -838,7 +840,7 @@ self_heal_dhcp_clients()
                     fi
                     fi
                     if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
+                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                         /usr/sbin/dibbler-client stop
                     elif [ "$BOX_TYPE" = "XB6" ]; then
@@ -987,7 +989,7 @@ self_heal_dhcp_clients()
                         wan_dhcp_client_v4=0
                     fi
                 else
-                    if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
+                    if [ "$check_wan_dhcp_client_v4" = "" ] && [ "x$MAPT_CONFIG" != "xset" ] && [ $DHCPV4C_STATUS != "false" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v4 is not running, need restart "
                         t2CountNotify "SYS_ERROR_DHCPV4Client_notrunnig"
                         wan_dhcp_client_v4=0
@@ -1015,7 +1017,7 @@ self_heal_dhcp_clients()
                             wan_dhcp_client_v6=0
                         fi
                     else
-                        if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ]; then
+                        if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
                             echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
                             t2CountNotify "SYS_ERROR_DHCPV6Client_notrunnig"
                             wan_dhcp_client_v6=0
@@ -1026,7 +1028,7 @@ self_heal_dhcp_clients()
 
             DHCP_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.DHCPStatus)
 
-            if [ "$DHCP_STATUS" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
+            if [ "$DHCP_STATUS" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "x$MAPT_CONFIG" != "xset" ] && [ $DHCPV4C_STATUS != "false" ]; then
 
                 echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
                 if [ $wan_dhcp_client_v4 -eq 0 ] || [ $wan_dhcp_client_v6 -eq 0 ]; then
@@ -1123,34 +1125,34 @@ self_heal_dhcp_clients()
 	"SYSTEMD")
         if [ "$WAN_STATUS" = "started" ]; then
             if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
-		if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
+                if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ] && [ $DHCPV4C_STATUS != "false" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
-			V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                        V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
-			echo_t "Calling epon_utility.sh to restart udhcpc "
-			sh /usr/ccsp/epon_utility.sh
+                        echo_t "Calling epon_utility.sh to restart udhcpc "
+                        sh /usr/ccsp/epon_utility.sh
                     else
-			if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
+                        if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
                             if [ "$UDHCPC_Enable" = "true" ]; then
-				V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                                V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                             else
-				#For AXB6 b -4 option is added to avoid timeout.
-				DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
-				V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
+                                #For AXB6 b -4 option is added to avoid timeout.
+                                DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
+                                V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 4"
                             fi
-			else
+                        else
                             DHCPC_PID_FILE="/var/run/eRT_ti_udhcpc.pid"
                             V4_EXEC_CMD="ti_udhcpc -plugin /lib/libert_dhcpv4_plugin.so -i $WAN_INTERFACE -H DocsisGateway -p $DHCPC_PID_FILE -B -b 1"
-			fi
+                        fi
                     fi
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                     eval "$V4_EXEC_CMD"
                     sleep 5
                     wan_dhcp_client_v4=1
-		fi
+                fi
 		#ARRISXB6-8319
 		#check if interface is down or default route is missing.
-		if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ]; then
+		if ([ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]) && [ "$LAST_EROUTER_MODE" != "2" ] && [ $DHCPV4C_STATUS != "false" ]; then
                     ip route show default | grep "default"
                     if [ $? -ne 0 ] ; then
 			ifconfig $WAN_INTERFACE up
@@ -1179,23 +1181,23 @@ self_heal_dhcp_clients()
 			wan_dhcp_client_v4=1
                     fi
 		fi
-		if [ $wan_dhcp_client_v6 -eq 0 ]; then
-                    echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
-			/lib/rdk/dibbler-init.sh
-			sleep 2
-			/usr/sbin/dibbler-client start
-                    elif [ "$WAN_TYPE" = "EPON" ]; then
-			echo_t "Calling dibbler_starter.sh to restart dibbler-client "
-			sh /usr/ccsp/dibbler_starter.sh
-                    else
-                        dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
-                        if [ "$dibbler_client_enable" = "true" ]; then
-                            Dhcpv6_Client_restart "dibbler-client" "Idle"
-                        else
-                            Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
-                        fi
-                    fi
+		if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
+            echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
+            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+                /lib/rdk/dibbler-init.sh
+                sleep 2
+                /usr/sbin/dibbler-client start
+            elif [ "$WAN_TYPE" = "EPON" ]; then
+                echo_t "Calling dibbler_starter.sh to restart dibbler-client "
+                sh /usr/ccsp/dibbler_starter.sh
+            else
+                dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
+                if [ "$dibbler_client_enable" = "true" ] && [ $DHCPV6C_STATUS != "false" ]; then
+                    Dhcpv6_Client_restart "dibbler-client" "Idle"
+                else
+                    Dhcpv6_Client_restart "ti_dhcp6c" "Idle"
+                fi
+            fi
                     wan_dhcp_client_v6=1
 		fi
             fi #Not HUB4//SR300//SE501/SR213/WNXL11BWL
