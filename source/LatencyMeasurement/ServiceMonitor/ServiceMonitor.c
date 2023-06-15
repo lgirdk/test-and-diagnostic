@@ -686,6 +686,7 @@ void* LatencyMeasurement_MonitorService(void *arg)
 		if(latencyMeasurementCount==0)
 		{
 			CcspTraceInfo(("LATENCY_MEASUREMENT_DISABLE %s\n",__func__));
+			pthread_mutex_unlock(&lock);
 			break;
 		}
 		pthread_mutex_unlock(&lock);
