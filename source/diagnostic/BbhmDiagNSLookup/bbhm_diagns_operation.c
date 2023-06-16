@@ -933,7 +933,10 @@ BbhmDiagnsDelPquery
     PBBHM_NS_LOOKUP_QUERY_ENTRY     pPquery         = (PBBHM_NS_LOOKUP_QUERY_ENTRY)hPquery;
     
     AnscAcquireLock    (&pMyObject->PqueryTableLock);
-    AnscSListPopEntryByLink(&pMyObject->PqueryTable, &pPquery->Linkage);
+    if (!(AnscSListPopEntryByLink(&pMyObject->PqueryTable, &pPquery->Linkage)))
+    {
+        return ANSC_STATUS_FAILURE;
+    }
     AnscReleaseLock    (&pMyObject->PqueryTableLock);
 
     BbhmDiagnsFreePquery(pPquery);
