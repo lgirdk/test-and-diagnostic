@@ -1953,7 +1953,10 @@ IPPing_SetParamUlongValue
     else if (strcmp(ParamName, "DataBlockSize") == 0)
     {
         cfg.size = uValue;
-        syscfg_set_u_commit (NULL, "selfheal_ping_DataBlockSize", cfg.size);
+        if (syscfg_set_u_commit (NULL, "selfheal_ping_DataBlockSize", cfg.size) != 0)
+        {
+            AnscTraceWarning(("syscfg_set failed\n"));
+        }
     }
     else if (strcmp(ParamName, "DSCP") == 0)
         cfg.tos = uValue << 2;
