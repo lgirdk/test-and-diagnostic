@@ -1027,7 +1027,8 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 #endif /* 0 */
 
 	/* Get the ping test configuration */
-	diag_getcfg(DIAG_MD_PING, &cfg);
+	if (diag_getcfg(DIAG_MD_PING, &cfg) != DIAG_ERR_OK)
+	    return NULL;
 
 	/* Get the ping test results */
 	diag_getstatis(DIAG_MD_PING, &statis);
