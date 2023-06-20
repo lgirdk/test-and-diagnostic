@@ -538,7 +538,9 @@ int checkIfExists(char* iface_name)
         return INTERFACE_NOT_EXIST;
     }
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-    strcpy(ifr.ifr_name, iface_name);
+    if (fd < 0)
+        return INTERFACE_NOT_EXIST;
+    strncpy(ifr.ifr_name, iface_name, sizeof(ifr.ifr_name)-1);
     if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {
         if (errno == ENODEV) {
             printf("%s Interface doesn't exists \n",iface_name);
