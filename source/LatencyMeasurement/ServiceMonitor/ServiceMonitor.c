@@ -393,8 +393,8 @@ int CheckLatencyMeasurementServiceStatus(int Service_Type,char *Pidbuf)
     else
     {
         copy_command_output(fp, buf, sizeof(buf));
+        v_secure_pclose(fp);
     }
-    v_secure_pclose(fp);
     strcpy(Pidbuf,buf);
 	CcspTraceInfo(("PID's :%s \n",Pidbuf));
     if(buf[0] != '\0')
