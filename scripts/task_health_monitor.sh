@@ -259,9 +259,22 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
     # checking device mode
     xle_device_mode=`syscfg get Device_Mode`
     if [ "$xle_device_mode" -eq "1" ]; then
+        RESOLV_CONF="/tmp/lte_resolv.conf"
         echo_t "[RDKB_SELFHEAL] : Device is in extender mode"
     else
+        RESOLV_CONF="/etc/resolv.conf"
         echo_t "[RDKB_SELFHEAL] : Device is in router mode"
+    fi
+    if [ ! -s $RESOLV_CONF ] || [ -z "$(cat ${RESOLV_CONF})" ] ; then
+        echo "resolv.conf is Empty, updating it"
+        cat /dev/null > $RESOLV_CONF
+        sysevent set correct_resolve_conf
+        echo " ==== df -h ==== "
+        df -h
+        echo "===== free ===="
+        free
+        echo "===== ls -al /tmp ====="
+        ls -al /tmp/
     fi
   /usr/bin/xle_selfheal $xle_device_mode &
 
