@@ -48,7 +48,7 @@ struct xle_attributes
   int is_ipv6_mesh_brWan_link;
   int is_default_route;
   int is_mesh_default_route;
-
+  int cellular_restart_count;
 }xle_attributes;
 
 struct xle_attributes xle_params;
@@ -61,6 +61,8 @@ char mesh_interface_name[128] = {0};
 char comp_status_cmd[256] = {0};
 char lte_wan_status[128] = {0};
 char lte_backup_enable[128] = {0};
+char lte_interface_enable[128]={0};
+char ipaddr_family[16]={0};
 
 static char *g_Subsystem = "eRT." ;
 /* CID 282121 fix */
@@ -81,9 +83,9 @@ FILE* logFp = NULL;
 }
 
 
-void check_lte_provisioned(char* lte_wan,char* lte_backup_enable )
+void check_lte_provisioned(char* lte_wan,char* lte_backup_enable, char* lte_interface_enable, char* ipaddr_family)
 {
-    char *paramNames[]= { "Device.Cellular.X_RDK_Status", "Device.Cellular.X_RDK_Enable" };
+    char *paramNames[]= { "Device.Cellular.X_RDK_Status", "Device.Cellular.X_RDK_Enable", "Device.Cellular.Interface.1.Enable", "Device.Cellular.Interface.1.X_RDK_ContextProfile.1.IpAddressFamily" };
     parameterValStruct_t **retVal = NULL;
     int nval;
      int ret = CcspBaseIf_getParameterValues( 
@@ -91,7 +93,7 @@ void check_lte_provisioned(char* lte_wan,char* lte_backup_enable )
         CELLULAR_COMPONENT_NAME,
         CELLULAR_DBUS_PATH,
         paramNames,
-        2,
+        4,
         &nval,
         &retVal);
     if (CCSP_SUCCESS == ret)
@@ -104,7 +106,14 @@ void check_lte_provisioned(char* lte_wan,char* lte_backup_enable )
         {
             strncpy(lte_backup_enable, retVal[1]->parameterValue, strlen(retVal[1]->parameterValue) + 1);
         }
-
+        if (NULL != retVal[2]->parameterValue)
+        {
+            strncpy(lte_interface_enable, retVal[2]->parameterValue, strlen(retVal[2]->parameterValue) + 1);
+        }
+        if (NULL != retVal[3]->parameterValue)
+        {
+            strncpy(ipaddr_family, retVal[3]->parameterValue, strlen(retVal[3]->parameterValue) + 1);
+        }
         if (retVal)
         {
             free_parameterValStruct_t(bus_handle, nval, retVal);
@@ -134,11 +143,12 @@ void GetInterfaceStatus( char* InterfaceStatus, char* comp_status_cmd, int size 
 void PopulateParameters()
 {
     char mesh_status[128] = {0};
+    char countBuffer[4] = {0};
     sysevent_fd =  sysevent_open("127.0.0.1", SE_SERVER_WELL_KNOWN_PORT, SE_VERSION, "xle_selfheal", &sysevent_token);
     sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
     sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
     sysevent_get(sysevent_fd, sysevent_token, "mesh_wan_linkstatus", mesh_status, sizeof(mesh_status));
-    sysevent_close(sysevent_fd, sysevent_token);
+    sysevent_get(sysevent_fd, sysevent_token, "cellular_restart_count", countBuffer, sizeof(countBuffer));
     char *paramValue = NULL;
     char*  component_id = "ccsp.xle_self";
     CCSP_Message_Bus_Init(component_id,
@@ -151,7 +161,7 @@ void PopulateParameters()
     {        strncpy(mesh_interface_name,paramValue,sizeof(mesh_interface_name)-1);
         ((CCSP_MESSAGE_BUS_INFO *)bus_handle)->freefunc(paramValue);
     }
-    check_lte_provisioned(lte_wan_status, lte_backup_enable );
+    check_lte_provisioned(lte_wan_status, lte_backup_enable, lte_interface_enable, ipaddr_family);
     if(( 0 == strncmp( lte_wan_status, "CONNECTED", 9 )) && ( 0 == strncmp( lte_backup_enable, "true", 4 )))
     {
         sprintf(comp_status_cmd,"ifconfig %s | grep UP",current_wan_ifname);
@@ -356,7 +366,7 @@ void PopulateParameters()
             xle_params.is_default_route = 0;
         }
     }
-    
+    xle_params.cellular_restart_count = atoi(countBuffer);
 }
 
 void isWan_up()
@@ -503,11 +513,35 @@ int main(int argc,char *argv[])
        xle_log("[xle_self_heal] Device mode changedin between, no need to print the details\n"); 
     }
     
+    //LTE SelfHeal Enhancement
+    xle_log("[xle_self_heal] ip address family: %s\n", ipaddr_family);
+    if((0 == strncmp( lte_interface_enable, "true", 4)) && ( 0 == strncmp( lte_backup_enable, "true", 4 )))
+    {
+        if((0 != strncmp( lte_wan_status, "CONNECTED", 9 )) || ((strstr(ipaddr_family,"IPv4")) && (xle_params.is_ipv4present == 0)) || ((strstr(ipaddr_family,"IPv6")) && (xle_params.is_ipv6present == 0)))
+        {
+            if(xle_params.cellular_restart_count < 3)
+            {
+                int count = xle_params.cellular_restart_count;
+                char count1[2];
+                count+=1;
+                snprintf(count1, sizeof(count1), "%d", count);
+                sysevent_set(sysevent_fd, sysevent_token, "cellular_restart_count", count1, 0);
+                system("systemctl restart RdkCellularManager.service &");
+                xle_log("[xle_self_heal] Cellular manager restarted. Number of times restarted=%d \n", count);
+            }
+            else
+            {
+                xle_log("[xle_self_heal] Today's limit for cellular manager restart has exceeded\n");
+            }
+        }
+    }
+    
     if ( logFp != NULL)
     {
         fclose(logFp);
         logFp= NULL;
     }
+    sysevent_close(sysevent_fd, sysevent_token);
  return 1 ;
 }
 

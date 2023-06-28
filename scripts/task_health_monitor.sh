@@ -268,6 +268,20 @@ if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
         RESOLV_CONF="/etc/resolv.conf"
         echo_t "[RDKB_SELFHEAL] : Device is in router mode"
     fi
+    checkMaintenanceWindow
+        IsAlreadyCellularCountResetted=`sysevent get isAlreadyCellularCountResetted`
+        if [ $reb_window -eq 1 ]; then
+             if [ $IsAlreadyCellularCountResetted -eq 0 ]; then
+                  echo_t "[RDKB_SELFHEAL] : Resetting cellular_restart_count within maintenance window"
+                  sysevent set cellular_restart_count 0
+                  sysevent set isAlreadyCellularCountResetted 1
+             fi
+        else
+             if [ $IsAlreadyCellularCountResetted -eq 1 ]; then
+                  echo_t "[RDKB_SELFHEAL] : Maintenance window closed. isAlreadyCellularCountResetted set to 0"
+                  sysevent set isAlreadyCellularCountResetted 0
+             fi
+        fi
     if [ ! -s $RESOLV_CONF ] || [ -z "$(cat ${RESOLV_CONF})" ] ; then
         echo "resolv.conf is Empty, updating it"
         cat /dev/null > $RESOLV_CONF
