@@ -37,6 +37,8 @@
 #include "lowlatency_util_apis.h"
 pthread_t tid[NUM_PTHREADS];
 pthread_cond_t Monitor_cond=PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond=PTHREAD_COND_INITIALIZER;
+pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
 char IPv6_addr[ARRAY_LEN],IPv4_addr[ARRAY_LEN];
 int curr_wan_mode=0;
 char current_wan_ifname[64]={0};
@@ -47,10 +49,69 @@ static int sysevent_fd_g = -1;
 static token_t sysevent_token_g = 0;
 extern int latencyMeasurementCount;
 int reportInterval_prev=0;
+bool IsPthreadisBusy=false;
+bool IsTR181_triger_at_PthreadisBusy=false;
+bool gLowLatency_Enable=false;
 /**************************************************************************/	
+void* isMonitorService_thread_free(void *arg)
+{
+	UNREFERENCED_PARAMETER(arg);
+	struct timespec ts;
+	int Status=0;
+	//pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
+	pthread_condattr_t SyncAttr;
+	pthread_condattr_init(&SyncAttr);
+	pthread_condattr_setclock(&SyncAttr, CLOCK_MONOTONIC);
+	pthread_cond_init(&cond,&SyncAttr);
+	while(1)
+	{	
+		memset(&ts,0,sizeof(ts));
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		ts.tv_nsec = 0;
+		ts.tv_sec +=TIMER_VALUE;
+		pthread_mutex_lock(&lock);
+		Status=pthread_cond_timedwait(&cond,&lock,&ts);
+		if((Status != 0)&&(Status != ETIMEDOUT))
+		{
+			CcspTraceInfo(("%s pthread_cond_timedwait failed\n",__func__));
+			pthread_mutex_unlock(&lock);
+			continue;
+		}
+		pthread_mutex_unlock(&lock);
+		sleep(1);
+		UpdateLatencyMeasurement_EnableCount(gLowLatency_Enable);
+		IsTR181_triger_at_PthreadisBusy=false;
+		break;
+	}
+	pthread_detach(tid[WAIT_FOR_MONITOR_FREE_PTHREAD_ID]);
+	CcspTraceInfo(("pthread_detach WAIT_FOR_MONITOR_FREE_PTHREAD_ID %s\n",__func__));
+	return NULL;
+}
 int UpdateLatencyMeasurement_EnableCount(bool LowLatency_Enable)
 {
 	char new_val_buf[20];
+	static int status_flag;
+	if(IsTR181_triger_at_PthreadisBusy == true && status_flag==0)
+	{
+		int Error=0;
+		
+		gLowLatency_Enable=LowLatency_Enable;
+		Error=pthread_create(&tid[WAIT_FOR_MONITOR_FREE_PTHREAD_ID],NULL,isMonitorService_thread_free,NULL);
+		if (Error)
+		{
+			CcspTraceInfo(("%s isMonitorService_thread_free error : %d\n",__func__,Error));
+		}
+		else{
+			CcspTraceInfo(("%s isMonitorService_thread_free thread is created\n",__func__));
+			status_flag=1;
+		}
+		return 0;
+	}
+	else if(IsTR181_triger_at_PthreadisBusy==false && status_flag==1)
+	{
+		status_flag=0;
+	}
+	IsTR181_triger_at_PthreadisBusy = true;
 	if(LowLatency_Enable==true)
 	{
 		if(latencyMeasurementCount==0)
@@ -631,12 +692,13 @@ void* LatencyMeasurement_MonitorService(void *arg)
 {
 	//UNREFERENCED_PARAMETER(arg);
 	char strValue[64] = {0};
-	pthread_mutex_t lock=PTHREAD_MUTEX_INITIALIZER;
+	int Status=0;
 	struct timespec ts; 
 	pthread_condattr_t SyncAttr;
 	int Error=0;
 	struct sysinfo s_info;
 	sysinfo(&s_info);
+	pthread_mutex_lock(&lock);
 	while(s_info.uptime < 900)// 900 this wait for device boot up then only monitor services will run
 	{
 		sysinfo(&s_info);
@@ -660,19 +722,25 @@ void* LatencyMeasurement_MonitorService(void *arg)
 	curr_wan_mode=atoi(strValue);
 	if(Get_Status_of_bridge_mode()==ROUTER_MODE)
 	{
-		CcspTraceInfo(("%s Device in router mode, calling MonitorLatencyMeasurementServices\n",__func__));
 		MonitorLatencyMeasurementServices();
 	}
-
-
+	pthread_mutex_unlock(&lock);
+	if(IsTR181_triger_at_PthreadisBusy==true)
+	{
+		sleep(1);
+		pthread_cond_signal(&cond);
+	}
+	IsTR181_triger_at_PthreadisBusy=false;
+	
 	while(1)
 	{	
-		pthread_mutex_lock(&lock);
 		memset(&ts,0,sizeof(ts));
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		ts.tv_nsec = 0;
-		ts.tv_sec +=TIMERINTERVEL;
-		if(pthread_cond_timedwait(&Monitor_cond,&lock,&ts) != 0)
+		ts.tv_sec +=TIMERINTERVEL;		
+		pthread_mutex_lock(&lock);
+		Status=pthread_cond_timedwait(&Monitor_cond,&lock,&ts);
+		if((Status != 0)&&(Status != ETIMEDOUT))
 		{
 			CcspTraceInfo(("%s pthread_cond_timedwait failed\n",__func__));
 			pthread_mutex_unlock(&lock);
@@ -680,16 +748,21 @@ void* LatencyMeasurement_MonitorService(void *arg)
 		}
 		if(ROUTER_MODE == Get_Status_of_bridge_mode())
 		{
-			CcspTraceInfo(("%s Device in router mode, calling MonitorLatencyMeasurementServices\n",__func__));
 			MonitorLatencyMeasurementServices();
 		}
+		pthread_mutex_unlock(&lock);
+		if(IsTR181_triger_at_PthreadisBusy==true)
+		{
+			sleep(1);
+			pthread_cond_signal(&cond);
+		}
+		IsTR181_triger_at_PthreadisBusy=false;
+
 		if(latencyMeasurementCount==0)
 		{
 			CcspTraceInfo(("LATENCY_MEASUREMENT_DISABLE %s\n",__func__));
-			pthread_mutex_unlock(&lock);
 			break;
 		}
-		pthread_mutex_unlock(&lock);
 	}
 	pthread_detach(tid[MONITOR_PTHREAD_ID]);
 	CcspTraceInfo(("pthread_detach MONITOR_PTHREAD_ID %s\n",__func__));

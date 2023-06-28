@@ -21,7 +21,7 @@
 #define __SERVICEMONITOR_H__
 
 #include "lowlatency_apis.h"
-#define NUM_PTHREADS 2 
+#define NUM_PTHREADS 3 
 #define SNIFFER_CMD "busybox pidof xNetSniffer"
 #define DP_CMD "busybox pidof xNetDP"
 
@@ -31,13 +31,15 @@
 #define	TCPREPORTINTERVAL	"LatencyMeasure_TCPReportInterval" */
 #define BUF_SIZE 128
 #define TIMERINTERVEL 300 //sec
+#define TIMER_VALUE 30 //sec
 #define REPORT_SIZE 100
 #define ARRAY_SIZE 250
 #define ARRAY_LEN 50
 
 typedef enum{
   SYSEVENT_PTHREAD_ID,
-  MONITOR_PTHREAD_ID
+  MONITOR_PTHREAD_ID,
+  WAIT_FOR_MONITOR_FREE_PTHREAD_ID
 }pthreadid;
 
 typedef enum{
