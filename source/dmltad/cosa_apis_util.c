@@ -222,7 +222,7 @@ CosaUtilGetLowerLayers
 
     while ((pTableStringToken = AnscTcUnlinkToken(pTableListTokenChain)))
     {
-        if ( pTableStringToken->Name )
+        if ( strlen(pTableStringToken->Name) != 0 )
         {
             if (strcmp(pTableStringToken->Name, "Device.Ethernet.Interface.") == 0)
             {
