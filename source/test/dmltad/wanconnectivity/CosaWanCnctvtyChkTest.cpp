@@ -167,6 +167,7 @@ TEST(CosaWanCnctvtyChk, GetUrlListGtest)
             }
         }
     }
+    free(url_list);
 }
 
 TEST(CosaWanCnctvtyChk, UdpCheckSumGtest)
