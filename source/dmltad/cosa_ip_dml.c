@@ -6035,7 +6035,7 @@ UDPEchoConfig_Validate
         return FALSE;
     }
 
-    if ( pUdpEchoInfo->Enable && (!pUdpEchoInfo->SourceIPName) )
+    if ( pUdpEchoInfo->Enable && (strlen(pUdpEchoInfo->SourceIPName) == 0) )
     {
         rc = strcpy_s(pReturnParamName, *puLength , "SourceIPAddress");
         ERR_CHK(rc);
