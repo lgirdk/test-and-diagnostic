@@ -1481,7 +1481,12 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
     WANCHK_LOG_DBG("Interface :%s fd :%d\n",query_info->ifname,pfd.fd);
 
     int flags = fcntl(pfd.fd, F_GETFL);
-    fcntl(pfd.fd, F_SETFL, flags | O_NONBLOCK);
+    if (fcntl(pfd.fd, F_SETFL, flags | O_NONBLOCK) == -1)
+    {
+        WANCHK_LOG_ERROR("Unable to set close-on-execflag!\n");
+        ret = -1;
+        goto EXIT;
+    }
     int no_of_replies = 0;
     int retry_count = 0;
     int64_t start_time, current_time;
