@@ -618,7 +618,7 @@ BbhmDiagnsAddEchoEntry
     pEchoEntry->StopTime            = 0;
     pEchoEntry->DNSServerIPName     = AnscCloneString(DstIpName);
 
-    if ( !pProperty->DstAddrName )
+    if (strlen(pProperty->DstAddrName) == 0)
     {
         pEchoEntry->Status              = BBHM_NS_LOOKUP_STATUS_Error_DNSServerNotAvailable;
         pEchoEntry->AnswerType          = BBHM_NS_LOOKUP_RESULT_None;
