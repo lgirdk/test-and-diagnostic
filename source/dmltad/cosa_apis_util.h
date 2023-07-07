@@ -113,4 +113,8 @@ CosaUtilGetStaticRouteTablePriv
         UINT                        *count,
         StaticRoute                 **out_sroute
     );
+
+int isValidIPv4Address(char *ipAddress);
+int isValidIPv6Address(char *ipAddress);
+int isValidFQDN(char *fqdn);
 #endif

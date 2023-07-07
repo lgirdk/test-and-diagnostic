@@ -76,6 +76,7 @@
 #include <syscfg/syscfg.h>
 #include "ccsp_trace.h"
 #include "secure_wrapper.h"
+#include "cosa_apis_util.h"
 
 #ifdef EMMC_DIAG_SUPPORT
 #include "platform_hal.h"
@@ -149,16 +150,12 @@ static char dev_type[20];
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
-
 static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
 {
-    int i;
-    size_t len;
     errno_t rc;
 
-    len = strlen(host);
-
-    if ((len + 2) >= sizelimit)
+    /* check if host doesn't hold null or whitespaces */
+    if (AnscValidStringCheck(host) != TRUE)
         return -1;
 
     /*
@@ -172,15 +169,27 @@ static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
        Checking that 'host' contains only characters in the above lists
        is better than checking for certain troublesome characters.
     */
-    for (i = 0; i < len; i++)
+    if (isValidIPv4Address(host))
     {
-        if (!isalnum(host[i]) &&
-            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
-        {
-            return -1;
-        }
+        AnscTraceWarning(("validate_hostname - isValidIPv4Address success '%s'\n", host));
+        goto done;
     }
-
+    else if(isValidIPv6Address(host))
+    {
+        AnscTraceWarning(("validate_hostname - isValidIPv6Address success '%s'\n", host));
+        goto done;
+    }
+    else if(isValidFQDN(host))
+    {
+        AnscTraceWarning(("validate_hostname - isValidFQDN success '%s'\n", host));
+        goto done;
+    }
+    else
+    {
+        AnscTraceWarning(("validate_hostname - Invalidhostname configured '%s'\n", host));
+        return -1;
+    }
+done:
     rc = sprintf_s(wrapped_host, sizelimit, "'%s'", host);
     if (rc < EOK)
     {
