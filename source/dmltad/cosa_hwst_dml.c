@@ -172,7 +172,7 @@ hwHealthTest_SetParamBoolValue
 		{
 	             AnscTraceFlow((" read error of client version"));
 		}
-                strcpy(version,clientVer);
+                strncpy(version,clientVer,sizeof(version)-1);
                 free(clientVer);
                 clientVer = NULL;
             }
