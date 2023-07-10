@@ -56,6 +56,7 @@ calcRandTimetoStartPing()
     rand_sec=`awk -v min=0 -v max=59 -v seed="$(date +%N)" 'BEGIN{srand(seed);print int(min+rand()*(max-min+1))}'`
 
     sec_to_sleep=$(($rand_min*60 + $rand_sec))
+    echo_t "self_heal_connectivity_test is going into sleep for $sec_to_sleep sec"
     sleep $sec_to_sleep; 
         
 }
