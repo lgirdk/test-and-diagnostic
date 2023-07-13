@@ -49,6 +49,10 @@
 #include "tad_rbus_apis.h"
 #include "lowlatency_apis.h"
 
+#ifdef DEVICE_PRIORITIZATION_ENABLED
+#include "device_prio_apis.h"
+#endif //#ifdef DEVICE_PRIORITIZATION_ENABLED
+
 PDSLH_CPE_CONTROLLER_OBJECT     pDslhCpeController      = NULL;
 PCOMPONENT_COMMON_DM            g_pComponent_Common_Dm  = NULL;
 PCCSP_FC_CONTEXT                pTadFcContext           = (PCCSP_FC_CONTEXT            )NULL;
@@ -360,6 +364,12 @@ int main(int argc, char* argv[])
 
     // Init LatencyMeasurent
     LatencyMeasurementInit();
+
+#ifdef DEVICE_PRIORITIZATION_ENABLED
+    // Init device prioritization
+    DevicePrioInit();
+#endif
+
     if ( bRunAsDaemon )
     {
         while(1)

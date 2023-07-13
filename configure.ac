@@ -83,6 +83,40 @@ AC_ARG_ENABLE([core_net_lib_feature_support],
 esac],[core_net_lib_feature_support=false])
 AM_CONDITIONAL(CORE_NET_LIB_FEATURE_SUPPORT, test x"$core_net_lib_feature_support" = x"true")
 
+RDK_SCHEDULER_CFLAGS=" "
+RDK_SCHEDULER=no
+AC_ARG_ENABLE([rdk_scheduler],
+        AS_HELP_STRING([--enable-rdk_scheduler],[enable rdk_scheduler]),
+        [
+          case "${enableval}" in
+           yes) RDK_SCHEDULER_CFLAGS="-DRDK_SCHEDULER_ENABLED"
+                RDK_SCHEDULER=yes ;;
+           no) AC_MSG_ERROR([rdk_scheduler is disabled]) ;;
+          *) AC_MSG_ERROR([bad value ${enableval} for --enable-rdk_scheduler]) ;;
+           esac
+           ],
+         [echo "rdk scheduler is disabled."])
+
+AM_CONDITIONAL([FEATURE_RDK_SCHEDULER], [test $RDK_SCHEDULER = yes])
+AC_SUBST(RDK_SCHEDULER_CFLAGS)
+
+DEVICE_PRIORITIZATION_CFLAGS=" "
+DEVICE_PRIORITIZATION=no
+AC_ARG_ENABLE([device_prioritization],
+        AS_HELP_STRING([--enable-device_prioritization],[enable device_prioritization]),
+        [
+          case "${enableval}" in
+           yes) DEVICE_PRIORITIZATION_CFLAGS="-DDEVICE_PRIORITIZATION_ENABLED"
+                DEVICE_PRIORITIZATION=yes ;;
+           no) AC_MSG_ERROR([device_prioritization is disabled]) ;;
+          *) AC_MSG_ERROR([bad value ${enableval} for --enable-device_prioritization]) ;;
+           esac
+           ],
+         [echo "device prioritization is disabled."])
+
+AM_CONDITIONAL([FEATURE_DEVICE_PRIORITIZATION], [test $DEVICE_PRIORITIZATION = yes])
+AC_SUBST(DEVICE_PRIORITIZATION_CFLAGS)
+
 AC_CONFIG_FILES(
   source/LatencyMeasurement/ServiceMonitor/Makefile
 	source/TandDSsp/Makefile
@@ -97,6 +131,8 @@ AC_CONFIG_FILES(
   source/LatencyMeasurement/TR-181/Makefile
   source/LatencyMeasurement/xNetSniffer/Makefile 
   source/LatencyMeasurement/xNetDP/Makefile
+  source/DevicePrioritization/Makefile
+  source/DevicePrioritization/TR-181/Makefile
 	Makefile
 )
 

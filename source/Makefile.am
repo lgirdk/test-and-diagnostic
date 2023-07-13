@@ -16,8 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+if FEATURE_DEVICE_PRIORITIZATION
+SUBDIRS = DevicePrioritization LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker
+else
 SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker 
+endif
 
 if WITH_GTEST_SUPPORT
 SUBDIRS += test
 endif
+
