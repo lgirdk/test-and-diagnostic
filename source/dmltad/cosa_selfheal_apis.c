@@ -717,7 +717,7 @@ CosaSelfHealInitialize
 
     if (syscfg_get(NULL, "log_backup_enable", buf, sizeof(buf)) == 0)
     {
-        if (buf != NULL)
+        if (strlen(buf) != 0)
         {
             pMyObject->NoWaitLogSync = (strcmp(buf,"true") ? FALSE : TRUE);
         }
@@ -727,7 +727,7 @@ CosaSelfHealInitialize
     ERR_CHK(rc);
     if (syscfg_get( NULL, "log_backup_threshold", buf, sizeof(buf)) == 0)
     {
-        if (buf != NULL)
+        if (strlen(buf) != 0)
         {
             pMyObject->LogBackupThreshold =  atoi(buf);
         }
@@ -737,11 +737,6 @@ CosaSelfHealInitialize
     pMyObject->pConnTest = CosaDmlGetSelfHealCfg((ANSC_HANDLE)pMyObject);
     pMyObject->pResMonitor = CosaDmlGetSelfHealMonitorCfg((ANSC_HANDLE)pMyObject);
     pMyObject->pCpuMemFrag = CosaDmlGetSelfHealCpuMemFragCfg((ANSC_HANDLE)pMyObject);
-
-    if ( returnStatus != ANSC_STATUS_SUCCESS )
-    {
-        return returnStatus;
-    }
 
     return returnStatus;
 }
