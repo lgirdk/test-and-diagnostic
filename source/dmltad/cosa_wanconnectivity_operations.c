@@ -1147,6 +1147,11 @@ int send_query_create_raw_skt(struct query *query_info)
 
     protocol_family = (query_info->skt_family == AF_INET) ? ETH_P_IP : ETH_P_IPV6;
     fd = socket(PF_PACKET, SOCK_RAW, htons(protocol_family));
+    if (fd < 0)
+    {
+        WANCHK_LOG_ERROR("Unable to create socket\n");
+        return -1;
+    }
     memset(&socket_ll, 0, sizeof(socket_ll));
     memset(&inf_request,0, sizeof(inf_request));
 
