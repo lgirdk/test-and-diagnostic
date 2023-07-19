@@ -2831,6 +2831,15 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                             echo_t "[RDKB_SELFHEAL] : Both 5G Radio(Radio 2) and 5G Private SSID are in DOWN state"
                         else
                             echo_t "[RDKB_SELFHEAL] : 5G Radio(Radio 2) is in up state, only 5G Private SSID is in DOWN state"
+                            #### CMXB7-5392: 5G SSID disabled
+                            if [[ "$MODEL_NUM" == "TG4482A" ]]; then
+                                checkMaintenanceWindow
+                                if [[ "$reb_window" == "1" ]]; then
+                                    echo_t "[RDKB_SELFHEAL] : Restarting CcspWifiSsp now within maintenance window"
+                                    systemctl restart ccspwifiagent.service
+                                fi
+                            fi
+                            #### End of CMXB7-5392
                         fi
 
                             #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
