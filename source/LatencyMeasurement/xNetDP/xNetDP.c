@@ -838,7 +838,10 @@ void* LatencyReportThread(void* arg)
 
     tmp_report_buf = (char*) malloc (MAX_REPORT_SIZE);
     if (tmp_report_buf == NULL )
+    {
+        free(report_buf);
         return NULL;
+    }
     memset(str,0,hashSize);
 
     pthread_detach(pthread_self());
@@ -848,8 +851,8 @@ void* LatencyReportThread(void* arg)
     //fp = fopen("LatencyReport.txt", "w+");
     while(1)
     {
-        memset(report_buf,0,sizeof(MAX_REPORT_SIZE));
-        memset(tmp_report_buf,0,sizeof(MAX_REPORT_SIZE));
+        memset(report_buf,0,MAX_REPORT_SIZE);
+        memset(tmp_report_buf,0,MAX_REPORT_SIZE);
         num_of_ipv4_clients=0, num_of_ipv6_clients =0;
         dbg_log("args.report_interval is %d\n",args.report_interval);
         sleep(args.report_interval);
@@ -914,14 +917,14 @@ void* LatencyReportThread(void* arg)
         i = 0;
 
         memset(buf,0,sizeof(buf));
-        tempCount=sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv4,%d",num_of_ipv4_clients);
+        tempCount = sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv4,%d",num_of_ipv4_clients);
         byteCount += tempCount;
 
         sprintf(report_buf,"%s%s",buf,tmp_report_buf);
         strcat(report_buf,"|");
 
         memset(buf,0,sizeof(buf));
-        memset(tmp_report_buf,0,sizeof(MAX_REPORT_SIZE));
+        memset(tmp_report_buf,0,MAX_REPORT_SIZE);
         memset(port_buff,0,sizeof(port_buff));
         memset(str,0,hashSize);
 
@@ -980,7 +983,7 @@ void* LatencyReportThread(void* arg)
         i = 0;
         memset(buf,0,sizeof(buf));
 
-        tempCount=sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv6,%d",num_of_ipv6_clients);
+        tempCount = sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv6,%d",num_of_ipv6_clients);
 
         strcat(report_buf,buf);
         strcat(report_buf,tmp_report_buf);
