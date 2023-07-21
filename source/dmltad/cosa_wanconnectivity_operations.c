@@ -530,8 +530,12 @@ static void cleanup_activequery(void *arg)
 {
     PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO pActvQueryCtxt = 
                                             (PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO)arg;
+    if (!pActvQueryCtxt)
+        return;
+    
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt = pActvQueryCtxt->pQueryCtxt;
-
+    if (!pQuerynowCtxt)
+        return;
     WANCHK_LOG_DBG("Cleanup Active query for interface %s\n",pQuerynowCtxt->InterfaceName);
     if (pQuerynowCtxt->DnsServerList)
     {
