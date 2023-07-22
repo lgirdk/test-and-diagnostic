@@ -358,7 +358,7 @@ bbhmUdpechoStartUdpEchoTask
 
 
                 /* check the client ip address */
-                if ( AnscEqualString(address, srcIP, TRUE) )
+                if (strcmp(address, srcIP) == 0)
                 {
                     if ( bFirst )
                     {

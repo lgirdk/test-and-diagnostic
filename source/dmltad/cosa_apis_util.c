@@ -247,7 +247,7 @@ CosaUtilGetLowerLayers
                         }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                             AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
+                             (strcmp(ucEntryNameValue, pKeyword) == 0))
                         {
                             pMatchedLowerLayer =  AnscCloneString(ucEntryFullPath);
 
@@ -278,7 +278,7 @@ CosaUtilGetLowerLayers
                         }
 
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                             AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
+                             (strcmp(ucEntryNameValue, pKeyword) == 0))
                         {
                             pMatchedLowerLayer =  AnscCloneString(ucEntryFullPath);
 
@@ -319,7 +319,7 @@ CosaUtilGetLowerLayers
                         }
                         
                         if (( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                            AnscEqualString(ucEntryNameValue, pKeyword, TRUE) )
+                            (strcmp(ucEntryNameValue, pKeyword) == 0))
                         {
                             pMatchedLowerLayer = AnscCloneString(ucEntryFullPath);
                             
@@ -366,7 +366,7 @@ CosaUtilGetLowerLayers
                         }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                             AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
+                             (strcmp(ucEntryNameValue, pKeyword) == 0))
                         {
                             pMatchedLowerLayer =  AnscCloneString(ucEntryFullPath);
 
@@ -420,7 +420,7 @@ CosaUtilGetLowerLayers
                             AnscTraceFlow(("----------CosaUtilGetLowerLayers, Param:%s,Param2:%s\n", ucLowerEntryName, ucEntryParamName));
                         
                             if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                                 AnscEqualString(ucEntryNameValue, pKeyword , TRUE ) )
+                                 (strcmp(ucEntryNameValue, pKeyword ) == 0))
                             {
                                 pMatchedLowerLayer =  AnscCloneString(ucLowerEntryName);
                                 AnscTraceFlow(("----------CosaUtilGetLowerLayers, J:%lu, LowerLayer:%s\n", j, pMatchedLowerLayer));
@@ -580,7 +580,7 @@ CosaUtilGetFullPathNameByKeyword
                         }
                
                         if ( ( 0 == CosaGetParamValueString(ucEntryParamName, ucEntryNameValue, &ulEntryNameLen)) &&
-                             AnscEqualString(ucEntryNameValue, pKeyword, TRUE ) )
+                             (strcmp(ucEntryNameValue, pKeyword) == 0))
                         {
                             pMatchedLowerLayer =  AnscCloneString(ucEntryFullPath);
 

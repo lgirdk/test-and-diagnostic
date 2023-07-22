@@ -336,7 +336,7 @@ BbhmDiagnsRecv
 
                 if ( AnscSizeOfString(p) )
                 {
-                    if ( !AnscEqualString(p - AnscSizeOfString(p) - 1, p, TRUE) )
+                    if (strcmp(p - AnscSizeOfString(p) - 1, p) != 0)
                     {
                         pStateTimer->Stop((ANSC_HANDLE)pStateTimer);
                         pProperty->Control = BBHM_NS_LOOKUP_CONTROL_STOP;
