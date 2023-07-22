@@ -377,7 +377,7 @@ BbhmDiagipRecv
         pIpv4Header = (PIPV4_HEADER)buffer;
         pIcmpHeaderIpv4 = (PICMPV4_ECHO_MESSAGE)AnscIpv4GetPayload(pIpv4Header);
 
-        if ( ! AnscEqualString(pSocket->PeerName, pProperty->pDstAddrName, TRUE)/*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
+        if ((strcmp(pSocket->PeerName, pProperty->pDstAddrName) != 0) /*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
             || (AnscIcmpv4EchoGetId(pIcmpHeaderIpv4) !=  tempId) )
         {
             return  ANSC_STATUS_FAILURE;
@@ -418,7 +418,7 @@ BbhmDiagipRecv
     {
         pIcmpHeaderIpv6 = (PICMPV6_ECHO_MESSAGE)buffer;
 
-        if ( ! AnscEqualString(pSocket->PeerName, pProperty->pDstAddrName, TRUE)/*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
+        if ((strcmp(pSocket->PeerName, pProperty->pDstAddrName) != 0) /*(pSocket->PeerAddress.Value != pProperty->DstIp.Value)*/
             || (AnscIcmpv6EchoGetId(pIcmpHeaderIpv6) !=  tempId) )
         {
             return  ANSC_STATUS_FAILURE;

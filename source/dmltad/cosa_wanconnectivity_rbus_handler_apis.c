@@ -115,7 +115,7 @@ rbusError_t WANCNCTVTYCHK_GetURLHandler(rbusHandle_t handle, rbusProperty_t prop
     {
         ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.TestURL.%d.%s", &instNum,
                                                                                    Param);
-        if (ret ==2 && instNum > 0 && AnscEqualString(Param, "URL", TRUE))
+        if ((ret == 2) && (instNum > 0) && (strcmp(Param, "URL") == 0))
         {
             PSINGLE_LINK_ENTRY              pSListEntry       = NULL;
             PCOSA_CONTEXT_LINK_OBJECT       pCxtLink          = NULL;
@@ -365,7 +365,7 @@ rbusError_t WANCNCTVTYCHK_SetURLHandler(rbusHandle_t handle, rbusProperty_t prop
     {
         ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.TestURL.%d.%s", &instNum,
                                                                                     Param);
-        if (ret ==2 && instNum > 0 && AnscEqualString(Param, "URL", TRUE))
+        if ((ret == 2) && (instNum > 0) && (strcmp(Param, "URL") == 0))
         {
             WANCHK_LOG_DBG("PropName = %s, param = %s, instnum = %d, ret = %d\n",
                                name, Param, instNum, ret);
