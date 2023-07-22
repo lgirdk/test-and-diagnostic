@@ -34,7 +34,7 @@ LatencyMeasure_GetParamBoolValue
 {
 	UNREFERENCED_PARAMETER(hInsContext);
 
-	if( AnscEqualString(pParamName, "X_RDK_LatencyMeasure_IPv4Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_IPv4Enable") == 0)
 	{
 		if (!LowLatency_Get_Parameter_Struct_Value(LL_IPv4ENABLE, pBool)) {
 			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
@@ -43,7 +43,7 @@ LatencyMeasure_GetParamBoolValue
 		return TRUE;
 	}
 
-	if( AnscEqualString(pParamName, "X_RDK_LatencyMeasure_IPv6Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_IPv6Enable") == 0)
 	{
 		if (!LowLatency_Get_Parameter_Struct_Value(LL_IPv6ENABLE, pBool)) {
 			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
@@ -75,7 +75,7 @@ LatencyMeasure_SetParamBoolValue
 {
 	UNREFERENCED_PARAMETER(hInsContext);
 
-	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_IPv4Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_IPv4Enable") == 0)
     {
 		if (0 != LowLatency_Set_IPv4Enable(bValue)) {
 			CcspTraceError(("%s result: value set failed, pParamName='%s'\n", __FUNCTION__, pParamName));
@@ -84,7 +84,7 @@ LatencyMeasure_SetParamBoolValue
 		return TRUE;
     }
 	
-	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_IPv6Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_IPv6Enable") == 0)
     {
 		if (0 != LowLatency_Set_IPv6Enable(bValue)) {
 			CcspTraceError(("%s result: value set failed, pParamName='%s'\n", __FUNCTION__, pParamName));
@@ -114,7 +114,7 @@ LatencyMeasure_GetParamUlongValue
 {
 	UNREFERENCED_PARAMETER(hInsContext);
 
-	if( AnscEqualString(pParamName, "X_RDK_LatencyMeasure_TCP_ReportInterval", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_TCP_ReportInterval") == 0)
 	{
 		if (!LowLatency_Get_Parameter_Struct_Value(LL_TCP_REPORTINTERVAL, puLong)) {
 			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
@@ -137,7 +137,7 @@ LatencyMeasure_SetParamUlongValue
 {
 	UNREFERENCED_PARAMETER(hInsContext);
 
-	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_TCP_ReportInterval", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_TCP_ReportInterval") == 0)
     {
 		if ((uValue < 1) || (uValue > 1440))
 		{
@@ -186,7 +186,7 @@ LatencyMeasure_SetParamStringValue
 {
     UNREFERENCED_PARAMETER(hInsContext);
 	
-    if( AnscEqualString(pParamName, "X_RDK_LatencyMeasure_TCP_Stats_Report", TRUE))
+    if (strcmp(pParamName, "X_RDK_LatencyMeasure_TCP_Stats_Report") == 0)
     {
         if (0 != LowLatency_Set_TCP_Stats_Report(pString))
         {

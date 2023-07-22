@@ -261,7 +261,7 @@ rbusError_t TestDiagnostic_LatencyMeasure_GetStringHandler(rbusHandle_t handle, 
 
     rbusValue_Init(&val);
 
-    if (AnscEqualString(param, "X_RDK_LatencyMeasure_TCP_Stats_Report", TRUE)){
+    if (strcmp(param, "X_RDK_LatencyMeasure_TCP_Stats_Report") == 0){
 		rbusValue_SetString(val, g_pTCPStatsReport);
 	}
     else {
@@ -351,7 +351,7 @@ LatencyMeasure_EventParamStringValue
     )
 {
 
-	if ( AnscEqualString(pParamName, "X_RDK_LatencyMeasure_TCP_Stats_Report", TRUE)) {
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_TCP_Stats_Report") == 0) {
 		if (action == RBUS_EVENT_ACTION_SUBSCRIBE)
 		{
 			CcspTraceInfo(("Subscribers count increased for event [%s] \n", pParamName));
