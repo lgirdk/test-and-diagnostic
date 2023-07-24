@@ -935,6 +935,7 @@ BbhmDiagnsDelPquery
     AnscAcquireLock    (&pMyObject->PqueryTableLock);
     if (!(AnscSListPopEntryByLink(&pMyObject->PqueryTable, &pPquery->Linkage)))
     {
+        AnscReleaseLock    (&pMyObject->PqueryTableLock);
         return ANSC_STATUS_FAILURE;
     }
     AnscReleaseLock    (&pMyObject->PqueryTableLock);
