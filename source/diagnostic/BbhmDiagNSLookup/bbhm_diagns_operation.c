@@ -1120,8 +1120,6 @@ BbhmDiagnsSetStopTime
 
                                 break;
 
-                            default:
-                                break;
                         }
 
                         /* Comma-separated list(up to 10 items) of IPAddresses */
