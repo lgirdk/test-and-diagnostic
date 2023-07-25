@@ -1230,7 +1230,7 @@ BbhmDiagitCalculateResult
                 /* Guarantee that the last abnormal code is recorded */
 
                 if ( pDslhHopObj->HopErrorCode != ICMP_TYPE_ECHO_REPLY
-                    || pDslhHopObj->HopErrorCode != ICMP_TYPE_TIME_EXCEEDED )
+                    && pDslhHopObj->HopErrorCode != ICMP_TYPE_TIME_EXCEEDED )
                 {
                     pDslhHopObj->HopErrorCode = pEchoEntry->ErrorCode;
                 }
