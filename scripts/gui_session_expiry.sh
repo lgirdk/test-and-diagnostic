@@ -19,7 +19,7 @@
 #######################################################################################
 source /etc/log_timestamp.sh
 
-tmp_file=$(find /tmp -name "*sess*")
+tmp_file=$(find /tmp -maxdepth 1 -name "*sess*")
 for file in $tmp_file
 do
         diff=$((($(date +%s) - $(stat $file -c %Y)) / 60 ))
