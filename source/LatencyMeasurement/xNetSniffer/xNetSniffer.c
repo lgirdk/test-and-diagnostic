@@ -551,7 +551,7 @@ int checkIfExists(char* iface_name)
     return INTERFACE_EXIST;
 }
 
-int validateParams(Param data)
+int validateParams()
 {
     if ( strlen(data.interface_name) == 0 || INTERFACE_NOT_EXIST == checkIfExists(data.interface_name))
     {
@@ -635,7 +635,7 @@ int main(int argc, char **argv)
         }
     }
     printf("data.dbg_mode is %d\n",data.dbg_mode);
-    if ( VALIDATION_SUCCESS == validateParams(data) )
+    if ( VALIDATION_SUCCESS == validateParams() )
     {
         dbg_log("Arg validation success\n");
     }
