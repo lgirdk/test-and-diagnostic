@@ -354,8 +354,7 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
         if ( pIPInterface->Cfg_bitmask & INTF_CFG_ACTIVE_INTERVAL)
         {
             WANCHK_LOG_INFO("ActiveMonitorInterval:%ld\n",pIPInterface->ActiveMonitorInterval);
-            if ( (pIPInterface->ActiveMonitorInterval < 0) || (pIPInterface->ActiveMonitorInterval == 0) 
-                                || (pIPInterface->ActiveMonitorInterval < 1000))
+            if (pIPInterface->ActiveMonitorInterval < 1000)
             {
                 WANCHK_LOG_ERROR("ActiveMonitor Interval Provided is invalid for interface %s,Operation not Permitted\n",
                                                                     pIPInterface->InterfaceName);
