@@ -259,6 +259,10 @@ void CosaWanCnctvtyChk_StartSysevent_listener()
     sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "current_wan_ifname", 
                                                                     &current_wan_asyncid);
 #endif
+    sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "backupwan_router_addr",
+                                                                              &backupwan_router_addr_asyncid);
+    sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "MeshWANInterface_UlaAddr",
+		    					 		      &MeshWANInterface_UlaAddr_asyncid);
 }
 
 void CosaWanCnctvtyChk_StopSysevent_listener()
@@ -728,14 +732,9 @@ ANSC_STATUS CosaWanCnctvtyChk_GetDNS_PeerInfo(char *InterfaceName)
     BOOL IPv6_DNS_EXISTS = FALSE;
     errno_t rc = -1;
     ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+    char tmpStr[BUFLEN_256] = {0};
+    char *saveptr   = NULL;
     PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo = (PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO) NULL;
-
-    
-    /* subscribe to change of events*/
-    sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "backupwan_router_addr", 
-                                                                    &backupwan_router_addr_asyncid);
-    sysevent_setnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, "MeshWANInterface_UlaAddr", 
-                                                                &MeshWANInterface_UlaAddr_asyncid);
 
     ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "backupwan_router_addr", 
                                                                 IPv4_DNS, sizeof(IPv4_DNS));
@@ -748,7 +747,9 @@ ANSC_STATUS CosaWanCnctvtyChk_GetDNS_PeerInfo(char *InterfaceName)
                                                                     buf, sizeof(buf));
     if ((ret == 0) && strlen(buf))
     {
-        IPv6_DNS = strtok(buf, "/");
+        rc = strcpy_s(tmpStr, strlen(buf)+1 , buf);
+        ERR_CHK(rc);
+        IPv6_DNS = strtok_r(tmpStr, "/",&saveptr);
         if(IPv6_DNS)
         {
             IPv6_DNS_EXISTS = TRUE;
@@ -1219,11 +1220,7 @@ void handle_dns_srvrcnt_event (char *InterfaceName,unsigned int new_dns_server_c
         ERR_CHK(rc);
         if((!ind) && (rc == EOK))
         {
-            sysevent_rmnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, 
-                                                                    backupwan_router_addr_asyncid);
-            sysevent_rmnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, 
-                                                                MeshWANInterface_UlaAddr_asyncid);
-                    /* reinitialize dns server entry for the interface*/
+            /* reinitialize dns server entry for the interface*/
             CosaWanCnctvtyChk_DNS_GetEntry(InterfaceName);
         }
         else
@@ -1492,10 +1489,12 @@ ANSC_STATUS CosaWanCnctvtyChk_Remove_Intf (wan_intf_index_t IntfIndex)
     ERR_CHK(ret);
     if((!ind) && (ret == EOK))
     {
+	/*    
         sysevent_rmnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, 
                                                                 backupwan_router_addr_asyncid);
         sysevent_rmnotification(sysevent_fd_wanchk_monitor, sysevent_token_wanchk_monitor, 
                                                             MeshWANInterface_UlaAddr_asyncid);
+	*/
     }
     else
     {
