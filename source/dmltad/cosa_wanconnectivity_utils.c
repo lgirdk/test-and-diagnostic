@@ -611,7 +611,7 @@ void WanCnctvtyChk_CreateIPHeader (int family, char *srcIp, char *dstIp, unsigne
     }else{
         
     struct iphdr *ip_header = (struct iphdr *)header;
-    memset(ip_header, 0, sizeof(struct ip6_hdr));
+    memset(ip_header, 0, sizeof(struct iphdr));
     ip_header->version = 4;
     ip_header->ihl = (sizeof(struct iphdr))/4 ;
     ip_header->tos = 0;
