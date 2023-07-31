@@ -490,8 +490,9 @@ self_heal_interfaces()
 
                 l3netRestart=$(sysevent get l3net_selfheal)
                 echo_t "[RDKB_AGG_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
-
-                if [ "$l3netRestart" != "done" ]; then
+                if [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
+                    : #Do nothing for XD4
+                elif [ "$l3netRestart" != "done" ]; then
 
                     check_if_brlan1_created=$(ifconfig | grep "brlan1")
                     check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")

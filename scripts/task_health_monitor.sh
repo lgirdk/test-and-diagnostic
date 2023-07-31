@@ -1182,6 +1182,8 @@ esac
 
 if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$MODEL_NUM" = "CGA4332COM" ]; then
     echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for BWG "
+elif [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
+    echo_t "Disabling CcpsHomeSecurity and CcspAdvSecurity for XD4 "
 else
     if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
 
@@ -1832,8 +1834,8 @@ case $SELFHEAL_TYPE in
         # TODO: move LIGHTTPD_PID BASE code with TCCBR,SYSTEMD code!
     ;;
     "TCCBR"|"SYSTEMD")
-	#Ignoring for XLE and Ashlene model. lighttpd and webgui.sh are not avaialble in these boxes.
-	if [ "$MODEL_NUM" = "WNXL11BWL" ] || [ "$MODEL_NUM" = "SE501" ]; then
+	#Ignoring for XLE, Ashlene, and XD4 models. lighttpd and webgui.sh are not avaialble in these boxes.
+	if [ "$MODEL_NUM" = "WNXL11BWL" ] || [ "$MODEL_NUM" = "SE501" ] || [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
             : # Do nothing
         else
             # Checking lighttpd PID
@@ -2488,7 +2490,9 @@ case $SELFHEAL_TYPE in
             l3netRestart=$(sysevent get l3net_selfheal)
             echo_t "[RDKB_SELFHEAL] : Value of l3net_selfheal : $l3netRestart"
 
-            if [ "$l3netRestart" != "done" ]; then
+            if [ "$MODEL_NUM" = "CVA601ZCOM" ]; then
+                : #Do nothing for XD4
+            elif [ "$l3netRestart" != "done" ]; then
 
                 check_if_brlan1_created=$(ifconfig | grep "brlan1")
                 check_if_brlan1_up=$(ifconfig brlan1 | grep "UP")
@@ -2691,7 +2695,7 @@ case $SELFHEAL_TYPE in
         #Selfheal will run after 15mins of bootup, then by now the WIFI initialization must have
         #completed, so if still wifi_initilization not done, we have to recover the WIFI
         #Restart the WIFI if initialization is not done with in 15mins of poweron.
-        if [ "$WiFi_Flag" = "false" ]; then
+        if [ "$WiFi_Flag" = "false" -a "$MODEL_NUM" != "CVA601ZCOM" ]; then
             SSID_DISABLED=0
             if [ -f "/tmp/wifi_initialized" ]; then
                 echo_t "[RDKB_SELFHEAL] : WiFi Initialization done"
@@ -2770,12 +2774,14 @@ case $SELFHEAL_TYPE in
 esac
 
 numofRadios=0
-isnumofRadiosExec=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries |grep "Execution succeed")
-if [ "$isnumofRadiosExec" != "" ]; then
-    numofRadios=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries | grep value | awk '{ print $5 }')
-else
-    echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"
-    echo "$isnumofRadiosExec"
+if [ "$MODEL_NUM" != "CVA601ZCOM" ]; then                                                                                                                                                                              
+    isnumofRadiosExec=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries |grep "Execution succeed")                                                                                                                     
+    if [ "$isnumofRadiosExec" != "" ]; then                                                                                                                                                                            
+        numofRadios=$(dmcli eRT getv Device.WiFi.RadioNumberOfEntries | grep value | awk '{ print $5 }')                                                                                                               
+    else                                                                                                                                                                                                               
+        echo_t "[RDKB_PLATFORM_ERROR] : Something went wrong while checking number of radios"                                                                                                                          
+        echo "$isnumofRadiosExec"                                                                                                                                                                                      
+    fi                                                                                                                                                                                                                 
 fi
 
 if [ $numofRadios -eq 3 ]; then
@@ -2809,7 +2815,7 @@ if [ $numofRadios -eq 3 ]; then
     fi
 fi
 
-if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
+if ([ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]) && [ "$MODEL_NUM" != "CVA601ZCOM" ]; then
     # If bridge mode is not set and WiFI is not disabled by user,
     # check the status of SSID
     if [ $BR_MODE -eq 0 ] && [ $SSID_DISABLED -eq 0 ]; then
@@ -3062,7 +3068,7 @@ fi
 #Check whether private SSID's are broadcasting during bridge-mode or not
 #if broadcasting then we need to disable that SSID's for pseduo mode(2)
 #if device is in full bridge-mode(3) then we need to disable both radio and SSID's
-if [ $BR_MODE -eq 1 ]; then
+if [ $BR_MODE -eq 1 -a "$MODEL_NUM" != "CVA601ZCOM" ]; then
 
     isBridging=$(syscfg get bridge_mode)
     echo_t "[RDKB_SELFHEAL] : BR_MODE:$isBridging"
@@ -3356,7 +3362,7 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
                     touch /tmp/dnsmaq_noiface
                 fi
             else
-                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] ; then
+                if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$MODEL_NUM" != "CVA601ZCOM" ]; then
                     echo_t "[RDKB_SELFHEAL] : dnsmasq is not running"
                     t2CountNotify "SYS_SH_dnsmasq_restart"
                 fi
