@@ -207,7 +207,11 @@ setRebootreason()
         fi
 }
 
-
+#Check if /data/wifi_config_nvram and /data/wifi_config_nvram_bak ar present in TCCBR. If yes, remove these files
+if [ -f /data/wifi_config_nvram ] || [ -f /data/wifi_config_nvram_bak ]; then
+        echo_t "Removing wifi_config_nvram and wifi_config_nvram_bak, not required for TCCBR"
+        rm -rf /data/wifi_config_nvram /data/wifi_config_nvram_bak
+fi
 
 if [ "$backupenable" == "true" ]
 then    
@@ -534,4 +538,3 @@ fi
 else
 	echo_t "RDKB_SELFHEAL_BOOTUP : nvram2 logging is disabled , not logging data"
 fi
-
