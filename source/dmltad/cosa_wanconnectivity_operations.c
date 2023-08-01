@@ -827,16 +827,8 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
   
     if (!pQuerynowCtxt)
     {
-       if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
-       {
-           WANCHK_LOG_ERROR("pQuerynowCtxt data is NULL,unable to execute query\n");
-       }
-       else
-       {
-           WANCHK_LOG_DBG("pQuerynowCtxt data is NULL,unable to execute query\n");
-       }
-       ret = ANSC_STATUS_FAILURE;
-       goto EXIT;
+        WANCHK_LOG_ERROR("pQuerynowCtxt data is NULL,unable to execute query\n");
+        return ANSC_STATUS_FAILURE;
     }
 
     if (!pQuerynowCtxt->url_count || !pQuerynowCtxt->url_list)
