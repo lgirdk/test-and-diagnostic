@@ -360,8 +360,6 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
                 dbg_log("   *  IPv6 next header : %d \n", ip6->next_header);
                 dbg_log("   *  IPv6 Hop limit : %d \n", ip6->hop_limit);
                 dbg_log("   *  IPv6 version shift : %d \n", ip6->ip_ver);
-                dbg_log("   *  IPv6 version : %d \n", ntohs(ip6->ip_ver>>4));
-                dbg_log("   *  IPv6 version shift : %d \n", (ip6->ip_ver >> 4));
                 tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + 40);
         }
         else
@@ -497,7 +495,8 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
             dbg_log("Data Received is : %d \nFLAG: %d \nACK: %u\nSeq %u\n Port %d\n TS: %lld.%06lld\n", 
                         message.mesg_type,message.th_flag,message.th_ack,message.th_seq,message.th_dport,message.tv_sec,message.tv_usec);
             // msgsnd to send message
-            msgsnd(msgid, &message, sizeof(message), 0);
+            int length = sizeof(struct mesg_buffer) - sizeof(long);
+            msgsnd(msgid, &message, length, 0);
       
             // display the message
             dbg_log("Data send is : %d \n", message.mesg_type );
