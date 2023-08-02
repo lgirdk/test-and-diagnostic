@@ -189,13 +189,14 @@ static int inet_is_onlink(const struct in_addr *addr)
 
             if (inet_pton(AF_INET, entry, &net) <= 0)
                 continue;
+            if (atoi(pref) != 0){
+                mask = htonl(0xffffffff << (32 - atoi(pref)));
 
-            mask = htonl(0xffffffff << (32 - atoi(pref)));
-
-            if (inet_is_same_net(*(uint32_t *)(addr), *(uint32_t *)&net, mask)) {
-                pclose(tbl_fp);
-                pclose(rule_fp);
-                return 1; /* on-link */
+                if (inet_is_same_net(*(uint32_t *)(addr), *(uint32_t *)&net, mask)) {
+                    pclose(tbl_fp);
+                    pclose(rule_fp);
+                    return 1; /* on-link */
+                }
             }
         }
 
