@@ -908,10 +908,8 @@ static int fetch_interface_stats(char *ifname,uint64_t *rx_bytes,uint64_t *tx_by
 static int fetch_port_stats(char *ifname,uint64_t *rx_bytes,uint64_t *tx_bytes)
 {
 int ret = SUCCESS;
-/* Temp workaround to disable MXL platforms*/
 #if defined(_HUB4_PRODUCT_REQ_) || defined(_SR213_PRODUCT_REQ_) || defined(_SR300_PRODUCT_REQ_) \
-|| defined (_SE501_PRODUCT_REQ_) || defined(_WNXL11BWL_PRODUCT_REQ_) || \
-(defined(_XB6_PRODUCT_REQ_) && !defined(_COSA_BCM_ARM_))
+|| defined (_SE501_PRODUCT_REQ_) || defined(_WNXL11BWL_PRODUCT_REQ_)
     if (ret == SUCCESS)
     {
         *rx_bytes = NEGATIVE_VALUE;
