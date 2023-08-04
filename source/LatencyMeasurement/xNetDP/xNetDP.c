@@ -616,40 +616,68 @@ void UpdateReportingTable(int hashIndex)
                 }
             }
 
-
-            dbg_log("Before comparing latency, SynAckMinLatency is %lld.%06lld,SynAckMinLatency %lld.%06lld\n",
+          dbg_log("Before comparing latency, SynAckMinLatency is %lld.%06lld,SynAckMinLatency %lld.%06lld\n",
                         hashLatencyTable[index].SynAckMinLatency_sec,hashLatencyTable[index].SynAckMinLatency_usec,
                         hashLatencyTable[index].SynAckMaxLatency_sec,hashLatencyTable[index].SynAckMaxLatency_usec 
                     );
-
-            if ( hashArray[hashIndex].latency_sec <= hashLatencyTable[index].SynAckMinLatency_sec && hashArray[hashIndex].latency_usec <= hashLatencyTable[index].SynAckMinLatency_usec)
+            if ( hashArray[hashIndex].latency_sec < hashLatencyTable[index].SynAckMinLatency_sec)
             {
                 hashLatencyTable[index].SynAckMinLatency_sec = hashArray[hashIndex].latency_sec;
                 hashLatencyTable[index].SynAckMinLatency_usec = hashArray[hashIndex].latency_usec;
-            } 
-            else if ( hashArray[hashIndex].latency_sec >= hashLatencyTable[index].SynAckMaxLatency_sec && hashArray[hashIndex].latency_usec >= hashLatencyTable[index].SynAckMaxLatency_usec)
+            }
+            else if(hashArray[hashIndex].latency_sec == hashLatencyTable[index].SynAckMinLatency_sec)
+            {
+                if(hashArray[hashIndex].latency_usec < hashLatencyTable[index].SynAckMinLatency_usec)
+                {
+                    hashLatencyTable[index].SynAckMinLatency_sec = hashArray[hashIndex].latency_sec;
+                    hashLatencyTable[index].SynAckMinLatency_usec = hashArray[hashIndex].latency_usec;
+                }
+            }
+
+            if ( hashArray[hashIndex].latency_sec > hashLatencyTable[index].SynAckMaxLatency_sec)
             {
                 hashLatencyTable[index].SynAckMaxLatency_sec = hashArray[hashIndex].latency_sec ;
                 hashLatencyTable[index].SynAckMaxLatency_usec = hashArray[hashIndex].latency_usec ;
             }
-
-            dbg_log("Before comparing latency,AckMinLatency is %lld.%06lld,SynAckMinLatency %lld.%06lld\n",
+            else if( hashArray[hashIndex].latency_sec == hashLatencyTable[index].SynAckMaxLatency_sec)
+            {
+                if(hashArray[hashIndex].latency_usec > hashLatencyTable[index].SynAckMaxLatency_usec)
+                {
+                    hashLatencyTable[index].SynAckMaxLatency_sec = hashArray[hashIndex].latency_sec ;
+                    hashLatencyTable[index].SynAckMaxLatency_usec = hashArray[hashIndex].latency_usec ;
+                }
+            }
+           dbg_log("Before comparing latency,AckMinLatency is %lld.%06lld,SynAckMinLatency %lld.%06lld\n",
                         hashLatencyTable[index].AckMinLatency_sec,hashLatencyTable[index].AckMinLatency_usec,
                         hashLatencyTable[index].AckMaxLatency_sec,hashLatencyTable[index].AckMaxLatency_usec 
                     );
 
-            if ( hashArray[hashIndex].Lan_latency_sec <= hashLatencyTable[index].AckMinLatency_sec && hashArray[hashIndex].Lan_latency_usec <= hashLatencyTable[index].AckMinLatency_usec)
+            if( hashArray[hashIndex].Lan_latency_sec < hashLatencyTable[index].AckMinLatency_sec)
             {
                 hashLatencyTable[index].AckMinLatency_sec = hashArray[hashIndex].Lan_latency_sec;
                 hashLatencyTable[index].AckMinLatency_usec = hashArray[hashIndex].Lan_latency_usec;
+            }
+            else if(hashArray[hashIndex].Lan_latency_sec == hashLatencyTable[index].AckMinLatency_sec)
+            {
+                if(hashArray[hashIndex].Lan_latency_usec < hashLatencyTable[index].AckMinLatency_usec)
+                {
+                    hashLatencyTable[index].AckMinLatency_sec = hashArray[hashIndex].Lan_latency_sec;
+                    hashLatencyTable[index].AckMinLatency_usec = hashArray[hashIndex].Lan_latency_usec;
+                }
             } 
-            else if ( hashArray[hashIndex].Lan_latency_sec >= hashLatencyTable[index].AckMaxLatency_sec &&  hashArray[hashIndex].Lan_latency_usec >= hashLatencyTable[index].AckMaxLatency_usec)
+             if ( hashArray[hashIndex].Lan_latency_sec > hashLatencyTable[index].AckMaxLatency_sec)
             {
                 hashLatencyTable[index].AckMaxLatency_sec = hashArray[hashIndex].Lan_latency_sec ;
                 hashLatencyTable[index].AckMaxLatency_usec = hashArray[hashIndex].Lan_latency_usec ;
             }
-
-
+            else if(hashArray[hashIndex].Lan_latency_sec == hashLatencyTable[index].AckMaxLatency_sec)
+            {
+                if(hashArray[hashIndex].Lan_latency_usec > hashLatencyTable[index].AckMaxLatency_usec)
+                {
+                    hashLatencyTable[index].AckMaxLatency_sec = hashArray[hashIndex].Lan_latency_sec ;
+                    hashLatencyTable[index].AckMaxLatency_usec = hashArray[hashIndex].Lan_latency_usec ;
+                }
+            }
             hashLatencyTable[index].SynAckAggregatedLatency_sec += hashArray[hashIndex].latency_sec  ;
             hashLatencyTable[index].SynAckAggregatedLatency_usec += hashArray[hashIndex].latency_usec ;
             hashLatencyTable[index].AckAggregatedLatency_sec += hashArray[hashIndex].Lan_latency_sec ;
@@ -763,7 +791,7 @@ void MeasureTCPLatency(int hashIndex)
     t3.tv_usec = hashArray[hashIndex].TcpInfo[INDEX_ACK].tv_usec;  
     //timercmp(&t1,&t2,diff_time);
 
-
+	
     timeval_subtract(&diff_time,&t2,&t1);
     hashArray[hashIndex].latency_sec = diff_time.tv_sec;
     hashArray[hashIndex].latency_usec = diff_time.tv_usec;
@@ -1331,7 +1359,7 @@ int main(int argc,char **argv)
             hashArray[hashIndex].TcpInfo[INDEX_SYN_ACK].th_ack  = message.th_ack;
             hashArray[hashIndex].TcpInfo[INDEX_SYN_ACK].tv_sec  = message.tv_sec;
             hashArray[hashIndex].TcpInfo[INDEX_SYN_ACK].tv_usec = message.tv_usec; 
-            //MeasureTCPLatency(hashIndex);
+	    //MeasureTCPLatency(hashIndex);
         }
     }
     else if((message.th_flag & SYN) == SYN)
@@ -1361,7 +1389,7 @@ int main(int argc,char **argv)
                 hashArray[hashIndex].TcpInfo[INDEX_ACK].th_ack  = message.th_ack;
                 hashArray[hashIndex].TcpInfo[INDEX_ACK].tv_sec  = message.tv_sec;
                 hashArray[hashIndex].TcpInfo[INDEX_ACK].tv_usec  = message.tv_usec; 
-                MeasureTCPLatency(hashIndex);
+		MeasureTCPLatency(hashIndex);
             }
         }
     }
