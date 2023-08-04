@@ -2954,6 +2954,15 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                             echo_t "[RDKB_SELFHEAL] : Both 2G Radio(Radio 1) and 2G Private SSID are in DOWN state"
                         else
                             echo_t "[RDKB_SELFHEAL] : 2G Radio(Radio 1) is in up state, only 2G Private SSID is in DOWN state"
+                           #### CMXB7-5473: 2G SSID disabled
+                            if [[ "$MODEL_NUM" == "TG4482A" ]]; then
+                                checkMaintenanceWindow
+                                if [[ "$reb_window" == "1" ]]; then
+                                    echo_t "[RDKB_SELFHEAL] : Restarting CcspWifiSsp now within maintenance window"
+                                    systemctl restart ccspwifiagent.service
+                                fi
+                            fi
+                            #### End of CMXB7-5473
 
                             #### TCXB8-2119: 2G SSID down due to hostapd unresponsive
                             if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
