@@ -2112,7 +2112,7 @@ static int get_mac_addr(char* ifName, char* mac)
     int skfd = -1;
     struct ifreq ifr;
 
-    AnscCopyString(ifr.ifr_name, ifName);
+    strncpy(ifr.ifr_name, ifName, sizeof(ifr.ifr_name)-1);
     
     skfd = socket(AF_INET, SOCK_DGRAM, 0);
     if(skfd == -1)
