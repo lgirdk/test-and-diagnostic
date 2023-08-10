@@ -540,7 +540,7 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                     }
                     if (strcmp(IPInterface.RecordType,record_type))
                     {
-                        memset(IPInterface.ServerType,0,MAX_RECORD_TYPE_SIZE);
+                        memset(IPInterface.RecordType,0,MAX_RECORD_TYPE_SIZE);
                         rc = strcpy_s(IPInterface.RecordType,MAX_RECORD_TYPE_SIZE ,record_type);
                         ERR_CHK(rc);
                         IPInterface.Cfg_bitmask |= INTF_CFG_RECORDTYPE;
