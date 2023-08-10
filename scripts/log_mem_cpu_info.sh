@@ -94,14 +94,16 @@ get_high_mem_processes() {
     totalMemSys=`free | awk 'FNR == 2 {print $2}'`
     usedMemSys=`free | awk 'FNR == 2 {print $3}'`
     freeMemSys=`free | awk 'FNR == 2 {print $4}'`
+    availableMemSys=`free | awk 'FNR == 2 {print $7}'`
 
     echo_t "RDKB_SYS_MEM_INFO_SYS : Total memory in system is $totalMemSys at timestamp $timestamp"
     echo_t "RDKB_SYS_MEM_INFO_SYS : Used memory in system is $usedMemSys at timestamp $timestamp"
     echo_t "RDKB_SYS_MEM_INFO_SYS : Free memory in system is $freeMemSys at timestamp $timestamp"
+    echo_t "RDKB_SYS_MEM_INFO_SYS : Available memory in system is $availableMemSys at timestamp $timestamp"
 
     # RDKB-7017	
     echo_t "USED_MEM:$usedMemSys"
-    if [ "$BOX_TYPE" = "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
         t2ValNotify "UsedMem_split" "$usedMemSys"
     else
         t2ValNotify "USED_MEM_ATOM_split" "$usedMemSys"
@@ -117,9 +119,13 @@ get_high_mem_processes() {
     fi
     
     echo_t "FREE_MEM:$freeMemSys"
+    t2ValNotify "FreeMem_split" "$freeMemSys"
+
+    echo_t "AVAILABLE_MEM:$availableMemSys"
+    t2ValNotify "AvailableMem_split" "$availableMemSys"
 
     # RDKB-7195
-    if [ "$BOX_TYPE" == "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
         iccctl_info=`iccctl mal`
         echo_t "ICCCTL_INFO : $iccctl_info"
 
@@ -157,7 +163,7 @@ get_high_mem_processes() {
     #RDKB-7411
     LOAD_AVG_15=`echo $LOAD_AVG | cut -f3 -d:`
     echo_t "LOAD_AVERAGE:$LOAD_AVG_15"
-    if [ "$BOX_TYPE" = "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
         t2ValNotify "LoadAvg_split" "$LOAD_AVG_15"
     else
         t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
@@ -218,7 +224,7 @@ get_high_mem_processes() {
         t2CountNotify "SYS_ERROR_CPU100"
     fi
     echo_t "USED_CPU:$Curr_CPULoad"
-    if [ "$BOX_TYPE" = "XB3" ]; then
+    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
         t2ValNotify "UsedCPU_split" "$Curr_CPULoad"
     else
         t2ValNotify "USED_CPU_ATOM_split" "$Curr_CPULoad"
@@ -355,7 +361,7 @@ get_high_mem_processes() {
                         if [ $free_memory_threshold -ne 0 ]; then
                             echo_t "[RDKB_SELFHEAL] : Free memory = $freeMemSys, Memory Threshold = $free_memory_threshold"
 
-                            if [ "$BOX_TYPE" = "XB3" ]; then
+                            if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
                                 Committed_AS=`cat /proc/meminfo | grep Committed_AS | sed 's/[^0-9]*//g'`
                                 CommitLimit=`cat /proc/meminfo | grep CommitLimit | sed 's/[^0-9]*//g'`
                                 free_mem_avail=$(($CommitLimit - $Committed_AS))
