@@ -315,6 +315,10 @@ Dhcpv6_Client_restart ()
 		echo_t "DHCPv6 Client not running"
 		return 
 	fi
+	if [ "$DHCPcMonitoring" == "false" ];then
+		echo_t "DHCP Monitoring done by wanmanager"
+		return 
+	fi
 	process_restart_need=0
 	if [ "$2" = "restart_for_dibbler-server" ];then
         	PAM_UP="$(busybox pidof CcspPandMSsp)"
@@ -3484,7 +3488,7 @@ case $SELFHEAL_TYPE in
     ;;
     "SYSTEMD")
         #Checking ipv6 dad failure and restart dibbler client [TCXB6-5169]
-    if [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
+    if [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$DHCPcMonitoring" != "false" ]; then
         CHKIPV6_DAD_FAILED=$(ip -6 addr show dev $WAN_INTERFACE | grep "scope link tentative dadfailed")
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
@@ -3536,7 +3540,7 @@ esac
 if [ "$xle_device_mode" -ne "1" ]; then
 # for xle no need to check dibbler client and server
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$DHCPcMonitoring" != "false" ]
     then
     #Checking dibbler server is running or not RDKB_10683
     DIBBLER_PID=$(busybox pidof dibbler-server)
@@ -3592,10 +3596,12 @@ if [ "$xle_device_mode" -ne "1" ]; then
                             #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
+                                        if [ "$DHCPcMonitoring" != "false" ];then
                             dibbler-server stop
                             sleep 2
                             dibbler-server start
                         fi
+                                    fi
                     else
                         echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
                         Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
@@ -3792,7 +3798,7 @@ case $SELFHEAL_TYPE in
     ;;
 esac
 
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ] && [ $DHCPV6C_STATUS != "false" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ -f "$DHCPV6_ERROR_FILE" ] && [ "$WAN_STATUS" = "started" ] && [ "$WAN_IPv4_Addr" != "" ] && [ $DHCPV6C_STATUS != "false" ] && [ "$DHCPcMonitoring" != "false" ]; then
     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
     echo_t "isIPv6 = $isIPv6"
     if [ "$isIPv6" = "" ] && [ "$Unit_Activated" != "0" ]; then
@@ -3821,7 +3827,7 @@ erouter0_up_check=$(ifconfig $WAN_INTERFACE | grep "UP")
 erouter0_globalv6_test=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global" | awk '{print $(NF-1)}' | cut -f1 -d":")
 erouter_mode_check=$(syscfg get last_erouter_mode) #Check given for non IPv6 bootfiles RDKB-27963
 IPV6_STATUS_CHECK_GIPV6=$(sysevent get ipv6-status) #Check given for non IPv6 bootfiles RDKB-27963
-if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV6C_STATUS != "false" ]; then
+if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV6C_STATUS != "false" ] && [ "$DHCPcMonitoring" != "false" ]; then
     case $SELFHEAL_TYPE in
         "SYSTEMD")
             if [ "$erouter0_up_check" = "" ]; then
@@ -3890,7 +3896,7 @@ fi
 #Logic ends here for RDKB-25714
 wan_dhcp_client_v4=1
 wan_dhcp_client_v6=1
-if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$WAN_STATUS" = "started" ]; then
+if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$WAN_STATUS" = "started" ]  && [ "$DHCPcMonitoring" != "false" ]; then
     wan_dhcp_client_v4=1
     wan_dhcp_client_v6=1
 
@@ -3972,7 +3978,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
         DHCP_STATUS_execution=$(echo "$DHCP_STATUS_query" | grep "Execution succeed")
         DHCP_STATUS=$(echo "$DHCP_STATUS_query" | grep "value" | cut -f3 -d":" | awk '{print $1}')
 
-        if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] ; then
+        if [ "$DHCP_STATUS_execution" != "" ] && [ "$DHCP_STATUS" != "Bound" ] && [ "$DHCPcMonitoring" != "false" ] ; then
 
             echo_t "DHCP_CLIENT : DHCPStatusValue is $DHCP_STATUS"
             if ([ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ] && [ $DHCPV4C_STATUS != "false" ]) || ([ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ] ); then
@@ -4041,7 +4047,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             fi
         ;;
         "TCCBR")
-            if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]; then
+            if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ] && [ "$DHCPcMonitoring" != "false" ]; then
                 V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                 eval "$V4_EXEC_CMD"
@@ -4049,7 +4055,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                 wan_dhcp_client_v4=1
             fi
 
-            if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
+            if [ $wan_dhcp_client_v6 -eq 0 ] && [ "$DHCPcMonitoring" != "false" ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
                 if [ "$MODEL_NUM" = "CGA4332COM" ]; then
                     /lib/rdk/dibbler-init.sh
@@ -4138,7 +4144,7 @@ case $SELFHEAL_TYPE in
     "TCCBR")
     ;;
     "SYSTEMD")
-        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV4C_STATUS != "false" ]; then
+        if [ "x$MAPT_CONFIG" != "xset" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ $DHCPV4C_STATUS != "false" ] && [ "$DHCPcMonitoring" != "false" ]; then
             if [ $wan_dhcp_client_v4 -eq 0 ]; then
                 if [ "$MANUFACTURE" = "Technicolor" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
