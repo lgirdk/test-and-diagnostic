@@ -2843,7 +2843,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                         fi
 
                             #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
-                            if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                            if [[ "$MODEL_NUM" == "CGM4981COM" ] || [ "$MODEL_NUM" == "CGA4332COM" ]]; then
                                 buf=$(grep "5G hostapd is unresponsive" /rdklogs/logs/wifi_vendor_apps.log)
                                 if [[ "$buf" != "" ]]; then
                                     echo_t "[RDKB_PLATFORM_ERROR] : 5G hostapd is unresponsive"
@@ -2859,6 +2859,23 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                                         echo "0" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
                                     fi
                                 fi
+                                #### CBR2-1716 : 5G SSID down due to control interface setup failed for wl1
+                                buf1=$(grep "Failed to setup control interface for wl1" /rdklogs/logs/wifi_vendor_apps.log)
+                                if [[ "$buf1" != "" ]]; then
+                                    echo_t "[RDKB_PLATFORM_ERROR] : Failed to setup control interface for wl1"
+                                    if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "1" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    else
+                                        echo "0" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                else
+                                    # The log of "Failed to setup control interface for wl1" may have been uploaded; therefore, no longer available.
+                                    # Perform the following only one time after detecting the SSID Status is Down
+                                    if [ ! -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
+                                        echo "0" > "$FILE_5G_HOSTAPD_RESTART_FLAG"
+                                    fi
+                                fi
+                                #### End of CBR2-1716
                                 if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
                                     count=$(head -n1 "$FILE_5G_HOSTAPD_RESTART_FLAG" | sed -e 's/^[^0-9]*\([0-9][0-9]*\).*/\1/')
                                     if [[ "$count" == "0" ]]; then
@@ -2888,7 +2905,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
             else
                 #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
                 # 5G SSID is up, remove the hostapd restart flag
-                if [[ "$MODEL_NUM" == "CGM4981COM" ]]; then
+                if [[ "$MODEL_NUM" == "CGM4981COM" ] || [ "$MODEL_NUM" == "CGA4332COM" ]]; then
                     if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
                         echo_t "[RDKB_SELFHEAL] : 5G Private SSID is now up, removing $FILE_5G_HOSTAPD_RESTART_FLAG"
                         rm "$FILE_5G_HOSTAPD_RESTART_FLAG"
