@@ -6477,6 +6477,7 @@ RDK_SpeedTest_GetParamUlongValue
         ULONG*                      pUlong
     )
 {
+#if (!defined(_SR213_PRODUCT_REQ_)) //SHARMAN-1777
     char TO_buf[4]={0};
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "SubscriberUnPauseTimeOut") == 0)
@@ -6495,6 +6496,10 @@ RDK_SpeedTest_GetParamUlongValue
     {
         AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName));
     }
+#else
+    *pUlong = 0;
+    return TRUE;
+#endif
     return FALSE;
 }
 
