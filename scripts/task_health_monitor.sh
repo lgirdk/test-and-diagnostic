@@ -114,7 +114,6 @@ case $SELFHEAL_TYPE in
     "BASE")
         SNMPMASTERCRASHED="/tmp/snmp_cm_crashed"
         WAN_INTERFACE=$(getWanInterfaceName)
-        PEER_COMM_ID="/tmp/elxrretyt.swr"
 
         if [ ! -f /usr/bin/GetConfigFile ]; then
             echo "Error: GetConfigFile Not Found"
@@ -124,7 +123,6 @@ case $SELFHEAL_TYPE in
     ;;
     "TCCBR")
         WAN_INTERFACE=$(getWanInterfaceName)
-        PEER_COMM_ID="/tmp/elxrretyt.swr"
 
         if [ ! -f /usr/bin/GetConfigFile ]; then
             echo "Error: GetConfigFile Not Found"
@@ -380,11 +378,7 @@ case $SELFHEAL_TYPE in
                 WIFI_QUERY_ERROR=1
             fi
 
-
-            if [ ! -f $PEER_COMM_ID ]; then
-                GetConfigFile $PEER_COMM_ID
-            fi
-            SSH_ATOM_TEST=$(ssh -I $IDLE_TIMEOUT -i $PEER_COMM_ID root@$ATOM_IP exit 2>&1)
+            SSH_ATOM_TEST=$(GetConfigFile /tmp/elxrretyt.swr stdout | ssh -I $IDLE_TIMEOUT -i /dev/stdin root@$ATOM_IP exit 2>&1)
             echo_t "SSH_ATOM_TEST : $SSH_ATOM_TEST"
             SSH_ERROR=`echo $SSH_ATOM_TEST | grep "Remote closed the connection"`
             SSH_TIMEOUT=`echo $SSH_ATOM_TEST | grep "Idle timeout"`
