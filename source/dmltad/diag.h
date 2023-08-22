@@ -135,7 +135,6 @@ diag_err_t diag_getstate(diag_mode_t mode, diag_state_t *state);
 diag_err_t diag_geterr(diag_mode_t mode, diag_err_t *state);
 diag_err_t diag_pingtest_init(void);
 diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void);
-diag_err_t diag_getPartnerID( char *partnerID );
 
 BOOL isDSLiteEnabled (void);
 int getIPbyInterfaceName (char *interface, char *ip, size_t len);
