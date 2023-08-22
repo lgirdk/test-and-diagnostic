@@ -252,19 +252,21 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
         return DIAG_ERR_RESOLVE;
     }
 
+    /* capture all other ping error messages, e.g. "ping: sendto: Network is unreachable" */
+    if (strncmp(result, "ping:", strlen("ping:")) == 0) {
+        return DIAG_ERR_OTHER;
+    }
+
     rc = memset_s(st, sizeof(*st), 0, sizeof(*st));
     ERR_CHK(rc);
     copy = sscanf(result, "%u %u %f %f %f", 
             &sent, &st->u.ping.success, &st->u.ping.rtt_min, 
             &st->u.ping.rtt_avg, &st->u.ping.rtt_max);
 
-    if((sent > 0) && (st->u.ping.success == 0)) {
-        st->u.ping.failure = sent - st->u.ping.success;
-        return DIAG_ERR_OK;
-    }
-
     if (copy == 5 || copy == 2) { /* RTT may not exist */
-        st->u.ping.failure = sent - st->u.ping.success;
+        if (sent > st->u.ping.success) {
+            st->u.ping.failure = sent - st->u.ping.success;
+        }
         return DIAG_ERR_OK;
     }
 
