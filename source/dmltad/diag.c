@@ -753,7 +753,7 @@ diag_err_t diag_pingtest_init( void )
 	}
 
 	//PartnerID
-	diag_getPartnerID( pingtest_devdet->PartnerID );
+	getPartnerId( pingtest_devdet->PartnerID );
 	
 	//ecmMAC
 	pingtest_devdet->ecmMAC[ 0 ] = '\0';
@@ -770,14 +770,6 @@ diag_err_t diag_pingtest_init( void )
 diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void)
 {
     return ( &diag_pingtest_stat.device_details);
-}
-
-#define DEVICE_PROPERTIES    "/etc/device.properties"
-diag_err_t diag_getPartnerID( char *partnerID )
-{
-	getPartnerId ( partnerID ) ;
-	
-	return DIAG_ERR_OK;
 }
 
 #if defined (_HUB4_PRODUCT_REQ_) || defined (FEATURE_SUPPORT_MAPT_NAT46)
