@@ -609,23 +609,23 @@ int main(int argc, char **argv)
       switch (opt)
       {
             case 'i':
-              strcpy(data.interface_name,optarg);
+              strncpy(data.interface_name,optarg,sizeof(data.interface_name)-1);
               break;
             case 'D':
               data.dbg_mode = TRUE;
               break;
             case 'f':
               //data.family = optarg;
-              strcpy(data.family,optarg);
+              strncpy(data.family,optarg,sizeof(data.family)-1);
               break;
             case 'F':
              // data.log_file = optarg;
-              strcpy(data.log_file,optarg);
+              strncpy(data.log_file,optarg,sizeof(data.log_file)-1);
               logFp = fopen(data.log_file,"w+");
               break;
             case 'p':
              // data.log_file = optarg;
-              strcpy(data.lan_prefix,optarg);
+              strncpy(data.lan_prefix,optarg,sizeof(data.lan_prefix)-1);
               break;
             case 'h':
               usage (progname, 0);
