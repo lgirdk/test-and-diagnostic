@@ -1915,7 +1915,10 @@ BOOL CPUProcAnalyzer_GetParamBoolValue
     char res[BUF_64] = {0};
     if ( strcmp(ParamName, "Enable") == 0 )
     {
-        *bValue = FALSE;
+	if( CosaIsProcAnalRunning() )
+		*bValue = TRUE;
+	else
+		*bValue = FALSE;
         return TRUE;
     }
     else if ( (strcmp(ParamName, "DynamicProcess") == 0) ||
