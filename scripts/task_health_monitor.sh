@@ -3522,7 +3522,7 @@ case $SELFHEAL_TYPE in
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
             if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
-                partner_id=$(syscfg get PartnerID)
+                partner_id="RDKM"
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
                     sysctl -w net.ipv6.conf.$WAN_INTERFACE.disable_ipv6=1
