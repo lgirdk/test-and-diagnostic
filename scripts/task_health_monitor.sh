@@ -2843,7 +2843,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
                         fi
 
                             #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
-                            if [[ "$MODEL_NUM" == "CGM4981COM" ] || [ "$MODEL_NUM" == "CGA4332COM" ]]; then
+                            if [[ "$MODEL_NUM" == "CGM4981COM" || "$MODEL_NUM" == "CGA4332COM" ]]; then
                                 buf=$(grep "5G hostapd is unresponsive" /rdklogs/logs/wifi_vendor_apps.log)
                                 if [[ "$buf" != "" ]]; then
                                     echo_t "[RDKB_PLATFORM_ERROR] : 5G hostapd is unresponsive"
@@ -2905,7 +2905,7 @@ if [ "$SELFHEAL_TYPE" = "BASE" ] || [ "$WiFi_Flag" = "false" ]; then
             else
                 #### TCXB8-2214: 5G SSID down due to hostapd unresponsive
                 # 5G SSID is up, remove the hostapd restart flag
-                if [[ "$MODEL_NUM" == "CGM4981COM" ] || [ "$MODEL_NUM" == "CGA4332COM" ]]; then
+                if [[ "$MODEL_NUM" == "CGM4981COM" || "$MODEL_NUM" == "CGA4332COM" ]]; then
                     if [ -f "$FILE_5G_HOSTAPD_RESTART_FLAG" ]; then
                         echo_t "[RDKB_SELFHEAL] : 5G Private SSID is now up, removing $FILE_5G_HOSTAPD_RESTART_FLAG"
                         rm "$FILE_5G_HOSTAPD_RESTART_FLAG"
