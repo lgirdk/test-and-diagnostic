@@ -347,7 +347,7 @@ do
 #		Take sum of the cpu consumption of top 5 downstream_manager processes.
 #		If total is more than 25%, reboot the box.
 
-		if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]
+		if [ "$BOX_TYPE" = "MV1" ]
                 then
 			if [ $Curr_CPULoad_Avg -ge $CPU_THRESHOLD ]; then
 				bootup_time_sec=$(cut -d. -f1 /proc/uptime)
@@ -380,7 +380,7 @@ if [ "$BOX_TYPE" == "WNXL11BWL" ] || [ "$BOX_TYPE" == "SE501" ]; then
 	fi
 fi
 
-if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+if [ "$BOX_TYPE" = "MV1" ]; then
 ####################################################
 #Logic:We will read ATOM load average on ARM side using rpcclient, 
 #	based on the load average threshold value,reboot the box.
