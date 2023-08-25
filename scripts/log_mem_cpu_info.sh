@@ -106,7 +106,7 @@ get_high_mem_processes() {
 
     # RDKB-7017	
     echo_t "USED_MEM:$usedMemSys"
-    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+    if [ "$FIRMWARE_TYPE" = "OFW" ]; then
         t2ValNotify "UsedMem_split" "$usedMemSys"
     else
         t2ValNotify "USED_MEM_ATOM_split" "$usedMemSys"
@@ -133,7 +133,7 @@ get_high_mem_processes() {
     t2ValNotify "AvailableMem_split" "$availableMemSys"
 
     # RDKB-7195
-    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+    if [ "$FIRMWARE_TYPE" = "OFW" ]; then
         iccctl_info=`iccctl mal`
         echo_t "ICCCTL_INFO : $iccctl_info"
 
@@ -171,7 +171,7 @@ get_high_mem_processes() {
     #RDKB-7411
     LOAD_AVG_15=`echo $LOAD_AVG | cut -f3 -d:`
     echo_t "LOAD_AVERAGE:$LOAD_AVG_15"
-    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+    if [ "$FIRMWARE_TYPE" = "OFW" ]; then
         t2ValNotify "LoadAvg_split" "$LOAD_AVG_15"
     else
         t2ValNotify "LOAD_AVG_ATOM_split" "$LOAD_AVG_15"
@@ -362,7 +362,7 @@ get_high_mem_processes() {
                         if [ $free_memory_threshold -ne 0 ]; then
                             echo_t "[RDKB_SELFHEAL] : Free memory = $freeMemSys, Memory Threshold = $free_memory_threshold"
 
-                            if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+                            if [ "$FIRMWARE_TYPE" = "OFW" ]; then
                                 Committed_AS=`cat /proc/meminfo | grep Committed_AS | sed 's/[^0-9]*//g'`
                                 CommitLimit=`cat /proc/meminfo | grep CommitLimit | sed 's/[^0-9]*//g'`
                                 free_mem_avail=$(($CommitLimit - $Committed_AS))

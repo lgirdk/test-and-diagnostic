@@ -1010,7 +1010,7 @@ self_heal_dhcp_clients()
                 UDHCPC_Enable="true"
                 dibbler_client_enable="true"
 
-		if ( ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
+		if ( ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                     check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
                     check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 else
@@ -1141,7 +1141,7 @@ self_heal_dhcp_clients()
         case $SELFHEAL_TYPE in
             "BASE")
                 if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
-                    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
+                    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ); then
                         V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
                         echo_t "Calling epon_utility.sh to restart udhcpc "
@@ -1168,7 +1168,7 @@ self_heal_dhcp_clients()
 
                 if [ $wan_dhcp_client_v6 -eq 0 ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-		    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
+		    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ); then
                         /lib/rdk/dibbler-init.sh
                         sleep 2
                         /usr/sbin/dibbler-client start
@@ -1278,7 +1278,7 @@ self_heal_dhcp_clients()
 		fi
 		if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
             echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-	    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
+	    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ ! -f /tmp/dhcpmgr_initialized ]; then
                 /lib/rdk/dibbler-init.sh
                 sleep 2
                 /usr/sbin/dibbler-client start
