@@ -688,7 +688,7 @@ LIGHTTPD_CONF="/var/lighttpd.conf"
 case $SELFHEAL_TYPE in
     "BASE")
         ###########################################
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+        if [ "$BOX_TYPE" = "MV1" ]; then
             wifi_timeout=$(get_from_ssid_cache "CCSP_ERR_TIMEOUT")
             wifi_not_exist=$(get_from_ssid_cache "CCSP_ERR_NOT_EXIST")
             WIFI_QUERY_ERROR=0
@@ -923,7 +923,7 @@ case $SELFHEAL_TYPE in
                               echo_t "RDKB_SELFHEAL : Ping command output is $PING_RES"
                               echo_t "RDKB_REBOOT : Peer is not up ,Rebooting device "
 
-                              if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+                              if [ "$BOX_TYPE" = "MV1" ]; then
                                  if [ -f /usr/bin/rpcclient2 ] ;then
                                  echo_t "Ping to peer failed check, whether ATOM is good through RPC"
                                     RPC_RES=`rpcclient2 pwd`
@@ -965,7 +965,7 @@ case $SELFHEAL_TYPE in
             echo_t "RDKB_SELFHEAL : MULTI_CORE is not defined as yes. Define it as yes if it's a multi core device."
         fi
         ########################################
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
+        if [ "$FIRMWARE_TYPE" = "OFW" ]; then
             dmesg -n 8
             atomOnlyReboot=$(dmesg | grep -i "Atom only")
             dmesg -n 5
@@ -2632,7 +2632,7 @@ fi
 case $SELFHEAL_TYPE in
     "BASE")
         # Checking snmp master PID
-        if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+        if [ "$BOX_TYPE" = "MV1" ]; then
             SNMP_MASTER_PID=$(get_pid snmp_agent_cm)
             if [ "$SNMP_MASTER_PID" = "" ] && [  ! -f "$SNMPMASTERCRASHED"  ]; then
                 echo_t "[RDKB_PROCESS_CRASHED] : snmp_agent_cm process crashed"
@@ -4397,7 +4397,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
     case $SELFHEAL_TYPE in
         "BASE")
-            if [ "$BOX_TYPE" = "XB3" ] || [ "$BOX_TYPE" = "MV1" ]; then
+            if [ "$BOX_TYPE" = "MV1" ]; then
 
                 if [ "$check_wan_dhcp_client_v4" != "" ] && [ "$check_wan_dhcp_client_v6" != "" ]; then
                     if [ "$(cat /proc/net/dbrctl/mode)"  = "standbay" ]; then
