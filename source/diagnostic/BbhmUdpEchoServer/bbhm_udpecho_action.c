@@ -205,6 +205,9 @@ bbhmUdpechoStartUdpEchoTask
 
         if (strcmp(pUdpEchoInfo->IfAddrName, "::") == 0)
         {
+            if (!pxskt_src_addrinfo)
+                return ANSC_STATUS_FAILURE;
+
             if ( pxskt_src_addrinfo->ai_family == AF_INET )
             {
                 if ( _xskt_getaddrinfo
