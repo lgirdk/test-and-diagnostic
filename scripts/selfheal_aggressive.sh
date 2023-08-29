@@ -1485,9 +1485,13 @@ self_heal_sedaemon()
 # Tech CBR2  => MODEL_NUM=CGA4332COM
 # Tech XB8  => MODEL_NUM=CGM4981COM
 # Tech XD4  => MODEL_NUM=CVA601ZCOM
+# Vant XER5 => MODEL_NUM=VTER11QEL
 
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "CVA601ZCOM" ]
+   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && 
+   [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && 
+   [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "CVA601ZCOM" ] &&
+   [ "$MODEL_NUM" != "VTER11QEL" ]
 then
     exit
 fi
