@@ -2129,7 +2129,7 @@ CPUProcAnalyzer_GetParamStringValue
         FILE *fp = fopen(CPA_PROCESS_LIST_FILE, "r");
         if(fp)
         {
-            while(fscanf(fp,"%s", buf) != EOF)
+            while(fscanf(fp,"%1023s", buf) != EOF)
             {
                 if(*pValue)
                 {
