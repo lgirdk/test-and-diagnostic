@@ -249,10 +249,12 @@ static int inet_is_local(const struct in_addr *addr)
                 return 1;
             }
         } else if (strcmp(tok, "local") == 0 && preflen) {
-            if (inet_is_same_net(*(uint32_t *)addr, *(uint32_t *)&inaddr, 
-                        htonl(0xFFFFFFFF << (32 - atoi(preflen))))) {
-                pclose(fp);
-                return 1;
+            if (atoi(preflen) != 0){
+                if (inet_is_same_net(*(uint32_t *)addr, *(uint32_t *)&inaddr, 
+                            htonl(0xFFFFFFFF << (32 - atoi(preflen))))) {
+                    pclose(fp);
+                    return 1;
+                }
             }
         } else {
             continue; // never got here actually
