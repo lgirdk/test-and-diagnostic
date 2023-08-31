@@ -889,6 +889,15 @@ char Value[MAX_INTF_NAME_SIZE] = {0};
 errno_t      rc = -1;
 #if defined(WAN_FAILOVER_SUPPORTED) || defined(GATEWAY_FAILOVER_SUPPORTED)
    ret = WanCnctvtyChk_GetParameterValue(CURRENT_PRIMARY_INTF_DML,Value);
+   if (ret != ANSC_STATUS_SUCCESS)
+   {
+     ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "current_wan_ifname", Value, sizeof(Value));
+   if (!strlen(Value))
+   {
+      /*if empty take default wan interface,if default also empty we can't do anything*/
+      ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "wan_ifname", Value, sizeof(Value));
+   }
+   }
 #else
    ret = sysevent_get(sysevent_fd_wanchk, sysevent_token_wanchk, "current_wan_ifname", Value, sizeof(Value));
    if (!strlen(Value))
