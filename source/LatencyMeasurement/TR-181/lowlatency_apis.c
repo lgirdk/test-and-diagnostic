@@ -107,7 +107,7 @@ LowLatency_Get_Parameter_Struct_Value
 			ret = TRUE;
             break;
 		case LL_PERCENTILECALC_ENABLE:
-            *((uint32_t*)pValue) = LowLatencyInfo.PercentileCalc_Enable;
+            *((bool*)pValue) = LowLatencyInfo.PercentileCalc_Enable;
 			ret = TRUE;
             break;
 
