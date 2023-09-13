@@ -899,7 +899,7 @@ self_heal_dhcp_clients()
                         fi
                         #RDKB-27177 addition ends here
                     fi
-                    if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
+                    if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
                     echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                     /usr/sbin/dibbler-client stop
                     fi
@@ -1003,7 +1003,7 @@ self_heal_dhcp_clients()
         if [ "$WAN_TYPE" != "EPON" ]; then
             case $SELFHEAL_TYPE in
                 "BASE"|"TCCBR")
-                    if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ] ; then
+                    if [ "$check_wan_dhcp_client_v6" = "" ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
                         echo_t "RDKB_PROCESS_CRASHED : DHCP Client for v6 is not running, need restart"
                         t2CountNotify "SYS_ERROR_DHCPV6Client_notrunning"
                         wan_dhcp_client_v6=0
@@ -1106,11 +1106,16 @@ self_heal_dhcp_clients()
                     wan_dhcp_client_v4=1
                 fi
 
-                if [ $wan_dhcp_client_v6 -eq 0 ]; then
+                if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                    /lib/rdk/dibbler-init.sh
-                    sleep 2
-                    /usr/sbin/dibbler-client start
+                    if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                        /lib/rdk/dibbler-init.sh
+                        sleep 2
+                        /usr/sbin/dibbler-client start
+                    else
+                        sysevent set dhcpv6_client-stop
+                        sysevent set dhcpv6_client-start
+                    fi
                     wan_dhcp_client_v6=1
                 fi
                 ;;
@@ -1184,7 +1189,7 @@ self_heal_dhcp_clients()
 		fi
 		if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
             echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
                 /lib/rdk/dibbler-init.sh
                 sleep 2
                 /usr/sbin/dibbler-client start

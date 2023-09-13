@@ -3878,7 +3878,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 echo_t "[RDKB_SELFHEAL] : erouter0 is DOWN, making it UP"
                 ifconfig $WAN_INTERFACE up
             fi
-            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
+            if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
             echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
             /usr/sbin/dibbler-client stop
             fi
@@ -4049,11 +4049,16 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                 wan_dhcp_client_v4=1
             fi
 
-            if [ $wan_dhcp_client_v6 -eq 0 ]; then
+            if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                /lib/rdk/dibbler-init.sh
-                sleep 2
-                /usr/sbin/dibbler-client start
+                if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                    /lib/rdk/dibbler-init.sh
+                    sleep 2
+                    /usr/sbin/dibbler-client start
+                else
+                    sysevent set dhcpv6_client-stop
+                    sysevent set dhcpv6_client-start
+                fi
                 wan_dhcp_client_v6=1
             fi
         ;;
@@ -4206,7 +4211,7 @@ case $SELFHEAL_TYPE in
 
             if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
