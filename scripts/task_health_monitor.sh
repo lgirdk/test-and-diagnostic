@@ -4517,13 +4517,18 @@ if [ "$(syscfg get mesh_enable)" = "true" ] && [ "$(busybox pidof dm)" != "" ];t
     isOneWiFi=`grep OneWiFiEnabled /etc/device.properties | cut -d "=" -f 2`
     if [ "$isOneWiFi" = "true" ]; then
         echo_t "Using OneWiFi interfaces for WiFi back-haul"
-        MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.OneWiFi`
-        MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.OneWiFi`
+        if [ "$MODEL_NUM" = "TG4482A" ]; then
+            MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.OneWiFi.Alias`
+            MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.OneWiFi.Alias`
+        else
+            MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.OneWiFi`
+            MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.OneWiFi`
+        fi
     else
         MESH_VAP_24=`psmcli get dmsb.l2net.13.Members.WiFi`
         MESH_VAP_50=`psmcli get dmsb.l2net.14.Members.WiFi`
     fi
-    if [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_24"`" = "" ] && [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_24"`" = "" ]; then
+    if [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_24"`" = "" ] && [ "`/usr/opensync/tools/ovsh s Wifi_VIF_Config -w if_name=="$MESH_VAP_50"`" = "" ]; then
        echo_t "Mesh: $MESH_VAP_24 & $MESH_VAP_50 is not present, try with cloud ifnmaes"
        MESH_VAP_24='bhaul-ap-24'
        MESH_VAP_50='bhaul-ap-50'
