@@ -1194,6 +1194,12 @@ int send_query_create_udp_skt(struct query *query_info)
     int flag = 1;
 
     fd = socket(query_info->skt_family, SOCK_DGRAM, IPPROTO_UDP);
+    if (fd < 0)
+    {
+        WANCHK_LOG_ERROR("Unable to create socket\n");
+        return -1;
+    }
+
     /* CID 305966 fix */
     if ( query_info->skt_family == AF_INET )
     {
