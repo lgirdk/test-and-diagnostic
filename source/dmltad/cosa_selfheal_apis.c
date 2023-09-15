@@ -1160,8 +1160,8 @@ int CosaIsProcAnalRunning()
     else
     {
         copy_command_output(fp, buf, sizeof(buf));
+        v_secure_pclose(fp);
     }
-    v_secure_pclose(fp);
 
     if(*buf)
     {
