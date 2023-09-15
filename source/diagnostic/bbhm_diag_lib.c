@@ -519,11 +519,7 @@ COSA_Diag_ScheduleDiagnostic
                     returnStatus = g_UdpechoObj->StopDiag((ANSC_HANDLE)g_UdpechoObj);
                 }
 
-                returnStatus = g_UdpechoObj->SetDiagParams
-                                (
-                                    (ANSC_HANDLE)g_UdpechoObj,
-                                    hDiagInfo
-                                );
+                g_UdpechoObj->SetDiagParams((ANSC_HANDLE)g_UdpechoObj,hDiagInfo);
 
                 if ( pUdpEchoInfo->Enable )
                 {
