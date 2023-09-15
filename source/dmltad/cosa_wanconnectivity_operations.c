@@ -2488,12 +2488,14 @@ static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName
     
     if (setsockopt(sd, SOL_SOCKET, SO_BINDTODEVICE, (void *)&ifr, sizeof(ifr)) < 0) {
         WANCHK_LOG_ERROR("%s Error on SO_BINDTODEVICE..\n",__FUNCTION__);
+        close(sd);
         return ANSC_STATUS_FAILURE;
     }
 
     if ( setsockopt(sd, (skt_family == AF_INET6) ? IPPROTO_IPV6 : IPPROTO_IP, IP_TTL, &val, sizeof(val)) != 0)
     { 
         WANCHK_LOG_ERROR("%s Set TTL option failure\n", __FUNCTION__);
+        close(sd);
         return ANSC_STATUS_FAILURE;
     }
 
@@ -2505,6 +2507,7 @@ static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName
     if (setsockopt(sd, SOL_SOCKET, SO_RCVTIMEO,(const char*)&tv_out, sizeof tv_out) !=0)
     {
         WANCHK_LOG_ERROR("%s Set TTL option failure\n", __FUNCTION__);
+        close(sd);
         return ANSC_STATUS_FAILURE;
     }
 
