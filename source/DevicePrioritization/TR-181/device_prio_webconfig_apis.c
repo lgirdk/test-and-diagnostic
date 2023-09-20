@@ -169,50 +169,67 @@ pErr process_DCPC_WebConfigRequest(void *Data)
     CcspTraceInfo(("sd->version is %lu\n", (long)sd->version));
     CcspTraceInfo(("sd->transaction_id %lu\n",(long) sd->transaction_id));
 
-    int count = sd->scheduler_info->actions_size;
+    if (sd->scheduler_info != NULL) {
 
-    // Validate each qos rule
-    for (int i=0; i<count; i++) {
-        char* rule_set = strdup(sd->scheduler_info->actions[i]);
-        if (NULL == rule_set) {
-            CcspTraceError(("%s: unable to find qos rule\n", __FUNCTION__));
-            execRetVal->ErrorCode = QOS_RULE_EMPTY;
-            strncpy(execRetVal->ErrorMsg,"unable to find qos rule",sizeof(execRetVal->ErrorMsg)-1);
-            return execRetVal;
-        }
+        int count = sd->scheduler_info->actions_size;
+        // Validate each qos rule
+        for (int i=0; i<count; i++) {
+            char* rule_set = strdup(sd->scheduler_info->actions[i]);
+            if (NULL == rule_set) {
+                CcspTraceError(("%s: unable to find qos rule\n", __FUNCTION__));
+                execRetVal->ErrorCode = QOS_RULE_EMPTY;
+                strncpy(execRetVal->ErrorMsg,"unable to find qos rule",sizeof(execRetVal->ErrorMsg)-1);
+                return execRetVal;
+            }
 
-        int valid_error = validateQosRule(rule_set);
+            int valid_error = validateQosRule(rule_set);
 
-        if (QOS_RULE_OK != valid_error) {
-            CcspTraceError(("%s: qos rule validation failed\n", __FUNCTION__));
-          
-            execRetVal->ErrorCode = VALIDATION_FALIED;
-            if (valid_error == QOS_RULE_INVALID_MAC) {
-                snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid mac:%s", rule_set);
+            if (QOS_RULE_OK != valid_error) {
+                CcspTraceError(("%s: qos rule validation failed\n", __FUNCTION__));
+            
+                execRetVal->ErrorCode = VALIDATION_FALIED;
+                if (valid_error == QOS_RULE_INVALID_MAC) {
+                    snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid mac:%s", rule_set);
+                }
+                else if (valid_error == QOS_RULE_INVALID_DSCP) {
+                    snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid dscp:%s", rule_set);
+                }
+                else if (valid_error == QOS_RULE_INVALID_ACTION) {
+                    snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid action:%s", rule_set);
+                }
+                else {
+                    snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed: %s", rule_set);
+                }            
+                free(rule_set);
+                return execRetVal;
             }
-            else if (valid_error == QOS_RULE_INVALID_DSCP) {
-                snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid dscp:%s", rule_set);
-            }
-            else if (valid_error == QOS_RULE_INVALID_ACTION) {
-                snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed invalid action:%s", rule_set);
-            }
-            else {
-                snprintf(execRetVal->ErrorMsg, sizeof(execRetVal->ErrorMsg)-1, "qos rule validation failed: %s", rule_set);
-            }            
+
             free(rule_set);
-            return execRetVal;
         }
 
-        free(rule_set);
-    }
-
-    if (0 == run_schedule(sd->scheduler_info, QOS_CLIENT_RULES_ALIAS)) {
-        CcspTraceInfo(("%s: Scheduler started..\n", __FUNCTION__));
-        execRetVal->ErrorCode = BLOB_EXEC_SUCCESS;
+        if (0 == run_schedule(sd->scheduler_info, QOS_CLIENT_RULES_ALIAS)) {
+            CcspTraceInfo(("%s: Scheduler started..\n", __FUNCTION__));
+            execRetVal->ErrorCode = BLOB_EXEC_SUCCESS;
+        }
+        else {
+            CcspTraceInfo(("%s: Failed to start scheduler.\n", __FUNCTION__));
+            execRetVal->ErrorCode = BLOB_EXEC_FAILURE;
+        }
     }
     else {
-        CcspTraceInfo(("%s: Failed to start scheduler.\n", __FUNCTION__));
-        execRetVal->ErrorCode = BLOB_EXEC_FAILURE;
+        CcspTraceInfo(("%s: Empty scheduler info.\n", __FUNCTION__));
+        if (0 == delete_schedule(QOS_CLIENT_RULES_ALIAS)) {
+            CcspTraceInfo(("%s: Scheduler stopped.\n", __FUNCTION__));
+            priomac_operation(NULL);
+            execRetVal->ErrorCode = BLOB_EXEC_SUCCESS;
+           // strncpy(execRetVal->ErrorMsg,"Removed prioritization of clients",sizeof(execRetVal->ErrorMsg)-1);
+            CcspTraceInfo(("%s: Cleaned all device prioritizations.\n", __FUNCTION__));            
+        }
+        else {
+            CcspTraceError(("%s: Failed to stop scheduler.\n", __FUNCTION__));
+            execRetVal->ErrorCode = BLOB_EXEC_FAILURE;
+            strncpy(execRetVal->ErrorMsg,"Failed to stop scheduler",sizeof(execRetVal->ErrorMsg)-1);
+        }
     }
 
     //No need to destroy scheduler doc

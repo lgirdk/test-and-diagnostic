@@ -120,10 +120,17 @@ int process_scheduler_doc( scheduler_doc_t *sd, int num, ... )
     }
     memset( sd->scheduler_info, 0, sizeof(schedule_info_t));
 
+    int ret = process_schedule_info_doc(sd->scheduler_info, mapobj);
 
-	if( 0 != process_schedule_info_doc(sd->scheduler_info, mapobj) )
+	if( SCHEDULER_INFO_OK != ret)
 	{
 		CcspTraceError(("process_schedule_info_doc failed\n"));
+        //Handling of empty qos rules
+        if (ret == SCHEDULER_INFO_ACTIONS_ERR) {
+            CcspTraceWarning(("process_schedule_info_doc empty actions, err:%d\n", SCHEDULER_INFO_ACTIONS_ERR));
+            sd->scheduler_info = NULL;
+            return 0;
+        }
 		return -1;
 	}
 
@@ -143,7 +150,7 @@ int process_schedule_info_doc( schedule_info_t *s, msgpack_object_map *map )
 {
     CcspTraceInfo(("process_schedule_info_doc - MSGPACK_OBJECT_MAP\n"));
 
-    int ret_val = 0;
+    int ret_val = SCHEDULER_INFO_OK;
 
     msgpack_object_kv *p = map->ptr;
     int size = map->size;
@@ -158,7 +165,7 @@ int process_schedule_info_doc( schedule_info_t *s, msgpack_object_map *map )
             if (0 != decode_schedule_table(key, val, &s->weekly, &s->weekly_size))
             {
                 CcspTraceError(("%s:weekly schedule error\n", __func__));
-                ret_val = -2;
+                ret_val = SCHEDULER_INFO_WEEKLY_ERR;
             }
         }
         else if (0 == strncmp(key->via.str.ptr, ABSOLUTE_SCHEDULE, key->via.str.size))
@@ -167,7 +174,7 @@ int process_schedule_info_doc( schedule_info_t *s, msgpack_object_map *map )
             if (0 != decode_schedule_table(key, val, &s->absolute, &s->absolute_size))
             {
                 CcspTraceError(("%s:absolute schedule error\n", __func__));
-                ret_val = -3;
+                ret_val = SCHEDULER_INFO_ABSOLUTE_ERR;
             }
         }
         else if (0 == strncmp(key->via.str.ptr, QOS_CLIENT_RULES_ALIAS, key->via.str.size))
@@ -181,7 +188,7 @@ int process_schedule_info_doc( schedule_info_t *s, msgpack_object_map *map )
                     free(s->actions);
                     s->actions = NULL;
                 }
-                ret_val = -4;
+                ret_val = SCHEDULER_INFO_ACTIONS_ERR;
             }
         } else if (0 == strncmp(key->via.str.ptr, TIME_ZONE, key->via.str.size)) {
             char time_zone[64] = {0};

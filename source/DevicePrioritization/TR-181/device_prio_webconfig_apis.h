@@ -48,7 +48,8 @@ enum {
     QOS_RULE_INVALID_MAC = 5,
     QOS_RULE_INVALID_DSCP = 6,
     QOS_RULE_INVALID_ACTION = 7,
-    QOS_RULE_INVALID = 8
+    QOS_RULE_INVALID = 8,
+    QOS_REMOVED_RULES = 9
 };
 
 uint32_t getBlobVersion(char* subdoc);

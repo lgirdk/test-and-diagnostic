@@ -39,6 +39,14 @@
 /* Currently SCHEDULER will not do any validation on time_zone string */
 #define TIME_ZONE "time_zone" /* REF: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones */
 
+enum {
+    SCHEDULER_INFO_OK = 0,
+    SCHEDULER_INFO_WEEKLY_ERR,
+    SCHEDULER_INFO_ABSOLUTE_ERR,
+    SCHEDULER_INFO_ACTIONS_ERR,
+    SCHEDULER_INFO_TIMEZONE_ERR
+};
+
 typedef struct scheduler_doc{
     schedule_info_t*  scheduler_info;       
     char*             subdoc_name;
