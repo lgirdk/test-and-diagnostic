@@ -60,7 +60,7 @@
                 FILE *fp2 = fopen(CPA_CONFIG_FILE, "w");   \
                 if(fp2)                                    \
                 {                                          \
-                    while(fscanf(fp1,"%s",buf) != EOF)     \
+                    while(fscanf(fp1,"%[^\n] ",buf) != EOF)     \
                     {                                      \
                         fprintf(fp2, "%s\n", buf);         \
                         memset(buf, 0, BUF_128);           \
