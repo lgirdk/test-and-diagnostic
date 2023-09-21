@@ -1419,6 +1419,15 @@ self_heal_meshAgent ()
     fi
 }
 
+self_heal_dhcpmgr ()
+{
+    if [ "x$(busybox pidof CcspDHCPMgr)" == "x" ]; then
+       if [ ! "`systemctl restart CcspDHCPMgr  2>&1`" ]; then
+          echo_t "[RDKB_AGG_SELFHEAL]: Restarting CcspDHCPMgr!"
+       fi
+    fi
+}
+
 self_heal_dual_cron(){
     CRONTAB_DIR="/var/spool/cron/crontabs/"
     CRON_FILE_BK="/tmp/cron_tab$$.txt"
@@ -1532,6 +1541,7 @@ do
     self_heal_dnsmasq
     fi
 
+    self_heal_dhcpmgr
     self_heal_dnsmasq_zombie
     self_heal_interfaces
     self_heal_dibbler_server
