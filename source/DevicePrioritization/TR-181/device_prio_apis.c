@@ -113,7 +113,7 @@ int DevicePrio_Set_QOS_Active_Rules() {
 
 	char old_val[QOS_ACTIVE_RULES_MAX_SIZE] = {0};
 
-	strcpy(old_val, DevicePrioInfo.QOS_Active_Rules);
+	strncpy(old_val, DevicePrioInfo.QOS_Active_Rules, sizeof(old_val)-1);
 
 	memset(DevicePrioInfo.QOS_Active_Rules, 0, QOS_ACTIVE_RULES_MAX_SIZE);
 
@@ -159,7 +159,7 @@ int DevicePrio_Generate_QOS_Active_Rules(char *result) {
     char traffic_val[128] = {0};
 	int count = 0;
 
-	strcpy(result, ""); // Initialize result as an empty string
+	strncpy(result, "", 1); // Initialize result as an empty string
 
 	if ( syscfg_get( NULL, "DCPC_PrioClients_Count", count_buf, sizeof(count_buf)) == 0 )
 	{
