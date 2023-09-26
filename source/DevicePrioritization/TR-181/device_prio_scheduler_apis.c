@@ -136,7 +136,7 @@ void priomac_operation(char* priomac_str_bundle) {
     char *line = buffer;
 
     while (1) {
-        int num_fields = sscanf(line, "%[^,],%[^,],%s", mac_address, dscp_str, action);
+        int num_fields = sscanf(line, "%[^,],%[^,],%31s", mac_address, dscp_str, action);
         if (num_fields == 3) {
             /*Increment total number of prio clients count in current schedule*/
             prio_clients_count++;
