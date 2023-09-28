@@ -363,7 +363,7 @@ rbusError_t WANCNCTVTYCHK_SetURLHandler(rbusHandle_t handle, rbusProperty_t prop
 
     if (strstr(name,"Device.Diagnostics.X_RDK_DNSInternet.TestURL."))
     {
-        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.TestURL.%d.%s", &instNum,
+        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.TestURL.%d.%127s", &instNum,
                                                                                     Param);
         if ((ret == 2) && (instNum > 0) && (strcmp(Param, "URL") == 0))
         {
