@@ -2525,7 +2525,7 @@ static ANSC_STATUS _send_ping(char *address,unsigned int skt_family,char *ifName
         pckt.hdr.type = (skt_family == AF_INET6) ? ICMP6_ECHO_REQUEST : ICMP_ECHO;
         pckt.hdr.un.echo.id = getpid();
 
-        strcpy((char *)&pckt.msg, "WAN Connectivity hello");
+        strncpy((char *)&pckt.msg, "WAN Connectivity hello", sizeof(pckt.msg)-1);
 
         pckt.hdr.un.echo.sequence = seq_cnt;
         pckt.hdr.checksum = WanCnctvtyChk_udp_checksum((unsigned short *)&pckt, sizeof(pckt));
