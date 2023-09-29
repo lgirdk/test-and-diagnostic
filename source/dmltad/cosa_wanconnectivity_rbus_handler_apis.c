@@ -200,7 +200,7 @@ rbusError_t WANCNCTVTYCHK_GetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
     WANCHK_LOG_DBG("Inside get handler with names %s\n",name);
     if(strstr(name,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%s", &instNum,
+        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
                                                                                         Param);
         if (ret ==2)
         {
