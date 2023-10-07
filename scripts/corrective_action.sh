@@ -91,6 +91,42 @@ change()
     echo "$diff"
 }
 
+calculate_cpu_use()
+{
+	USR=$(change 1)
+	SYS=$(change 3)
+	IDLE=$(change 4)
+	IOW=$(change 5)
+	IRQ=$(change 6)
+	SIRQ=$(change 7)
+	STEAL=$(change 8)
+
+	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
+
+	TOTAL=$(($ACTIVE + $IDLE))
+
+	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
+	echo "$Curr_CPULoad"
+}
+
+print_cpu_usage()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		echo_t "No parameters for the function print_cpu_usage"
+		return
+	fi
+	timestamp=$(getDate)
+	echo_t "RDKB_CPU_USAGE: marker $1 is $2 at timestamp $timestamp"
+	if [ "$2" -ge "90" ]; then
+		echo_t "WARNING RDKB_CPU_USAGE_AVERAGE is more than 90% for marker : $1 : $2  at timestamp $timestamp"
+		if [ $2 -eq 100 ]; then
+			t2CountNotify "SYS_ERROR_CPU100"
+		fi
+	fi
+	echo_t "$1:$2"
+	t2ValNotify "$1" "$2"
+}
+
 getVendorName()
 {
     vendorName=$(dmcli eRT retv Device.DeviceInfo.Manufacturer)
