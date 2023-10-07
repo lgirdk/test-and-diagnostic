@@ -32,6 +32,13 @@ UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
 VERSION_FILE="/version.txt"
 
+#Setting the free memory threshhold to 30MB for Mv1 and 100MB for remaining platforms.
+if [ "$BOX_TYPE" = "MV1" ]; then
+	LOW_MEM_THRESHOLD=30000
+else
+	LOW_MEM_THRESHOLD=100000
+fi
+
 case $SELFHEAL_TYPE in
     "BASE")
         source $UTOPIA_PATH/log_env_var.sh
@@ -93,6 +100,51 @@ change()
     local b=$(extract $STARTSTAT $1)
     local diff=$(( e - b ))
     echo "$diff"
+}
+
+calculate_cpu_use()
+{
+	USR=$(change 1)
+	SYS=$(change 3)
+	IDLE=$(change 4)
+	IOW=$(change 5)
+	IRQ=$(change 6)
+	SIRQ=$(change 7)
+	STEAL=$(change 8)
+
+	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
+
+	TOTAL=$(($ACTIVE + $IDLE))
+
+	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
+	echo "$Curr_CPULoad"
+}
+
+print_cpu_usage()
+{
+	if [ "$1" = "" ] || [ "$2" = "" ]; then
+		echo_t "No parameters for the function print_cpu_usage"
+		return
+	fi
+	timestamp=$(getDate)
+	echo_t "RDKB_CPU_USAGE: marker $1 is $2 at timestamp $timestamp"
+	if [ "$2" -ge "90" ]; then
+		echo_t "WARNING RDKB_CPU_USAGE_AVERAGE is more than 90% for marker : $1 : $2  at timestamp $timestamp"
+		if [ $2 -eq 100 ]; then
+			t2CountNotify "SYS_ERROR_CPU100"
+		fi
+		if [ "$1" = "UsedCPU_15MIN_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_15MIN_Above90"
+		fi
+		if [ "$1" = "UsedCPU_HOURLY_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_HOURLY_Above90"
+		fi
+		if [ "$1" = "UsedCPU_DEVICE_BOOT_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_DEVICE_BOOT_Above90"
+		fi
+	fi
+	echo_t "$1:$2"
+	t2ValNotify "$1" "$2"
 }
 
 getVendorName()
