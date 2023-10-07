@@ -31,6 +31,9 @@ FW_END="/nvram/.FirmwareUpgradeEndTime"
 TMPFS_THRESHOLD=85
 max_count=12
 DELAY=30
+FIFTEEN_MINUTES=900
+PROC_STAT_PREV_HOUR="/tmp/getstat_hourly"
+
 timestamp=`getDate`
 
 logTmpFs()
@@ -195,40 +198,33 @@ get_high_mem_processes() {
         t2CountNotify "SYS_ERROR_LoadAbove9"
     fi
 
-    #Record the start statistics
-
+    STARTSTAT_15MIN=$(getstat)
+    sleep `expr $FIFTEEN_MINUTES - $DELAY`
     STARTSTAT=$(getstat)
-
     sleep $DELAY
+    ENDSTAT=$(getstat)
+    Curr_CPULoad=$(calculate_cpu_use)
+    #Average of CPU USAGE from last 30 seconds
+    print_cpu_usage "UsedCPU_split" "$Curr_CPULoad"
 
-    #Record the end statistics
-	ENDSTAT=$(getstat)
+    STARTSTAT="$STARTSTAT_15MIN"
+    Curr_CPULoad=$(calculate_cpu_use)
+    #Average of CPU USAGE from last 15 minutes
+    print_cpu_usage "UsedCPU_15MIN_split" "$Curr_CPULoad"
 
-	USR=$(change 1)
-	SYS=$(change 3)
-	IDLE=$(change 4)
-	IOW=$(change 5)
-	IRQ=$(change 6)
-	SIRQ=$(change 7)
-	STEAL=$(change 8)
-
-	ACTIVE=$(( $USR + $SYS + $IOW + $IRQ + $SIRQ + $STEAL))
-
-	TOTAL=$(($ACTIVE + $IDLE))
-
-	Curr_CPULoad=$(( $ACTIVE * 100 / $TOTAL ))
-	timestamp=`getDate`
-    # RDKB-7017	
-    echo_t "RDKB_CPU_USAGE : CPU usage is $Curr_CPULoad at timestamp $timestamp"
-    if [ $Curr_CPULoad -eq 100 ]; then 
-        t2CountNotify "SYS_ERROR_CPU100"
+    #Average of CPU USAGE from last 1 hour.
+    ENDSTAT=$(getstat)
+    if [ -f "$PROC_STAT_PREV_HOUR" ]; then
+	    STARTSTAT=`cat "$PROC_STAT_PREV_HOUR"`
+	    Curr_CPULoad=$(calculate_cpu_use)
+	    print_cpu_usage "UsedCPU_HOURLY_split" "$Curr_CPULoad"
     fi
-    echo_t "USED_CPU:$Curr_CPULoad"
-    if [ "$BOX_TYPE" = "XB3" ] || [ "$FIRMWARE_TYPE" = "OFW" ]; then
-        t2ValNotify "UsedCPU_split" "$Curr_CPULoad"
-    else
-        t2ValNotify "USED_CPU_ATOM_split" "$Curr_CPULoad"
-    fi
+    echo "$ENDSTAT" > "$PROC_STAT_PREV_HOUR"
+
+    #Average of CPU USAGE from the device boot
+    STARTSTAT=0x0x0x0x0x0x0x0x0x0
+    Curr_CPULoad=$(calculate_cpu_use)
+    print_cpu_usage "UsedCPU_DEVICE_BOOT_split" "$Curr_CPULoad"
 
     # RDKB-7412
    	CPU_INFO=`mpstat 1 1 | tail -1 | tr -s ' ' ':' | cut -d':' -f3-`
