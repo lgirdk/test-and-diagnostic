@@ -124,6 +124,11 @@ get_high_mem_processes() {
     echo_t "FREE_MEM:$freeMemSys"
     t2ValNotify "FreeMem_split" "$freeMemSys"
 
+    if [ $freeMemSys -lt $LOW_MEM_THRESHOLD ]; then
+	    echo_t "ERROR free memory is less than threshold value $LOW_MEM_THRESHOLD FREE_MEM:$freeMemSys at timesstamp $timestamp"
+	    t2CountNotify "SYS_ERROR_LOW_FREE_MEMORY"
+    fi
+
     echo_t "AVAILABLE_MEM:$availableMemSys"
     t2ValNotify "AvailableMem_split" "$availableMemSys"
 
