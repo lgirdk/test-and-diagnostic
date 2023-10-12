@@ -32,6 +32,13 @@ UTOPIA_PATH="/etc/utopia/service.d"
 RDKLOGGER_PATH="/rdklogger"
 VERSION_FILE="/version.txt"
 
+#Setting the free memory threshhold to 30MB for Mv1 and 100MB for remaining platforms.
+if [ "$BOX_TYPE" = "MV1" ]; then
+	LOW_MEM_THRESHOLD=30000
+else
+	LOW_MEM_THRESHOLD=100000
+fi
+
 case $SELFHEAL_TYPE in
     "BASE")
         source $UTOPIA_PATH/log_env_var.sh
@@ -121,6 +128,15 @@ print_cpu_usage()
 		echo_t "WARNING RDKB_CPU_USAGE_AVERAGE is more than 90% for marker : $1 : $2  at timestamp $timestamp"
 		if [ $2 -eq 100 ]; then
 			t2CountNotify "SYS_ERROR_CPU100"
+		fi
+		if [ "$1" = "UsedCPU_15MIN_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_15MIN_Above90"
+		fi
+		if [ "$1" = "UsedCPU_HOURLY_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_HOURLY_Above90"
+		fi
+		if [ "$1" = "UsedCPU_DEVICE_BOOT_split" ]; then
+			t2CountNotify "SYS_ERROR_UsedCPU_DEVICE_BOOT_Above90"
 		fi
 	fi
 	echo_t "$1:$2"
