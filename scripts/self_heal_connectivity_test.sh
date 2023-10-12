@@ -401,7 +401,7 @@ runPingTest()
 		            echo_t "RDKB_SELFHEAL : Ping to IPv6 Gateway Address are failed."
 		            t2CountNotify "RF_ERROR_IPV6PingFailed"
 		            echo_t "PING_FAILED:$IPv6_Gateway_addr"
-                elif [ $last_erouter_mode -gt 1 ]
+                elif [[ $last_erouter_mode -gt 1 ]]
 		then
                     echo_t "RDKB_SELFHEAL : No IPv6 Gateway Address detected"
 		    t2CountNotify "SYS_INFO_NoIPv6_Address"
