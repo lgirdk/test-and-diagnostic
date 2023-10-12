@@ -1462,9 +1462,13 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
     volatile int ret = 0;
     int ret_parse = 0;
     unsigned char reply[BUFLEN_4096] = {0};
+    char packet[BUFLEN_4096] = {0};
     uint8_t rcode;
     volatile BOOL v4_resolved = FALSE;
     volatile BOOL v6_resolved = FALSE;
+    int64_t timeout = 0;
+    int64_t start_time, current_time;
+    unsigned int pkt_len = 0;
 
     if (disable_info_log == FALSE)
         WANCHK_LOG_INFO("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
@@ -1496,13 +1500,8 @@ int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw
         ret = -1;
         goto EXIT;
     }
-    int no_of_replies = 0;
+ 
     int retry_count = 0;
-    int64_t start_time, current_time;
-    int64_t timeout = 0;
-    char packet[BUFLEN_4096] = {0};
-    unsigned int pkt_len = 0;
-
     while(retry_count <= query_info->query_retry)
     {
         int recvlen=0 ;
@@ -1588,6 +1587,7 @@ wait_for_response:
             }
 
             BOOL match_found = FALSE;
+            int no_of_replies = 0;
             for (int j=0;j < query_info->query_count;j++)
             {
                 WANCHK_LOG_DBG("dns payload %02hhx %02hhx\n", ((unsigned char *) dns_payload)[0],
