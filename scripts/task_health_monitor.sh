@@ -4586,3 +4586,21 @@ if [ $drift = false ];then
    rm -rf /tmp/meshwifi_restart
 fi
 
+#checking TandD hung status leading to mem leak.
+case $SELFHEAL_TYPE in
+      "SYSTEMD")
+      if [ "$MODEL_NUM" = "TG4482A" ]; then
+         TDM_PID=$(busybox pidof CcspTandDSsp)
+         if [ "$TDM_PID" != "" ]; then
+            FanEntries=$(dmcli eRT getv Device.Thermal.FanNumberOfEntries)
+            FanEntries_timeout=$(echo "$FanEntries" | grep "$CCSP_ERR_TIMEOUT")
+            FanEntries_notexist=$(echo "$FanEntries" | grep "$CCSP_ERR_NOT_EXIST")
+            if [ "$FanEntries_timeout" != "" ] || [ "$FanEntries_notexist" != "" ]; then
+               echo_t "[RDKB_PLATFORM_ERROR] : CcspTandDSsp process is hung , restarting it"
+               systemctl restart CcspTandDSsp
+               t2CountNotify "SYS_ERROR_CcspTandDSspHung_restart"
+            fi
+         fi
+      fi
+      ;;
+esac
