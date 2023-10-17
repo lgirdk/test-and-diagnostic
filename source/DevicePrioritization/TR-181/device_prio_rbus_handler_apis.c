@@ -109,7 +109,7 @@ DevicePrio_EventParamStringValue
     )
 {
 
-    if ( AnscEqualString(pParamName, "ActiveRules", TRUE)) {
+    if (strcmp(pParamName, "ActiveRules") == 0) {
 		if (action == RBUS_EVENT_ACTION_SUBSCRIBE)
 		{
 			CcspTraceInfo(("Subscribers count increased for event [%s] \n", pParamName));

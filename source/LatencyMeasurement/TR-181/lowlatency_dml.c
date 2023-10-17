@@ -52,7 +52,7 @@ LatencyMeasure_GetParamBoolValue
 		return TRUE;
 	}
 
-	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable") == 0)
 	{
 		if (!LowLatency_Get_Parameter_Struct_Value(LL_PERCENTILECALC_ENABLE, pBool)) {
 			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
@@ -93,7 +93,7 @@ LatencyMeasure_SetParamBoolValue
 		return TRUE;
     }
 
-	if (AnscEqualString(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable", TRUE))
+	if (strcmp(pParamName, "X_RDK_LatencyMeasure_PercentileCalc_Enable") == 0)
     {
 		if (0 != LowLatency_Set_PercentileCalc_Enable(bValue)) {
 			CcspTraceError(("%s result: value set failed, pParamName='%s'\n", __FUNCTION__, pParamName));

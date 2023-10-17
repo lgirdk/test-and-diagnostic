@@ -38,7 +38,7 @@ DscpControl_GetParamStringValue
 {
 	UNREFERENCED_PARAMETER(hInsContext);
 
-	if( AnscEqualString(pParamName, "ActiveRules", TRUE))
+	if (strcmp(pParamName, "ActiveRules") == 0)
     {
 		if (!DevicePrio_Get_Parameter_Struct_Value(DP_QOS_ACTIVE_RULES, pValue)) {
 			CcspTraceError(("%s for parameter '%s' failed.\n", __FUNCTION__, pParamName));
@@ -63,7 +63,7 @@ DscpControl_SetParamStringValue
     UNREFERENCED_PARAMETER(hInsContext);
 
 #ifdef RDK_SCHEDULER_ENABLED	
-    if( AnscEqualString(pParamName, "Data", TRUE))
+    if (strcmp(pParamName, "Data") == 0)
     {
 		if(pString != NULL)	
         {
