@@ -355,6 +355,7 @@ int main(int argc,char *argv[])
        return 0;
     }
 
+    t2_init("RxTx100");
 /* Open log fd, ensure to close after done*/
     log_fd = fopen(LOG_FILE , "a+");
     if (!log_fd)
@@ -368,6 +369,8 @@ int main(int argc,char *argv[])
         write_to_logfile("RxTx100 Capture Failed\n");
     }
     fclose(log_fd);
+
+    t2_uninit();
 }
 
 int start_rxtx()
