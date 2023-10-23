@@ -4044,8 +4044,7 @@ if [ "$xle_device_mode" -ne "1" ]; then
                                 echo "DIBBLER : Dibbler Server Config is empty"
                                 t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                             fi
-                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SR213" ];then
-                            #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
+                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ]  && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ] && [ "$BOX_TYPE" != "MV3" ]; then
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
                             dibbler-server stop
@@ -4145,8 +4144,7 @@ if [ "$xle_device_mode" -ne "1" ]; then
                                     t2CountNotify "SYS_ERROR_DibblerServer_emptyconf"
                                 fi
                             fi
-                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SR213" ];then
-                            #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
+                        elif [ "$DHCPv6_ServerType" -eq 2 ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "MV1" ] && [ "$BOX_TYPE" != "MV2PLUS" ] && [ "$BOX_TYPE" != "MV3" ];then
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
                             dibbler-server stop
