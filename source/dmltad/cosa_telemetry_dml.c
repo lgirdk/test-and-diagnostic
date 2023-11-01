@@ -73,23 +73,21 @@ BOOL Telemetry_SetParamBoolValue(ANSC_HANDLE hInsContext, char* ParamName, BOOL 
             return TRUE;
         }
 
+#ifdef _PUMA6_ARM_
         /* Telemetry agent receives the events only if T2Enable is enabled */
         if (bValue == TRUE)
         {
-#ifdef _PUMA6_ARM_
             system("rpcclient2 'syscfg set telemetry_enable true; syscfg set T2Enable true'");
-#endif
-            if (syscfg_set(NULL, "T2Enable", "true") != 0)
-            {
-                CcspTraceError(("syscfg_set failed for Telemetry2 Enable\n"));
-                return FALSE;
-            }
         }
         else
         {
-#ifdef _PUMA6_ARM_
             system("rpcclient2 'syscfg set telemetry_enable false; syscfg set T2Enable false'");
+        }
 #endif
+        if (syscfg_set(NULL, "T2Enable", bValue ? "true" : "false") != 0)
+        {
+            CcspTraceError(("syscfg_set failed for Telemetry2 Enable\n"));
+            return FALSE;
         }
 
         if (syscfg_set_commit(NULL, "telemetry_enable", bValue ? "true" : "false") != 0)
