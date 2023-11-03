@@ -596,6 +596,7 @@ void UpdateReportingTable(int hashIndex)
                         memset(hashLatencyTable[index].lanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                         hashLatencyTable[index].Num_of_Sample=0;
                     }
+                    dbg_log("wanSamples and lanSamples Memory set to Zero: \n");
                 }
                 else if(( hashLatencyTable[index].Num_of_Sample>=ADD_MAX_SAMPLE)&&( hashLatencyTable[index].atFirstInitTime==1))
                 {
@@ -613,6 +614,7 @@ void UpdateReportingTable(int hashIndex)
                     memset(hashLatencyTable[index].wanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     memset(hashLatencyTable[index].lanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     hashLatencyTable[index].Num_of_Sample=0;
+                     dbg_log("wanSamples and lanSamples Memory set to Zero: \n");
                 }
             }
 
@@ -826,7 +828,7 @@ void* LatencyReportThread(void* arg)
     int port_sz_count = 0;
     int hashSize= sizeof(LatencyTable)+1;
     char str[hashSize];
-    char port_buff[MAX_PORTS];
+    char port_buff[SIZE];
     char buf[128]={0};
     int num_of_ipv4_clients = 0;  
     int num_of_ipv6_clients = 0;  
@@ -867,7 +869,7 @@ void* LatencyReportThread(void* arg)
             if(Ipv4HashLatencyTable[i].bHasLatencyEntry == true)
             {
                 printf("Index i is %d,Ipv4HashLatencyTable[i].bHasLatencyEntry\n",i);
-                tempCount = sprintf(str,";%s;%lu,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld;",Ipv4HashLatencyTable[i].mac,Ipv4HashLatencyTable[i].num_of_flows,
+                tempCount = snprintf(str,sizeof(str),";%s;%lu,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld;",Ipv4HashLatencyTable[i].mac,Ipv4HashLatencyTable[i].num_of_flows,
                     latency_in_microsecond(Ipv4HashLatencyTable[i].SynAckMinLatency_sec,Ipv4HashLatencyTable[i].SynAckMinLatency_usec),
                     latency_in_microsecond(Ipv4HashLatencyTable[i].SynAckMaxLatency_sec,Ipv4HashLatencyTable[i].SynAckMaxLatency_usec),
                     latency_in_microsecond(Ipv4HashLatencyTable[i].SynAckAggregatedLatency_sec,Ipv4HashLatencyTable[i].SynAckAggregatedLatency_usec)/Ipv4HashLatencyTable[i].num_of_flows,
@@ -883,13 +885,15 @@ void* LatencyReportThread(void* arg)
                     memset(buf,0,sizeof(buf));
                     if (port_count == Ipv4HashLatencyTable[i].num_of_ports-1)
                     {
-                        port_sz_count += sprintf(buf,"%d",Ipv4HashLatencyTable[i].port[port_count]);
+                        port_sz_count += snprintf(buf,sizeof(buf),"%d",Ipv4HashLatencyTable[i].port[port_count]);
                     }
                     else
                     {
-                        port_sz_count += sprintf(buf,"%d,",Ipv4HashLatencyTable[i].port[port_count]);
+                        port_sz_count += snprintf(buf,sizeof(buf),"%d,",Ipv4HashLatencyTable[i].port[port_count]);
                     }
-                    strcat(port_buff,buf);
+                    dbg_log("Inside the LatencyReportThread before strcat ports\n");
+                    strncat(port_buff,buf,(SIZE-strlen(port_buff)-1));
+                    dbg_log("Inside the LatencyReportThread strcat ports\n");
                 }  
                 if(tempCount)
                 {
@@ -898,9 +902,10 @@ void* LatencyReportThread(void* arg)
                         byteCount += tempCount+port_sz_count;
                         dbg_log("Flush Ipv4HashLatencyTable\n");
                         memset(&Ipv4HashLatencyTable[i],0,sizeof(LatencyTable));
-                        strcat(tmp_report_buf,str);
-                        strcat(tmp_report_buf,port_buff);
+                        strncat(tmp_report_buf,str,(MAX_REPORT_SIZE-strlen(tmp_report_buf)-1));
+                        strncat(tmp_report_buf,port_buff,(MAX_REPORT_SIZE-strlen(tmp_report_buf)-1));
                         num_of_ipv4_clients++;
+                         dbg_log("after Flush Ipv4HashLatencyTable concat report \n");
                     }
                     else
                     {
@@ -917,11 +922,11 @@ void* LatencyReportThread(void* arg)
         i = 0;
 
         memset(buf,0,sizeof(buf));
-        tempCount = sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv4,%d",num_of_ipv4_clients);
+        tempCount = snprintf(buf,sizeof(buf),"Private,AnyDSCP,AnyECN,AnyPort,IPv4,%d",num_of_ipv4_clients);
         byteCount += tempCount;
 
-        sprintf(report_buf,"%s%s",buf,tmp_report_buf);
-        strcat(report_buf,"|");
+        snprintf(report_buf,(MAX_REPORT_SIZE-1),"%s%s",buf,tmp_report_buf);
+        strncat(report_buf,"|",(MAX_REPORT_SIZE-strlen(report_buf)-1));
 
         memset(buf,0,sizeof(buf));
         memset(tmp_report_buf,0,MAX_REPORT_SIZE);
@@ -933,7 +938,7 @@ void* LatencyReportThread(void* arg)
             memset(port_buff,0,sizeof(port_buff));
             if(Ipv6HashLatencyTable[i].bHasLatencyEntry == true)
             {
-                tempCount = sprintf(str,";%s;%lu,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld;",Ipv6HashLatencyTable[i].mac,Ipv6HashLatencyTable[i].num_of_flows,
+                tempCount = snprintf(str,sizeof(str),";%s;%lu,%lld,%lld,%lld,%lld,%lld,%lld,%lld,%lld;",Ipv6HashLatencyTable[i].mac,Ipv6HashLatencyTable[i].num_of_flows,
                     latency_in_microsecond(Ipv6HashLatencyTable[i].SynAckMinLatency_sec,Ipv6HashLatencyTable[i].SynAckMinLatency_usec),
                     latency_in_microsecond(Ipv6HashLatencyTable[i].SynAckMaxLatency_sec,Ipv6HashLatencyTable[i].SynAckMaxLatency_usec),
                     latency_in_microsecond(Ipv6HashLatencyTable[i].SynAckAggregatedLatency_sec,Ipv6HashLatencyTable[i].SynAckAggregatedLatency_usec)/Ipv6HashLatencyTable[i].num_of_flows,
@@ -947,11 +952,13 @@ void* LatencyReportThread(void* arg)
                 {
                     memset(buf,0,sizeof(buf));
                     if (port_count == Ipv6HashLatencyTable[i].num_of_ports-1)
-                        port_sz_count += sprintf(buf,"%d",Ipv6HashLatencyTable[i].port[port_count]);
+                        port_sz_count += snprintf(buf,sizeof(buf),"%d",Ipv6HashLatencyTable[i].port[port_count]);
                     else
-                        port_sz_count += sprintf(buf,"%d,",Ipv6HashLatencyTable[i].port[port_count]);
-
-                    strcat(port_buff,buf);
+                        port_sz_count += snprintf(buf,sizeof(buf),"%d,",Ipv6HashLatencyTable[i].port[port_count]);
+                    
+                    dbg_log("Inside IPV6 the LatencyReportThread before strcat ports\n");
+                    strncat(port_buff,buf,(SIZE-strlen(port_buff)-1));
+                     dbg_log("Inside IPV6 the LatencyReportThread strcat ports\n");
                 }
 
                 // TODO port num
@@ -962,9 +969,10 @@ void* LatencyReportThread(void* arg)
                         byteCount += tempCount+port_sz_count;
                         dbg_log("Flush Ipv6HashLatencyTable\n");
                         memset(&Ipv6HashLatencyTable[i],0,sizeof(LatencyTable));
-                        strcat(tmp_report_buf,str);
-                        strcat(tmp_report_buf,port_buff);
+                        strncat(tmp_report_buf,str,(MAX_REPORT_SIZE-strlen(tmp_report_buf)-1));
+                        strncat(tmp_report_buf,port_buff,(MAX_REPORT_SIZE-strlen(tmp_report_buf)-1));
                         num_of_ipv6_clients++;
+                        dbg_log("Flush Ipv6HashLatencyTable done concat reports\n");
                     }
                     else
                     {
@@ -983,11 +991,11 @@ void* LatencyReportThread(void* arg)
         i = 0;
         memset(buf,0,sizeof(buf));
 
-        tempCount = sprintf(buf,"Private,AnyDSCP,AnyECN,AnyPort,IPv6,%d",num_of_ipv6_clients);
-
-        strcat(report_buf,buf);
-        strcat(report_buf,tmp_report_buf);
-        strcat(report_buf,"|");
+        snprintf(buf,sizeof(buf),"Private,AnyDSCP,AnyECN,AnyPort,IPv6,%d",num_of_ipv6_clients);
+        dbg_log("before Report_buf is %s\n",report_buf);
+        strncat(report_buf,buf,(MAX_REPORT_SIZE-strlen(report_buf)-1));
+        strncat(report_buf,tmp_report_buf,(MAX_REPORT_SIZE-strlen(report_buf)-1));
+        strncat(report_buf,"|",(MAX_REPORT_SIZE-strlen(report_buf)-1));
 
         dbg_log("Report_buf is %s\n",report_buf);
 
@@ -1061,7 +1069,7 @@ void* LatencyReportThreadPerSession(void* arg)
                // printf("hashArray[%d].bComputed = %d\n",i,hashArray[i].bComputed);
                 if(hashArray[i].bComputed == TRUE)
                 {
-                    tempCount = sprintf(str1,"%s,%u,%lld.%lld,%lld.%06lld|",hashArray[i].mac,hashArray[i].TcpInfo[INDEX_SYN].th_seq,hashArray[i].latency_sec,hashArray[i].latency_usec,hashArray[i].Lan_latency_sec,hashArray[i].Lan_latency_usec);
+                    tempCount = snprintf(str1,sizeof(str1),"%s,%u,%lld.%lld,%lld.%06lld|",hashArray[i].mac,hashArray[i].TcpInfo[INDEX_SYN].th_seq,hashArray[i].latency_sec,hashArray[i].latency_usec,hashArray[i].Lan_latency_sec,hashArray[i].Lan_latency_usec);
                     if(tempCount)
                     {
                         if((byteCount+tempCount) < MAX_REPORT_SIZE)
@@ -1069,7 +1077,7 @@ void* LatencyReportThreadPerSession(void* arg)
                             byteCount += tempCount;
                             memset(&hashArray[i],0,sizeof(TcpSniffer));
                             g_HashCount--;
-                            strcat(str,str1);
+                            strncat(str,str1,(MAX_REPORT_SIZE-strlen(str)-1));
                         }
                         else
                         {
@@ -1262,7 +1270,7 @@ int main(int argc,char **argv)
               args.report_type = atoi(optarg);
               break;
             case 'n':
-              strcpy(args.report_name,optarg);
+              strncpy(args.report_name,optarg,sizeof(args.report_name)-1);
               break;
             case 'D':
               args.dbg_mode = true;
@@ -1278,7 +1286,7 @@ int main(int argc,char **argv)
               break; */
             case 'F':
              // data.log_file = optarg;
-              strcpy(args.log_file,optarg);
+              strncpy(args.log_file,optarg,sizeof(args.log_file)-1);
               logFp = fopen(args.log_file,"w+");
               break;
             case 'h':
