@@ -1453,6 +1453,46 @@ self_heal_dual_cron(){
     fi
 }
 
+wan_sysevents(){
+    sysevent set wan_service-status
+    sysevent set wan-restart
+}
+
+self_heal_wan(){
+     wan_status=$(sysevent get wan-status)
+     echo "Current Wan-status:$wan_status"
+     if [ "$wan_status" == "starting" ]; then
+         if [ ! -f /tmp/wan_starting ]; then
+             touch /tmp/wan_starting
+         else
+             echo "======ip route show =========" >> /rdklogs/logs/wan-status_stuck.txt
+             ip route show >> /rdklogs/logs/wan-status_stuck.txt
+             echo "======ip -6 route show =========" >> /rdklogs/logs/wan-status_stuck.txt
+             ip -6 route show >> /rdklogs/logs/wan-status_stuck.txt
+             echo "====sysevent show output to /rdklogs/logs/sysevents_wan_stuck.txt ====" >> /rdklogs/logs/wan-status_stuck.txt
+             sysevent show /rdklogs/logs/sysevents_wan_stuck.txt
+             echo "======ifconfig -a=========" >> /rdklogs/logs/wan-status_stuck.txt
+             ifconfig -a >> /rdklogs/logs/wan-status_stuck.txt
+             echo "======ps=========" >> /rdklogs/logs/wan-status_stuck.txt
+             ps >> /rdklogs/logs/wan-status_stuck.txt
+
+             if [ ! -f /tmp/numOfTimesRan.txt ]; then
+                 echo "1" > /tmp/numOfTimesRan.txt
+                 wan_sysevents
+             else
+                 varFile="/tmp/numOfTimesRan.txt"
+                 numOfTimesRan=$(cat "$varFile")
+                 numOfTimesRan=$((numOfTimesRan + 1))
+                 echo "$numOfTimesRan" > "$varFile"
+                 if [ $numOfTimesRan -lt 3 ]; then
+                     echo "wan-status stuck in $wan_status,recoverying for $numOfTimesRan time"
+                     wan_sysevents
+                 fi
+             fi
+             rm -f /tmp/wan_starting
+         fi
+     fi
+}
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -1519,6 +1559,7 @@ do
     self_heal_wifi
     self_heal_meshAgent
     self_heal_dual_cron
+    self_heal_wan
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
