@@ -1715,21 +1715,39 @@ case $SELFHEAL_TYPE in
                 if [ $? -eq 1 ]; then
                     echo_t "XfinityWifi is enabled, but $l2sd0Prefix.$Xfinity_Public_5_VLANID interface is not created try creating it"
 
-                    Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
+                    if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                         Interface=$(psmcli get dmsb.l2net.16.Members.WiFi)
+                    else
+                         Interface=$(psmcli get dmsb.l2net.11.Members.WiFi)
+                    fi
                     if [ "$Interface" = "" ]; then
                         echo_t "PSM value(ath15) is missing for $l2sd0Prefix.$Xfinity_Public_5_VLANID"
-                        psmcli set dmsb.l2net.11.Members.WiFi ath15
+                        if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                             psmcli set dmsb.l2net.16.Members.WiFi ath15
+                        else
+                             psmcli set dmsb.l2net.11.Members.WiFi ath15
+                        fi
                     fi
 
-                    sysevent set multinet_11-status stopped
-                    $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                    if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                        sysevent set multinet_16-status stopped
+                        $UTOPIA_PATH/service_multinet_exec multinet-start 16
+                    else
+                        sysevent set multinet_11-status stopped
+                        $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                    fi
                     ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
                     ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
                     if [ $? -eq 1 ]; then
                         echo_t "$l2sd0Prefix.$Xfinity_Public_5_VLANID is not created at First Retry, try again after 2 sec"
                         sleep 2
-                        sysevent set multinet_11-status stopped
-                        $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                        if [ "$MODEL_NUM" = "CGA4332COM" ]; then
+                            sysevent set multinet_16-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 16
+                        else
+                            sysevent set multinet_11-status stopped
+                            $UTOPIA_PATH/service_multinet_exec multinet-start 11
+                        fi
                         ifconfig $l2sd0Prefix.$Xfinity_Public_5_VLANID up
                         ifconfig | grep "$l2sd0Prefix\.$Xfinity_Public_5_VLANID"
                         if [ $? -eq 1 ]; then
