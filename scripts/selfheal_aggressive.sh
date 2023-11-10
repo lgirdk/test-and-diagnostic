@@ -1408,28 +1408,6 @@ self_heal_nas_ip()
     esac
 }
 
-self_heal_wifi()
-{
-    case $SELFHEAL_TYPE in
-        "BASE")
-        ;;
-        "TCCBR")
-                # TCCBR-6230, TCCBR-6150: Broadcasting guest SSID "BROADCOM_GUEST_x_y"
-                #     The workaround has been provided by Broadcom.
-                #     It brings down those interfaces having SSID as "BROADCOM_GUEST..."
-                #     The patch here is to call the Broadcom script periodically from "selfheal_aggressive.sh"
-		# Per RDKB Field Issue Hand-off meeting on 11/16/2022, this patch applies only to TCCBR.
-                BROADCOM_BSS_HANDLER="/lib/rdk/wifi_bss_refresh.sh"
-                if [ -f "$BROADCOM_BSS_HANDLER" ]; then
-                        echo_t "[RDKB_PLATFORM_INFO] : TCCBR is calling $BROADCOM_BSS_HANDLER to check BSS with SSID as BROADCOM_GUEST..."
-                        $BROADCOM_BSS_HANDLER
-		fi
-        ;;
-        "SYSTEMD")
-        ;;
-    esac
-}
-
 self_heal_meshAgent ()
 {
     cpu_max=20
@@ -1561,7 +1539,6 @@ do
     self_heal_dropbear
     self_heal_ccspwifissp_hung
     self_heal_nas_ip
-    self_heal_wifi
     self_heal_meshAgent
     self_heal_dual_cron
     self_heal_wan
