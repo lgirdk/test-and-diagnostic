@@ -44,25 +44,53 @@ char* getDevicePrioParamName(devicePrioParam_t param) {
     }
 }
 
-/*** APIs for publishing event ***/	
-rbusError_t 
+/*** APIs for publishing event ***/
+rbusError_t
 DevicePrio_PublishToEvent
-	(
-		char* event_name, 
-		char* eventData 
+    (
+        char* event_name,
+		char* eventNewData,
+        char* eventOldData,
+        rbusValueType_t ValueType
 	)
 {
     int ret = RBUS_ERROR_BUS_ERROR ;
     rbusEvent_t event;
-    rbusObject_t data;
-    rbusValue_t value;
-    rbusValue_Init(&value);
-    rbusValue_SetString(value, eventData);
-    rbusObject_Init(&data, NULL);
-    rbusObject_SetValue(data, event_name, value);
+    rbusObject_t rbusObj;
+    rbusValue_t val;
+    rbusValue_t oldVal;
+    rbusValue_t byVal;
+    bool rbusStrRet;
+
+    rbusValue_Init(&val);
+    rbusValue_Init(&oldVal);
+
+    rbusStrRet = rbusValue_SetFromString(val, ValueType, eventNewData);
+
+    if(rbusStrRet == false)
+    {
+        CcspTraceError(("%s-%d Rbus Error code:'%d' \n",__FUNCTION__,__LINE__,rbusStrRet));
+        return RBUS_ERROR_BUS_ERROR;
+    }
+
+    rbusStrRet = rbusValue_SetFromString(oldVal, ValueType, eventOldData);
+
+    if(rbusStrRet == false)
+    {
+        CcspTraceError(("%s-%d Rbus Error code:'%d' \n",__FUNCTION__,__LINE__,rbusStrRet));
+        return RBUS_ERROR_BUS_ERROR;
+    }
+    rbusValue_Init(&byVal);
+    rbusValue_SetString(byVal, TAD_COMPONENT_NAME);
+
+    rbusObject_Init(&rbusObj, NULL);
+    rbusObject_SetValue(rbusObj, "value", val);
+    rbusObject_SetValue(rbusObj, "oldValue", oldVal);
+    rbusObject_SetValue(rbusObj, "by", byVal);
+
     event.name = event_name;
-    event.data = data;
-    event.type = RBUS_EVENT_GENERAL;
+    event.data = rbusObj;
+    event.type = RBUS_EVENT_VALUE_CHANGED;
 
 	/* Process the event publish*/
 	ret = rbusEvent_Publish(g_rbusHandle, &event);
@@ -81,6 +109,10 @@ DevicePrio_PublishToEvent
 		CcspTraceInfo(("%s : Publish to %s ret value is %d\n", __FUNCTION__,event_name,ret));
 	}
     /* release rbus value and object variable */
-    rbusValue_Release(value);    
+    rbusValue_Release(val);
+    rbusValue_Release(oldVal);
+    rbusValue_Release(byVal);
+    rbusObject_Release(rbusObj);
+
     return ret;
 }

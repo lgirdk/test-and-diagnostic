@@ -126,7 +126,7 @@ int DevicePrio_Set_QOS_Active_Rules() {
 
 		CcspTraceInfo(("%s: New Active Rule is : %s\n", __FUNCTION__, DevicePrioInfo.QOS_Active_Rules));
 
-		if (RBUS_ERROR_SUCCESS != DevicePrio_PublishToEvent(DM_DSCP_CONTROL_ACTIVE_RULES, DevicePrioInfo.QOS_Active_Rules)) {
+		if (RBUS_ERROR_SUCCESS != DevicePrio_PublishToEvent(DM_DSCP_CONTROL_ACTIVE_RULES, DevicePrioInfo.QOS_Active_Rules, old_val, RBUS_STRING)) {
 			CcspTraceError(("%s : publish value '%s' failed.\n", __FUNCTION__, DevicePrioInfo.QOS_Active_Rules));
 			return 1;
 		}

@@ -33,13 +33,15 @@ char const* getParamName(char const* path);
 
 char* getDevicePrioParamName(devicePrioParam_t param);
 
-/*** APIs for publishing event ***/	
-rbusError_t 
+/*** APIs for publishing event ***/
+rbusError_t
 DevicePrio_PublishToEvent
-	(
-		char* event_name, 
-		char* eventData
-	);
+    (
+        char* event_name,
+        char* eventNewData,
+        char* eventOldData,
+        rbusValueType_t valueType
+    );
 #endif
 
 
