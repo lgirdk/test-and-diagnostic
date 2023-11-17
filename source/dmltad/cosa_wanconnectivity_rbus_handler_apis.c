@@ -418,7 +418,7 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
 
     if(strstr(name,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%s", &instNum,
+        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
                                                                                         Param);
         if (ret ==2 && instNum > 0)
         {
