@@ -1198,7 +1198,7 @@ usage (char *progname, int status)
     }
   exit (status);
 }
-int validateParams(Param args)
+int validateParams()
 {
     if ( REP_TYPE_FILE != args.report_type &&  REP_TYPE_T2 != args.report_type )
     {
@@ -1290,7 +1290,7 @@ int main(int argc,char **argv)
         }
     }
 
-    if ( VALIDATION_SUCCESS == validateParams(args) )
+    if ( VALIDATION_SUCCESS == validateParams() )
     {
         dbg_log("Arg validation success\n");
     }
