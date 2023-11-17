@@ -626,7 +626,7 @@ rbusError_t WANCNCTVTYCHK_SubHandler(rbusHandle_t handle, rbusEventSubAction_t a
                                                         subscribe_action,eventName);
     if(strstr(eventName,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(eventName, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%s", &instNum,
+        ret = sscanf(eventName, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
                                                                                         Param);
         if (ret ==2 && instNum > 0)
         {
