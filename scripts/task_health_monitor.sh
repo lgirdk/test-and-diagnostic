@@ -222,7 +222,8 @@ check_component_status(){
 	        echo_t "RDKB_PROCESS_CRASHED : fwupgrademanager is not running, need restart"
 	        resetNeeded fwupgrademanager fwupgrademanager
             fi
-
+        fi
+        if [ -e /usr/bin/wanmanager]; then
             WANMANAGER_PID=$(busybox pidof wanmanager)
             if [ "$WANMANAGER_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, restart it"
