@@ -52,6 +52,13 @@ int reportInterval_prev=0;
 bool IsPthreadisBusy=false;
 bool IsTR181_triger_at_PthreadisBusy=false;
 bool gLowLatency_Enable=false;
+
+#if defined(_HUB4_PRODUCT_REQ_) || defined(_SR213_PRODUCT_REQ_)
+#define LAN_PREFIX_SYSEVENT "ipv6_prefix"
+#else
+#define LAN_PREFIX_SYSEVENT "lan_prefix"
+
+#endif
 /**************************************************************************/	
 void* isMonitorService_thread_free(void *arg)
 {
@@ -188,7 +195,6 @@ int GetTCPReportInterval(){
 	CcspTraceInfo(("Enter into %s ReportInterval:%d:\n", __FUNCTION__,reportInterval));
 	return reportInterval;
 }
-
 /***********************************************************************************************
 MonitorLatencyMeasurementServices() function monitor the services and if the serice is not running 
 start the service again based on IPv4Enable and IPv6Enable.
@@ -210,6 +216,8 @@ void MonitorLatencyMeasurementServices()
 	int xNetSniffer_PID1=0;
 	int xNetSniffer_PID2=0;
 	bool latency_measure_disabled =0;
+	bool LanIpv6_prefix_flag=false;
+	bool Lan_prefix_flag=false;
 	/** get the IPv4Enable, IPv6Enable and ReportInterval from TR181****/
 	CcspTraceInfo(("Entering %s: \n", __FUNCTION__));
 	ReportInterval=GetTCPReportInterval() * 60 ; 
@@ -268,13 +276,16 @@ void MonitorLatencyMeasurementServices()
 			{
 				Get_IPv4_addr();
 
-				CcspTraceInfo(("%s: Initializing xNetSniffer service on IPv4.\n", __FUNCTION__));
+				CcspTraceInfo(("%s: Initializing xNetSniffer service on IPv4 IPv4_addr:%s len:%ld.\n", __FUNCTION__,IPv4_addr,strlen(IPv4_addr)));
 
-				if (strlen(IPv4_addr) == 0 )
-					v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv4 &",lan_ifname);
-				else
+				if (strlen(IPv4_addr) > 0 )
+				{
 					v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv4 -p %s &",lan_ifname,IPv4_addr);
-
+				}
+				else{
+					//v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv4 &",lan_ifname);
+					Lan_prefix_flag=true;
+				}
 				CheckLatencyMeasurementServiceStatus(SNIFFER_SERVICE,ServicePID);
 				token_ipv4 = strtok_r(rest_ipv4, " ", &rest_ipv4);
 				CcspTraceInfo(("%s: xNetSniffer_v4 service PID:%s rest:%s\n", __FUNCTION__,token_ipv4,rest_ipv4));
@@ -297,14 +308,19 @@ void MonitorLatencyMeasurementServices()
 		{
 			if(IPv6Enable==true) // check IPv6Enable enable is enable start the xNetSniffer service with IPv6
 			{
-				sysevent_get(sysevent_fd_g, sysevent_token_g, "lan_prefix", IPv6_addr, sizeof(IPv6_addr));
+				sysevent_get(sysevent_fd_g, sysevent_token_g, LAN_PREFIX_SYSEVENT, IPv6_addr, sizeof(IPv6_addr));
 				
-				CcspTraceInfo(("%s: Initializing xNetSniffer service on IPv6.\n", __FUNCTION__));
+				CcspTraceInfo(("%s: Initializing xNetSniffer service on IPv6:IPv6_addr:%s.Len:%ld\n", __FUNCTION__,IPv6_addr,strlen(IPv6_addr)));
 
-				if (strlen(IPv6_addr) == 0 )
-					v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv6 &",lan_ifname);
-				else
+				if (strlen(IPv6_addr) > 0 )
+				{
 					v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv6 -p %s &",lan_ifname,IPv6_addr);
+				}
+				else
+				{
+					//v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv6 &",lan_ifname);
+					LanIpv6_prefix_flag=true;
+				}
 				//v_secure_system("/usr/bin/xNetSniffer -i %s -f IPv6 -D &",lan_ifname);
 				
 				CheckLatencyMeasurementServiceStatus(SNIFFER_SERVICE,ServicePID);
@@ -346,6 +362,16 @@ void MonitorLatencyMeasurementServices()
 		CcspTraceInfo(("%s:killed IPV6PID:%d,IPv6Enable:%d\n",__FUNCTION__,IPV6PID,IPv6Enable));
 		IPV6PID=-1;
 		latency_measure_disabled=1;
+	}
+	if((LanIpv6_prefix_flag==true)&&(IPV6PID==0))
+	{
+		IPV6PID=-1;
+		LanIpv6_prefix_flag=false;
+	}
+	if((Lan_prefix_flag==true)&&(IPv4PID==0))
+	{
+		IPv4PID=-1;
+		Lan_prefix_flag=false;
 	}
 	if (latency_measure_disabled == 1 )
 	{
@@ -568,8 +594,8 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 	sysevent_setnotification(sysevent_fd, sysevent_token,"bridge_mode",  &interface_asyncid);
 	sysevent_set_options(sysevent_fd, sysevent_token, "lan_ip_config_modified", TUPLE_FLAG_EVENT);
 	sysevent_setnotification(sysevent_fd, sysevent_token,"lan_ip_config_modified",  &interface_asyncid);
-	sysevent_set_options(sysevent_fd, sysevent_token, "lan_prefix", TUPLE_FLAG_EVENT);
-	sysevent_setnotification(sysevent_fd, sysevent_token,"lan_prefix",  &interface_asyncid);
+	sysevent_set_options(sysevent_fd, sysevent_token, LAN_PREFIX_SYSEVENT, TUPLE_FLAG_EVENT);
+	sysevent_setnotification(sysevent_fd, sysevent_token,LAN_PREFIX_SYSEVENT,  &interface_asyncid);
 	sysevent_set_options(sysevent_fd, sysevent_token, "current_wan_ifname", TUPLE_FLAG_EVENT);
 	sysevent_setnotification(sysevent_fd, sysevent_token,"current_wan_ifname",  &interface_asyncid);
 	sysevent_set_options(sysevent_fd, sysevent_token, "current_wan_mode_update", TUPLE_FLAG_EVENT);
@@ -607,7 +633,7 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 				if(BridgeMode_value==ROUTER_MODE)// router mode 
 				{
 					Get_IPv4_addr();
-					sysevent_get(sysevent_fd, sysevent_token, "lan_prefix", IPv6_addr, sizeof(IPv6_addr));
+					sysevent_get(sysevent_fd, sysevent_token, LAN_PREFIX_SYSEVENT, IPv6_addr, sizeof(IPv6_addr));
 					SendConditional_pthread_cond_signal();
 				}
 				else // bridge mode 
@@ -631,7 +657,7 @@ void *SysEventHandlerThrd_for_Monitorservice(void *data)
 					strncpy(IPv4_addr_pre,IPv4_addr,strlen(IPv4_addr_pre));
 				}
 			}
-			else if(strcmp(name,"lan_prefix")==0)
+			else if(strcmp(name,LAN_PREFIX_SYSEVENT)==0)
 			{
 				if(strcmp(value,IPv6_addr)!=0)
 				{
