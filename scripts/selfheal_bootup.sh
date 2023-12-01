@@ -907,4 +907,67 @@ then
 	rm -rf $needSelfhealReboot
 fi
 
+
+checkIfWanHasIp()
+{
+    wan_ipv4_addr=$(ip -4 addr show dev $WAN_INTERFACE | grep -i "scope global" | awk '{print $2}' | cut -f1 -d"/")
+    wan_ipv6_addr=$(ip -6 addr show dev $WAN_INTERFACE | grep -i "scope global" | awk '{print $2}' | cut -f1 -d"/")
+
+    echo "wan_ipv4_addr is $wan_ipv4_addr"
+    echo "wan_ipv6_addr is $wan_ipv6_addr"
+
+    if [ -z "$wan_ipv4_addr" ] && [ -z "$wan_ipv6_addr" ];then
+        return 1
+    fi
+    return 0
+}
+
+dumpLogs()
+{
+    cp /var/log/dibbler/dibbler-client.log /rdklogs/logs/dbg_wan_ip_missing.txt
+    ps ww >> /rdklogs/logs/dbg_wan_ip_missing.txt
+    ip route show >> /rdklogs/logs/dbg_wan_ip_missing.txt
+    ip -6 route show >> /rdklogs/logs/dbg_wan_ip_missing.txt
+    sysevent show /rdklogs/logs/sysevent_list.txt 
+    ifconfig -a  >> /rdklogs/logs/dbg_wan_ip_missing.txt
+}
+
+
+eth_wan_enabled=$(syscfg get eth_wan_enabled)
+
+if [ "$eth_wan_enabled" = "true" ];then
+    
+    LinkStatus=$(dmcli eRT getv Device.X_RDKCENTRAL-COM_EthernetWAN.LinkStatus  | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+
+    WAN_INTERFACE=$(sysevent get wan_ifname)
+    CURRENT_WAN_IFNAME=$(sysevent get current_wan_ifname)
+    if [ "$CURRENT_WAN_IFNAME" = "" ] || [ "$CURRENT_WAN_IFNAME" = "$WAN_INTERFACE" ];then
+        if [ "$LinkStatus" = "true" ];then
+             checkIfWanHasIp
+             wan_ip_ret=$?
+             if [ "$wan_ip_ret" = "1" ];then
+                echo "Wan doesn't have IP, monitor after 3 mins"
+                sleep 180
+                checkIfWanHasIp
+                wan_ip_ret=$?
+                if [ "$wan_ip_ret" = "1" ];then
+                    checkPrevRebootReason=$(syscfg get X_RDKCENTRAL-COM_LastRebootReason)
+                    if [ "$checkPrevRebootReason" != "missing_wan_ip" ];then
+                        echo "Wan doesn't have IP , need to reboot device to recover"
+                        syscfg set X_RDKCENTRAL-COM_LastRebootReason "missing_wan_ip"
+                        syscfg set X_RDKCENTRAL-COM_LastRebootCounter 1
+                        syscfg commit
+                        dumpLogs
+                        $RDKLOGGER_PATH/backupLogs.sh "true" "missing_wan_ip"
+
+                    else
+                        echo "Device was previously rebooted because of missing_wan_ip , not rebooting again"
+                    fi
+
+                 fi
+             fi
+
+        fi
+    fi
+fi
 touch /tmp/selfheal_bootup_completed
