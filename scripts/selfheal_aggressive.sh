@@ -59,6 +59,12 @@ Dhcpv6_Client_restart ()
 		echo_t "DHCPv6 Client not running.."
 		return 
 	fi
+
+	if [ "$DHCPcMonitoring" == "false" ];then
+		echo_t "DHCP Monitoring done by wanmanager"
+		return 
+	fi
+
 	process_restart_need=0
 	if [ "$2" = "restart_for_dibbler-server" ];then
         	PAM_UP="$(busybox pidof CcspPandMSsp)"
@@ -1545,7 +1551,9 @@ do
     self_heal_dnsmasq_zombie
     self_heal_interfaces
     self_heal_dibbler_server
+    if [ "$DHCPcMonitoring" != "false" ]; then
     self_heal_dhcp_clients
+    fi
     self_heal_dropbear
     self_heal_ccspwifissp_hung
     self_heal_nas_ip
