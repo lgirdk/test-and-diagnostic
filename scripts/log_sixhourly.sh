@@ -54,7 +54,7 @@ fi
 # Mesh diagnostics logs for XLE and XB7
 WFO_ARG=
 # Skip first iteration since device would be still initializing.
-UPTIME=`cat /proc/uptime | cut -d' ' -f1 | cut -d'.' -f1`
+UPTIME=$(cut -d. -f1 /proc/uptime)
 
 # Device reporting cpu issue, hence skipping for now : RDKB-49082 
 skip_blackbox=false
