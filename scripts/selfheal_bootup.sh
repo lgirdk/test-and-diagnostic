@@ -970,4 +970,10 @@ if [ "$eth_wan_enabled" = "true" ];then
         fi
     fi
 fi
+if [ "$MODEL_NUM" = "TG4482A" ]
+then
+   radio_enum_count=`lspci -mk | grep mtlk | wc -l`
+   echo_t "pci_enumeration_count:$radio_enum_count" >> $SELFHEALFILE
+   t2ValNotify "PciEnumeration_split" "$radio_enum_count"
+fi
 touch /tmp/selfheal_bootup_completed

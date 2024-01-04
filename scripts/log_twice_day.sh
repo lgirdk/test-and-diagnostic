@@ -22,9 +22,18 @@ source /etc/utopia/service.d/log_capture_path.sh
 UTOPIA_PATH="/etc/utopia/service.d"
 source $UTOPIA_PATH/log_env_var.sh
 source /lib/rdk/t2Shared_api.sh
+source /etc/device.properties
 
 exec 3>&1 4>&2 >>$SELFHEALFILE 2>&1
 
 STATUS=`dmcli eRT getv Device.NAT.X_Comcast_com_EnablePortMapping | grep value | awk '{print $5}'`
 echo_t "Port mapping status is:$STATUS"
 t2ValNotify "PortMappingEnable_split" "$STATUS"
+
+if [ "$MODEL_NUM" = "TG4482A" ]
+then
+   radio_enum_count=`lspci -mk | grep mtlk | wc -l`
+   echo_t "pci_enumeration_count:$radio_enum_count"
+   t2ValNotify "PciEnumeration_split" "$radio_enum_count"
+fi
+
