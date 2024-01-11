@@ -320,6 +320,12 @@ case "$1" in
 		echo_t "Device is waiting for reboot after CDL , Exiting Wan Link Heal bootup-check"
 		exit 0
 	fi
+
+        gw_wan_status=$(IsGWinWFO)
+        if [ "$gw_wan_status" == "1" ]; then
+                echo_t "gw_wan_status : Exiting Wan Link Heal bootup-check due to WFO"
+                exit 0
+        fi 
 	LastrebootReason=`syscfg get X_RDKCENTRAL-COM_LastRebootReason`
 	echo_t "LastrebootReason = $LastrebootReason"
 	if [ "Software_upgrade" == "$LastrebootReason" ] || [ "forced_software_upgrade" == "$LastrebootReason" ] || [ "PROVISIONING_Image_Upgrade" == "$LastrebootReason" ] || [ "rfc_reboot" == "$LastrebootReason" ]; then
