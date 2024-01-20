@@ -494,18 +494,6 @@ static void *diag_task(void *arg)
             break;
     }
 
-#if defined(_PLATFORM_RASPBERRYPI_) || (_PLATFORM_TURRIS_)
-/**
- inet_pton is failing because of extra quotes in ip address (cfg.host)
-**/
-    int len = strlen(cfg.host);
-    if( (cfg.host[0] == '\'') && (cfg.host[len-1] == '\'') )
-    {
-        memmove(cfg.host,&cfg.host[1],len-2);
-        cfg.host[len-2]='\0';
-    }
-#endif
-
     /**
      * XXX: work around for dual WAN issue.
      * We have two WAN default route, one for wan0 another for erouter0.
