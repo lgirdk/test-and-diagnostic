@@ -105,15 +105,14 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     if (!cfg || !strlen(cfg->host) || !st)
         return DIAG_ERR_PARAM;
 
-    cmd[0] = '\0', left = sizeof(cmd);
-
     if (cfg->cnt <= 0)
         cnt = PING_DEF_CNT; /* or never return */
     else
         cnt = cfg->cnt;
 
-#if defined(_PLATFORM_TURRIS_)
-    rc = sprintf_s(cmd + strlen(cmd), left, "ping ");
+    left = sizeof(cmd);
+
+    rc = sprintf_s(cmd, left, "ping ");
     if (rc < EOK)
     {
         ERR_CHK(rc);
@@ -122,17 +121,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     {
         left -= rc;
     }
-#else
-    rc = sprintf_s(cmd + strlen(cmd), left, "ping %s ", cfg->host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    else
-    {
-        left -= rc;
-    }
-#endif
+
     if (isDSLiteEnabled() && isIPv4Host(cfg->host))
     {
         char ifip[16];
@@ -217,19 +206,7 @@ static diag_err_t ping_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_stat_
     }
 #endif
 
-#if defined(_PLATFORM_TURRIS_)
-    rc = sprintf_s(cmd + strlen(cmd), left, "%s ", cfg->host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    else
-    {
-        left -= rc;
-    }
-#endif
-
-    rc = sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    rc = sprintf_s(cmd + strlen(cmd), left, "'%s' 2>&1 ", cfg->host);
     if (rc < EOK)
     {
         ERR_CHK(rc);
