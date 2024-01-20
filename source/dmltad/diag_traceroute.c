@@ -195,30 +195,21 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
     if (!cfg || !strlen(cfg->host) || !stat)
         return DIAG_ERR_PARAM;
 
-    cmd[0] = '\0', left = sizeof(cmd);
-
 #if !defined(_PLATFORM_RASPBERRYPI_)
     timeout = cfg->timo;
-    rc = sprintf_s(cmd + strlen(cmd), left, "traceroute %s ", cfg->host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    else
-    {
-        left -= rc;
-    }
-#else
-    rc = sprintf_s(cmd + strlen(cmd), left, "traceroute '%s' ", cfg->host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
-    else
-    {
-        left -= rc;
-    }
 #endif
+
+    left = sizeof(cmd);
+
+    rc = sprintf_s(cmd, left, "traceroute ");
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
+    }
 
     if (isDSLiteEnabled() && isIPv4Host(cfg->host))
     {
@@ -301,6 +292,26 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             left -= rc;
         }
     }
+    rc = sprintf_s(cmd + strlen(cmd), left, "'%s' ", cfg->host);
+    if (rc < EOK)
+    {
+        ERR_CHK(rc);
+    }
+    else
+    {
+        left -= rc;
+    }
+
+    /*
+       If cfg->size is defined it should be after the hostname on the command line:
+
+       $ ./busybox traceroute --help 
+       BusyBox v1.32.1 (2022-06-30 18:12:21 PDT) multi-call binary.
+
+       Usage: traceroute [-46FIlnrv] [-f 1ST_TTL] [-m MAXTTL] [-q PROBES] [-p PORT]
+                         [-t TOS] [-w WAIT_SEC] [-s SRC_IP] [-i IFACE]
+                         [-z PAUSE_MSEC] HOST [BYTES]
+    */
     if (cfg->size)
     {
         rc = sprintf_s(cmd + strlen(cmd), left, "%u ", cfg->size);
@@ -313,8 +324,7 @@ static diag_err_t tracert_start(diag_obj_t *diag, const diag_cfg_t *cfg, diag_st
             left -= rc;
         }
     }
-
-    rc = sprintf_s(cmd + strlen(cmd), left, "2>&1 ");
+    rc = sprintf_s(cmd + strlen(cmd), left, "2>&1");
     if (rc < EOK)
     {
         ERR_CHK(rc);
