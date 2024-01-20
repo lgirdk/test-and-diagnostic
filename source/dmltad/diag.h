@@ -40,7 +40,6 @@
 #ifndef __DIAG_COMM_H__
 #define __DIAG_COMM_H__
 #include <net/if.h>
-#include "plugin_main_apis.h"
 
 typedef enum diag_mode_e {
     DIAG_MD_PING,
@@ -135,9 +134,4 @@ diag_err_t diag_getstate(diag_mode_t mode, diag_state_t *state);
 diag_err_t diag_geterr(diag_mode_t mode, diag_err_t *state);
 diag_err_t diag_pingtest_init(void);
 diag_pingtest_device_details_t* diag_pingtest_getdevicedetails(void);
-
-BOOL isDSLiteEnabled (void);
-int getIPbyInterfaceName (char *interface, char *ip, size_t len);
-BOOL isIPv4Host (const char *host);
-
 #endif /* __DIAG_COMM_H__ */
