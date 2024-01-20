@@ -150,12 +150,18 @@ static char dev_type[20];
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
-static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
+static int validate_hostname (char *host, size_t sizelimit)
 {
+    size_t len;
     errno_t rc;
 
     /* check if host doesn't hold null or whitespaces */
     if (AnscValidStringCheck(host) != TRUE)
+        return -1;
+
+    len = strlen(host);
+
+    if (len >= sizelimit)
         return -1;
 
     /*
@@ -181,12 +187,8 @@ static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
         AnscTraceWarning(("validate_hostname - Invalidhostname configured '%s'\n", host));
         return -1;
     }
+
 done:
-    rc = sprintf_s(wrapped_host, sizelimit, "'%s'", host);
-    if (rc < EOK)
-    {
-        ERR_CHK(rc);
-    }
 
     return 0;
 }
@@ -936,8 +938,6 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 	diag_err_t		err_return;
 	diag_cfg_t		cfg;
 	diag_stat_t 	statis;
-	char 			tmp_hostname[ 257 ]  = { 0 };
-	int i = 0,j = 0;
 	errno_t rc = -1;
 
 	//Detach the thread from loop
@@ -1028,36 +1028,12 @@ void *COSAIP_pingtest_ProcessThread( void *arg )
 	//Fill Device Details it's already not filled case
 	COSA_IP_diag_FillDeviceDetails( );
 
-	/*
-	  * Remove first and last charecter from host name
-	  * if host name is 'www.google.com' then we have to display like 
-	  * www.google.com
-	  */
-	rc = sprintf_s( tmp_hostname, sizeof(tmp_hostname) , "%s", "NULL" );
-	if(rc < EOK)
-	{
-		ERR_CHK(rc);
-	}
-
-	/* CID: 67228 Copy of overlapping memory */
-        if( cfg.host[ 0 ] != '\0' )
-	{
-            for(i= 0;i<strlen(cfg.host);i++) 
-	    {
-                if (cfg.host[i] == '\'')
-                    continue;
-
-                tmp_hostname[j++] = cfg.host[i];
-            }
-            tmp_hostname[j++] = '\0';
-	}
-
        AnscTraceFlow(( "DeviceId:%s;CmMac:%s;PartnerId:%s;DeviceModel:%s;Endpoint:%s;Attempts:%d;SuccessCount:%d;AvgRtt:%.2f\n",
 					( pingtest_devdet->DeviceID[ 0 ] != '\0' ) ? pingtest_devdet->DeviceID : "NULL",
 					( pingtest_devdet->ecmMAC[ 0 ] != '\0' ) ? pingtest_devdet->ecmMAC : "NULL",										
 					( pingtest_devdet->PartnerID[ 0 ] != '\0' ) ? pingtest_devdet->PartnerID : "NULL",										
 					( pingtest_devdet->DeviceModel[ 0 ] != '\0' ) ? pingtest_devdet->DeviceModel : "NULL", 				
-					tmp_hostname,
+					cfg.host,
 					cfg.cnt,
 					statis.u.ping.success,
 					statis.u.ping.rtt_avg ));
@@ -2070,12 +2046,10 @@ IPPing_SetParamStringValue
     }
     else if (strcmp(ParamName, "Host") == 0)
     {
-        char wrapped_host[256];
-
-        if (validate_hostname(pString, wrapped_host, sizeof(wrapped_host)) != 0)
+        if (validate_hostname(pString, sizeof(cfg.host)) != 0)
             return FALSE;
 
-        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", pString);
         if(rc < EOK)
         {
             ERR_CHK(rc);
@@ -2775,12 +2749,10 @@ TraceRoute_SetParamStringValue
     }
     else if (strcmp(ParamName, "Host") == 0)
     {
-        char wrapped_host[256];
-
-        if (validate_hostname(pString, wrapped_host, sizeof(wrapped_host)) != 0)
+        if (validate_hostname(pString, sizeof(cfg.host)) != 0)
             return FALSE;
 
-        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", wrapped_host);
+        rc = sprintf_s(cfg.host, sizeof(cfg.host), "%s", pString);
         if(rc < EOK)
         {
             ERR_CHK(rc);
