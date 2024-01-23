@@ -47,7 +47,7 @@
 #define PCAP_DISPATCH_CNT 100
 
 /*Extern variables*/
-extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES];
+extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO *gInterface_List;
 extern BOOL g_wanconnectivity_check_active;
 extern BOOL g_wanconnectivity_check_enable;
 extern pthread_mutex_t gIntfAccessMutex;
@@ -114,7 +114,7 @@ current_timestamp()
 ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t type)
 {
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[InstanceNumber-1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(InstanceNumber);
     if (!gIntfInfo)
     {
         WANCHK_LOG_ERROR("Unable to start threads,global data is NULL for InstanceNumber %ld\n",
@@ -165,7 +165,7 @@ ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t typ
 ANSC_STATUS wancnctvty_chk_stop_threads(ULONG InstanceNumber,service_type_t type)
 {
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[InstanceNumber-1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(InstanceNumber);
     WANCHK_LOG_INFO ("%s: Stopping threads if any for interface %s\n",__FUNCTION__,
                                                             gIntfInfo->IPInterface.InterfaceName);
     if (!gIntfInfo)
@@ -278,13 +278,15 @@ ANSC_STATUS wancnctvty_chk_start_active(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfIn
         return ANSC_STATUS_FAILURE;
     }
 
-    PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo = gIntfInfo->DnsServerList;
-    if (!pDnsSrvInfo)
+    PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO pIPv4DnsSrvInfo = gIntfInfo->IPv4DnsServerList;
+    PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO pIPv6DnsSrvInfo = gIntfInfo->IPv6DnsServerList;
+
+    if (!pIPv4DnsSrvInfo && !pIPv6DnsSrvInfo)
     {
-        WANCHK_LOG_ERROR("pDnsSrvInfo is NULL,Abort active thread\n");
+        WANCHK_LOG_ERROR("pIPv4DnsSrvInfo and pIPv6DnsSrvInfo is NULL,Abort active thread\n");
         return ANSC_STATUS_FAILURE;
     }
-
+    
     PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO pActvQueryCtxt = NULL;
     pActvQueryCtxt = (PCOSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO)
                         AnscAllocateMemory(sizeof(COSA_DML_WANCNCTVTY_CHK_ACTIVEQUERY_CTXT_INFO));
@@ -300,7 +302,7 @@ ANSC_STATUS wancnctvty_chk_start_active(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfIn
 
     wancnctvty_chk_copy_ctxt_data(gIntfInfo,pActvQueryCtxt->pQueryCtxt);
     WANCHK_LOG_INFO("ActiveMonitor Interface %s Config\n",gIntfInfo->IPInterface.InterfaceName);
-    CosaWanCnctvtyChk_Interface_dump(pIPInterface->InstanceNumber);
+    //CosaWanCnctvtyChk_Interface_dump(pIPInterface->InstanceNumber);
     pthread_create( &gIntfInfo->wancnctvychkactivethread_tid, NULL, 
                                             wancnctvty_chk_active_thread, (void *)pActvQueryCtxt);
     gIntfInfo->ActiveMonitor_Running = TRUE;
@@ -310,7 +312,7 @@ ANSC_STATUS wancnctvty_chk_start_active(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfIn
 ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo,
                                         PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt)
 {
-    /* Copy DNS info from inreface context*/
+    /* Copy DNS info from interface context*/
     /* Copy pIPInterface which we are coming in current context*/
     errno_t rc = -1;
     int ind = -1;
@@ -322,12 +324,14 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
     pQuerynowCtxt->QueryTimeout = pIPInterface->QueryTimeout;
     pQuerynowCtxt->QueryRetry   = pIPInterface->QueryRetry;
     pQuerynowCtxt->doInfoLogOnce = TRUE;
+    pQuerynowCtxt->QueryInProgress = FALSE;
+    pQuerynowCtxt->ActiveMonitorInterval = pIPInterface->ActiveMonitorInterval;
     rc = strcpy_s(pQuerynowCtxt->InterfaceName, MAX_INTF_NAME_SIZE , pIPInterface->InterfaceName);
     ERR_CHK(rc);
     rc = strcpy_s(pQuerynowCtxt->Alias, MAX_INTF_NAME_SIZE , pIPInterface->Alias);
     ERR_CHK(rc);
     pQuerynowCtxt->IsPrimary = TRUE;
-    rc = strcmp_s( "Backup",strlen("Backup"), pQuerynowCtxt->Alias, &ind);
+    rc = strcmp_s( "REMOTE_LTE",strlen("REMOTE_LTE"), pQuerynowCtxt->Alias, &ind);
     ERR_CHK(rc);
     if((!ind) && (rc == EOK))
     {
@@ -351,16 +355,34 @@ ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gInt
         WANCHK_LOG_WARN("%s:RecordType is Invalid\n",__FUNCTION__);
         pQuerynowCtxt->RecordType = RECORDTYPE_INVALID;
     }
-    pQuerynowCtxt->DnsServerCount = gIntfInfo->DnsServerCount;
-    PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo = gIntfInfo->DnsServerList;
-    pQuerynowCtxt->DnsServerList = (PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO) AnscAllocateMemory(
-                    pQuerynowCtxt->DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO));
+    pQuerynowCtxt->IPv4DnsServerCount = gIntfInfo->IPv4DnsServerCount;
+    pQuerynowCtxt->IPv6DnsServerCount = gIntfInfo->IPv6DnsServerCount;
+    if (pQuerynowCtxt->IPv4DnsServerCount > 0)
+    {
+        PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO pIPv4DnsSrvInfo = gIntfInfo->IPv4DnsServerList;
+        pQuerynowCtxt->IPv4DnsServerList = (PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO) AnscAllocateMemory(
+                    pQuerynowCtxt->IPv4DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO));
+        memset(pQuerynowCtxt->IPv4DnsServerList,0,
+                    pQuerynowCtxt->IPv4DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO));
+        memcpy(pQuerynowCtxt->IPv4DnsServerList, pIPv4DnsSrvInfo,
+                    pQuerynowCtxt->IPv4DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO));
+    }
 
-    memset(pQuerynowCtxt->DnsServerList,0,
-                    pQuerynowCtxt->DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO));
+    if (pQuerynowCtxt->IPv6DnsServerCount > 0)
+    {
+        PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO pIPv6DnsSrvInfo = gIntfInfo->IPv6DnsServerList;
+        pQuerynowCtxt->IPv6DnsServerList = (PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO) AnscAllocateMemory(
+                    pQuerynowCtxt->IPv6DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO));
+        memset(pQuerynowCtxt->IPv6DnsServerList,0,
+                    pQuerynowCtxt->IPv6DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO));
+        memcpy(pQuerynowCtxt->IPv6DnsServerList, pIPv6DnsSrvInfo,
+                    pQuerynowCtxt->IPv6DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO));
+    }
 
-    memcpy(pQuerynowCtxt->DnsServerList,pDnsSrvInfo,
-                    pQuerynowCtxt->DnsServerCount * sizeof(COSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO));
+    rc = strcpy_s(pQuerynowCtxt->IPv4Gateway, IPv4_STR_LEN, pIPInterface->IPv4Gateway);
+    ERR_CHK(rc);
+    rc = strcpy_s(pQuerynowCtxt->IPv6Gateway, IPv6_STR_LEN, pIPInterface->IPv6Gateway);
+    ERR_CHK(rc);
 
     pQuerynowCtxt->url_list = get_url_list(&pQuerynowCtxt->url_count);
     return ANSC_STATUS_SUCCESS;
@@ -427,16 +449,12 @@ void *wancnctvty_chk_active_thread( void *arg)
     WANCHK_LOG_INFO("Start active Monitor\n");
 
     pActive->loop = ev_loop_new(EVFLAG_AUTO);
-    pActive->actvtimer.repeat = (pActvQueryCtxt->ActiveMonitorInterval/1000);
-    pActive->actvtimer.data   = pActvQueryCtxt->pQueryCtxt;
-    ev_init (&pActive->actvtimer, wanchk_actv_querytimeout_cb);
-    if (pActvQueryCtxt->PassiveMonitor == FALSE)
-    {
-        ev_timer_again (pActive->loop,&pActive->actvtimer);
-    }
-    else
-    {
-        /* Assume active monitor is stopped, it will be unpaused when passive monitor bgtimer expires */
+    pActive->actvtimer.data = pActvQueryCtxt->pQueryCtxt;
+    ev_timer_init(&pActive->actvtimer, wanchk_actv_querytimeout_cb, 0.0, pActvQueryCtxt->ActiveMonitorInterval / 1000.0);
+
+    if (pActvQueryCtxt->PassiveMonitor == FALSE) {
+        ev_timer_start(pActive->loop, &pActive->actvtimer);
+    } else {
         v_secure_system("touch /tmp/actv_mon_pause_%s", pActive->InterfaceName);
     }
     ev_stat_init (&pActive->pause_actv_mntr, actv_mntr_pause_cb,actv_mntr_pause_fname, 0.);
@@ -459,9 +477,31 @@ wanchk_actv_querytimeout_cb (EV_P_ ev_timer *w, int revents)
 {
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = 
                                              (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)w->data;
+    
+    if (pActvQueryCtxt->QueryInProgress) {
+        WANCHK_LOG_INFO("Skipping Current ActiveMonitor Interval for %s, as Decision is yet to made for Previous Interval\n",
+                         pActvQueryCtxt->InterfaceName);
+        return;
+    }
+    pthread_create(&pActvQueryCtxt->timercb_tid, NULL,
+                                    wancnctvty_chk_actvquery_cbthread, (void *)pActvQueryCtxt);
+}
+
+void *wancnctvty_chk_actvquery_cbthread( void *arg)
+{
+    pthread_detach( pthread_self( ) );
+    PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt =
+                                          (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO)arg;
+    if (!pActvQueryCtxt)
+    {
+       WANCHK_LOG_ERROR("pActvQueryCtxt data is NULL,unable to execute query now\n");
+       return NULL;
+    }
+
     WANCHK_LOG_DBG("%s:Trigger Active Query for interface %s\n", __FUNCTION__,
-                                                                   pActvQueryCtxt->InterfaceName);
+                                                                pActvQueryCtxt->InterfaceName);
     wancnctvty_chk_frame_and_send_query(pActvQueryCtxt, ACTIVE_MONITOR_INVOKE);
+    return NULL;
 }
 
 void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents)
@@ -482,7 +522,7 @@ void actv_mntr_pause_cb (struct ev_loop *loop, ev_stat *w, int revents)
     else
     {
         /* File is removed, restart the active monitor timer*/
-        ev_timer_again(pActive->loop, &pActive->actvtimer);
+        ev_timer_start(pActive->loop, &pActive->actvtimer);
     }
 }
 
@@ -492,6 +532,13 @@ static void cleanup_activemonitor_ev(void *arg)
     WANCHK_LOG_INFO("stopping active monitor loop\n");
     if (!pActive)
         return;
+    PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pActvQueryCtxt = pActive->actvtimer.data;
+    if (pActvQueryCtxt->timercb_tid)
+    {
+       WANCHK_LOG_INFO("stopping timer cb thread loop\n");	 
+       pthread_cancel(pActvQueryCtxt->timercb_tid);
+       pActvQueryCtxt->timercb_tid = 0;
+    }   
     ev_timer_stop(pActive->loop, &pActive->actvtimer);
     ev_break(pActive->loop,EVBREAK_ALL);
     ev_loop_destroy(pActive->loop);
@@ -536,10 +583,15 @@ static void cleanup_activequery(void *arg)
     if (!pQuerynowCtxt)
         return;
     WANCHK_LOG_DBG("Cleanup Active query for interface %s\n",pQuerynowCtxt->InterfaceName);
-    if (pQuerynowCtxt->DnsServerList)
+    if (pQuerynowCtxt->IPv4DnsServerList)
     {
-        AnscFreeMemory(pQuerynowCtxt->DnsServerList);
-        pQuerynowCtxt->DnsServerList = NULL;
+        AnscFreeMemory(pQuerynowCtxt->IPv4DnsServerList);
+        pQuerynowCtxt->IPv4DnsServerList = NULL;
+    }
+    if (pQuerynowCtxt->IPv6DnsServerList)
+    {
+        AnscFreeMemory(pQuerynowCtxt->IPv6DnsServerList);
+        pQuerynowCtxt->IPv6DnsServerList = NULL;
     }
     if (pQuerynowCtxt->url_list)
     {
@@ -582,10 +634,15 @@ static void cleanup_querynow(void *arg)
         return;
   
     WANCHK_LOG_DBG("Cleanup querynow for interface %s\n",pQuerynowCtxt->InterfaceName);
-    if (pQuerynowCtxt->DnsServerList)
+    if (pQuerynowCtxt->IPv4DnsServerList)
     {
-        free(pQuerynowCtxt->DnsServerList);
-        pQuerynowCtxt->DnsServerList = NULL;
+        free(pQuerynowCtxt->IPv4DnsServerList);
+        pQuerynowCtxt->IPv4DnsServerList = NULL;
+    }
+    if (pQuerynowCtxt->IPv6DnsServerList)
+    {
+        free(pQuerynowCtxt->IPv6DnsServerList);
+        pQuerynowCtxt->IPv6DnsServerList = NULL;
     }
     if (pQuerynowCtxt->url_list)
     {
@@ -600,7 +657,7 @@ static void cleanup_querynow(void *arg)
     }
     /* Clear tid and state*/
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[pQuerynowCtxt->InstanceNumber-1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(pQuerynowCtxt->InstanceNumber);
     gIntfInfo->QueryNow_Running = FALSE;
     gIntfInfo->wancnctvychkquerynowthread_tid = 0;
     pthread_mutex_unlock(&gIntfAccessMutex);
@@ -654,7 +711,7 @@ void *wancnctvty_chk_passive_thread( void *arg )
     rc = strcpy_s(pPassive->InterfaceName, MAX_INTF_NAME_SIZE , pIPInterface->InterfaceName);
     ERR_CHK(rc);
     pPassive->IsPrimary = TRUE;
-    rc = strcmp_s( "Backup",strlen("Backup"), pIPInterface->Alias, &ind);
+    rc = strcmp_s( "REMOTE_LTE",strlen("REMOTE_LTE"), pIPInterface->Alias, &ind);
     ERR_CHK(rc);
     if((!ind) && (rc == EOK))
     {
@@ -734,7 +791,7 @@ void *wancnctvty_chk_passive_thread( void *arg )
     ev_init (&pPassive->bgtimer, wanchk_bgtimeout_cb);
     pPassive->bgtimer.data = (void *)pPassive;
     pPassive->bgtimer.repeat = (pIPInterface->PassiveMonitorTimeout / 1000);
-    ev_timer_again (pPassive->loop, &pPassive->bgtimer);
+    ev_timer_start (pPassive->loop, &pPassive->bgtimer);
 
     pthread_cleanup_push(cleanup_passivemonitor_ev, pPassive);
 
@@ -761,7 +818,7 @@ wanchk_bgtimeout_cb (EV_P_ ev_timer *w, int revents)
     PWAN_CNCTVTY_CHK_PASSIVE_MONITOR pPassive = w->data;
 
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[pPassive->InstanceNumber - 1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo =  get_InterfaceList(pPassive->InstanceNumber);
     ActiveMonitor = gIntfInfo->IPInterface.ActiveMonitor;
     pthread_mutex_unlock(&gIntfAccessMutex);
 
@@ -812,27 +869,24 @@ done
 ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt,queryinvoke_type_t invoke_type)
 { 
-    struct query query_info;
-    int i=0;
-    errno_t rc = -1;
-    int ind         = -1;
-    BOOL  use_ipv4_dns = FALSE;
-    BOOL  use_ipv6_dns = FALSE;
-    unsigned int dns_server_count = 0;
+    unsigned int ipv4_dns_server_count = 0;
+    unsigned int ipv6_dns_server_count = 0;
     int ret = ANSC_STATUS_SUCCESS;
     BOOL v4_query = FALSE;
     BOOL v6_query = FALSE;
     int no_of_queries = 0;
     BOOL URL_v4_resolved = FALSE;
     BOOL URL_v6_resolved = FALSE;
-    BOOL use_raw_socket = FALSE;
     BOOL disable_info_log = FALSE;
+    static BOOL timeout_happened = FALSE;
+    int poll_cnt = 0;
   
     if (!pQuerynowCtxt)
     {
         WANCHK_LOG_ERROR("pQuerynowCtxt data is NULL,unable to execute query\n");
         return ANSC_STATUS_FAILURE;
     }
+
 
     if (!pQuerynowCtxt->url_count || !pQuerynowCtxt->url_list)
     {
@@ -848,7 +902,7 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
         goto EXIT;
     }
 
-    if (!pQuerynowCtxt->DnsServerCount)
+    if (!pQuerynowCtxt->IPv4DnsServerCount && !pQuerynowCtxt->IPv6DnsServerCount)
     {
         if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
         {
@@ -863,29 +917,11 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
     }
     else
     {
-        dns_server_count = pQuerynowCtxt->DnsServerCount;
+        ipv4_dns_server_count = pQuerynowCtxt->IPv4DnsServerCount;
+        ipv6_dns_server_count = pQuerynowCtxt->IPv6DnsServerCount;
     }
 
-    if ( pQuerynowCtxt->ServerType != SRVR_TYPE_INVALID)
-    {
-        if ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) || 
-            (pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) ||
-            (pQuerynowCtxt->ServerType == SRVR_IPV4_ONLY))
-        {
-            use_ipv4_dns = TRUE;
-        }
-
-        if ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) || 
-            (pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) || 
-            (pQuerynowCtxt->ServerType == SRVR_IPV6_ONLY))
-        {
-            use_ipv6_dns = TRUE;
-        }
-
-        WANCHK_LOG_DBG("Querynow ServerType:%d use_ipv4_dns:%d use_ipv6_dns:%d\n",
-                                            pQuerynowCtxt->ServerType,use_ipv4_dns,use_ipv6_dns);
-    }
-    else
+    if ( pQuerynowCtxt->ServerType == SRVR_TYPE_INVALID)
     {
         if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
         {
@@ -918,8 +954,8 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
             v6_query = TRUE;
             no_of_queries++;
         }
-        WANCHK_LOG_DBG("Querynow RecordType:%d A:%d AAAA:%d dns_server_count:%d\n",
-                                    pQuerynowCtxt->RecordType,v4_query,v6_query,dns_server_count);
+        WANCHK_LOG_DBG("Querynow RecordType:%d A:%d AAAA:%d ipv4_dns_server_count:%d, ipv6_dns_server_count:%d\n",
+                                    pQuerynowCtxt->RecordType,v4_query,v6_query,ipv4_dns_server_count,ipv6_dns_server_count);
 
         int url_index=0;
         for (url_index=0;url_index < pQuerynowCtxt->url_count;url_index++)
@@ -977,109 +1013,101 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
                 pthread_mutex_unlock(&gDnsTxnIdBkpAccessMutex);
             }
             /* we are trying to mimic cpe dns behaviour, traverse the same way in same order dns servers
-             are populated, mark resolution based on results*/
-            for (i=0;i < dns_server_count; ++i)
-            {
-                memset(&query_info,0,sizeof(struct query));
-                rc = strcpy_s(query_info.ifname, MAX_INTF_NAME_SIZE , pQuerynowCtxt->InterfaceName);
-                ERR_CHK(rc);
-                query_info.query_timeout = pQuerynowCtxt->QueryTimeout;
-                query_info.query_retry   = pQuerynowCtxt->QueryRetry;
-                query_info.query_count = no_of_queries;
-                query_info.rqstd_rectype = pQuerynowCtxt->RecordType;
-                rc = strcmp_s( "Backup",strlen("Backup"),pQuerynowCtxt->Alias, &ind);
-                ERR_CHK(rc);
-                if((!ind) && (rc == EOK))
-                {
-                    use_raw_socket = TRUE;
-                }
-                if (use_ipv4_dns && !URL_v4_resolved)
-                {
-                    if (pQuerynowCtxt->DnsServerList && pQuerynowCtxt->DnsServerList[i].dns_type == DNS_SRV_IPV4)
-                    {
-                        rc = strcpy_s(query_info.ns, MAX_URL_SIZE,
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv4Address);
-                        ERR_CHK(rc);
-                        query_info.skt_family = AF_INET;
-                        query_list[0].resp_recvd = 0;
-                        query_list[1].resp_recvd = 0;
-                        if (!send_query(&query_info,query_list,use_raw_socket,disable_info_log))
-                        {
-                            WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s on IPv4 Server:%s\n",
-                                                                pQuerynowCtxt->url_list[url_index],
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv4Address);
-                            URL_v4_resolved = TRUE;
-                        }
-                        else
-                        {
-                            WANCHK_LOG_DBG("DNS Resolution Failed for URL:%s on IPv4 Server:%s\n",
-                                                                pQuerynowCtxt->url_list[url_index],
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv4Address);
-                        }
-                    }
-                }
+             are populated, mark resolution based on results
 
-                if (use_ipv6_dns && !URL_v6_resolved)
-                {
-                    if (pQuerynowCtxt->DnsServerList &&
-                                        pQuerynowCtxt->DnsServerList[i].dns_type == DNS_SRV_IPV6)
-                    {
-                        memset(query_info.ns,0,MAX_URL_SIZE);
-                        rc = strcpy_s(query_info.ns, MAX_URL_SIZE ,
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv6Address);
-                        ERR_CHK(rc);
-                        query_info.skt_family = AF_INET6;
-                        query_list[0].resp_recvd = 0;
-                        query_list[1].resp_recvd = 0;
-                        if (!send_query(&query_info,query_list,use_raw_socket,disable_info_log))
-                        {
-                            WANCHK_LOG_DBG("DNS Resolved Successfully for URL:%s IPv6 Server:%s\n",
-                                                                pQuerynowCtxt->url_list[url_index],
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv6Address);
-                            URL_v6_resolved = TRUE;
-                        }
-                        else
-                        {
-                            WANCHK_LOG_DBG("DNS Resolution Failed for URL:%s on IPv6 Server:%s\n",
-                                                                pQuerynowCtxt->url_list[url_index],
-                                            pQuerynowCtxt->DnsServerList[i].IPAddress.IPv6Address);
-                        }
-                    }
+             Query is first sent to Primary IPv4 and IPv6 DNS servers.
+             Only if Primary servers failed, then, Secondary DNS servers are queried.*/
+
+            errno_t rc = -1;
+            int ipv4_idx = 0, ipv6_idx = 0;
+            int ipv4_present, ipv6_present;
+            UCHAR ipv4_addr[IPv4_STR_LEN];
+            UCHAR ipv6_addr[IPv6_STR_LEN];
+            while(ipv4_idx < ipv4_dns_server_count || ipv6_idx < ipv6_dns_server_count) {
+                ipv4_present = 0;
+                ipv6_present = 0;
+                memset(ipv4_addr, 0, IPv4_STR_LEN);
+                memset(ipv6_addr, 0, IPv6_STR_LEN);
+                if (ipv4_idx < ipv4_dns_server_count) {
+                    ipv4_present = 1;
+                    rc = strcpy_s(ipv4_addr, IPv4_STR_LEN, pQuerynowCtxt->IPv4DnsServerList[ipv4_idx].IPv4Address);
+                    ERR_CHK(rc);
                 }
-                if ( ((pQuerynowCtxt->ServerType == SRVR_IPV4_ONLY) && URL_v4_resolved) ||
-                    ((pQuerynowCtxt->ServerType == SRVR_IPV6_ONLY) && URL_v6_resolved) ||
-                    ((pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
-                    ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
+                if (ipv6_idx < ipv6_dns_server_count) {
+                    ipv6_present = 1;
+                    rc = strcpy_s(ipv6_addr, IPv6_STR_LEN, pQuerynowCtxt->IPv6DnsServerList[ipv6_idx].IPv6Address);
+                    ERR_CHK(rc);
+                }
+                poll_cnt = ipv4_present + ipv6_present;
+                struct pollfd pfd[poll_cnt];
+                int retry_count = 0;
+                while (retry_count < pQuerynowCtxt->QueryRetry)
                 {
-                    if (invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
-                    {
-                        WANCHK_LOG_INFO("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
-                                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                                                                        pQuerynowCtxt->url_list[url_index],
-                                        pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                    if (!send_query(pQuerynowCtxt, query_list, no_of_queries, pfd, disable_info_log, ipv4_addr, ipv6_addr, poll_cnt)) {
+                        WANCHK_LOG_DBG("DNS Packets Sent Successfully for Interface: %s\n",pQuerynowCtxt->InterfaceName);
+                        int ret_resp = process_resp (pQuerynowCtxt,query_list,no_of_queries,pfd,disable_info_log,
+                                                     &URL_v4_resolved,&URL_v6_resolved,ipv4_addr,ipv6_addr,
+                                                     ipv4_present,ipv6_present,poll_cnt);
+                        if (!ret_resp)
+                        {
+                          WANCHK_LOG_DBG("DNS Resolved Successfully for Interface: %s, Alias: %s\n",
+					  pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+                          timeout_happened = FALSE;
+                          break;
+                        }
                     }
-                    else
-                    {
-                        WANCHK_LOG_DBG("%s Succeeded for URL %s on Intf:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
-                                            (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                                                                        pQuerynowCtxt->url_list[url_index],
-                                        pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
-                    }
-                    if (invoke_type == QUERYNOW_INVOKE)
-                    {
-                        wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
-                                                           QUERYNOW_RESULT_CONNECTED);
-                        ret = ANSC_STATUS_SUCCESS;
-                    }
-                    else if (invoke_type == ACTIVE_MONITOR_INVOKE)
-                    {
-                        wancnctvty_chk_monitor_result_update(pQuerynowCtxt->InstanceNumber,
-                                                        MONITOR_RESULT_CONNECTED);
-                        ret = ANSC_STATUS_SUCCESS;
-                    }
-                    goto EXIT;
+                    WANCHK_LOG_DBG("DNS Timedout for Interface %s, Alias %s, Retry\n",  
+				    pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+                    timeout_happened = TRUE;
+                    retry_count++;
+                }
+                //DNS Resolved, Break from the loop
+                if (timeout_happened == FALSE) {
+                    pQuerynowCtxt->QueryInProgress = FALSE;
+                    break;
+                }
+                //DNS Timedout, Move to next DNS Server
+                if (timeout_happened == TRUE) {
+                    ipv4_idx++;
+                    ipv6_idx++;
+                    pQuerynowCtxt->QueryInProgress = TRUE;
                 }
             }
+
+            if ( ((pQuerynowCtxt->ServerType == SRVR_IPV4_ONLY) && URL_v4_resolved) ||
+                ((pQuerynowCtxt->ServerType == SRVR_IPV6_ONLY) && URL_v6_resolved) ||
+                ((pQuerynowCtxt->ServerType == SRVR_BOTH_IPV4_IPV6) && (URL_v6_resolved && URL_v4_resolved)) ||
+                ((pQuerynowCtxt->ServerType == SRVR_EITHER_IPV4_IPV6) && (URL_v6_resolved || URL_v4_resolved)) )
+            {
+                if (invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
+                {
+                    WANCHK_LOG_INFO("%s Succeeded for URL %s on Intf:%s Alias:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
+                                        (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                    pQuerynowCtxt->url_list[url_index],pQuerynowCtxt->InterfaceName,
+                                    pQuerynowCtxt->Alias,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                }
+                else
+                {
+                    WANCHK_LOG_DBG("%s Succeeded for URL %s on Intf:%s Alias:%s SrvrType:%d Status IPv4:%d IPv6:%d\n",
+                                        (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
+                                    pQuerynowCtxt->url_list[url_index],pQuerynowCtxt->InterfaceName,
+                                    pQuerynowCtxt->Alias,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+                }
+                if (invoke_type == QUERYNOW_INVOKE)
+                {
+                    wancnctvty_chk_querynow_result_update(pQuerynowCtxt->InstanceNumber,
+                                                       QUERYNOW_RESULT_CONNECTED);
+                    ret = ANSC_STATUS_SUCCESS;
+                }
+                else if (invoke_type == ACTIVE_MONITOR_INVOKE)
+                {
+                    wancnctvty_chk_monitor_result_update(pQuerynowCtxt->InstanceNumber,
+                                                    MONITOR_RESULT_CONNECTED);
+                    ret = ANSC_STATUS_SUCCESS;
+                }
+                goto EXIT;
+            }
+
             if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
             {
                 WANCHK_LOG_ERROR("Resolution Failed for URL %s, lets try next URL\n",
@@ -1103,17 +1131,18 @@ ANSC_STATUS wancnctvty_chk_frame_and_send_query(
 EXIT:
     if (ret == ANSC_STATUS_FAILURE)
     {
+        pQuerynowCtxt->QueryInProgress = FALSE;
         if(invoke_type == QUERYNOW_INVOKE || pQuerynowCtxt->doInfoLogOnce)
         {
-            WANCHK_LOG_ERROR("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
-                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+            WANCHK_LOG_ERROR("%s DNS Resolution Failed on Interface %s Alias:%s ServerType:%d Status IPv4:%d IPv6:%d\n",
+                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor", pQuerynowCtxt->InterfaceName,
+                    pQuerynowCtxt->Alias,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
         }
         else
         {
-            WANCHK_LOG_DBG("%s DNS Resolution Failed on Interface %s ServerType:%d Status IPv4:%d IPv6:%d\n",
-                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",
-                    pQuerynowCtxt->InterfaceName,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
+            WANCHK_LOG_DBG("%s DNS Resolution Failed on Interface %s Alias:%s ServerType:%d Status IPv4:%d IPv6:%d\n",
+                    (invoke_type == QUERYNOW_INVOKE) ? "QueryNow" : "ActiveMonitor",pQuerynowCtxt->InterfaceName,
+                    pQuerynowCtxt->Alias,pQuerynowCtxt->ServerType,URL_v4_resolved,URL_v6_resolved);
         }
         if (invoke_type == QUERYNOW_INVOKE)
         {
@@ -1155,7 +1184,7 @@ int send_query_create_raw_skt(struct query *query_info)
     if(-1 == (ioctl(fd, SIOCGIFINDEX, &inf_request)))
     {
         WANCHK_LOG_ERROR("Error getting Interface index !\n");
-	/* CID 305977 - 1 fix */
+/* CID 305977 - 1 fix */
         close(fd);
         return -1;
     }
@@ -1173,8 +1202,8 @@ int send_query_create_raw_skt(struct query *query_info)
     if(-1 == (bind(fd, (struct sockaddr *)&socket_ll, sizeof(socket_ll))))
     {
         WANCHK_LOG_ERROR("Error binding to socket!\n");
-	/* CID 305977 - 2 fix */
-	close(fd);
+/* CID 305977 - 2 fix */
+        close(fd);
         return -1;
     }
 
@@ -1206,7 +1235,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (get_ipv4_addr(query_info->ifname,ipv4_src) != 0)
         {
             WANCHK_LOG_ERROR("Unable to get IPv4 Address for interface:%s\n",query_info->ifname);
-	    close(fd);
+            close(fd);
             return -1;
         }
         
@@ -1216,22 +1245,22 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET, ipv4_src, &(local_addrv4.sin_addr)) != 1)
         {
             WANCHK_LOG_ERROR("Unable to assign ipv4 Address");
-	    close(fd);
-	    return -1;
+            close(fd);
+            return -1;
         }
         local_addrv4.sin_family = AF_INET;
         local_addrv4.sin_port = 0;
 
         if(setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,(char *)&flag,sizeof(flag))<0){
             WANCHK_LOG_ERROR("Error: Could not set reuse address option\n");
-	    close(fd);
+            close(fd);
             return -1;
         }
 
         if (bind(fd, (struct sockaddr *)&local_addrv4, sizeof(local_addrv4)) < 0)
         {
             WANCHK_LOG_ERROR("Unable to bind socket for interface :%s\n",query_info->ifname);
-	    close(fd);
+            close(fd);
             return -1;
         }
 
@@ -1240,7 +1269,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET, query_info->ns, &(serv_addrv4.sin_addr)) != 1)
         {
            WANCHK_LOG_ERROR("Unable to assign server ipv4 Address\n");
-	   close(fd);
+           close(fd);
            return -1;
         }
 
@@ -1248,7 +1277,7 @@ int send_query_create_udp_skt(struct query *query_info)
         {
             WANCHK_LOG_ERROR("connect socket for interface :%s failed for dst :%s\n",
                                                                 query_info->ifname,query_info->ns);
-	    close(fd);
+            close(fd);
             return -1;
         }
     }
@@ -1257,7 +1286,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (get_ipv6_addr(query_info->ifname,ipv6_src) !=0)
         {
            WANCHK_LOG_ERROR("Unable to get IPv6 Address for interface:%s\n",query_info->ifname);
-	   close(fd);
+           close(fd);
            return -1;
         }
 
@@ -1267,7 +1296,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET6, ipv6_src, &(local_addrv6.sin6_addr)) != 1)
         {
             WANCHK_LOG_ERROR("Unable to assign IPv6 Address\n");
-	    close(fd);
+            close(fd);
             return -1;
         }
         local_addrv6.sin6_family = AF_INET6;
@@ -1276,7 +1305,7 @@ int send_query_create_udp_skt(struct query *query_info)
         if (bind(fd, (struct sockaddr *)&local_addrv6, sizeof(local_addrv6)) < 0)
         {
             WANCHK_LOG_ERROR("Unable to bind socket for interface :%s\n",query_info->ifname);
-	    close(fd);
+            close(fd);
             return -1;
         }
         serv_addrv6.sin6_family = AF_INET6;
@@ -1284,21 +1313,21 @@ int send_query_create_udp_skt(struct query *query_info)
         if (inet_pton(AF_INET6, query_info->ns, &(serv_addrv6.sin6_addr)) != 1)
         {
            WANCHK_LOG_ERROR("Unable to assign server ipv6 Address\n");
-	   close(fd);
+           close(fd);
            return -1;
         }
 
         if (connect(fd, (struct sockaddr *) &serv_addrv6, sizeof(serv_addrv6)) < 0)
         {
             WANCHK_LOG_ERROR("connect socket for interface :%s failed for dst :%s\n",query_info->ifname,query_info->ns);
-	    close(fd);
+            close(fd);
             return -1;
         }
     } 
     else
     {
         WANCHK_LOG_ERROR("Unsupported socket family\n");
-	close(fd);
+        close(fd);
         return -1;
     } 
     return fd;
@@ -1319,8 +1348,17 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
     unsigned int pkt_len = 0;
     int ip_offset = 0;
     FILE *fp = NULL;
-        /* Fetch HW address for interface*/
 
+    char gw_addr[BUFLEN_64] = {0};
+    memset(gw_addr, 0, sizeof(gw_addr));
+    if (query_info->skt_family == AF_INET) {
+        strcpy_s(gw_addr, sizeof(gw_addr), query_info->IPv4Gateway);
+    } else {
+        strcpy_s(gw_addr, sizeof(gw_addr), query_info->IPv6Gateway);
+    }
+    WANCHK_LOG_DBG("%s: GW IP Address:%s\n",__FUNCTION__,gw_addr);
+
+    /* Fetch HW address for interface*/
     if (-1 == get_mac_addr(query_info->ifname,srcMac)) {
         WANCHK_LOG_ERROR("Error Fetching Interface HW address!\n");
         return 0;
@@ -1338,13 +1376,13 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
             /* Ping utility will have minimum wait time of 1 sec, so when we have connectivity issue
              failure can be detected only after 1 sec, may not be appropriate for our usecase, 
              calling own ping utily to send icmp v4/v6 echo with worst time of 20ms*/
-            _send_ping(query_info->ns,query_info->skt_family,query_info->ifname);
+            _send_ping(gw_addr,query_info->skt_family,query_info->ifname);
         }
         if (query_info->skt_family == AF_INET) {
-            fp = v_secure_popen("r","ip -4 neigh show %s dev %s | cut -d ' ' -f 3",query_info->ns,
+            fp = v_secure_popen("r","ip -4 neigh show %s dev %s | cut -d ' ' -f 3", gw_addr,
                                                                         query_info->ifname);
         } else {
-            fp = v_secure_popen("r","ip -6 neigh show %s dev %s | cut -d ' ' -f 3",query_info->ns,
+            fp = v_secure_popen("r","ip -6 neigh show %s dev %s | cut -d ' ' -f 3", gw_addr,
                                                                     query_info->ifname);
         }
 
@@ -1358,7 +1396,7 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
         {
             if (!retry_count)
             {
-                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n",query_info->ns);
+                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n", gw_addr);
                 retry_count = 1;
                 continue;
             }
@@ -1369,11 +1407,11 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
         {
             if (!retry_count)
             {
-                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n",query_info->ns);
+                WANCHK_LOG_INFO("NEIGHBOUR Entry not found for %s rechecking with ping\n", gw_addr);
                 retry_count = 1;
                 continue;
             }
-            WANCHK_LOG_ERROR("DST HW address Not resolved for %s!\n",query_info->ns);
+            WANCHK_LOG_ERROR("DST HW address Not resolved for %s!\n", gw_addr);
             return 0;
         }
         else {
@@ -1387,19 +1425,22 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
     And also Device.DNS.Client. has gateway as DNS server not actual LTE DNS servers. Not seeing 
     scope of DNS servers on secondary. revisit on RDKB-43219 discuss with arch team*/
 
-    if (get_ipv4_addr(query_info->ifname,ipv4_src) != 0)
+    if ( query_info->skt_family == AF_INET )
     {
-        WANCHK_LOG_ERROR("Unable to get IPv4 Address for interface:%s\n",query_info->ifname);
-        return 0;
+        if (get_ipv4_addr(query_info->ifname,ipv4_src) != 0)
+        {
+            WANCHK_LOG_ERROR("Unable to get IPv4 Address for interface:%s\n",query_info->ifname);
+            return 0;
+        }
+        WANCHK_LOG_DBG("got ipv4 address %s for interface:%s\n",ipv4_src,query_info->ifname);
+    } else {
+        if (get_ipv6_addr(query_info->ifname,ipv6_src) !=0)
+        {
+            WANCHK_LOG_ERROR("Unable to get IPv6 Address for interface:%s\n",query_info->ifname);
+            return 0;
+        }
+        WANCHK_LOG_DBG("got ipv6 address %s for interface:%s\n",ipv6_src,query_info->ifname);
     }
-    WANCHK_LOG_DBG("got ipv4 address %s for interface:%s\n",ipv4_src,query_info->ifname);
-
-    if (get_ipv6_addr(query_info->ifname,ipv6_src) !=0)
-    {
-       WANCHK_LOG_ERROR("Unable to get IPv6 Address for interface:%s\n",query_info->ifname); 
-       return 0;
-    }
-    WANCHK_LOG_DBG("got ipv6 address %s for interface:%s\n",ipv6_src,query_info->ifname);
 
         /* slecting some random port*/
     source_port = 40000+rand()%10000;
@@ -1455,241 +1496,435 @@ unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *
     return pkt_len;
 }
 
-int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw_socket,BOOL disable_info_log)
+int send_query (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt, struct mk_query *query_list, 
+               int no_of_queries, struct pollfd *pfd, BOOL disable_info_log, UCHAR* ipv4_addr, UCHAR* ipv6_addr,
+               int poll_cnt)
 {
-    struct pollfd pfd;
+    struct query query_info;
     int rc = -1;
-    volatile int ret = 0;
-    int ret_parse = 0;
-    unsigned char reply[BUFLEN_4096] = {0};
-    char packet[BUFLEN_4096] = {0};
-    uint8_t rcode;
-    volatile BOOL v4_resolved = FALSE;
-    volatile BOOL v6_resolved = FALSE;
-    int64_t timeout = 0;
-    int64_t start_time, current_time;
+    BOOL use_raw_socket = FALSE;
+    //int ind = -1;
+    int ret = -1;
     unsigned int pkt_len = 0;
+    char packet[BUFLEN_4096] = {0};
+  
+    if (!pQuerynowCtxt)
+    {
+       WANCHK_LOG_ERROR("Query Ctxt is NULL\n");
+       return -1;
+    }
 
     if (disable_info_log == FALSE)
-        WANCHK_LOG_INFO("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
+        WANCHK_LOG_INFO("Send Query on Interface :%s\n", pQuerynowCtxt->InterfaceName);
     else
-        WANCHK_LOG_DBG("Send Query on Interface :%s to Nameserver: %s\n",query_info->ifname,query_info->ns);
+        WANCHK_LOG_DBG("Send Query on Interface :%s\n", pQuerynowCtxt->InterfaceName);
 
-    pfd.events = POLLIN;
+    memset(&query_info,0,sizeof(struct query));
+    rc = strcpy_s(query_info.ifname, MAX_INTF_NAME_SIZE , pQuerynowCtxt->InterfaceName);
+    ERR_CHK(rc);
+    query_info.query_timeout = pQuerynowCtxt->QueryTimeout;
+    query_info.query_retry   = pQuerynowCtxt->QueryRetry;
+    query_info.query_count = no_of_queries;
+    query_info.rqstd_rectype = pQuerynowCtxt->RecordType;
+    rc = strcpy_s(query_info.IPv4Gateway, IPv4_STR_LEN, pQuerynowCtxt->IPv4Gateway);
+    ERR_CHK(rc);
+    rc = strcpy_s(query_info.IPv6Gateway, IPv6_STR_LEN, pQuerynowCtxt->IPv6Gateway);
+    ERR_CHK(rc);
 
-    if (use_raw_socket) {
-        pfd.fd = send_query_create_raw_skt(query_info);
-    } else {
-        pfd.fd = send_query_create_udp_skt(query_info);
-    }
-
-    pthread_cleanup_push(cleanup_querynow_fd,&pfd.fd);
-
-    if (pfd.fd == -1)
+#if 0
+    rc = strcmp_s("REMOTE_LTE",strlen("REMOTE_LTE"),pQuerynowCtxt->Alias, &ind);
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
     {
-        WANCHK_LOG_ERROR("Error creating socket !\n");
-        goto EXIT;
-
+        use_raw_socket = TRUE;
     }
-    WANCHK_LOG_DBG("Interface :%s fd :%d\n",query_info->ifname,pfd.fd);
+#endif
 
-    int flags = fcntl(pfd.fd, F_GETFL);
-    if (fcntl(pfd.fd, F_SETFL, flags | O_NONBLOCK) == -1)
-    {
-        WANCHK_LOG_ERROR("Unable to set close-on-execflag!\n");
-        ret = -1;
-        goto EXIT;
-    }
- 
-    int retry_count = 0;
-    while(retry_count <= query_info->query_retry)
-    {
-        int recvlen=0 ;
+    //Raw socket is used for both active and standby interface
+    use_raw_socket = TRUE;
 
-        for (int i=0;i < query_info->query_count;i++)
+    /* We have to conclude the results within the interval, lets write to the nameservers provided
+       and process the response from the nameservers       
+    */
+    int prev_query_type = -1;
+    int idx = 0;
+    while (idx < poll_cnt) {
+        memset(query_info.ns, 0, MAX_URL_SIZE);
+
+        // Determine which type of query to send based on the previous iteration
+        int query_type = (prev_query_type == -1 || prev_query_type == DNS_SRV_IPV6) ? DNS_SRV_IPV4 : DNS_SRV_IPV6;
+
+        if (query_type == DNS_SRV_IPV4)
         {
-            if (query_list[i].resp_recvd)
-               continue;
+            // Copy IPv4 DNS query
+            rc = strcpy_s(query_info.ns, MAX_URL_SIZE, ipv4_addr);
+            ERR_CHK(rc);
+            query_info.skt_family = AF_INET;
+            query_list[0].resp_recvd = 0;
+            query_list[1].resp_recvd = 0;
+        }
+        else if (query_type == DNS_SRV_IPV6)
+        {
+            // Copy IPv6 DNS query
+            rc = strcpy_s(query_info.ns, MAX_URL_SIZE, ipv6_addr);
+            ERR_CHK(rc);
+            query_info.skt_family = AF_INET6;
+            query_list[0].resp_recvd = 0;
+            query_list[1].resp_recvd = 0;
+        }
+  
+        // Set up the socket and prepare for sending query
+        pfd[idx].events = POLLIN;
+        pfd[idx].fd = -1;
+        
+        if (!strlen(query_info.ns)) {
+            prev_query_type = query_type;
+            continue; // Empty DNS address, continue to next iteration
+        }
+    
+        if (use_raw_socket) {
+            pfd[idx].fd = send_query_create_raw_skt(&query_info);
+        }
+#if 0 
+        else {
+            pfd[idx].fd = send_query_create_udp_skt(&query_info);
+        }
+#endif
 
-            if (use_raw_socket)
-            {
-                WANCHK_LOG_DBG("Frame Raw UDP Packet for Interface :%s fd: %d\n",query_info->ifname,pfd.fd);
-                pkt_len = send_query_frame_raw_pkt(query_info,&query_list[i],packet);
-                if (!pkt_len)
-                {
-                    WANCHK_LOG_ERROR("Error in Creating Raw Packet\n");
-                    goto EXIT;
+        if (pfd[idx].fd == -1) {
+            // Error creating socket, log and continue
+            WANCHK_LOG_WARN("Error creating socket for nameserver %s !\n", query_info.ns);
+            idx++;
+            continue;
+        }
+
+        WANCHK_LOG_DBG("Interface: %s fd: %d\n", query_info.ifname, pfd[idx].fd);
+
+        // Set socket to non-blocking mode
+        int flags = fcntl(pfd[idx].fd, F_GETFL);
+        if (fcntl(pfd[idx].fd, F_SETFL, flags | O_NONBLOCK) == -1) {
+            WANCHK_LOG_ERROR("Unable to set close-on-exec flag!\n");
+            idx++;
+            continue;
+        }
+    
+        // Iterate through the queries and send them
+        for (int i = 0; i < query_info.query_count; i++) {
+            if (query_list[i].resp_recvd) {
+                continue; // Response already received, skip
+            }
+    
+            if (use_raw_socket) {
+                // Send raw UDP packet
+                WANCHK_LOG_DBG("Frame Raw UDP Packet for Interface: %s fd: %d dns: %s\n", query_info.ifname, pfd[idx].fd, query_info.ns);
+                pkt_len = send_query_frame_raw_pkt(&query_info, &query_list[i], packet);
+                if (!pkt_len) {
+                    // Error in sending raw packet
+                    WANCHK_LOG_ERROR("Error in Sending Raw Packet for nameserver %s\n", query_info.ns);
+                    idx++;
+                    break;
                 }
             }
-            else
-            {
-                WANCHK_LOG_DBG("Frame UDP Payload for Interface :%s fd: %d\n",query_info->ifname,pfd.fd);
-                memcpy(packet,query_list[i].query,query_list[i].qlen);
+#if 0 
+            else {
+                // Send UDP payload
+                WANCHK_LOG_DBG("Frame UDP Payload for Interface: %s fd: %d dns: %s\n", query_info.ifname, pfd[idx].fd, query_info.ns);
+                memcpy(packet, query_list[i].query, query_list[i].qlen);
                 pkt_len = query_list[i].qlen;
             }
-            if (write(pfd.fd, packet, pkt_len) < 0) {
-                WANCHK_LOG_WARN("write failed for nameserver %s\r\n",query_info->ns);
-                ret = -1;
-                goto EXIT;
+#endif
+    
+            // Write packet to socket
+            if (write(pfd[idx].fd, packet, pkt_len) < 0) {
+                // Error writing to socket
+                WANCHK_LOG_WARN("Write failed for nameserver %s on interface %s\n", query_info.ns, query_info.ifname);
+                break;
+            } else {
+                WANCHK_LOG_DBG("Write success for nameserver %s on interface %s\n", query_info.ns, query_info.ifname);
+                ret = 0; // Successful write
             }
         }
 
-        if (disable_info_log == FALSE)
-            WANCHK_LOG_INFO("Sending %s Attempt:%d\n",retry_count? "Query Retry":"Query",retry_count);
-        else
-            WANCHK_LOG_DBG("Sending %s Attempt:%d\n",retry_count? "Query Retry":"Query",retry_count);
+        if (ret == 0) {
+            idx++;
+        }
+        // Update the previous query type
+        prev_query_type = query_type;
+    }
 
-        timeout = query_info->query_timeout;
+    return ret;
+}
+
+int process_resp (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt, struct mk_query *query_list, 
+                  int no_of_queries,struct pollfd *pfd, BOOL disable_info_log, BOOL *URL_v4_resolved,
+                  BOOL *URL_v6_resolved, UCHAR* ipv4_addr, UCHAR* ipv6_addr, 
+                  int ipv4_present, int ipv6_present, int poll_cnt)
+{
+    int64_t timeout = 0;
+    int64_t start_time, current_time;
+    int recvlen = 0;
+    int rc = -1;
+    int ret_parse = 0;
+    unsigned char reply[BUFLEN_1024] = {0};
+    char dns_payload[BUFLEN_1024] = {0};
+    uint8_t rcode;
+    BOOL v4_resolved = FALSE;
+    BOOL v6_resolved = FALSE;
+    BOOL use_raw_socket = FALSE;
+    //int ind = -1;
+    volatile int ret = 0;
+    int resp_recvd_cnt = 0;
+    int dns_sent_cnt = 0;
+    int response_succeeded = 0;
+
+#if 0
+    rc = strcmp_s("REMOTE_LTE",strlen("REMOTE_LTE"),pQuerynowCtxt->Alias, &ind);
+    ERR_CHK(rc);
+    if((!ind) && (rc == EOK))
+    {
+        use_raw_socket = TRUE;
+    }
+#endif
+
+    //Raw socket is used for both Active and Standby interface
+    use_raw_socket = TRUE;
+
+    timeout = pQuerynowCtxt->QueryTimeout;
 wait_for_response:
         start_time = clock_mono_ms();
         WANCHK_LOG_DBG("waiting for response with timeout:%lld\n", (long long int)timeout);
         if (timeout >= 0) {
-            rc = poll(&pfd, 1, timeout);
+            rc = poll(pfd, poll_cnt, timeout);
         } else {
-            WANCHK_LOG_DBG("Timeout happened on query response for interface: %s\n",query_info->ifname);
-            retry_count++;
-            continue;
+            if (response_succeeded) {
+                WANCHK_LOG_DBG("Done processing query response for interface: %s alias: %s\n",
+			        pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+                ret = 0;
+            }
+            else {
+            	WANCHK_LOG_DBG("Timeout happened on query response for interface: %s alias: %s\n",
+			    	pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+            	ret = 2;
+            }
+            goto EXIT;
         }
 
         WANCHK_LOG_DBG("poll return code:%d\n",rc);
         if(rc < 0) {
-           WANCHK_LOG_ERROR("poll for fd:%d failed on interface :%s\n",pfd.fd,query_info->ifname);
+           WANCHK_LOG_ERROR("poll failed on interface: %s, alias: %s\n",
+			     pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
            ret = -1;
            goto EXIT;
         } else if (rc == 0) {
-           WANCHK_LOG_DBG("Timeout happened on query response for interface: %s\n",query_info->ifname);
-           retry_count++;
-           continue;
+           if (response_succeeded) {
+                WANCHK_LOG_DBG("Done processing query response for interface: %s alias: %s\n",
+			        pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+                ret = 0;
+            }
+            else {
+            	WANCHK_LOG_DBG("Timeout happened on query response for interface: %s alias: %s\n",
+			    	pQuerynowCtxt->InterfaceName, pQuerynowCtxt->Alias);
+            	ret = 2;
+            }
+            goto EXIT;
         } else {
-            memset(reply,0,sizeof(reply));
-            recvlen = read(pfd.fd, reply, sizeof(reply));
-            if (recvlen < 0) {
-                WANCHK_LOG_WARN("recvlen is zero for interface: %s\n",query_info->ifname);
-                retry_count++;
-                continue;
-            }
-
-            char dns_payload[BUFLEN_4096] = {0};
-            unsigned int dns_payload_len = 0;
-
-            if (use_raw_socket) {
-                if (get_dns_payload(query_info->skt_family,reply+sizeof(struct ethhdr),
-                            (recvlen - sizeof(struct ethhdr)),dns_payload,&dns_payload_len) < 0)
-                {
-                    WANCHK_LOG_ERROR("Unable to fetch dns payload for interface:%s\n",query_info->ifname);
-                    current_time = clock_mono_ms();
-                    timeout = timeout - (current_time - start_time);
-                    goto wait_for_response;
-                }
-            } else {
-                memcpy(dns_payload,reply,recvlen);
-                dns_payload_len = recvlen;
-            }
-
-            BOOL match_found = FALSE;
-            int no_of_replies = 0;
-            for (int j=0;j < query_info->query_count;j++)
+            int skt_family = 0;
+            BOOL retry_again = FALSE;
+            dns_sent_cnt = poll_cnt;
+            for (int i = 0; i < poll_cnt; i++)
             {
-                WANCHK_LOG_DBG("dns payload %02hhx %02hhx\n", ((unsigned char *) dns_payload)[0],
+                if (pfd[i].fd == -1)
+                {
+                   WANCHK_LOG_DBG("fd not set for index:%d for intf:%s\n", i,
+				                              pQuerynowCtxt->InterfaceName);
+                   dns_sent_cnt--;
+                   continue;
+                }
+                memset(reply,0,BUFLEN_1024);
+                recvlen = recv(pfd[i].fd, reply, BUFLEN_1024, 0);
+                if (recvlen <= 0) {
+                    WANCHK_LOG_DBG("recv is empty for interface: %s and fd: %d\n", 
+                                    pQuerynowCtxt->InterfaceName, pfd[i].fd);
+                    retry_again = TRUE;
+                    continue;
+                }
+
+                //If poll_cnt is 2, then first idx is for ipv4 and second idx is for ipv6
+                if (poll_cnt == 2 && i == 0 && ipv4_present) {
+                    skt_family = AF_INET;
+                }
+                else if (poll_cnt == 2 && i == 1 && ipv6_present) {
+                    skt_family = AF_INET6;
+                }
+
+                //If poll_cnt is 1, then it can be either ipv4 or ipv6
+                if (poll_cnt == 1 && ipv4_present) {
+                    skt_family = AF_INET;
+                }
+                else if (poll_cnt == 1 && ipv6_present) {
+                    skt_family = AF_INET6;
+                }
+
+                memset(dns_payload,0,BUFLEN_1024);
+
+                unsigned int dns_payload_len = 0;
+
+                if (use_raw_socket) {
+                   if (get_dns_payload(skt_family,reply+sizeof(struct ethhdr),(recvlen - sizeof(struct ethhdr)),
+                                       dns_payload,&dns_payload_len) < 0)
+                   {
+                      WANCHK_LOG_ERROR("Unable to fetch dns payload for interface:%s\n",
+				      						pQuerynowCtxt->InterfaceName);
+                      continue;
+                   }
+                }
+#if 0 
+                else {
+                   memcpy(dns_payload,reply,recvlen);
+                   dns_payload_len = recvlen;
+                }
+#endif
+
+                BOOL match_found = FALSE;
+                int no_of_replies = 0;
+                for (int j=0;j < no_of_queries;j++)
+                {
+                    WANCHK_LOG_DBG("dns payload %02hhx %02hhx\n", ((unsigned char *) dns_payload)[0],
                                                         ((unsigned char *)dns_payload)[1]);
 
-                WANCHK_LOG_DBG("query_list %02hhx %02hhx\n", ((unsigned char *) query_list[j].query)[0],
+                    WANCHK_LOG_DBG("query_list %02hhx %02hhx\n", ((unsigned char *) query_list[j].query)[0],
                                                 ((unsigned char *) query_list[j].query)[1]);
 
-                if (memcmp(dns_payload,query_list[j].query,2) == 0) {
-                   query_list[j].resp_recvd = 1;
-                   no_of_replies++;
-                   match_found = TRUE;
-                } 
-            }
-            if (!match_found) {
-                WANCHK_LOG_DBG("No matching response found yet,continue for interface: %s\n",
-                                                                                query_info->ifname);
-                current_time = clock_mono_ms();
-                timeout = timeout - (current_time - start_time);
-                goto wait_for_response;
-            }
-
-            rcode = dns_payload[3] & 0x0f;
-            if (rcode != 0) {
-                WANCHK_LOG_DBG("Unexpected response code:%d for interface: %s\n",rcode,
-                                                                                query_info->ifname);
-                ret = -1;
-                /* ??? Retry or Abort, For now go for retry*/
-                retry_count++;
-                continue;
-            } else {
-                ret_parse = dns_parse(dns_payload, dns_payload_len);
-                switch (ret_parse) {
-                case -1:
-                    WANCHK_LOG_WARN("Can't find response for nameserver %s Parse error on interface: %s\n",
-                                                                query_info->ns,query_info->ifname);
-                    if (no_of_replies < query_info->query_count) {
-                        WANCHK_LOG_DBG("Not yet received all replies %d for interface:%s\n",
-                                                                no_of_replies,query_info->ifname);
-                        current_time = clock_mono_ms();
-                        timeout = timeout - (current_time - start_time);
-                        goto wait_for_response;
-                    } else {
-                        WANCHK_LOG_ERROR("No valid response obtained for nameserver %s on interface: %s\n",
-                                                                query_info->ns,query_info->ifname);
-                        ret = -1;
-                        goto EXIT;
+                    if (memcmp(dns_payload,query_list[j].query,2) == 0) {
+                       query_list[j].resp_recvd = 1;
+                       no_of_replies++;
+                       resp_recvd_cnt++;
+                       match_found = TRUE;
                     }
-                case IPV4_ONLY:
-                     v4_resolved = TRUE;
-                     break;
-                case  IPV6_ONLY:
-                     v6_resolved = TRUE;
-                     break;
-                case BOTH_IPV4_IPV6:
-                     v4_resolved = TRUE;
-                     v6_resolved = TRUE;
-                     break;
                 }
-            }
-            /* if no_of_replies is expected count or if we received a single response in case of
-            A or AAAA break*/
-            if ((no_of_replies >= query_info->query_count) || 
-                 (no_of_replies > 0 && (query_info->rqstd_rectype == EITHER_IPV4_IPV6)))
-              break;
-        }
-    }
-EXIT:
-    cleanup_querynow_fd(&pfd.fd);
+                if (!match_found) {
+                   WANCHK_LOG_DBG("No matching response found yet,continue for interface: %s\n",
+                                                                           pQuerynowCtxt->InterfaceName);
+                   continue;
+                }
+              
+                if (resp_recvd_cnt >= (dns_sent_cnt * no_of_queries) && response_succeeded) {
+                   WANCHK_LOG_DBG("resp_recvd for all queries and also succeeded for intf: %s\n", 
+                                  				      pQuerynowCtxt->InterfaceName);
+                   ret = 0;
+                   retry_again = FALSE;
+                   break;
+                }
 
-    if ( ((query_info->rqstd_rectype == IPV4_ONLY) && v4_resolved) ||
-         ((query_info->rqstd_rectype == IPV6_ONLY) && v6_resolved) ||
-         ((query_info->rqstd_rectype == BOTH_IPV4_IPV6) && (v6_resolved && v4_resolved)) ||
-         ((query_info->rqstd_rectype == EITHER_IPV4_IPV6) && (v6_resolved || v4_resolved)))
+              
+                /* if we close early, we may see port unreachable icmps back to servers. just skip 
+                   parsing the responses received within timeframe*/
+                if (response_succeeded) {
+                    WANCHK_LOG_DBG("Response already succeeded for interface: %s skip rsp from fd: %d\n", 
+				                              pQuerynowCtxt->InterfaceName, pfd[i].fd);
+                    continue;
+                }
+
+                rcode = dns_payload[3] & 0x0f;
+                if (rcode != 0) {
+                   WANCHK_LOG_DBG("Unexpected response code:%d for interface: %s\n",rcode,
+                                                                           pQuerynowCtxt->InterfaceName);
+                   //ret = -1;
+                   /* ??? Retry or Abort, For now check another server response*/
+                   //retry_count++;
+                   continue;
+                } else {
+                   ret_parse = dns_parse(dns_payload, dns_payload_len);
+                   switch (ret_parse) {
+                   case -1:
+                      WANCHK_LOG_WARN("Can't find response for nameserver %s Parse error on interface: %s\n",
+                                       skt_family == AF_INET ? ipv4_addr: ipv6_addr, pQuerynowCtxt->InterfaceName);
+                      if (no_of_replies < no_of_queries) {
+                         WANCHK_LOG_DBG("Not yet received all replies %d for interface:%s\n",
+                                                                no_of_replies,pQuerynowCtxt->InterfaceName);
+                         continue;
+                      } else {
+                        WANCHK_LOG_WARN("No valid response obtained for nameserver %s on interface: %s\n",
+                                       skt_family == AF_INET ? ipv4_addr: ipv6_addr, pQuerynowCtxt->InterfaceName);
+                        //ret = -1;
+                        continue;
+                      }
+                      case IPV4_ONLY:
+                        v4_resolved = TRUE;
+                        if (skt_family == AF_INET)
+                            *URL_v4_resolved = TRUE;
+                        if (skt_family == AF_INET6)
+                            *URL_v6_resolved = TRUE;
+                        break;
+                      case  IPV6_ONLY:
+                        v6_resolved = TRUE;
+                        if (skt_family == AF_INET)
+                            *URL_v4_resolved = TRUE;
+                        if (skt_family == AF_INET6)
+                            *URL_v6_resolved = TRUE;
+                        break;
+                      case BOTH_IPV4_IPV6:
+                        v4_resolved = TRUE;
+                        v6_resolved = TRUE;
+                        if (skt_family == AF_INET)
+                            *URL_v4_resolved = TRUE;
+                        if (skt_family == AF_INET6)
+                            *URL_v6_resolved = TRUE;
+                        break;
+                    }
+                }
+                /* if no_of_replies is expected count or if we received a single response in case of
+                   A or AAAA break*/
+                if ((no_of_replies >= no_of_queries) ||
+                    (no_of_replies > 0 && (pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6)))
+                   response_succeeded = 1;
+           }
+           if (retry_again == TRUE) {
+               WANCHK_LOG_DBG("Reaped all fd's, adjust timeout and wait on poll\n");
+               current_time = clock_mono_ms();
+               timeout = timeout - (current_time - start_time);
+               goto wait_for_response;
+           }
+        }
+EXIT:
+    for (int id = 0; id < poll_cnt; id++) {
+        cleanup_querynow_fd(&pfd[id].fd);
+    }
+    if (ret == 2) {
+       return ret;
+    }
+
+    if ( ((pQuerynowCtxt->RecordType == IPV4_ONLY) && v4_resolved) ||
+         ((pQuerynowCtxt->RecordType == IPV6_ONLY) && v6_resolved) ||
+         ((pQuerynowCtxt->RecordType == BOTH_IPV4_IPV6) && (v6_resolved && v4_resolved)) ||
+         ((pQuerynowCtxt->RecordType == EITHER_IPV4_IPV6) && (v6_resolved || v4_resolved)))
     {
         if (disable_info_log == FALSE)
         {
-            WANCHK_LOG_INFO("Query Response Succeeded on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
-                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+            WANCHK_LOG_INFO("Query Response Succeeded on interface %s alias %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                             pQuerynowCtxt->InterfaceName,pQuerynowCtxt->Alias,pQuerynowCtxt->RecordType,v4_resolved,v6_resolved);
         }
         else
         {
-            WANCHK_LOG_DBG("Query Response Succeeded on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
-                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+            WANCHK_LOG_DBG("Query Response Succeeded on interface %s alias %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                            pQuerynowCtxt->InterfaceName,pQuerynowCtxt->Alias,pQuerynowCtxt->RecordType,v4_resolved,v6_resolved);
         }
+	ret = 0;
     }
     else
     {
         if(disable_info_log == FALSE)
         {
-            WANCHK_LOG_WARN("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
-                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+            WANCHK_LOG_WARN("Query Response Failed on interface %s alias %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                             pQuerynowCtxt->InterfaceName,pQuerynowCtxt->Alias,pQuerynowCtxt->RecordType,v4_resolved,v6_resolved);
         }
         else
         {
-            WANCHK_LOG_DBG("Query Response Failed on interface %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
-                        query_info->ifname,query_info->rqstd_rectype,v4_resolved,v6_resolved);
+            WANCHK_LOG_DBG("Query Response Failed on interface %s alias %s Requested RecordType:%d Status TYPE_A:%d TYPE_AAAA:%d\n",
+                            pQuerynowCtxt->InterfaceName,pQuerynowCtxt->Alias,pQuerynowCtxt->RecordType,v4_resolved,v6_resolved);
         }
         ret = -1;
     }
-
-    pthread_cleanup_pop(0);
     return ret;
 }
 
@@ -1907,13 +2142,13 @@ static void dns_response_callback(
         /* These logs may come frequenlty when we have frequent dns activity in client,moving
            to debug, we will have logging when passive mntr expires, when there is a change in stata
            ,when we hit any errors etc*/
-        WANCHK_LOG_DBG("PassiveMonitor DNS response detected from V4 server TYPE_A:%d TYPE_AAAA:%d\n",
-                                                v4_resolved, v6_resolved);
+        WANCHK_LOG_DBG("PassiveMonitor DNS response detected for intf:%s from V4 server TYPE_A:%d TYPE_AAAA:%d\n",
+                                                pPassive->InterfaceName, v4_resolved, v6_resolved);
     }
     else if (response_from_v6_server == TRUE)
     {
-        WANCHK_LOG_DBG("PassiveMonitor DNS response detected from V6 server TYPE_A:%d TYPE_AAAA:%d\n",
-                                                v4_resolved, v6_resolved);
+        WANCHK_LOG_DBG("PassiveMonitor DNS response detected for intf:%s from V6 server TYPE_A:%d TYPE_AAAA:%d\n",
+                                                pPassive->InterfaceName, v4_resolved, v6_resolved);
     }
     if ((v4_resolved == TRUE) || (v6_resolved == TRUE))
     {
@@ -1933,7 +2168,7 @@ static void dns_response_callback(
                                                           MONITOR_RESULT_CONNECTED);
         v_secure_system("touch /tmp/actv_mon_pause_%s", pPassive->InterfaceName);
         WANCHK_LOG_DBG("we have to restart the timer\n");
-        ev_timer_again (pPassive->loop,&pPassive->bgtimer);
+        ev_timer_start (pPassive->loop,&pPassive->bgtimer);
         pcap_breakloop(pPassive->pcap);
     }
     if(pPassive->doInfoLogOnce)
@@ -1955,6 +2190,10 @@ int dns_parse(const unsigned char *msg, size_t len)
     BOOL ns_t_a_found = FALSE;
     BOOL ns_t_aaaa_found = FALSE;
 
+    if (msg == NULL) {
+        WANCHK_LOG_WARN("dns payload is NULL\n");
+        return -1;
+    }
     if (ns_initparse(msg, len, &handle) != 0) {
         WANCHK_LOG_WARN("Unable to parse dns payload\n");
         return -1;
@@ -2335,14 +2574,14 @@ ANSC_STATUS wancnctvty_chk_querynow_result_update(ULONG InstanceNumber,querynow_
     char rowName[RBUS_MAX_NAME_LENGTH] = {0};
     BOOL send_publish_event = FALSE;
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[InstanceNumber-1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(InstanceNumber);
     previous_result = gIntfInfo->IPInterface.QueryNowResult;
     gIntfInfo->IPInterface.QueryNowResult  = result;
     if (previous_result != gIntfInfo->IPInterface.QueryNowResult)
     {
-        WANCHK_LOG_INFO("Updated QueryNowResult for Interface %s: %ld->%ld\n",
+        WANCHK_LOG_INFO("Updated QueryNowResult for Interface %s, Alias: %s: %ld->%ld\n",
                                                         gIntfInfo->IPInterface.InterfaceName,
-                                                        previous_result,
+                                                        gIntfInfo->IPInterface.Alias, previous_result,
                                                         gIntfInfo->IPInterface.QueryNowResult);
         if (gIntfInfo->IPInterface.QueryNowResult_SubsCount)
             send_publish_event = TRUE;
@@ -2351,7 +2590,7 @@ ANSC_STATUS wancnctvty_chk_querynow_result_update(ULONG InstanceNumber,querynow_
     if (send_publish_event)
     {
         snprintf(rowName, RBUS_MAX_NAME_LENGTH, 
-            "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%ld.QueryNowResult",InstanceNumber);
+            "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.[%s].QueryNowResult", gIntfInfo->IPInterface.Alias);
         WANCNCTVTYCHK_PublishEvent(rowName,result,previous_result);
     }
 
@@ -2364,14 +2603,15 @@ ANSC_STATUS wancnctvty_chk_monitor_result_update(ULONG InstanceNumber,monitor_re
     char rowName[RBUS_MAX_NAME_LENGTH] = {0};
     BOOL send_publish_event = FALSE;
     pthread_mutex_lock(&gIntfAccessMutex);
-    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[InstanceNumber-1];
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(InstanceNumber);
     previous_result = gIntfInfo->IPInterface.MonitorResult;
     gIntfInfo->IPInterface.MonitorResult  = result;
     if (previous_result != gIntfInfo->IPInterface.MonitorResult)
     {
 
-        WANCHK_LOG_INFO("Updated MonitorResult for Interface %s:%ld->%ld\n",
-                                        gIntfInfo->IPInterface.InterfaceName,previous_result,
+        WANCHK_LOG_INFO("Updated MonitorResult for Interface: %s, Alias: %s:%ld->%ld\n",
+                                        gIntfInfo->IPInterface.InterfaceName,
+                                        gIntfInfo->IPInterface.Alias, previous_result,
                                         gIntfInfo->IPInterface.MonitorResult);
         if (gIntfInfo->IPInterface.MonitorResult_SubsCount)
             send_publish_event = TRUE;
@@ -2381,7 +2621,7 @@ ANSC_STATUS wancnctvty_chk_monitor_result_update(ULONG InstanceNumber,monitor_re
     if (send_publish_event)
     {
         snprintf(rowName, RBUS_MAX_NAME_LENGTH, 
-                "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%ld.MonitorResult",InstanceNumber);
+                "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.[%s].MonitorResult", gIntfInfo->IPInterface.Alias);
         WANCNCTVTYCHK_PublishEvent(rowName,result,previous_result);
     }
 

@@ -43,6 +43,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp6.h>
 #include <pcap.h>
+#include <poll.h>
 
 /* Generated with tcpdump -dd "udp src port 53" */
 struct sock_filter dns_packet_filter[] = {
@@ -93,6 +94,8 @@ struct query {
     unsigned int query_retry;
     unsigned int query_count;
     recordtype_t rqstd_rectype;
+    char IPv4Gateway[IPv4_STR_LEN];
+    char IPv6Gateway[IPv6_STR_LEN];
 };
 
 typedef struct _wan_chk_passive_monitor
@@ -146,8 +149,13 @@ ANSC_STATUS wancnctvty_chk_start_passive(PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfI
 ANSC_STATUS wancnctvty_chk_copy_ctxt_data (PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo,
                                         PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt);
 void *wancnctvty_chk_querynow_thread( void *arg);
-int send_query(struct query *query_info,struct mk_query *query_list,BOOL use_raw_socket,
-                                                                            BOOL disable_info_log);
+int send_query(PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt, struct mk_query *query_list,
+               int no_of_queries,struct pollfd *,BOOL disable_info_log, UCHAR* ipv4_addr, UCHAR* ipv6_addr,
+               int poll_cnt);
+int process_resp (PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO pQuerynowCtxt, struct mk_query *query_list,
+                  int no_of_queries, struct pollfd *pfd, BOOL disable_info_log, BOOL *URL_v4_resolved,
+                  BOOL *URL_v6_resolved, UCHAR* ipv4_addr, UCHAR* ipv6_addr, 
+                  int ipv4_present, int ipv6_present, int poll_cnt);
 int dns_parse(const unsigned char *msg, size_t len);
 int send_query_create_raw_skt(struct query *query_info);
 unsigned int send_query_frame_raw_pkt(struct query *query_info,struct mk_query *query,
@@ -173,5 +181,6 @@ ANSC_STATUS wancnctvty_chk_monitor_result_update(ULONG InstanceNumber,monitor_re
 ANSC_STATUS wancnctvty_chk_querynow_result_update(ULONG InstanceNumber,querynow_result_t result);
 int get_dns_payload(int family, char *payload,unsigned payload_len,
                                                     char *dns_payload,unsigned int *dns_payload_len);
+void *wancnctvty_chk_actvquery_cbthread( void *arg);
 
 #endif

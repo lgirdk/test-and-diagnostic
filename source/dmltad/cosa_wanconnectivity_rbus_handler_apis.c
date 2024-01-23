@@ -26,14 +26,16 @@ extern rbusHandle_t rbus_handle;
 extern rbusHandle_t rbus_table_handle;
 extern BOOL g_wanconnectivity_check_active;
 extern BOOL g_wanconnectivity_check_enable;
+extern BOOL g_wanconnectivity_check_start;
 extern pthread_mutex_t gIntfAccessMutex;
 extern pthread_mutex_t gUrlAccessMutex;
 extern ULONG   gulUrlNextInsNum;
 extern ULONG   gIntfCount;
 extern SLIST_HEADER    gpUrlList;
-extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES];
+extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO *gInterface_List;
 extern ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t type);
 extern ANSC_STATUS wancnctvty_chk_stop_threads(ULONG InstanceNumber,service_type_t type);
+extern PWANCNCTVTY_CHK_GLOBAL_INTF_INFO get_InterfaceFromAlias(char *Alias);
 
 /**********************************************************************
     function:
@@ -189,10 +191,12 @@ rbusError_t WANCNCTVTYCHK_GetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                                                         rbusGetHandlerOptions_t* opts)
 {
     char const* name;
-    int ret = 0;
-    unsigned int instNum =0;
+    int aliasRet = 0, instRet = 0;
+    unsigned int instNum = 0;
     char Param[BUFLEN_128] = {0};
+    char alias[BUFLEN_128] = {0};
     rbusValue_t value;
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = NULL;
 
     rbusValue_Init(&value);
 
@@ -200,14 +204,21 @@ rbusError_t WANCNCTVTYCHK_GetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
     WANCHK_LOG_DBG("Inside get handler with names %s\n",name);
     if(strstr(name,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
-                                                                                        Param);
-        if (ret ==2)
+        pthread_mutex_lock(&gIntfAccessMutex);
+        aliasRet = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.[%[^]]].%127s", alias, Param);
+        if (aliasRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, alias: %s, ret: %d\n", __FUNCTION__, name, alias, aliasRet);
+            gIntfInfo = get_InterfaceFromAlias(alias);
+        }
+
+        instRet = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum, Param);
+        if (instRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, instNum: %d, ret: %d\n", __FUNCTION__, name, instNum, instRet);
+            gIntfInfo = get_InterfaceList(instNum);
+        }
+
+        if (gIntfInfo)
         {
-            WANCHK_LOG_DBG("PropName = %s, param = %s, instnum = %d, ret = %d\n",
-                                                                        name, Param, instNum, ret);
-            pthread_mutex_lock(&gIntfAccessMutex);
-            PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[instNum-1];
             if (strcmp(Param, "Enable") == 0)
             {
                 rbusValue_SetBoolean(value, gIntfInfo->IPInterface.Enable);
@@ -276,6 +287,7 @@ rbusError_t WANCNCTVTYCHK_GetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
         else
         {
             rbusValue_Release(value);
+            pthread_mutex_unlock(&gIntfAccessMutex);
             return RBUS_ERROR_INVALID_INPUT;
         }
     }
@@ -319,17 +331,11 @@ rbusError_t WANCNCTVTYCHK_SetHandler(rbusHandle_t handle, rbusProperty_t prop,
 
     if(strcmp(name, "Device.Diagnostics.X_RDK_DNSInternet.Enable") == 0)
     {
-        BOOL wanconnectivity_check_enable = FALSE;
         if (type != RBUS_BOOLEAN)
         {
             return RBUS_ERROR_INVALID_INPUT;
         }
-        wanconnectivity_check_enable = rbusValue_GetBoolean(value);
-        if (CosaWanCnctvtyChk_Feature_Commit(wanconnectivity_check_enable) != ANSC_STATUS_SUCCESS)
-        {
-            WANCHK_LOG_ERROR("Unable to commit changes for feature flag change\n");
-            return ANSC_STATUS_FAILURE;
-        }
+        g_wanconnectivity_check_enable = rbusValue_GetBoolean(value);
     }
     else
     {
@@ -410,29 +416,38 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
     (void)opts;
     unsigned int instNum = 0;
     char Param[BUFLEN_128] ={0};
+    char alias[BUFLEN_128] ={0};
     char const* name = rbusProperty_GetName(prop);
     rbusValue_t value = rbusProperty_GetValue(prop);
     rbusValueType_t type = rbusValue_GetType(value);
     errno_t rc = -1;
-    int ret = 0;
+    int aliasRet = 0, instRet = 0;
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = NULL;
 
     if(strstr(name,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
-                                                                                        Param);
-        if (ret ==2 && instNum > 0)
+        pthread_mutex_lock(&gIntfAccessMutex);
+        aliasRet = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.[%[^]]].%127s", alias, Param);
+        if (aliasRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, alias: %s, ret: %d\n", __FUNCTION__, name, alias, aliasRet);
+            gIntfInfo = get_InterfaceFromAlias(alias);
+        }
+
+        instRet = sscanf(name, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum, Param);
+        if (instRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, instNum: %d, ret: %d\n", __FUNCTION__, name, instNum, instRet);
+            gIntfInfo = get_InterfaceList(instNum);
+        }
+
+        if (gIntfInfo)
         {
             COSA_DML_WANCNCTVTY_CHK_INTF_INFO IPInterface;
             memset(&IPInterface,0,sizeof(COSA_DML_WANCNCTVTY_CHK_INTF_INFO));
-            pthread_mutex_lock(&gIntfAccessMutex);
-            PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[instNum-1];
             IPInterface = gIntfInfo->IPInterface;
-            IPInterface.InstanceNumber = instNum;
             pthread_mutex_unlock(&gIntfAccessMutex);
 
             IPInterface.Cfg_bitmask = 0;
-            WANCHK_LOG_DBG("PropName = %s, param = %s, instnum = %d, ret = %d\n",
-                               name, Param, instNum, ret);
+
             if (type == RBUS_BOOLEAN)
             {
                 if (strcmp(Param, "Enable") == 0)
@@ -474,9 +489,9 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if (strcmp(Param, "PassiveMonitorTimeout") == 0)
                 {
                     uint32_t input = rbusValue_GetUInt32(value);
-                    if (input < 1000)
+                    if (input < 11000)
                     {
-                        WANCHK_LOG_ERROR("%s: PassiveMonitorTimeout not valid\n", __FUNCTION__);
+                        WANCHK_LOG_ERROR("%s: PassiveMonitorTimeout not valid. Value should be greater than 11 seconds\n", __FUNCTION__);
                         return RBUS_ERROR_INVALID_INPUT;
                     }
                     if (IPInterface.PassiveMonitorTimeout != input)
@@ -489,9 +504,9 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
                 if (strcmp(Param, "ActiveMonitorInterval") == 0)
                 {
                     uint32_t input = rbusValue_GetUInt32(value);
-                    if (input < 1000)
+                    if (input < 11000)
                     {
-                        WANCHK_LOG_ERROR("%s: ActiveMonitorInterval not valid\n", __FUNCTION__);
+                        WANCHK_LOG_ERROR("%s: ActiveMonitorInterval not valid. Value should be greater than 11 seconds\n", __FUNCTION__);
                         return RBUS_ERROR_INVALID_INPUT;
                     }
                     if (IPInterface.ActiveMonitorInterval != input)
@@ -584,6 +599,7 @@ rbusError_t WANCNCTVTYCHK_SetIntfHandler(rbusHandle_t handle, rbusProperty_t pro
         else
         {
             WANCHK_LOG_ERROR("%s:%d Invalid Input\n",__FUNCTION__,__LINE__);
+            pthread_mutex_unlock(&gIntfAccessMutex);
             return RBUS_ERROR_INVALID_INPUT;
         }
     }
@@ -620,18 +636,30 @@ rbusError_t WANCNCTVTYCHK_SubHandler(rbusHandle_t handle, rbusEventSubAction_t a
     char *subscribe_action = NULL;
     unsigned int instNum = 0;
     char Param[BUFLEN_128] ={0};
-    int ret = 0;
+    char alias[BUFLEN_128] = {0};
+    int aliasRet = 0, instRet = 0;
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = NULL;
+
     subscribe_action = action == RBUS_EVENT_ACTION_SUBSCRIBE ? "subscribe" : "unsubscribe";
     WANCHK_LOG_INFO("%s %d - Got Request %s for Event %s\n", __FUNCTION__, __LINE__,
                                                         subscribe_action,eventName);
     if(strstr(eventName,"Device.Diagnostics.X_RDK_DNSInternet.WANInterface."))
     {
-        ret = sscanf(eventName, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum,
-                                                                                        Param);
-        if (ret ==2 && instNum > 0)
+        pthread_mutex_lock(&gIntfAccessMutex);
+        aliasRet = sscanf(eventName, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.[%[^]]].%127s", alias, Param);
+        if (aliasRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, alias: %s, Param: %s\n", __FUNCTION__, eventName, alias, Param);
+            gIntfInfo = get_InterfaceFromAlias(alias);
+        }
+
+        instRet = sscanf(eventName, "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.%d.%127s", &instNum, Param);
+        if (instRet == 2) {
+            WANCHK_LOG_DBG("%s: Name:%s, instNum: %d, Param: %s\n", __FUNCTION__, eventName, instNum, Param);
+            gIntfInfo = get_InterfaceList(instNum);
+        }
+
+        if (gIntfInfo)
         {
-            pthread_mutex_lock(&gIntfAccessMutex);
-            PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = &gInterface_List[instNum-1];
             if (strcmp(Param, "MonitorResult") == 0)
             {
                 if (action == RBUS_EVENT_ACTION_SUBSCRIBE ) {
@@ -655,6 +683,7 @@ rbusError_t WANCNCTVTYCHK_SubHandler(rbusHandle_t handle, rbusEventSubAction_t a
         else
         {
             WANCHK_LOG_ERROR("%s:%d Invalid Input\n",__FUNCTION__,__LINE__);
+            pthread_mutex_unlock(&gIntfAccessMutex);
             return RBUS_ERROR_INVALID_INPUT;
         }
     }
@@ -685,7 +714,7 @@ rbusError_t WANCNCTVTYCHK_PublishEvent(char* event_name , uint32_t eventNewData,
     rbusValue_t byVal;
     rbusError_t ret = RBUS_ERROR_SUCCESS;
 
-    WANCHK_LOG_INFO("Publishing event:%s\n",event_name);
+    WANCHK_LOG_INFO("Publishing event:%s | oldValue:%d, newValue:%d\n", event_name, eventOldData, eventNewData);
     //initialize and set previous value for the event
     rbusValue_Init(&oldVal);
     rbusValue_SetUInt32(oldVal, eventOldData);
@@ -852,23 +881,248 @@ rbusError_t WANCNCTVTYCHK_TableRemoveRowHandler(rbusHandle_t handle, char const*
     WANCHK_LOG_INFO("%s: URL Entry deleted,Restarting threads\n",__FUNCTION__);
     unsigned int Instance = 1;
     /* In progress QueryNow we can't do anything,restart active monitor if running*/
-    for (Instance=1;Instance <= MAX_NO_OF_INTERFACES;Instance++)
-    {
-        returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
-        if (returnStatus != ANSC_STATUS_SUCCESS)
-        {
-            WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
-            return ANSC_STATUS_FAILURE;
-        }
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO interface_list = gInterface_List;
+    while (interface_list != NULL) {
+      pthread_mutex_lock(&gIntfAccessMutex);
+      Instance = interface_list->IPInterface.InstanceNumber;
+      interface_list = interface_list->next;
+      pthread_mutex_unlock(&gIntfAccessMutex);
 
-        /* this will start active*/
-        returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
-        if (returnStatus != ANSC_STATUS_SUCCESS)
-        {
-            WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
-            return ANSC_STATUS_FAILURE;
-        }
+      returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
+      if (returnStatus != ANSC_STATUS_SUCCESS)
+      {
+          WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+          return ANSC_STATUS_FAILURE;
+      }
+
+      /* this will start active*/
+      returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
+      if (returnStatus != ANSC_STATUS_SUCCESS)
+      {
+          WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+          return ANSC_STATUS_FAILURE;
+      }
     }
+
     return RBUS_ERROR_SUCCESS;
 }
 
+/**********************************************************************
+    function:
+        WANCNCTVTYCHK_StartConnectivityCheck
+    description:
+        This Handler function is to start wan connectivity check
+        with given interface name and alias
+    argument:
+        rbusHandle_t handle
+        char const* methodName
+        rbusObject_t inParams
+        rbusObject_t outParams
+        rbusMethodAsyncHandle_t asyncHandle
+    return:
+        rbusError_t
+**********************************************************************/
+rbusError_t WANCNCTVTYCHK_StartConnectivityCheck(rbusHandle_t handle, char const* methodName, rbusObject_t inParams, rbusObject_t outParams,
+                                                        rbusMethodAsyncHandle_t asyncHandle) {
+    rbusValue_t value;
+    char *interface = NULL;
+    char *alias = NULL;
+    char *IPv4_nameserver_list = NULL;
+    char *IPv6_nameserver_list = NULL;
+    char *IPv4_Gateway = NULL;
+    char *IPv6_Gateway = NULL;
+    uint32_t len = 0;
+    uint32_t IPv4DnsServerCount = 0;
+    uint32_t IPv6DnsServerCount = 0;
+    errno_t  rc = -1;
+    BOOL dns_changed;
+    struct in_addr ipv4;
+    struct in6_addr ipv6;
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = NULL;
+    ANSC_STATUS returnStatus = ANSC_STATUS_SUCCESS;
+
+    value = rbusObject_GetValue(inParams, "linux_interface_name");
+    interface = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "alias");
+    alias = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "IPv4_DNS_Servers");
+    IPv4_nameserver_list = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "IPv6_DNS_Servers");
+    IPv6_nameserver_list = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "IPv4_Gateway");
+    IPv4_Gateway = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "IPv6_Gateway");
+    IPv6_Gateway = (char*)rbusValue_GetString(value, &len);
+
+    WANCHK_LOG_INFO("%s: InterfaceName: %s, Alias: %s, v4_list: %s, v6_list: %s, v4_gateway: %s, v6_gateway: %s\n",
+                    __FUNCTION__, interface, alias, IPv4_nameserver_list, IPv6_nameserver_list, IPv4_Gateway, IPv6_Gateway);
+
+    if (is_valid_interface(interface) != ANSC_STATUS_SUCCESS) {
+        WANCHK_LOG_ERROR("Invalid Interface Name to Start WAN Connectivity Check\n");
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    /*
+    if (is_valid_aliasName(alias) != ANSC_STATUS_SUCCESS) {
+       WANCHK_LOG_ERROR("Invalid Alias Name. Alias Name must be identical to Device.X_RDK_WanManager.InterfaceAvailableStatus\n");
+       return RBUS_ERROR_INVALID_INPUT;
+    }
+    */
+
+    if (IPv4_nameserver_list == NULL && IPv6_nameserver_list == NULL) {
+        WANCHK_LOG_ERROR("Provide DNS Server List to Start Wan Connectivity Check for Interface: %s, Alias: %s\n",
+                          interface, alias);
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    if (validate_DNS_nameservers(IPv4_nameserver_list, IPv6_nameserver_list, &IPv4DnsServerCount, &IPv6DnsServerCount) != ANSC_STATUS_SUCCESS) {
+        WANCHK_LOG_ERROR("Invalid DNS Nameserver List\n");
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    if ((IPv4_Gateway != NULL) &&
+        (strlen(IPv4_Gateway) > 0 ) &&
+        (inet_pton(AF_INET, IPv4_Gateway, &ipv4) != 1)) {
+        WANCHK_LOG_ERROR("Invalid IPv4 Gateway address: %s \n", IPv4_Gateway);
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    if ((IPv6_Gateway != NULL) &&
+        (strlen(IPv6_Gateway) > 0) &&
+        (inet_pton(AF_INET6, IPv6_Gateway, &ipv6) != 1)) {
+        WANCHK_LOG_ERROR("Invalid IPv6 Gateway address: %s \n", IPv6_Gateway);
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    dns_changed = check_for_change_in_dns(alias, IPv4_nameserver_list, IPv6_nameserver_list, IPv4DnsServerCount, IPv6DnsServerCount);
+
+    pthread_mutex_lock(&gIntfAccessMutex);
+    gIntfInfo = get_InterfaceFromAlias(alias);
+    if (gIntfInfo && ((strcmp(interface, gIntfInfo->IPInterface.InterfaceName) == 0) && (strcmp(alias, gIntfInfo->IPInterface.Alias) == 0))) {
+        //Return Invalid, if start received for already running test
+        if (gIntfInfo->IPInterface.Enable == TRUE) {
+            WANCHK_LOG_ERROR("Test is already running on Interface %s with Alias %s. To Start again, Stop and Start the test\n", interface, alias);
+            pthread_mutex_unlock(&gIntfAccessMutex);
+            return RBUS_ERROR_INVALID_INPUT;
+        }
+
+        WANCHK_LOG_INFO("Interface %s is already present with Alias %s. Starting Wan Connectivity Check\n", interface, alias);
+        gIntfInfo->IPInterface.Enable = DEF_INTF_ENABLE;
+        gIntfInfo->IPInterface.Configured = TRUE;
+
+        if (IPv4_Gateway != NULL) {
+            memset(gIntfInfo->IPInterface.IPv4Gateway, 0, IPv4_STR_LEN);
+            rc = strcpy_s(gIntfInfo->IPInterface.IPv4Gateway, IPv4_STR_LEN, IPv4_Gateway);
+            ERR_CHK(rc);
+        }
+
+        if (IPv6_Gateway != NULL) {
+            memset(gIntfInfo->IPInterface.IPv6Gateway, 0, IPv6_STR_LEN);
+            rc = strcpy_s(gIntfInfo->IPInterface.IPv6Gateway, IPv6_STR_LEN, IPv6_Gateway);
+            ERR_CHK(rc);
+        }
+
+        if (dns_changed == TRUE) {
+            WANCHK_LOG_INFO("DNS list changed, Updating DNS nameservers\n");
+            if (CosaWanCnctvtyChk_DNS_UpdateEntry(interface, alias, IPv4_nameserver_list, IPv6_nameserver_list,
+                                                  IPv4DnsServerCount, IPv6DnsServerCount) != ANSC_STATUS_SUCCESS)
+            {
+               WANCHK_LOG_ERROR("%s: DNS Update failed for interface: %s, alias: %s\n", __FUNCTION__, interface, alias);
+            }
+        }
+
+        returnStatus = wancnctvty_chk_start_threads(gIntfInfo->IPInterface.InstanceNumber,ALL_THREADS);
+        pthread_mutex_unlock(&gIntfAccessMutex);
+        if (returnStatus != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s:%d Unable to start threads\n",__FUNCTION__,__LINE__);
+            return ANSC_STATUS_FAILURE;
+        }
+        return RBUS_ERROR_SUCCESS;
+    }
+
+    if (gIntfInfo) {
+        WANCHK_LOG_ERROR("Interface with Alias: %s is present already. Use Different Alias Name\n", alias);
+        pthread_mutex_unlock(&gIntfAccessMutex);
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+    pthread_mutex_unlock(&gIntfAccessMutex);
+
+    g_wanconnectivity_check_active    = CosaWanCnctvtyChk_GetActive_Status();
+    if (g_wanconnectivity_check_active == TRUE) {
+        /* start wan connectivty check process*/
+        g_wanconnectivity_check_start = TRUE;
+        if (CosaWanCnctvtyChk_Init_Intf (interface, alias, IPv4_nameserver_list, 
+                                         IPv6_nameserver_list, IPv4DnsServerCount,
+                                         IPv6DnsServerCount, IPv4_Gateway, IPv6_Gateway) != ANSC_STATUS_SUCCESS)
+        {
+            WANCHK_LOG_ERROR("%s: Interface Table Init failed for interface: %s, alias: %s\n", __FUNCTION__, interface, alias);
+        }
+    }
+    else {
+        WANCHK_LOG_ERROR("Start Wan Connectivity Check from ACTIVE GATEWAY\n");
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    return RBUS_ERROR_SUCCESS;
+}
+
+/**********************************************************************
+    function:
+        WANCNCTVTYCHK_StopConnectivityCheck
+    description:
+        This Handler function is to stop wan connectivity check
+        with given interface name and alias
+    argument:
+        rbusHandle_t handle
+        char const* methodName
+        rbusObject_t inParams
+        rbusObject_t outParams
+        rbusMethodAsyncHandle_t asyncHandle
+    return:
+        rbusError_t
+**********************************************************************/
+rbusError_t WANCNCTVTYCHK_StopConnectivityCheck(rbusHandle_t handle, char const* methodName, rbusObject_t inParams, rbusObject_t outParams,
+                                                       rbusMethodAsyncHandle_t asyncHandle) {
+
+    rbusValue_t value;
+    char *interface = NULL;
+    char *alias = NULL;
+    uint32_t len = 0;
+    ULONG InstanceNum = -1;
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = NULL;
+
+    value = rbusObject_GetValue(inParams, "linux_interface_name");
+    interface = (char*)rbusValue_GetString(value, &len);
+
+    len = 0;
+    value = rbusObject_GetValue(inParams, "alias");
+    alias = (char*)rbusValue_GetString(value, &len); 
+
+    pthread_mutex_lock(&gIntfAccessMutex);
+    gIntfInfo = get_InterfaceFromAlias(alias);
+    if (gIntfInfo) {
+         InstanceNum = gIntfInfo->IPInterface.InstanceNumber;
+    }
+    pthread_mutex_unlock(&gIntfAccessMutex);
+
+    if (InstanceNum == -1) {
+        WANCHK_LOG_ERROR("%s: Invalid Interface/Alias Name\n", __FUNCTION__);
+        return RBUS_ERROR_INVALID_INPUT;
+    }
+
+    WANCHK_LOG_INFO("Stopping the WAN Connectivity Check for Interface: %s, Alias: %s\n", interface, alias);
+    CosaWanCnctvtyChk_Remove_Intf(InstanceNum);
+
+    return RBUS_ERROR_SUCCESS;
+}

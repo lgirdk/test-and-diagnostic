@@ -48,7 +48,7 @@ extern BOOL g_wanconnectivity_check_enable;
 extern pthread_mutex_t gIntfAccessMutex;
 extern pthread_mutex_t gUrlAccessMutex;
 extern SLIST_HEADER    gpUrlList;
-extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO gInterface_List[MAX_NO_OF_INTERFACES];
+extern WANCNCTVTY_CHK_GLOBAL_INTF_INFO *gInterface_List;
 
 
 extern ANSC_STATUS wancnctvty_chk_start_threads(ULONG InstanceNumber,service_type_t type);
@@ -84,7 +84,9 @@ rbusDataElement_t WANCHK_Feature_Enabled_RbusElements[] =
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryTimeout", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.QueryRetry", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
     { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.RecordType", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
-    { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ServerType", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} }
+    { "Device.Diagnostics.X_RDK_DNSInternet.WANInterface.{i}.ServerType", RBUS_ELEMENT_TYPE_PROPERTY, {WANCNCTVTYCHK_GetIntfHandler, WANCNCTVTYCHK_SetIntfHandler, NULL, NULL, NULL, NULL} },
+    { "Device.X_RDK_DNSInternet.StartConnectivityCheck()", RBUS_ELEMENT_TYPE_METHOD, {NULL, NULL, NULL, NULL, NULL, WANCNCTVTYCHK_StartConnectivityCheck} },
+    { "Device.X_RDK_DNSInternet.StopConnectivityCheck()", RBUS_ELEMENT_TYPE_METHOD, {NULL, NULL, NULL, NULL, NULL, WANCNCTVTYCHK_StopConnectivityCheck} }
 };
 
 /**********************************************************************
@@ -210,94 +212,6 @@ rbusError_t CosaWanCnctvtyChk_UnReg_elements(dml_type_t type)
 
 /**********************************************************************
     function:
-        CosaWanCnctvtyChk_Feature_Commit
-    description:
-        This function is to commit the configs.
-    argument:
-        ANSC_HANDLE    hInsContext, The Instance handle
-        CHAR*          ParamName,   Parameter name
-        ULONG*         pInt         Buffer of returned ULONG value
-    return:
-        TRUE if succeeded
-        FALSE if failure
-**********************************************************************/
-
-ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value)
-{
-    BOOL  wanconnectivity_chk_enable = FALSE;
-
-    char buf[128] = {0};
-
-    if((syscfg_get( NULL, "wanconnectivity_chk_enable", buf, sizeof(buf)) == 0 ) && (buf[0] != '\0') )
-    {
-        wanconnectivity_chk_enable = (!strcmp(buf, "true")) ? TRUE : FALSE;
-    }
-
-    WANCHK_LOG_INFO("Update WANCHK Enable Status %d->%d\n",wanconnectivity_chk_enable,enable_value);
-
-    g_wanconnectivity_check_enable = enable_value;
-
-    if( enable_value != wanconnectivity_chk_enable )
-    {
-       /* if we move from Enable to disable, stop the threads , if we are already running*/
-        if ( (enable_value == FALSE) && (wanconnectivity_chk_enable == TRUE) &&
-             (g_wanconnectivity_check_active == TRUE))
-        {
-            WANCHK_LOG_INFO("wanconnectivity_chk status changed to disable from enable\n");
-          /* Un subscribe from events for RBUS to avoid race conditions*/
-           CosaWanCnctvtyChk_UnSubscribeRbus();
-           CosaWanCnctvtyChk_UnSubscribeActiveGW();
-           CosaWanCnctvtyChk_StopSysevent_listener();
-           /* Deinit interface Table*/
-           if (CosaWanCnctvtyChk_DeInit_IntfTable() != ANSC_STATUS_SUCCESS)
-           {
-                WANCHK_LOG_ERROR("%s: Unable to deinit interface table\n", __FUNCTION__);
-           }
-           /* Deinit URL list*/
-           if (CosaWanCnctvtyChk_Remove_Urllist() != ANSC_STATUS_SUCCESS)
-           {
-                WANCHK_LOG_ERROR("%s: Unable to remove URL list\n", __FUNCTION__);
-           }
-           CosaWanCnctvtyChk_UnReg_elements(FEATURE_ENABLED_DML);
-        }
-
-        g_wanconnectivity_check_active = FALSE;
-
-        /* we moved to enable from disable start the threads*/
-        if ((enable_value == TRUE))
-        {
-            WANCHK_LOG_INFO("wanconnectivity_chk status changed to enable from disable\n");
-            CosaWanCnctvtyChk_Reg_elements(FEATURE_ENABLED_DML);
-            if (CosaWanCnctvtyChk_GetActive_Status())
-            {
-                g_wanconnectivity_check_active = TRUE;
-                if (CosaWanCnctvtyChk_Init_URLTable () != ANSC_STATUS_SUCCESS)
-                {
-                    WANCHK_LOG_ERROR("%s: Unable to init URL table\n", __FUNCTION__);
-                }
-                if (CosaWanCnctvtyChk_Init_IntfTable () != ANSC_STATUS_SUCCESS)
-                {
-                    WANCHK_LOG_ERROR("%s: Unable to init interface table\n", __FUNCTION__);
-                }
-                CosaWanCnctvtyChk_SubscribeRbus();
-                CosaWanCnctvtyChk_SubscribeActiveGW();
-                CosaWanCnctvtyChk_StartSysevent_listener();
-            }
-        }
-
-        if (syscfg_set_commit(NULL, "wanconnectivity_chk_enable", (enable_value == TRUE) ? "true" : "false") != 0)
-        {
-            WANCHK_LOG_WARN("%s: syscfg_set failed for %s\n", __FUNCTION__,
-                                                                    "wanconnectivity_chk_enable");
-            return ANSC_STATUS_FAILURE;
-        }
-    } 
-
-    return ANSC_STATUS_SUCCESS;
-}
-
-/**********************************************************************
-    function:
         CosaWanCnctvtyChk_Intf_Commit
     description:
         This function is to commit the interface configs.
@@ -331,10 +245,10 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
 
         memset(&CurrentCfg,0,sizeof(COSA_DML_WANCNCTVTY_CHK_INTF_INFO)); 
         CurrentCfg.InstanceNumber = pIPInterface->InstanceNumber;
-        returnStatus = CosaDmlGetIntfCfg(&CurrentCfg,TRUE);
+        returnStatus = CosaDmlGetIntfCfg(&CurrentCfg, FALSE);
         if (returnStatus != ANSC_STATUS_SUCCESS)
         {
-          WANCHK_LOG_ERROR("%s:Unable to fetch current values from syscfg",__FUNCTION__);
+          WANCHK_LOG_ERROR("%s:Unable to fetch current values from CosaDmlGetIntfCfg",__FUNCTION__);
         }
 
         if ( (pIPInterface->Cfg_bitmask & INTF_CFG_ACTIVE_ENABLE) || 
@@ -362,19 +276,6 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
             } 
         }
 
-        /* store it to syscfg*/
-        returnStatus = CosaDmlStoreIntfCfg(pIPInterface);
-        if (returnStatus != ANSC_STATUS_SUCCESS)
-        {
-            WANCHK_LOG_ERROR("%s:Unable to store values, revert to older values for interface %s",
-                                                        __FUNCTION__,pIPInterface->InterfaceName);
-            returnStatus = CosaDml_glblintfdb_updateentry(&CurrentCfg);
-            if (returnStatus != ANSC_STATUS_SUCCESS)
-            {
-                WANCHK_LOG_ERROR("%s:Unable to update global db entry\n",__FUNCTION__);
-            }
-            return ANSC_STATUS_FAILURE;
-        }
         returnStatus = CosaDml_glblintfdb_updateentry(pIPInterface);
         if (returnStatus != ANSC_STATUS_SUCCESS)
         {
@@ -505,6 +406,9 @@ ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  p
             }
 
         }
+
+        /* Sleep 1 second to stop all the running threads */
+        sleep(1);
 
         /* this will start active or passive monitor*/
         returnStatus = wancnctvty_chk_start_threads(pIPInterface->InstanceNumber,
@@ -685,22 +589,27 @@ ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const cha
         unsigned int Instance = 1;
         WANCHK_LOG_INFO("%s: URL list updated,Restarting threads\n",__FUNCTION__);
         /* In progress QueryNow we can't do anything,restart active monitor if running*/
-        for (Instance=1;Instance <= MAX_NO_OF_INTERFACES;Instance++)
-        {
-            returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
-            if (returnStatus != ANSC_STATUS_SUCCESS)
-            {
-                WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
-                return ANSC_STATUS_FAILURE;
-            }
+        PWANCNCTVTY_CHK_GLOBAL_INTF_INFO interface_list = gInterface_List;
+        while (interface_list != NULL) {
+          pthread_mutex_lock(&gIntfAccessMutex);
+          Instance = interface_list->IPInterface.InstanceNumber;
+          interface_list = interface_list->next;
+          pthread_mutex_unlock(&gIntfAccessMutex);
 
-            /* this will start active*/
-            returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
-            if (returnStatus != ANSC_STATUS_SUCCESS)
-            {
-                WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
-                return ANSC_STATUS_FAILURE;
-            }
+          returnStatus = wancnctvty_chk_stop_threads(Instance,ACTIVE_MONITOR_THREAD);
+          if (returnStatus != ANSC_STATUS_SUCCESS)
+          {
+              WANCHK_LOG_ERROR("%s:%d Unable to stop threads",__FUNCTION__,__LINE__);
+              return ANSC_STATUS_FAILURE;
+          }
+
+          /* this will start active*/
+          returnStatus = wancnctvty_chk_start_threads(Instance,ACTIVE_MONITOR_THREAD);
+          if (returnStatus != ANSC_STATUS_SUCCESS)
+          {
+              WANCHK_LOG_ERROR("%s:%d Unable to start threads",__FUNCTION__,__LINE__);
+              return ANSC_STATUS_FAILURE;
+          }
         }
     }
 

@@ -71,7 +71,6 @@
 #include "sysevent/sysevent.h"
 
 /* supporting only primary and secondary now*/
-#define MAX_NO_OF_INTERFACES 2
 #define MAX_INTF_NAME_SIZE 64
 #define MAX_URL_SIZE 255
 #define MAX_RECORD_TYPE_SIZE 64
@@ -81,8 +80,7 @@
 #define MACADDR_SZ 18
 #define  ARRAY_SZ(x) (sizeof(x) / sizeof((x)[0]))
 
-#define CURRENT_PRIMARY_INTF_DML "Device.X_RDK_WanManager.CurrentActiveInterface"
-#define CURRENT_STANDBY_INTF_DML "Device.X_RDK_WanManager.CurrentStandbyInterface"
+#define ALIAS_CHECK_DML          "Device.X_RDK_WanManager.InterfaceAvailableStatus"
 #define ACTIVE_GATEWAY_DML       "Device.X_RDK_GatewayManagement.ActiveGateway"
 #define DNS_SRV_COUNT_DML        "Device.DNS.Client.ServerNumberOfEntries"
 #define DNS_SRV_TABLE_DML        "Device.DNS.Client.Server."
@@ -116,15 +114,15 @@
 #define SE_SERVER_WELL_KNOWN_PORT 52367
 #define SE_VERSION 1
 
-#define DEF_INTF_ENABLE FALSE
+#define DEF_INTF_ENABLE TRUE
 #define DEF_PASSIVE_MONITOR_PRIMARY_ENABLE TRUE
 #define DEF_PASSIVE_MONITOR_BACKUP_ENABLE FALSE
-#define DEF_PASSIVE_MONITOR_TIMEOUT 10000
+#define DEF_PASSIVE_MONITOR_TIMEOUT 12000
 #define DEF_ACTIVE_MONITOR_PRIMARY_ENABLE TRUE
 #define DEF_ACTIVE_MONITOR_BACKUP_ENABLE FALSE
-#define DEF_ACTIVE_MONITOR_INTERVAL 5000
-#define DEF_QUERY_TIMEOUT 200
-#define DEF_QUERY_RETRY 2
+#define DEF_ACTIVE_MONITOR_INTERVAL 12000
+#define DEF_QUERY_TIMEOUT 10000
+#define DEF_QUERY_RETRY 1
 #define DEF_QUERY_RECORDTYPE "A+AAAA"
 #define DEF_QUERY_SERVERTYPE "IPv4+IPv6"
 
@@ -197,16 +195,20 @@ typedef enum _service_type {
 } service_type_t;
 
 typedef  struct
-_COSA_DML_WANCNCTVTY_CHK_DNSSRV_TABLE
+_COSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_TABLE
 {
     dns_entrytype_t dns_type;
-    union {
-        UCHAR                           IPv4Address[IPv4_STR_LEN];
-        UCHAR                           IPv6Address[IPv6_STR_LEN];
-    } IPAddress;
-
+    UCHAR                           IPv4Address[IPv4_STR_LEN];
 }
-COSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO,  *PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO;
+COSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO,  *PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO;
+
+typedef  struct
+_COSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_TABLE
+{
+    dns_entrytype_t dns_type;
+    UCHAR                           IPv6Address[IPv6_STR_LEN];
+}
+COSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO,  *PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO;
 
 typedef  struct
 _COSA_DML_WANCNCTVTY_CHK_INTF_TABLE
@@ -230,6 +232,8 @@ _COSA_DML_WANCNCTVTY_CHK_INTF_TABLE
     BOOL                                          Configured;
     uint32_t                                      MonitorResult_SubsCount;
     uint32_t                                      QueryNowResult_SubsCount;
+    UCHAR                                         IPv4Gateway[IPv4_STR_LEN];
+    UCHAR                                         IPv6Gateway[IPv6_STR_LEN];
 }
 COSA_DML_WANCNCTVTY_CHK_INTF_INFO,  *PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO;
 
@@ -280,15 +284,22 @@ _COSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT
     BOOL      IsPrimary;
     ULONG     QueryTimeout;
     ULONG     QueryRetry;
-    unsigned int DnsServerCount;
+    unsigned int IPv4DnsServerCount;
+    unsigned int IPv6DnsServerCount;
     unsigned int url_count;
     recordtype_t RecordType;
     servertype_t ServerType;
     UCHAR     InterfaceName[MAX_INTF_NAME_SIZE];
     UCHAR     Alias[MAX_INTF_NAME_SIZE];
     char      **url_list;
-    PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO  DnsServerList;
+    PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO  IPv4DnsServerList;
+    PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO  IPv6DnsServerList;
     BOOL      doInfoLogOnce;
+    BOOL      QueryInProgress;
+    ULONG     ActiveMonitorInterval;
+    pthread_t timercb_tid;
+    UCHAR     IPv4Gateway[IPv4_STR_LEN];
+    UCHAR     IPv6Gateway[IPv6_STR_LEN];
 }
 COSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO,  *PCOSA_DML_WANCNCTVTY_CHK_QUERYNOW_CTXT_INFO;
 
@@ -309,18 +320,14 @@ _COSA_WAN_CNCTVTY_CHK_EVENTS
 
 } COSA_WAN_CNCTVTY_CHK_EVENTS;
 
-
-typedef enum _wan_intf_index {
-        PRIMARY_INTF_INDEX  = 1,
-        SECONDARY_INTF_INDEX = 2,
-} wan_intf_index_t;
-
 typedef  struct
 _WANCNCTVTY_CHK_GLOBAL_INTF_INFO
 {
     COSA_DML_WANCNCTVTY_CHK_INTF_INFO             IPInterface;
-    PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO          DnsServerList;
-    unsigned int                                  DnsServerCount;
+    PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO      IPv4DnsServerList;
+    PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO      IPv6DnsServerList;
+    unsigned int                                  IPv4DnsServerCount;
+    unsigned int                                  IPv6DnsServerCount;
     BOOL                                          Dns_configured;
     pthread_t                                     wancnctvychkpassivethread_tid;
     BOOL                                          PassiveMonitor_Running;
@@ -328,6 +335,7 @@ _WANCNCTVTY_CHK_GLOBAL_INTF_INFO
     BOOL                                          ActiveMonitor_Running;
     pthread_t                                     wancnctvychkquerynowthread_tid;
     BOOL                                          QueryNow_Running;
+    struct _WANCNCTVTY_CHK_GLOBAL_INTF_INFO       *next;
 }
 WANCNCTVTY_CHK_GLOBAL_INTF_INFO,  *PWANCNCTVTY_CHK_GLOBAL_INTF_INFO;
 
@@ -337,57 +345,37 @@ WANCNCTVTY_CHK_GLOBAL_INTF_INFO,  *PWANCNCTVTY_CHK_GLOBAL_INTF_INFO;
 
 ANSC_STATUS CosaWanCnctvtyChk_Init (VOID);
 ANSC_STATUS CosaWanCnctvtyChk_Init_URLTable (VOID);
-ANSC_STATUS CosaWanCnctvtyChk_Init_IntfTable (VOID);
-ANSC_STATUS CosaWanCnctvtyChk_Init_Intf (wan_intf_index_t index);
+ANSC_STATUS CosaWanCnctvtyChk_Init_Intf (char* if_name, char* alias, char *IPv4_nameserver_list,
+                                         char *IPv6_nameserver_list, int IPv4DnsServerCount,
+                                         int IPv6DnsServerCount, char* IPv4_Gateway, char* IPv6_Gateway);
 ANSC_STATUS CosaWanCnctvtyChk_IfGetEntry(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface);
-ANSC_STATUS CosaWanCnctvtyChk_DNS_GetEntry(char *InterfaceName);
 BOOL CosaWanCnctvtyChk_GetActive_Status(void);
-BOOL CosaWanCnctvtyChk_GetPrimary_IntfName(char *);
-BOOL CosaWanCnctvtyChk_GetSecondary_IntfName(char *);
-ANSC_STATUS CosaWanCnctvtyChk_SubscribeRbus(void);
-ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeRbus(void);
 ANSC_STATUS CosaWanCnctvtyChk_SubscribeActiveGW(void);
 ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeActiveGW(void);
-void handle_dns_srvrcnt_event (char *InterfaceName,unsigned int new_dns_server_count);
-void handle_dns_srv_addrchange_event (char *InterfaceName,int dns_srv_index,
-                                                                    const char *newValue);
 void handle_actv_status_event (BOOL new_status);
-ANSC_STATUS CosaWanCnctvtyChk_DeInit_IntfTable(VOID);
-void handle_intf_change_event(COSA_WAN_CNCTVTY_CHK_EVENTS event,const char *new_value);
-ANSC_STATUS CosaWanCnctvtyChk_Remove_Intf (wan_intf_index_t IntfIndex);
-ANSC_STATUS CosaWanCnctvtyChk_Remove_Urllist (VOID);
-ANSC_STATUS CosaWanCnctvtyChk_DNS_Unsubscribe(unsigned int DnsServerCount);
-ANSC_STATUS CosaDmlStoreIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface);
+ANSC_STATUS CosaWanCnctvtyChk_Remove_Intf (ULONG IntfIndex);
 ANSC_STATUS CosaDmlGetIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface,BOOL use_default);
 ANSC_STATUS CosaDml_glblintfdb_updateentry(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface);
-ANSC_STATUS CosaDml_glblintfdb_update_dnsentry(char *InterfaceName,unsigned int DnsServerCount,
-                                                PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo);
-ANSC_STATUS CosaDml_glblintfdb_delentry(ULONG InstanceNumber);
+ANSC_STATUS CosaDml_glblintfdb_update_dnsentry(char *InterfaceName,unsigned int IPv4DnsServerCount,
+                                               unsigned int IPv6DnsServerCount,
+                                               PCOSA_DML_WANCNCTVTY_CHK_IPv4DNSSRV_INFO pIPv4DnsSrvInfo,
+                                               PCOSA_DML_WANCNCTVTY_CHK_IPv6DNSSRV_INFO pIPv6DnsSrvInfo);
 ANSC_STATUS CosaDml_querynow_result_get(ULONG InstanceNumber,querynow_result_t *result);
 ANSC_STATUS CosaDml_monitor_result_get(ULONG InstanceNumber,monitor_result_t *result);
-ANSC_STATUS CosaWanCnctvtyChkRemove ();
 ANSC_STATUS CosaWanCnctvtyChk_Urllist_dump (VOID);
 ANSC_STATUS CosaWanCnctvtyChk_Interface_dump (ULONG InstanceNumber);
-
-ANSC_STATUS WanCnctvtyChk_GetPrimaryDNS_Entry(PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo);
-ANSC_STATUS WanCnctvtyChk_GetRemote_MacAddress(char *mac_addr);
-ANSC_STATUS WanCnctvtyChk_IDM_Invoke(idm_invoke_method_Params_t *IDM_request,BOOL Invoke_Async,
-                                                                        rbusObject_t *outParams);
-ANSC_STATUS WanCnctvtyChk_GetRemoteParameterValue( char *mac_addr,
-                                                        const char *pParamName, char *pReturnVal );
-ANSC_STATUS WanCnctvtyChk_GetParameterValue(  const char *pParamName, char
-*pReturnVal );
-ANSC_STATUS WanCnctvtyChk_GetSecondaryDNS_Entry(char *mac_addr,
-                                                PCOSA_DML_WANCNCTVTY_CHK_DNSSRV_INFO pDnsSrvInfo,
-                                                unsigned int DnsServerCount);
-void WanCnctvtyChk_IDM_AsyncMethodHandler(rbusHandle_t handle,char const* methodName,
-                                                            rbusError_t error,rbusObject_t params);
+ANSC_STATUS is_valid_interface(const char *if_name);
+ANSC_STATUS is_valid_aliasName(const char *alias);
+ANSC_STATUS validate_DNS_nameservers (char* IPv4_nameserver_list, char* IPv6_nameserver_list, 
+                                      int* IPv4DnsServerCount, int* IPv6DnsServerCount);
+ANSC_STATUS WanCnctvtyChk_GetParameterValue(  const char *pParamName, char *pReturnVal );
 rbusError_t WANCNCTVTYCHK_PublishEvent(char* event_name , uint32_t eventNewData, uint32_t eventOldData);
-ANSC_STATUS CosaWanCnctvtyChk_GetDNS_PeerInfo(char *InterfaceName);
-ANSC_STATUS CosaWanCnctvtyChk_GetDNS_HostInfo(char *InterfaceName);
-void *WanCnctvtyChk_SysEventHandlerThrd(void *data);
 ULONG GetInstanceNo_FromName(char *InterfaceName);
-void CosaWanCnctvtyChk_StartSysevent_listener();
-void CosaWanCnctvtyChk_StopSysevent_listener();
+PWANCNCTVTY_CHK_GLOBAL_INTF_INFO get_InterfaceList (ULONG InstanceNumber);
+PWANCNCTVTY_CHK_GLOBAL_INTF_INFO get_InterfaceFromAlias(char *Alias);
+PWANCNCTVTY_CHK_GLOBAL_INTF_INFO create_InterfaceList (ULONG InstanceNumber);
+BOOL check_for_change_in_dns(char* alias, char* Ipv4_nameserver_list, char* IPv6_nameserver_list, 
+                                                       int newIPv4DnsCount, int newIPv6DnsCount);
+ANSC_STATUS CosaWanCnctvtyChk_DNS_UpdateEntry(char *InterfaceName, char* alias, char *IPv4_nameserver_list,
+                                              char *IPv6_nameserver_list, int IPv4DnsServerCount, int IPv6DnsServerCount);
 #endif
-

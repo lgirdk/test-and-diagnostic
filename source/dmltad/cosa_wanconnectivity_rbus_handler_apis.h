@@ -40,4 +40,10 @@ rbusError_t WANCNCTVTYCHK_SubHandler(rbusHandle_t handle, rbusEventSubAction_t a
 rbusError_t WANCNCTVTYCHK_TableAddRowHandler(rbusHandle_t handle, char const* tableName,
                                    char const* aliasName, uint32_t* instNum);
 rbusError_t WANCNCTVTYCHK_TableRemoveRowHandler(rbusHandle_t handle, char const* rowName);
+rbusError_t WANCNCTVTYCHK_StartConnectivityCheck(rbusHandle_t handle, char const* methodName, 
+                                                 rbusObject_t inParams, rbusObject_t outParams,
+                                                 rbusMethodAsyncHandle_t asyncHandle);
+rbusError_t WANCNCTVTYCHK_StopConnectivityCheck(rbusHandle_t handle, char const* methodName, 
+                                                rbusObject_t inParams, rbusObject_t outParams,
+                                                rbusMethodAsyncHandle_t asyncHandle);
 #endif

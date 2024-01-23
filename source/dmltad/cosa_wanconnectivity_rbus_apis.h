@@ -45,7 +45,6 @@
 rbusError_t CosaWanCnctvtyChk_RbusInit(VOID);
 rbusError_t CosaWanCnctvtyChk_Reg_elements(dml_type_t type);
 rbusError_t CosaWanCnctvtyChk_UnReg_elements(dml_type_t type);
-ANSC_STATUS CosaWanCnctvtyChk_Feature_Commit(BOOL enable_value);
 ANSC_STATUS CosaWanCnctvtyChk_Intf_Commit (PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO  pIPInterface);
 ANSC_STATUS CosaWanCnctvtyChk_URL_Commit (unsigned int InstanceNumber, const char *url);
 ANSC_STATUS CosaWanCnctvtyChk_URL_delDBEntry (unsigned int InstanceNumber);

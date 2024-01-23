@@ -385,7 +385,7 @@ CosaBackEndManagerRemove
         CosaPPPRemove((ANSC_HANDLE)pMyObject->hPPP);
     }
 */
-    CosaWanCnctvtyChkRemove();
+    //CosaWanCnctvtyChkRemove();
 
     /* Remove self */
     AnscFreeMemory((ANSC_HANDLE)pMyObject);
