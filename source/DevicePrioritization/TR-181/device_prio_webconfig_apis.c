@@ -18,7 +18,7 @@
 */
 #include <syscfg/syscfg.h>
 #include "webconfig_framework.h"
-#include "base64.h"
+#include <trower-base64/base64.h>
 #include "safec_lib_common.h"
 #include "device_prio_webconfig_apis.h"
 #include "device_prio_scheduler_apis.h"
