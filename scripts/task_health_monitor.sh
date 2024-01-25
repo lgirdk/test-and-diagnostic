@@ -4509,6 +4509,69 @@ if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGM4140COM" ]; then
         fi
 fi
 
+# HCM Checks Added
+hcm_mwo_pid=$(pidof MeshWifiOptimizer)
+hcm_mqtt_pid=$(ps ww | grep "local_optimizer_mosquitto.conf" | grep -v grep | awk '{print $1}')
+mesh_qm_pid=$(pidof qm)
+
+get_total_cpu_time() {
+    awk '/^cpu /{print $2+$3+$4+$5+$6+$7+$8}' /proc/stat
+}
+
+get_process_cpu_time() {
+    awk '{print $14 + $15}' /proc/$hcm_mwo_pid/stat
+}
+
+get_cpu_meshwifi_optimizer() {
+    initial_process_time=$(get_process_cpu_time)
+    initial_total_time=$(get_total_cpu_time)
+    sleep 1
+    final_process_time=$(get_process_cpu_time)
+    final_total_time=$(get_total_cpu_time)
+    diff_process_time=$((final_process_time - initial_process_time))
+    diff_total_time=$((final_total_time - initial_total_time))
+    CPU_USAGE=$(awk "BEGIN {print ($diff_process_time / $diff_total_time) * 100}")
+}
+
+print_hcm_process_stats() {
+    get_cpu_meshwifi_optimizer
+    RSS=$(grep VmRSS /proc/$(pidof MeshWifiOptimizer)/status | cut -d':' -f2 | tr -d ' ' | sed 's/^[[:space:]]*//')
+    VMSize=$(grep VmSize /proc/$(pidof MeshWifiOptimizer)/status | cut -d':' -f2 | tr -d ' ' | sed 's/^[[:space:]]*//')
+    echo_t "HCM_PROCESS_STATS: MeshWifiOptimizer CPU Usage: $CPU_USAGE RSS: $RSS VM: $VMSize"
+    CPU_RM_KB=$(echo $CPU_USAGE | awk '{gsub(/kB/, ""); print}')
+    RSS_RM_KB=$(echo $RSS | awk '{gsub(/kB/, ""); print}')
+    VMSize_RM_KB=$(echo $VMSize | awk '{gsub(/kB/, ""); print}')
+    echo_t "HCM_PROCESS_STATS: $CPU_RM_KB,$RSS_RM_KB,$VMSize_RM_KB"
+}
+
+hcm_handle_recovery() {
+    if [ ! -f "/proc/$hcm_mwo_pid/status" ] && [ -f "/proc/$hcm_mqtt_pid/status" ]
+    then
+        echo_t "HCM_Checks: MeshWifi Optimizer not running, restarting it"
+        /usr/bin/MeshWifiOptimizer >> /rdklogs/logs/MWO.log 2>&1
+    else
+        echo_t "HCM_Checks: MWO Broker not running, restarting Mesh"
+        /usr/opensync/scripts/managers.init restart
+    fi
+}
+
+if [ "$MODEL_NUM" = "CGM4331COM" ]; then
+    mesh_optimization_mode=$(deviceinfo.sh -optimization)
+    mesh_enable=$(syscfg get mesh_enable)
+    if [[ "$mesh_optimization_mode" == "monitor" || "$mesh_optimization_mode" == "enable" ]] && ! [[ "$mesh_enable" == "true" && "$mesh_optimization_mode" == "enable" ]] && ! [[ "$mesh_enable" == "false" && "$mesh_optimization_mode" == "monitor" ]]
+    then
+        echo_t "HCM_Checks: MWO and local broker should run in HCM mode"
+        if [ ! -f "/proc/$hcm_mwo_pid/status" ] || [ ! -f "/proc/$hcm_mqtt_pid/status" ] && [ -f "/proc/$mesh_qm_pid/status" ]
+        then
+            echo_t "HCM_Checks: MWO or local broker not running in HCM mode, Recovery begin"
+            hcm_handle_recovery
+        else
+            echo_t "HCM_Checks: MWO and local broker running in HCM mode"
+            print_hcm_process_stats
+        fi
+    fi
+fi
+
 #pre-condition check for mesh enablement
 precondition_check_mesh=-1
 
