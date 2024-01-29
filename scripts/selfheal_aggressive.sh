@@ -928,7 +928,7 @@ self_heal_dhcp_clients()
                 dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
                 if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ]; then
-                    check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
+                    check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
                     check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 else
                     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$SELFHEAL_TYPE" = "BASE" -a "$BOX_TYPE" = "XB3" ]; then
@@ -952,7 +952,7 @@ self_heal_dhcp_clients()
                 fi
                 ;;
             "TCCBR")
-                check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
+                check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
                 check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 ;;
         esac
@@ -1105,7 +1105,7 @@ self_heal_dhcp_clients()
                 ;;
             "TCCBR")
                 if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
-                    V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                    V4_EXEC_CMD="sysevent set dhcp_client-start"
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v4"
                     eval "$V4_EXEC_CMD"
                     sleep 5
@@ -1139,7 +1139,7 @@ self_heal_dhcp_clients()
             if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
                 if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ] && [ $DHCPV4C_STATUS != "false" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
-                        V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
+                        V4_EXEC_CMD="sysevent set dhcp_client-start"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
                         echo_t "Calling epon_utility.sh to restart udhcpc "
                         sh /usr/ccsp/epon_utility.sh
