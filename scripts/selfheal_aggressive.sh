@@ -1414,40 +1414,12 @@ self_heal_nas_ip()
     esac
 }
 
-self_heal_meshAgent ()
-{
-    cpu_max=20
-    mesh=`pidof meshAgent`
-    cpu=`top -n 1 | awk '/mesh/ {print $7}' | sed s/"%"//`
-    if [ ! -z "$cpu" ] && [ "$cpu" -gt "$cpu_max" ];then
-       echo_t "[RDKB_AGG_SELFHEAL] :meshAgent is consuming more CPU , restarting meshAgent CPU: $cpu"
-       systemctl restart meshAgent
-    fi
-}
-
 self_heal_dhcpmgr ()
 {
     if [ "x$(busybox pidof CcspDHCPMgr)" == "x" ]; then
        if [ ! "`systemctl restart CcspDHCPMgr  2>&1`" ]; then
           echo_t "[RDKB_AGG_SELFHEAL]: Restarting CcspDHCPMgr!"
        fi
-    fi
-}
-
-self_heal_dual_cron(){
-    CRONTAB_DIR="/var/spool/cron/crontabs/"
-    CRON_FILE_BK="/tmp/cron_tab$$.txt"
-
-    #This is to enable logging if duplicate/dual cron jobs are detected in crontab.
-    crontab_count=$(crontab -l -c $CRONTAB_DIR | wc -l)
-    crontab_count_unique=$(crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' | wc -l)
-    if [[ $crontab_count -ne $crontab_count_unique ]]
-    then
-        echo_t "[RDKB_AGG_SELFHEAL] : Duplicate crontab detected. Removing Duplicates."
-        t2CountNotify "SYS_ERROR_Duplicate_crontab"
-        crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' > $CRON_FILE_BK
-        crontab $CRON_FILE_BK -c $CRONTAB_DIR
-        rm -rf $CRON_FILE_BK
     fi
 }
 
@@ -1557,8 +1529,6 @@ do
     self_heal_dropbear
     self_heal_ccspwifissp_hung
     self_heal_nas_ip
-    self_heal_meshAgent
-    self_heal_dual_cron
     self_heal_wan
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then

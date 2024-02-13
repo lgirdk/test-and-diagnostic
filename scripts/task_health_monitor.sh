@@ -255,6 +255,36 @@ check_xle_dns_route()
     fi
 
 }
+
+self_heal_meshAgent()
+{
+    cpu_max=20
+    mesh=`pidof meshAgent`
+    cpu=`top -n 1 | awk '/mesh/ {print $7}' | sed s/"%"//`
+    if [ ! -z "$cpu" ] && [ "$cpu" -gt "$cpu_max" ];then
+       echo_t "[RDKB_SELFHEAL] :meshAgent is consuming more CPU , restarting meshAgent CPU: $cpu"
+       systemctl restart meshAgent
+    fi
+}
+
+self_heal_dual_cron()
+{
+    CRONTAB_DIR="/var/spool/cron/crontabs/"
+    CRON_FILE_BK="/tmp/cron_tab$$.txt"
+
+    #This is to enable logging if duplicate/dual cron jobs are detected in crontab.
+    crontab_count=$(crontab -l -c $CRONTAB_DIR | wc -l)
+    crontab_count_unique=$(crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' | wc -l)
+    if [[ $crontab_count -ne $crontab_count_unique ]]
+    then
+        echo_t "[RDKB_SELFHEAL] : Duplicate crontab detected. Removing Duplicates."
+        t2CountNotify "SYS_ERROR_Duplicate_crontab"
+        crontab -l -c $CRONTAB_DIR | awk '!visited[$0]++' > $CRON_FILE_BK
+        crontab $CRON_FILE_BK -c $CRONTAB_DIR
+        rm -rf $CRON_FILE_BK
+    fi
+}
+
 xle_device_mode=0
 if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
     # checking device mode
@@ -4627,3 +4657,6 @@ case $SELFHEAL_TYPE in
       fi
       ;;
 esac
+
+self_heal_dual_cron
+self_heal_meshAgent
