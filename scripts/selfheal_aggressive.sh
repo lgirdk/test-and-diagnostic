@@ -258,8 +258,49 @@ self_heal_interfaces()
     case $SELFHEAL_TYPE in
         "BASE")
             # Checking whether brlan0 and l2sd0.100 are created properly , if not recreate it
-
-            if [ "$WAN_TYPE" != "EPON" ]; then
+	    if [ "$MODEL_NAME" = "RPI" ]; then
+                 device_mode=$(dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
+                if [ ! -f /tmp/.router_reboot ]; then
+                    if [ "$device_mode" != "" ]; then
+                        if [ "$device_mode" = "router" ]; then
+                            check_if_brlan0_created=$(ifconfig | grep "brlan0")
+                            check_if_brlan0_up=$(ifconfig brlan0 | grep "UP")
+                            check_if_brlan0_hasip=$(ifconfig brlan0 | grep "inet addr")
+                            if [ "$check_if_brlan0_created" = "" ] || [ "$check_if_brlan0_up" = "" ] || [ "$check_if_brlan0_hasip" = "" ]; then
+                                echo_t "[RDKB_PLATFORM_ERROR] : Either brlan0  not completely up, setting event to recreate brlan0 interface"
+                                echo_t "[RDKB_AGG_SELFHEAL_BOOTUP] : brlan0 o/p "
+                                ifconfig brlan0;
+                                if [ "x$ovs_enable" = "xtrue" ];then
+                                    ovs-vsctl list-ifaces brlan0
+                                else
+                                    brctl show
+                                fi
+                                logNetworkInfo
+                                ipv4_status=$(sysevent get ipv4_4-status)
+                                lan_status=$(sysevent get lan-status)
+                                if [ "$lan_status" != "started" ]; then
+                                    if [ "$ipv4_status" = "" ] || [ "$ipv4_status" = "down" ]; then
+                                        echo_t "[RDKB_AGG_SELFHEAL] : ipv4_4-status is not set or lan is not started, setting lan-start event"
+                                        sysevent set lan-start
+                                    sleep 60
+                                else
+                                    if [ "$check_if_brlan0_created" = "" ] ; then
+                                        /etc/utopia/registration.d/02_multinet restart
+                                    fi
+                                    fi
+                               else
+                                 if [ "$check_if_brlan0_created" = "" ]; then
+                                    /etc/utopia/registration.d/02_multinet restart
+                                 fi
+                              fi
+                           fi
+                       fi
+                    fi
+                else
+                    rm -rf /tmp/.router_reboot
+                fi
+            else
+              if [ "$WAN_TYPE" != "EPON" ]; then
                 device_mode=$(dmcli eRT retv Device.X_CISCO_COM_DeviceControl.LanManagementEntry.1.LanMode)
                 if [ ! -f /tmp/.router_reboot ]; then
                     if [ "$device_mode" != "" ]; then
@@ -318,7 +359,6 @@ self_heal_interfaces()
                 else
                     rm -rf /tmp/.router_reboot
                 fi
-
                 # Checking whether brlan1 and l2sd0.101 interface are created properly
                 if [ "$IS_BCI" != "yes" ]; then
                     check_if_brlan1_created=$(ifconfig | grep "brlan1")
@@ -366,7 +406,8 @@ self_heal_interfaces()
                 fi
             fi
         fi
-            ;;
+     fi
+        ;;
         "TCCBR")
             # Checking whether brlan0 created properly , if not recreate it
             lanSelfheal=$(sysevent get lan_selfheal)
@@ -1516,8 +1557,8 @@ if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
    [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && 
    [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && 
    [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "CVA601ZCOM" ] &&
-   [ "$MODEL_NUM" != "VTER11QEL" ] &&
-   [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ]
+   [ "$MODEL_NUM" != "VTER11QEL" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] &&
+   [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NAME" != "RPI" ]
 then
     exit
 fi
