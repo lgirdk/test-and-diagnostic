@@ -48,6 +48,7 @@
 #include "ServiceMonitor.h"
 #include "tad_rbus_apis.h"
 #include "lowlatency_apis.h"
+#include "current_time.h"
 
 #ifdef DEVICE_PRIORITIZATION_ENABLED
 #include "device_prio_apis.h"
@@ -364,6 +365,20 @@ int main(int argc, char* argv[])
 
     // Init LatencyMeasurent
     LatencyMeasurementInit();
+
+    //crate a thread to update time thread for ethwan enable mode
+    BOOL ethwanEnabled = FALSE;
+    ethwanEnabled = IsEthWanEnabled();
+    #ifdef RDKB_EXTENDER_ENABLED
+  	int callUpdate = 1;
+    #else
+  	int callUpdate = 0;
+    #endif
+  
+    if(ethwanEnabled || callUpdate == 1)
+    {
+        updateTimeThread_create();
+    }
 
 #ifdef DEVICE_PRIORITIZATION_ENABLED
     // Init device prioritization
