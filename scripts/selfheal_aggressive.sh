@@ -1463,6 +1463,20 @@ self_heal_wan(){
          fi
      fi
 }
+
+self_heal_sedaemon()
+{
+    accessmgr=`pidof accessManager`
+    se05xd=`pidof se05xd`
+    if [[ -z "$se05xd" ]] || [[ -z "$accessmgr" ]]; then
+          echo_t "[RDKB_AGG_SELFHEAL] : Restarting accessmanager and se05xd"
+          t2CountNotify "SYS_SH_SERestart"
+          systemctl stop startse05xd.service
+          systemctl stop accessmanager.service
+          systemctl start accessmanager.service
+          systemctl start startse05xd.service
+    fi
+}
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech xb6  => MODEL_NUM=CGM4140COM
@@ -1533,6 +1547,9 @@ do
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
        self_heal_process
+    fi
+    if [ -f /tmp/started_se05xd ]; then
+         self_heal_sedaemon
     fi
     STOP_TIME_SEC=$(cut -d. -f1 /proc/uptime)
     TOTAL_TIME_SEC=$((STOP_TIME_SEC-START_TIME_SEC))
