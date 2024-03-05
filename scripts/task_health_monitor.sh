@@ -3588,7 +3588,7 @@ esac
 if [ "$xle_device_mode" -ne "1" ]; then
 # for xle no need to check dibbler client and server
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$DHCPcMonitoring" != "false" ]
+        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
     then
     #Checking dibbler server is running or not RDKB_10683
     DIBBLER_PID=$(busybox pidof dibbler-server)
@@ -3644,12 +3644,10 @@ if [ "$xle_device_mode" -ne "1" ]; then
                             #if servertype is stateless(1-stateful,2-stateless),the ip assignment will be done through zebra process.Hence dibbler-server won't required.
                             echo_t "DHCPv6 servertype is stateless,dibbler-server restart not required"
                         else
-                                        if [ "$DHCPcMonitoring" != "false" ];then
                             dibbler-server stop
                             sleep 2
                             dibbler-server start
                         fi
-                                    fi
                     else
                         echo_t "RDKB_PROCESS_CRASHED : dibbler server.conf file not present"
                         Dhcpv6_Client_restart "$DHCPv6_TYPE" "restart_for_dibbler-server"
