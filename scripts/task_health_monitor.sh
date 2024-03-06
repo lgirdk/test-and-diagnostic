@@ -285,6 +285,22 @@ self_heal_dual_cron()
     fi
 }
 
+self_heal_sedaemon()
+{
+    if [ -f /tmp/started_se05xd ] && [ "$BOX_TYPE" = "SR213" ]; then
+         accessmgr=`pidof accessManager`
+         se05xd=`pidof se05xd`
+         if [[ -z "$se05xd" ]] || [[ -z "$accessmgr" ]]; then
+               echo_t "[RDKB_SELFHEAL] : Restarting accessmanager and se05xd"
+               t2CountNotify "SYS_SH_SERestart"
+               systemctl stop startse05xd.service
+               systemctl stop accessmanager.service
+               systemctl start accessmanager.service
+               systemctl start startse05xd.service
+         fi
+    fi
+}
+
 xle_device_mode=0
 if [ "$BOX_TYPE" = "WNXL11BWL" ]; then
     # checking device mode
@@ -4721,3 +4737,4 @@ esac
 
 self_heal_dual_cron
 self_heal_meshAgent
+self_heal_sedaemon
