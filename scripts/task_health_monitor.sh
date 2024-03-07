@@ -4449,13 +4449,8 @@ fi
 # Checking D process running or not
 case $SELFHEAL_TYPE in
       "BASE"|"SYSTEMD"|"TCCBR")
-      check_D_process=`ps -w | grep " DW " | grep -v grep | wc -l`
-      if [ $check_D_process -eq 0 ]; then
-           echo_t "[RDKB_SELFHEAL] : There is no D process running in this device"
-      else
-           echo_t "[RDKB_SELFHEAL] : D process is running in this device"
-      fi
-      ;;
+      ps -w | { echo "D process list:"; awk '$4 == "D" { count++ ; print $5 } END { if (count > 0) print "[RDKB_SELFHEAL] : There are "count " processes in D state" ; else print "[RDKB_SELFHEAL] : There is no D process running in this device" }'; }
+     ;;
 esac
 
 #BWGRDK-1044 conntrack Flush monitoring
