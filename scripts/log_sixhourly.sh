@@ -57,27 +57,15 @@ WFO_ARG=
 UPTIME=$(cut -d. -f1 /proc/uptime)
 
 # Device reporting cpu issue, hence skipping for now : RDKB-49082 
-skip_blackbox=false
+skip_blackbox=true
+if [ "$MODEL_NUM" == "WNXL11BWL" ]; then
+    skip_blackbox=false
+fi
+
 if $skip_blackbox; then
- if [ "$UPTIME" -gt 600 ]; then
-    if [ "$MODEL_NUM" == "CGM4331COM" ] || [ "$MODEL_NUM" == "TG4482A" ]; then
-        ACT_IFACE=`dmcli eRT getv Device.X_RDK_WanManager.CurrentActiveInterface | grep 'value: ' | cut -d':' -f3 | xargs`
-        if [ "$ACT_IFACE" == "brRWAN" ]; then
-            WFO_ARG="-w"
-        fi
-        echo  "================== Periodic xmesh_diagnostics logging ==================" >> /rdklogs/logs/MeshBlackbox.log
-        echo  "================== Periodic xmesh_diagnostics logging ==================" >> /rdklogs/logs/MeshBlackboxDumps.log
-        xmesh_diagnostics -d $WFO_ARG
-    elif [ "$MODEL_NUM" == "WNXL11BWL" ]; then
-        WFO_ENABLED=`sysevent get mesh_wfo_enabled`
-        if [ "$WFO_ENABLED" == "true" ]; then
-            WFO_ARG="-w"
-        fi
-        echo  "================== Periodic xmesh_diagnostics logging ==================" >> /rdklogs/logs/MeshBlackbox.log
-        echo  "================== Periodic xmesh_diagnostics logging ==================" >> /rdklogs/logs/MeshBlackboxDumps.log
-        xmesh_diagnostics -d $WFO_ARG
-    fi
- fi
+    echo  " Skipped periodic Xmesh checks: Unsupported Mode" >> /rdklogs/logs/MeshBlackbox.log
 else 
- echo  " Skipped periodic Xmesh checks: Unsupported Mode" >> /rdklogs/logs/MeshBlackbox.log
+    if [ "$UPTIME" -gt 600 ]; then
+        /usr/ccsp/tad/log_xmesh_diagnostics.sh
+    fi
 fi
