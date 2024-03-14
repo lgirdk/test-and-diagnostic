@@ -80,7 +80,6 @@
 #include <net/if.h>
 
 #include "ansc_platform.h"
-#include <ctype.h>
 
 
 ANSC_STATUS
@@ -627,52 +626,5 @@ CosaUtilGetStaticRouteTable
     )
 {
 	return CosaUtilGetStaticRouteTablePriv(count, out_sroute);
-}
-
-int isValidIPv4Address(char *ipAddress)
-{
-    struct sockaddr_in sa;
-    int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
-    return result;
-}
-
-int isValidIPv6Address(char *ipAddress)
-{
-    struct sockaddr_in6 sa;
-    int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
-    return result;
-}
-
-int isValidFQDN(char *fqdn)
-{
-    char  tmpFqdn[256] = {'\0'};;
-    char  *sep = ".";
-    char  *token = NULL;
-    int i;
-    strncpy(tmpFqdn, fqdn, sizeof(tmpFqdn)-1);
-    for (token = strtok(tmpFqdn, sep); (token != NULL); token = strtok(NULL, sep))
-    {
-        if (!isalpha(token[0]))
-        {
-            AnscTraceWarning(("isValidFQDN - label does not start with letter\n"));
-            return 0;
-        }
-
-        for (i=0; i < strlen(token); i++)
-        {
-            if (!isalpha(token[i]) && !('-' == token[i]) && !isdigit(token[i]))
-            {
-                AnscTraceWarning(("isValidFQDN - found invalid character '%c'\n", token[i]));
-                return 0;
-            }
-        }
-
-        if (!isalpha(token[i-1]) && !isdigit(token[i-1]))
-        {
-            AnscTraceWarning(("isValidFQDN - label does not end with letter or digit"));
-            return 0;
-        }
-    }
-    return 1;
 }
 

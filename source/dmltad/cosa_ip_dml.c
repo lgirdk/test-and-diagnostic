@@ -76,7 +76,6 @@
 #include <syscfg/syscfg.h>
 #include "ccsp_trace.h"
 #include "secure_wrapper.h"
-#include "cosa_apis_util.h"
 
 #ifdef EMMC_DIAG_SUPPORT
 #include "platform_hal.h"
@@ -128,14 +127,11 @@ int g_status_speedtest = 0;
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
 extern  ANSC_HANDLE                         bus_handle;
 
+
 static int validate_hostname (char *host, size_t sizelimit)
 {
+    int i;
     size_t len;
-    errno_t rc;
-
-    /* check if host doesn't hold null or whitespaces */
-    if (AnscValidStringCheck(host) != TRUE)
-        return -1;
 
     len = strlen(host);
 
@@ -143,30 +139,24 @@ static int validate_hostname (char *host, size_t sizelimit)
         return -1;
 
     /*
-       'host' must contain IPv4, IPv6, or a FQDN.
-    */
-    if (isValidIPv4Address(host))
-    {
-        AnscTraceWarning(("validate_hostname - isValidIPv4Address success '%s'\n", host));
-        goto done;
-    }
-    else if(isValidIPv6Address(host))
-    {
-        AnscTraceWarning(("validate_hostname - isValidIPv6Address success '%s'\n", host));
-        goto done;
-    }
-    else if(isValidFQDN(host))
-    {
-        AnscTraceWarning(("validate_hostname - isValidFQDN success '%s'\n", host));
-        goto done;
-    }
-    else
-    {
-        AnscTraceWarning(("validate_hostname - Invalidhostname configured '%s'\n", host));
-        return -1;
-    }
+       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
+       input validation based on following possible character lists:
 
-done:
+         IPv4 - numeric, dot(.)
+         IPv6 - alpha-numeric, colon(:)
+         FQDN - alpha-numeric, hyphen(-), dot(.)
+
+       Checking that 'host' contains only characters in the above lists
+       is better than checking for certain troublesome characters.
+    */
+    for (i = 0; i < len; i++)
+    {
+        if (!isalnum(host[i]) &&
+            (host[i] != '-') && (host[i] != '.') && (host[i] != ':'))
+        {
+            return -1;
+        }
+    }
 
     return 0;
 }
