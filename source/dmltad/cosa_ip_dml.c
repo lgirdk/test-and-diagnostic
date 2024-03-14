@@ -137,15 +137,7 @@ static int validate_hostname (char *host, char *wrapped_host, size_t sizelimit)
         return -1;
 
     /*
-       'host' must contain IPv4, IPv6, or a FQDN. Therefore we can do basic
-       input validation based on following possible character lists:
-
-         IPv4 - numeric, dot(.)
-         IPv6 - alpha-numeric, colon(:)
-         FQDN - alpha-numeric, hyphen(-), dot(.)
-
-       Checking that 'host' contains only characters in the above lists
-       is better than checking for certain troublesome characters.
+       'host' must contain IPv4, IPv6, or a FQDN.
     */
     if (isValidIPv4Address(host))
     {
