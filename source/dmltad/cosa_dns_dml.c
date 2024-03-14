@@ -73,7 +73,6 @@
 #include "bbhm_diagns_interface.h"
 #include "ccsp_psm_helper.h"
 #include "safec_lib_common.h"
-#include "cosa_apis_util.h"
 
 /*#include "cosa_dns_internal.h"*/
 
@@ -118,6 +117,21 @@ COSAGetParamValueByPathName
         parameterValStruct_t        *val,
         ULONG                       *parameterValueLength
     );
+
+static int isValidIPv4Address(char *ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+    return result;
+}
+
+static int isValidIPv6Address(char *ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET6, ipAddress, &(sa.sin_addr));
+    return result;
+}
+
 
 /***********************************************************************
 
