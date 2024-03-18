@@ -4362,8 +4362,13 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     fi
                 else
                     if [ "$FIRMWARE_TYPE" = "OFW" ]; then
-                        check_wan_dhcp_client_v4=$(grep -E 'udhcpc.*erouter' $PROCESSES_CACHE)
-                        check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
+                        if [ -e /usr/bin/wanmanager ]; then
+                            check_wan_dhcp_client_v4="wanmgrHandlesDhcpClients"
+                            check_wan_dhcp_client_v6="wanmgrHandlesDhcpClients"
+                        else
+                            check_wan_dhcp_client_v4=$(grep -E 'udhcpc.*erouter' $PROCESSES_CACHE)
+                            check_wan_dhcp_client_v6=$(grep "[d]ibbler-client" $PROCESSES_CACHE)
+                        fi
                     else
                         dhcp_cli_output=$(cgrep -E 'ti_.*erouter0' $PROCESSES_CACHE)
                         check_wan_dhcp_client_v4=$(echo "$dhcp_cli_output" | grep "ti_udhcpc")
