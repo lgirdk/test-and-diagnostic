@@ -808,7 +808,7 @@ fi
 		WIFI_INIT_FILE_EXISTS=`ls /tmp/wifi_initialized`
 	fi
 
-	if [ -z "$WiFi_PID" ] || [ "$WIFI_INIT_FILE_EXISTS" != "$WiFi_INIT_FILE" ]; then
+		if ([ -z "$WiFi_PID" ] || [ "$WIFI_INIT_FILE_EXISTS" != "$WiFi_INIT_FILE" ])  && [ "$MODEL_NUM" != "CVA601ZCOM" ]; then
 		echo_t "RDKB_SELFHEAL : WiFi Agent is not running or not initialized completely, checking if MacFilter entries are corrupted"
 		for index in $MF_WiFi_Index
 		do
