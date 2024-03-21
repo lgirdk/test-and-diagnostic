@@ -22,28 +22,25 @@
 VERSION_LOG_FILE=/tmp/.speedtest-client-version.log
 . /etc/device.properties
 
-if [ "$BOX_TYPE" = XB3 ] && [ "$MODEL_NUM" = TG1682G ]
-then
- # C speedtest client
- rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client -v" > $VERSION_LOG_FILE
-elif [ "$BOX_TYPE" = XB6 ]
-then
- # C speedtest client
- /usr/bin/speedtest-client -v > $VERSION_LOG_FILE
-elif [ "$BOX_TYPE" = TCCBR ]
-then
- # C speedtest client
- /usr/bin/speedtest-client -v > $VERSION_LOG_FILE
-elif [ "$BOX_TYPE" = XB3 ] && ( [ "$MODEL_NUM" = DPC3941 ] || [ "$MODEL_NUM" = DPC3941B ] )
-then
- # C speedtest client
- rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
-elif [ "$BOX_TYPE" = SR213 ]
-then
-# C speedtest client
-/usr/bin/speedtest-client -v > $VERSION_LOG_FILE
-else
- # Unsupported speedtest client
- echo "Unsupported device model" > $VERSION_LOG_FILE
-fi
-
+case "$BOX_TYPE" in
+    "XB3")
+        if [ "$MODEL_NUM" = "TG1682G" ]; then
+            # C speedtest client
+            rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client -v" > "$VERSION_LOG_FILE"
+        elif [ "$MODEL_NUM" = "DPC3941" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+            # C speedtest client
+            rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
+        else
+            # Unsupported speedtest client
+            echo "Unsupported device model" > "$VERSION_LOG_FILE"
+        fi
+        ;;
+    "XB6" | "TCCBR" | "WNXL11BWL" | "SR213")
+        # C speedtest client
+        /usr/bin/speedtest-client -v > "$VERSION_LOG_FILE"
+        ;;
+    *)
+        # Unsupported speedtest client
+        echo "Unsupported device model" > "$VERSION_LOG_FILE"
+        ;;
+esac
