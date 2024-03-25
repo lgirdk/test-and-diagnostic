@@ -394,7 +394,7 @@ if [ "$AtomHighLoadCountThreshold" -eq 0 ]; then
     AtomHighLoadCountThreshold=1
 fi
     if [ ${Load_Avg1%%.*} -ge 5 ] && [ ${Load_Avg10%%.*} -ge 5 ] && [ ${Load_Avg15%%.*} -ge 5 ]; then
-        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
+        if [ "$MODEL_NUM" = "DPC3939B" ] || [ "$MODEL_NUM" = "DPC3941B" ] || [ "$BOX_TYPE" = "MV1" ]; then
             AtomHighLoadCount=$(($AtomHighLoadCount + 1))
             echo_t "RDKB_SELFHEAL : ATOM_HIGH_LOADAVG detected. $AtomHighLoadCount / $AtomHighLoadCountThreshold"
             if [ "$AtomHighLoadCount" -ge "$AtomHighLoadCountThreshold" ]; then
