@@ -17,9 +17,12 @@
  * limitations under the License.
  */
 
-#include "ImagehealthChecker.h"
 #include <ctype.h>
+#include <syscfg/syscfg.h>
+
+#include "ImagehealthChecker.h"
 #include "ccsp_hal_ethsw.h"
+
 int ccsp_hdl_ret;
 int compare_pass(char *arg_type,char *curr_pass,char *dflt_pass,int old_value)
 {
@@ -718,17 +721,10 @@ void get_Clients_Count(char * arg_type,char * ret_buf,int size)   //Need to run 
    ERR_CHK(rc);
    if((ind == 0) && (rc == EOK))
    {
-           if (syscfg_init() == -1)
-            {
-                IHC_PRINT("%s syscfg or sysevent init failed \n",__FUNCTION__);
-            }
-            else
-            {
-                if( syscfg_set_commit(NULL, "IHC_Clients_count", sys_cfg_store) != 0 )
-                {
-                    IHC_PRINT("%s syscfg_set failed \n",__FUNCTION__);
-                }
-            }
+       if (syscfg_set_commit(NULL, "IHC_Clients_count", sys_cfg_store) != 0 )
+       {
+           IHC_PRINT("%s syscfg_set failed \n",__FUNCTION__);
+       }
    }
    else
    {
@@ -1823,11 +1819,7 @@ int main(int argc,char* argv[])
         IHC_PRINT("Invalid argument ... Please Enter the proper argument name..... \n");
         exit(0);
     }
-    if (syscfg_init() != 0)
-    {
-        IHC_PRINT("syscfg_init failed \n");
-        return -1;
-    }
+
     t2_init("TandD");
     ccsp_hdl_ret = ccsp_handler_init();
     if ( 0 != ccsp_hdl_ret )
