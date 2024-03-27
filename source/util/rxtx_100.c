@@ -923,9 +923,7 @@ int ret = SUCCESS;
 /* Getting interface stats from HAL API platform_hal_GetInterfaceStats */
     INTF_STATS intfStats;
     memset(&intfStats,0,sizeof(intfStats));
-#ifndef XB10_ONLY_SUPPORT
     ret = platform_hal_GetInterfaceStats(ifname, &intfStats);
-#endif
     if (ret == SUCCESS)
     {
         *rx_bytes = intfStats.rx_bytes;
