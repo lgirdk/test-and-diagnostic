@@ -289,6 +289,15 @@ get_high_mem_processes() {
 
 	NVRAM_USAGE=`df /nvram | tail -1 | awk '{print $(NF-1)}' | cut -d"%" -f1`
 	t2ValNotify "NVRAM_USE_PERCENTAGE_split" "$NVRAM_USAGE"
+	echo_t "[RDKB_SELFHEAL] : NVRAM_USE_PERCENTAGE_split $NVRAM_USAGE"
+
+	if [ "$NVRAM_USAGE" -ge 95 ]; then
+		t2CountNotify "SYS_ERROR_NVRAM_Above95_split"
+		echo_t "[RDKB_SELFHEAL]:WARNING Nvram usage is $NVRAM_USAGE % at timestamp $timestamp"
+		echo_t "*********** dump file usage in nvram **************"
+		echo_t "`du -ah /nvram`"
+		echo_t "******************************"
+	fi
 
 	swap=`free | awk 'FNR == 4 {print $3}'`
 	cache=`cat /proc/meminfo | awk 'FNR == 4 {print $2}'`
