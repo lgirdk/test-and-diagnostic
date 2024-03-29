@@ -4542,6 +4542,36 @@ get_cpu_meshwifi_optimizer() {
     CPU_USAGE=$(awk "BEGIN {print ($diff_process_time / $diff_total_time) * 100}")
 }
 
+restart_mwo() {
+    killall MeshWifiOptimizer
+    /usr/bin/MeshWifiOptimizer >> /rdklogs/logs/MWO.log 2>&1
+}
+
+check_mwo_rss_selfheal() {
+#Prevent MeshWifiOptimizer crossing beyond 20MB RSS
+    hcm_rss_watermark="20000"
+    echo_t "HCM: Current RSS Mem: $1"
+
+    if [ "$1" -gt "$hcm_rss_watermark" ];then
+        echo_t "HCM: MWO RSS memory has exceeded the RSS watermark, Selfhealing"
+        restart_mwo
+    else
+        echo_t "HCM: MWO RSS Memory is still in the optimal range"
+    fi
+}
+
+check_mwo_cpu_selfheal() {
+#Prevent MeshWifiOptimizer crossing beyond 25% CPU
+    hcm_cpu_watermark="25"
+    echo_t "HCM: Current CPU: $1"
+    if awk 'BEGIN {exit !('"$1"' > '"$hcm_cpu_watermark"')}' ; then
+        echo_t "HCM: MWO CPU has exceeded the CPU watermark, Selfhealing"
+        restart_mwo
+    else
+        echo_t "HCM: MWO CPU Memory is still in optimal range"
+    fi
+}
+
 print_hcm_process_stats() {
     get_cpu_meshwifi_optimizer
     RSS=$(grep VmRSS /proc/$(pidof MeshWifiOptimizer)/status | cut -d':' -f2 | tr -d ' ' | sed 's/^[[:space:]]*//')
@@ -4550,6 +4580,8 @@ print_hcm_process_stats() {
     CPU_RM_KB=$(echo $CPU_USAGE | awk '{gsub(/kB/, ""); print}')
     RSS_RM_KB=$(echo $RSS | awk '{gsub(/kB/, ""); print}')
     VMSize_RM_KB=$(echo $VMSize | awk '{gsub(/kB/, ""); print}')
+    check_mwo_rss_selfheal $RSS_RM_KB
+    check_mwo_cpu_selfheal $CPU_RM_KB
     echo_t "HCM_PROCESS_STATS: $CPU_RM_KB,$RSS_RM_KB,$VMSize_RM_KB"
 }
 
@@ -4557,7 +4589,7 @@ hcm_handle_recovery() {
     if [ ! -f "/proc/$hcm_mwo_pid/status" ] && [ -f "/proc/$hcm_mqtt_pid/status" ]
     then
         echo_t "HCM_Checks: MeshWifi Optimizer not running, restarting it"
-        /usr/bin/MeshWifiOptimizer >> /rdklogs/logs/MWO.log 2>&1
+        restart_mwo
     else
         echo_t "HCM_Checks: MWO Broker not running, restarting Mesh"
         /usr/opensync/scripts/managers.init restart
