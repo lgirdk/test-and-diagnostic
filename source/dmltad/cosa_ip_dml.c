@@ -122,29 +122,7 @@ char g_authentication_speedtest[SPEEDTEST_AUTH_SIZE + 1] = {0};
 char g_clientversion_speedtest[SPEEDTEST_VERSION_SIZE + 1] = {0};
 int g_clienttype_speedtest = 1;
 int g_status_speedtest = 0;
-#ifdef WAN_FAILOVER_SUPPORTED
-#define WAN_FAILOVER_SUPPORT_CHECK if (!isServiceNeeded() && g_enable_speedtest == TRUE) \
-     { \
-             return FALSE;
 
-#define WAN_FAILOVER_SUPPORT_CHECk_END }
-#else
-#define WAN_FAILOVER_SUPPORT_CHECK
-#define WAN_FAILOVER_SUPPORT_CHECk_END
-#endif
-
-#ifdef WAN_FAILOVER_SUPPORTED
-typedef enum {
-    Router =0,
-    Extender_Mode,
-} Dev_Mode;
-
-static char default_wan_ifname[50];
-static char current_wan_ifname[50];
-static int            sysevent_fd = -1;
-static token_t        sysevent_token;
-static char dev_type[20];
-#endif
 
 
 extern  COSAGetParamValueByPathNameProc     g_GetParamValueByPathNameProc;
@@ -298,49 +276,6 @@ X_CISCO_COM_ARP_GetParamBoolValue
     /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return FALSE;
 }
-
-#ifdef WAN_FAILOVER_SUPPORTED
-unsigned int Get_Device_Mode()
-{
-
-        syscfg_get(NULL, "Device_Mode", dev_type, sizeof(dev_type));
-        unsigned int dev_mode = atoi(dev_type);
-        Dev_Mode mode;
-        if(dev_mode==1)
-        {
-          mode =Extender_Mode;
-        }
-        else
-          mode = Router;
-        return mode;
-}
-#endif
-
-#ifdef WAN_FAILOVER_SUPPORTED
-static BOOL isServiceNeeded()
-{
-         AnscTraceWarning(("Inside isServiceNeeded\n"));
-        default_wan_ifname[0] = '\0';
-        current_wan_ifname[0] = '\0';
-        sysevent_get(sysevent_fd, sysevent_token, "wan_ifname", default_wan_ifname, sizeof(default_wan_ifname));
-        sysevent_get(sysevent_fd, sysevent_token, "current_wan_ifname", current_wan_ifname, sizeof(current_wan_ifname));
-        if (Get_Device_Mode()==Extender_Mode)
-        {
-            AnscTraceWarning(("Service Not Needed\n"));
-            return FALSE;
-        }
-        else
-        {
-
-                if(strcmp(current_wan_ifname,default_wan_ifname ) != 0)
-                {
-                    AnscTraceWarning(("current Wam interface Name is not equal to default wan ifname\n"));
-                    return FALSE;
-                }
-        }
-    return TRUE;
-}
-#endif
 
 
 /**********************************************************************
@@ -6326,8 +6261,7 @@ SpeedTest_Validate
         ULONG*                      puLength
     )
 {
-	WAN_FAILOVER_SUPPORT_CHECK
-        WAN_FAILOVER_SUPPORT_CHECk_END
+	
     if ( g_enable_speedtest == FALSE && g_run_speedtest == TRUE )
     {
         errno_t rc = -1;
