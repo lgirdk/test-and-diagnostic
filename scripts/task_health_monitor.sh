@@ -3897,11 +3897,25 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 ifconfig $WAN_INTERFACE up
             fi
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ]; then
+            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
-                /usr/sbin/dibbler-client stop
+                dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
+                if [ -n "$dibbler_client_pid" ]; then
+                    echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler-client with pid $dibbler_client_pid"
+                    killall -9 dibbler-client
+                fi
+                if [ -f /tmp/dhcpmgr_initialized ]; then
+                    sysevent set dhcpv6_client-stop
+                else
+                    /usr/sbin/dibbler-client stop
+                fi
             elif [ "$BOX_TYPE" = "XB6" ]; then
                 echo_t "DHCP_CLIENT : Killing DHCP Client for v6 as Global IPv6 not attached"
+                dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
+                if [ -n "$dibbler_client_pid" ]; then
+                    echo_t "[RDKB_AGG_SELFHEAL] :  Killing dibbler-client with pid $dibbler_client_pid"
+                    killall -9 dibbler-client
+                fi
                 if [ "$MODEL_NUM" = "CGM4981COM" ]
                 then
                     sh $DHCPV6_HANDLER disable
@@ -3947,8 +3961,17 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 ifconfig $WAN_INTERFACE up
             fi
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ] && [ $DHCPV6C_STATUS != "false" ]; then
-            echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
-            /usr/sbin/dibbler-client stop
+                echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
+                dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
+                if [ -n "$dibbler_client_pid" ]; then
+                    echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler-client with pid $dibbler_client_pid"
+                    killall -9 dibbler-client
+                fi
+                if [ -f /tmp/dhcpmgr_initialized ]; then
+                    sysevent set dhcpv6_client-stop
+                else
+                    /usr/sbin/dibbler-client stop
+                fi
             fi
         ;;
     esac
