@@ -257,8 +257,10 @@ get_high_mem_processes() {
 	if [ "$count" -eq "$max_count" ]
 	then
 		echo_t "RDKB_PROC_MEM_LOG: Process Memory log at $timestamp is" >> /rdklogs/logs/CPUInfo.txt.0
-		echo_t "" >> /rdklogs/logs/CPUInfo.txt.0
+		echo_t "busybox top -mbn1" >> /rdklogs/logs/CPUInfo.txt.0
 		busybox top -mbn1 >> /rdklogs/logs/CPUInfo.txt.0
+		echo_t "busybox ps -wl" >> /rdklogs/logs/CPUInfo.txt.0
+		busybox ps -wl >> /rdklogs/logs/CPUInfo.txt.0
                 
                 # Log tmpfs data
                 logTmpFs "log"                
