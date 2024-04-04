@@ -450,6 +450,7 @@ fi
         echo_t "*************************"
         echo_t "`date`"
         echo_t "`busybox top -mbn1 | sort -k4 -r`"
+        echo_t "`busybox ps -wl`"
         echo_t "`cat /proc/meminfo`"
 	cachedMem=`awk '/^Cached:/ {print $2,$3}' /proc/meminfo`
         echo_t "CachedMemory: $cachedMem"
