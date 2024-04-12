@@ -816,8 +816,14 @@ self_heal_dhcp_clients()
     DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
-    DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
-    DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
+
+    if [ -f /tmp/dhcpmgr_initialized ]; then
+        DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
+        DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
+    else
+        DHCPV4C_STATUS=true
+        DHCPV6C_STATUS=true
+    fi
 
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then
