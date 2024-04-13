@@ -38,6 +38,7 @@ case $BOX_TYPE in
     "SR213") SELFHEAL_TYPE="SYSTEMD";;
     "WNXL11BWL") SELFHEAL_TYPE="SYSTEMD";;
     "VNTXER5") SELFHEAL_TYPE="SYSTEMD";;
+    "SCER11BEL") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -76,7 +77,7 @@ case $SELFHEAL_TYPE in
         fi
 
         source $UTOPIA_PATH/log_env_var.sh
-        if [ "$BOX_TYPE" = "VNTXER5" ]; then
+        if [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
             WAN_INTERFACE=erouter0
         else
             WAN_INTERFACE=wan0

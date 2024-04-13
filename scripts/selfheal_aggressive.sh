@@ -1563,13 +1563,15 @@ self_heal_sedaemon()
 # Vant XER5 => MODEL_NUM=VTER11QEL
 # Tech XB10    => MODEL_NUM=CGM601TCOM
 # Sercomm XB10 => MODEL_NUM=SG417DBCT
+# Sercomm XER10 => MODEL_NUM=SCER11BEL
 
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
    [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && 
    [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "TG4482A" ] && 
    [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "CVA601ZCOM" ] &&
-   [ "$MODEL_NUM" != "VTER11QEL" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] &&
-   [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NAME" != "RPI" ]
+   [ "$MODEL_NUM" != "VTER11QEL" ] &&
+   [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] &&
+   [ "$MODEL_NUM" != "SCER11BEL" ]
 then
     exit
 fi
