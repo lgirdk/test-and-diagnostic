@@ -1,4 +1,4 @@
-/*
+ /*
 * If not stated otherwise in this file or this component's LICENSE file the
 * following copyright and licenses apply:
 *
@@ -23,11 +23,20 @@ using namespace std;
 
 extern WanCnctvtyChkMock *g_wanCnctyChkMock;
 
-extern "C" ANSC_STATUS WanCnctvtyChk_GetParameterValue(const char *pParamName, char *pReturnVal)
+extern "C" ANSC_STATUS is_valid_interface(const char *if_name) 
 {
     if (!g_wanCnctyChkMock)
     {
         return ANSC_STATUS_FAILURE;
     }
-    return g_wanCnctyChkMock->WanCnctvtyChk_GetParameterValue(pParamName, pReturnVal);
+    return g_wanCnctyChkMock->is_valid_interface(if_name);
+}
+
+extern "C" BOOL CosaWanCnctvtyChk_GetActive_Status (void) 
+{
+    if (!g_wanCnctyChkMock)
+    {
+        return FALSE;
+    }
+    return g_wanCnctyChkMock->CosaWanCnctvtyChk_GetActive_Status();
 }
