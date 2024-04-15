@@ -118,7 +118,7 @@ getVendorName()
     if [ "$vendorName" = "" ]; then
         case $SELFHEAL_TYPE in
             "BASE"|"SYSTEMD")
-                if [ "$WAN_TYPE" = "EPON" ]; then
+                if [ "$WAN_TYPE" = "EPON" ] || [ "$WAN_TYPE" = "ETHERNET" ]; then
                     vendorName=$MANUFACTURE
                 else
                     vendorName=$(echo "$MFG_NAME" | tr '[:lower:]' '[:upper:]')
@@ -265,7 +265,7 @@ checkConditionsbeforeAction()
             loop=1
         ;;
         "SYSTEMD")
-            if [ "$1" != "RM" ] && [ "$WAN_TYPE" != "EPON" ] && [ "$WAN_TYPE" != "DSL" ]; then
+            if [ "$1" != "RM" ] && [ "$WAN_TYPE" != "EPON" ] && [ "$WAN_TYPE" != "DSL" ] && [ "$WAN_TYPE" != "ETHERNET" ]; then
                 isIPv4=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
                 if [ "$isIPv4" = "" ]; then
                     isIPv6=$(ifconfig $WAN_INTERFACE | grep "inet6" | grep "Scope:Global")
