@@ -913,7 +913,7 @@ self_heal_dhcp_clients()
                             echo_t "[RDKB_AGG_SELFHEAL] :  Killing dibbler-client with pid $dibbler_client_pid"
                             killall -9 dibbler-client
                         fi
-                        if [ "$MODEL_NUM" = "CGM4981COM" ]
+                        if [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "CGM601TCOM" ] || [ "$MODEL_NUM" = "SG417DBCT" ]
                         then
                             sh $DHCPV6_HANDLER disable
                         else
@@ -1453,7 +1453,7 @@ self_heal_nas_ip()
              cut -d"/" -f4)
              hostapd_enable=$(ps | grep -i hostapd | grep -v grep)
              if [ "$wifi_process" != "OneWifi" ] && [ "$hostapd_enable" != "" ]; then #issue seen only in selfheal, also hostapd should run while checking this, hence this condition
-                 if [ "$MODEL_NUM" == "CGM4331COM" ] || [ "$MODEL_NUM" == "CGM4981COM" ]; then
+                 if [ "$MODEL_NUM" == "CGM4331COM" ] || [ "$MODEL_NUM" == "CGM4981COM" ] || [ "$MODEL_NUM" == "CGM601TCOM" ] || [ "$MODEL_NUM" == "SG417DBCT" ] ; then
                      WAN_INTERFACE=`sysevent get current_wan_ifname`
                      if [ "$WAN_INTERFACE" = "" ]; then
                          WAN_INTERFACE="erouter0"
