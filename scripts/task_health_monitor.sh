@@ -3778,9 +3778,12 @@ if [ "$xle_device_mode" -ne "1" ]; then #zebra for non xle
     #Checking the zebra is running or not
     WAN_STATUS=$(sysevent get wan-status)
     ZEBRA_PID=$(busybox pidof zebra)
+     echo_t "BR_MODE:$BR_MODE ZEBRA_PID:$ZEBRA_PID WAN_STATUS:$WAN_STATUS"
     if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
         if [ "$BR_MODE" = "0" ]; then
-
+             echo_t "$BR_MODE cat zebra.conf file: "
+            filename ="/var/zebra.conf"
+            cat "$filename";
             echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
             t2CountNotify "SYS_SH_Zebra_restart"
             /etc/utopia/registration.d/20_routing restart
