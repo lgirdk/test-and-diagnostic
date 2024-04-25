@@ -24,8 +24,6 @@
 
 #define TAD_COMPONENT_NAME "TestAndDiagnosticsRbus"
 
-rbusHandle_t g_rbusHandle;
-
 rbusError_t tadRbusInit();
 
 rbusError_t tadTerminate();
