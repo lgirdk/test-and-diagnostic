@@ -123,24 +123,6 @@ ssp_TadMbi_SendTransferCompleteSignal
         void
     );
 
-DBusHandlerResult
-CcspTandD_path_message_func
-    (
-        DBusConnection  *conn,
-        DBusMessage     *message,
-        void            *user_data
-    );
-
-/*
-static DBusHandlerResult
-path_message_func
-    (
-        DBusConnection  *conn,
-        DBusMessage     *message,
-        void            *user_data
-    );
-*/
-
 ANSC_STATUS
 ssp_TadMbi_RegisterToCR
     (
