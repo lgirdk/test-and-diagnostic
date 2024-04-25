@@ -19,6 +19,8 @@
 #include "ccsp_trace.h"
 #include "tad_rbus_apis.h"
 
+rbusHandle_t g_rbusHandle;
+
 /***********************************************************************
 
   tadRbusInit(): Initialize Rbus and data elements for Test&Diagnostic
