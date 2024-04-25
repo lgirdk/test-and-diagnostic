@@ -817,13 +817,18 @@ self_heal_dhcp_clients()
     WAN_STATUS=$(sysevent get wan-status)
     WAN_IPv6_Addr=$(ifconfig $WAN_INTERFACE | grep "inet" | grep -v "inet6")
 
-    if [ -f /tmp/dhcpmgr_initialized ]; then
-        DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
-        DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
-    else
-        DHCPV4C_STATUS=true
-        DHCPV6C_STATUS=true
-    fi
+    # Disabling Device.DHCPv6.Client.1.Enable check for now. Will be enabled once parameter is used to Enable or Disable v4/v6 clients in the field.
+
+    #if [ -f /tmp/dhcpmgr_initialized ]; then
+    #   DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
+    #   DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
+    #else
+    #   DHCPV4C_STATUS=true
+    #   DHCPV6C_STATUS=true
+    #fi
+
+    DHCPV4C_STATUS=true
+    DHCPV6C_STATUS=true
 
     if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
     then

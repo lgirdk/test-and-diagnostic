@@ -41,13 +41,18 @@ else
     DHCPV6_HANDLER="/etc/utopia/service.d/service_dhcpv6_client.sh"
 fi
 
-if [ -f /tmp/dhcpmgr_initialized ]; then
-    DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
-    DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
-else
+# Disabling Device.DHCPv6.Client.1.Enable check for now. Will be enabled once parameter is used to Enable or Disable v4/v6 clients in the field.
+
+#if [ -f /tmp/dhcpmgr_initialized ]; then
+#   DHCPV4C_STATUS=$(dmcli eRT retv Device.DHCPv4.Client.1.Enable)
+#   DHCPV6C_STATUS=$(dmcli eRT retv Device.DHCPv6.Client.1.Enable)
+#else
+#   DHCPV4C_STATUS=true
+#   DHCPV6C_STATUS=true
+#fi
+
     DHCPV4C_STATUS=true
     DHCPV6C_STATUS=true
-fi
 
 Unit_Activated=$(syscfg get unit_activated)
 source $TAD_PATH/corrective_action.sh
