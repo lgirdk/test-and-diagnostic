@@ -4611,7 +4611,7 @@ hcm_handle_recovery() {
     fi
 }
 
-if [ "$MODEL_NUM" = "CGM4331COM" ]; then
+if [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4981COM" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "TG3482G" ]; then
     mesh_optimization_mode=$(deviceinfo.sh -optimization)
     mesh_enable=$(syscfg get mesh_enable)
     if [[ "$mesh_optimization_mode" == "monitor" || "$mesh_optimization_mode" == "enable" ]] && ! [[ "$mesh_enable" == "true" && "$mesh_optimization_mode" == "enable" ]] && ! [[ "$mesh_enable" == "false" && "$mesh_optimization_mode" == "monitor" ]]
