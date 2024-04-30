@@ -37,7 +37,7 @@ else
     traffic_count -L | grep -v $MAC | tr '[a-z]' '[A-Z]' > /tmp/rxtx_cur.txt
 fi
 
-grep -E "192.168.245.|169.254.0.|169.254.1." /nvram/dnsmasq.leases | cut -d' ' -f2 | tr '[a-z]' '[A-Z]' > $PODMAC
+grep -E "192.168.245.|169.254.0.|169.254.1." /var/lib/misc/dnsmasq.leases | cut -d' ' -f2 | tr '[a-z]' '[A-Z]' > $PODMAC
 
 while read pmac; do
  pmac=$(echo $pmac | sed 's/\:/\\\:/g')
@@ -86,8 +86,8 @@ if [ ! -z "$high_download_mac" ];then
 fi
 cut -d'|' -f1 /tmp/rxtx_cur.txt | sort -u > /tmp/eblist
 # Dump leases table - strip out mesh pods
-grep -v "\* \*" /nvram/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f2 > /tmp/cli47
-grep -v "\* \*" /nvram/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
+grep -v "\* \*" /var/lib/misc/dnsmasq.leases | grep "192.168.245." | cut -d' ' -f2 > /tmp/cli47
+grep -v "\* \*" /var/lib/misc/dnsmasq.leases | grep -v "172.16.12." | grep -v "58:90:43" | grep -v "60:b4:f7" | grep -v "b8: ee :0e" | grep -v "b8:d9:4d" | cut -d' ' -f2 > /tmp/cli4
 if [ -z "$MAC" ]
 then
 	ip nei show | grep brlan0 | grep -v FAILED | cut -d' ' -f 5  > /tmp/cli46
