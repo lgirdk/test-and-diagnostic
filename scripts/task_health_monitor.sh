@@ -18,6 +18,10 @@
 # limitations under the License.
 #######################################################################################
 
+if [ -e /usr/bin/wanmanager ]; then
+    WANMANAGER_ENABLED=1
+fi
+
 if [ "$(syscfg get selfheal_enable)" !=  "true" ]; then
    if [ -e "/tmp/deadlock_warning" ]; then
       rm "/tmp/deadlock_warning"
@@ -224,7 +228,7 @@ check_component_status(){
             fi
         fi
 
-        if [ -e /usr/bin/wanmanager ]; then
+        if [ "$WANMANAGER_ENABLED" = "1" ]; then
             WANMANAGER_PID=$(busybox pidof wanmanager)
             if [ "$WANMANAGER_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, restart it"
@@ -4377,7 +4381,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                     fi
                 else
                     if [ "$FIRMWARE_TYPE" = "OFW" ]; then
-                        if [ -e /usr/bin/wanmanager ]; then
+                        if [ "$WANMANAGER_ENABLED" = "1" ]; then
                             check_wan_dhcp_client_v4="wanmgrHandlesDhcpClients"
                             check_wan_dhcp_client_v6="wanmgrHandlesDhcpClients"
                         else
@@ -4426,9 +4430,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                 echo_t "erouter ipv4 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv4_loss"
                 /usr/bin/logger -p local0.notice -t NETWORK "$(date +'%a %b %d %T %Y') Gateway ipv4 address is empty"
-                if [ "$BOX_TYPE" = "MV3" ] ; then
-                    sysevent set dhcp_client_restart_mv3 $WAN_INTERFACE
-                else
+                if [ "WANMANAGER_ENABLED" != "1"] ; then
                     sysevent set dhcp_client-restart
                 fi
             fi
@@ -4439,11 +4441,13 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                 echo_t "erouter ipv6 address is empty"
                 /usr/bin/logger -p local0.notice -t NETWORK "$(date +'%a %b %d %T %Y') Gateway ipv6 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv6_loss"
-                t2CountNotify "SYS_SH_ti_dhcp6c_restart"
-                echo_t "restart dibbler-client"
-                /usr/sbin/dibbler-client stop
-                sleep 2
-                /usr/sbin/dibbler-client start
+                if [ "WANMANAGER_ENABLED" != "1"] ; then
+                    t2CountNotify "SYS_SH_ti_dhcp6c_restart"
+                    echo_t "restart dibbler-client"
+                    /usr/sbin/dibbler-client stop
+                    sleep 2
+                    /usr/sbin/dibbler-client start
+                fi
             fi
         fi
     fi
