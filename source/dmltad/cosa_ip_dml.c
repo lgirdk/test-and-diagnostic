@@ -6416,7 +6416,7 @@ RDK_SpeedTest_GetParamUlongValue
         ULONG*                      pUlong
     )
 {
-#if (!defined(_SR213_PRODUCT_REQ_)) //SHARMAN-1777
+#if !defined(_SR213_PRODUCT_REQ_) && !defined (_WNXL11BWL_PRODUCT_REQ_)//SHARMAN-1777 and LTE-2347
     char TO_buf[4]={0};
     /* check the parameter name and return the corresponding value */
     if (strcmp(ParamName, "SubscriberUnPauseTimeOut") == 0)
