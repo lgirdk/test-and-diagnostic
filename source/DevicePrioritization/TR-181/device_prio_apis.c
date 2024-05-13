@@ -132,7 +132,7 @@ int DevicePrio_Set_QOS_Active_Rules() {
 		}
 	}
 	else {
-		CcspTraceError(("%s: No value change : %s\n", __FUNCTION__, DevicePrioInfo.QOS_Active_Rules));
+		CcspTraceInfo(("%s: No value change : %s\n", __FUNCTION__, DevicePrioInfo.QOS_Active_Rules));
 	}
 
 	return 0;

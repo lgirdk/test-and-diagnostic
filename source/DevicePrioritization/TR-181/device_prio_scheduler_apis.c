@@ -41,7 +41,7 @@ int clean_prev_syscfg_params() {
         }
 	}
     else {
-        CcspTraceError(("%s: syscfg_get is empty for %s\n", __FUNCTION__, syscfg_param));
+        CcspTraceInfo(("%s: syscfg_get is empty for %s\n", __FUNCTION__, syscfg_param));
         return -1;
     }
 
@@ -114,7 +114,7 @@ void priomac_operation(char* priomac_str_bundle) {
 
     //To remove all prio clients
     if (NULL == priomac_str_bundle) {
-        CcspTraceError(("%s: Empty priomac bundle \n", __FUNCTION__));
+        CcspTraceInfo(("%s: Empty priomac bundle \n", __FUNCTION__));
         if(0 != trigger_firewall_restart()) {
             CcspTraceError(("%s: failed firewall restart.\n", __FUNCTION__));
         }
