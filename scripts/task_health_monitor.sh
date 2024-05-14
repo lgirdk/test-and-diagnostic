@@ -4559,7 +4559,7 @@ get_cpu_meshwifi_optimizer() {
 
 restart_mwo() {
     killall MeshWifiOptimizer
-    /usr/bin/MeshWifiOptimizer >> /rdklogs/logs/MWO.log 2>&1
+    /usr/bin/MeshWifiOptimizer >> /rdklogs/logs/MWO.log.0 2>&1
 }
 
 check_mwo_rss_selfheal() {
