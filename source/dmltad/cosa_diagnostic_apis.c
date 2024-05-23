@@ -166,10 +166,12 @@ CosaDiagInitialize
     PCOSA_DATAMODEL_DIAG            pMyObject            = (PCOSA_DATAMODEL_DIAG )hThisObject;
     PDSLH_PING_INFO                 pDiagPingInfo        = (PDSLH_PING_INFO      )NULL;
     PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo  = (PDSLH_TRACEROUTE_INFO)NULL;
+#if !defined (RESOURCE_OPTIMIZATION)
     PDSLH_NSLOOKUP_INFO             pDiagNSLookInfo      = (PDSLH_NSLOOKUP_INFO  )NULL;
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo        = (PDSLH_TR143_DOWNLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo          = (PDSLH_TR143_UPLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo         = (PDSLH_TR143_UDP_ECHO_CONFIG)NULL;
+#endif
     PCOSA_DML_DIAG_RXTX_STATS       pRxTxStats           = (PCOSA_DML_DIAG_RXTX_STATS)NULL;
 	PCOSA_DML_DIAG_SPEEDTEST_SERVER 		pSpeedTestServer		= (PCOSA_DML_DIAG_SPEEDTEST_SERVER)NULL;
 
@@ -199,6 +201,7 @@ CosaDiagInitialize
         pMyObject->hDiagTracerouteInfo = (ANSC_HANDLE)pDiagTracerouteInfo;
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     pDiagNSLookInfo = AnscAllocateMemory(sizeof(DSLH_NSLOOKUP_INFO));
 
     if ( !pDiagNSLookInfo )
@@ -283,6 +286,7 @@ CosaDiagInitialize
 	pMyObject->pSpeedTestServer	= NULL;
     pMyObject->ArpEntryCount      = 0;
     pMyObject->PreviousVisitTime  = 0;
+#endif
 
     /* Initialize speedtest enable */
     char buf[8]={0};
@@ -398,6 +402,7 @@ CosaDiagRemove
         AnscFreeMemory((ANSC_HANDLE)pMyObject->hDiagTracerouteInfo);
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     if ( pMyObject->hDiagNSLookInfo )
     {
         AnscFreeMemory((ANSC_HANDLE)pMyObject->hDiagNSLookInfo);
@@ -422,6 +427,7 @@ CosaDiagRemove
     {
         AnscFreeMemory(pMyObject->pArpTable);
     }
+#endif
 
     if ( pMyObject->pSpeedTestServer )
     {
@@ -724,6 +730,7 @@ CosaDmlDiagGetConfigs
     return hDiagInfo;
 }
 
+#if !defined (RESOURCE_OPTIMIZATION)
 PCOSA_DML_DIAG_ARP_TABLE
 CosaDmlDiagGetARPTable
 
@@ -734,6 +741,7 @@ CosaDmlDiagGetARPTable
 {
 	return CosaDmlDiagGetARPTablePriv(hContext, pulCount);
 }
+#endif
 
 /* To initialize Rxstats interface and port list, fetch from syscfg, if we have
 entry copy to pRxTxStats*/

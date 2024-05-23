@@ -24,10 +24,6 @@ EXTRA_DEPENDENCIES = $(top_builddir)/source-arm/diagnostic/BbhmDiagIpPing/libdia
 lib_LTLIBRARIES = libdiagnostic.la
 
 libdiagnostic_la_SOURCES = \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_action.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_base.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_interface.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_operation.c \
         source/diagnostic/BbhmDiagExecutor/bbhm_diageo_base.c \
         source/diagnostic/BbhmDiagExecutor/bbhm_diageo_interface.c \
         source/diagnostic/BbhmDiagExecutor/bbhm_diageo_operation.c \
@@ -53,6 +49,14 @@ libdiagnostic_la_SOURCES = \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_states.c \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_tdo_base.c \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_tdo_operation.c \
+        source/diagnostic/bbhm_diag_lib.c
+
+if !FEATURE_RESOURCE_OPTIMIZATION
+libdiagnostic_la_SOURCES += \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_action.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_base.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_interface.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_operation.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_base.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_interface.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_operation.c \
@@ -70,8 +74,8 @@ libdiagnostic_la_SOURCES = \
         source/diagnostic/BbhmUdpEchoServer/bbhm_udpecho_action.c \
         source/diagnostic/BbhmUdpEchoServer/bbhm_udpecho_base.c \
         source/diagnostic/BbhmUdpEchoServer/bbhm_udpecho_interface.c \
-        source/diagnostic/BbhmUdpEchoServer/bbhm_udpecho_operation.c \
-        source/diagnostic/bbhm_diag_lib.c
+        source/diagnostic/BbhmUdpEchoServer/bbhm_udpecho_operation.c
+endif
 
 libdiagnostic_la_CPPFLAGS = -I$(top_srcdir)/source/diagnostic/include -I$(top_srcdir)/source/diagnostic/BbhmDiagIpPing -I$(top_srcdir)/source/dmltad -I$(top_srcdir)/source/TandDSsp
 libdiagnostic_la_DEPENDENCIES = $(EXTRA_DEPENDENCIES)

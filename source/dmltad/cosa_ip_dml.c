@@ -221,6 +221,9 @@ done:
 
 
 ***********************************************************************/
+
+#if !defined (RESOURCE_OPTIMIZATION)
+
 /***********************************************************************
 
  APIs for Object:
@@ -851,6 +854,8 @@ ARPTable_GetParamStringValue
     /* AnscTraceWarning(("Unsupported parameter '%s'\n", ParamName)); */
     return -1;
 }
+
+#endif
 
 /***********************************************************************
 
@@ -3242,6 +3247,7 @@ RouteHops_GetParamStringValue
     return -1;
 }
 
+#if !defined (RESOURCE_OPTIMIZATION)
 /***********************************************************************
 
 
@@ -6096,6 +6102,7 @@ UDPEchoConfig_Rollback
 
     return 0;
 }
+#endif
 
 /***********************************************************************
 

@@ -136,6 +136,7 @@ COSA_Init
 
     /* register the back-end apis for the data model */
 
+#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamBoolValue",  X_CISCO_COM_ARP_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamIntValue",  X_CISCO_COM_ARP_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamUlongValue",  X_CISCO_COM_ARP_GetParamUlongValue);
@@ -148,6 +149,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamIntValue",  ARPTable_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamUlongValue",  ARPTable_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ARPTable_GetParamStringValue",  ARPTable_GetParamStringValue);
+#endif
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamBoolValue",  IPPing_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamIntValue",  IPPing_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "IPPing_GetParamUlongValue",  IPPing_GetParamUlongValue);
@@ -178,6 +180,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamIntValue",  RouteHops_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamUlongValue",  RouteHops_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RouteHops_GetParamStringValue",  RouteHops_GetParamStringValue);
+#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamBoolValue",  DownloadDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamIntValue",  DownloadDiagnostics_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DownloadDiagnostics_GetParamUlongValue",  DownloadDiagnostics_GetParamUlongValue);
@@ -211,6 +214,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Validate",  UDPEchoConfig_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Commit",  UDPEchoConfig_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
+#endif
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_Validate",  SpeedTest_Validate);
@@ -227,6 +231,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamStringValue",  SpeedTestServer_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_SetParamStringValue",  SpeedTestServer_SetParamStringValue);
 
+#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamUlongValue",  NSLookupDiagnostics_GetParamUlongValue);
@@ -247,6 +252,7 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamIntValue",  Result_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamUlongValue",  Result_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamStringValue",  Result_GetParamStringValue);
+#endif
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_GetParamBoolValue",  LogBackup_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_SetParamBoolValue",  LogBackup_SetParamBoolValue);

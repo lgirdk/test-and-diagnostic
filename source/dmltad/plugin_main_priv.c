@@ -103,6 +103,7 @@ COSA_RegisterAdditionalDmApis
     	PCOSA_PLUGIN_INFO               pPlugInfo
     )
 {
+#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamBoolValue",  X_CISCO_COM_ARP_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamIntValue",  X_CISCO_COM_ARP_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "X_CISCO_COM_ARP_GetParamUlongValue",  X_CISCO_COM_ARP_GetParamUlongValue);
@@ -149,10 +150,6 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Validate",  UDPEchoConfig_Validate);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Commit",  UDPEchoConfig_Commit);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "UDPEchoConfig_Rollback",  UDPEchoConfig_Rollback);
-	pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_GetParamUlongValue",  RDK_SpeedTest_GetParamUlongValue);
-    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_SetParamUlongValue",  RDK_SpeedTest_SetParamUlongValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
@@ -174,6 +171,12 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamIntValue",  Result_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamUlongValue",  Result_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamStringValue",  Result_GetParamStringValue);
+#endif
+
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_GetParamBoolValue",  SpeedTest_GetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTest_SetParamBoolValue",  SpeedTest_SetParamBoolValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_GetParamUlongValue",  RDK_SpeedTest_GetParamUlongValue);
+    pPlugInfo->RegisterFunction(pPlugInfo->hContext, "RDK_SpeedTest_SetParamUlongValue",  RDK_SpeedTest_SetParamUlongValue);
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DeviceInfo_GetParamBoolValue",  DeviceInfo_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "DeviceInfo_GetParamIntValue",  DeviceInfo_GetParamIntValue);
@@ -190,6 +193,7 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "MemoryStatus_GetParamIntValue",  MemoryStatus_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "MemoryStatus_GetParamUlongValue",  MemoryStatus_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "MemoryStatus_GetParamStringValue",  MemoryStatus_GetParamStringValue);
+#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ProcessStatus_GetParamBoolValue",  ProcessStatus_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ProcessStatus_GetParamIntValue",  ProcessStatus_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "ProcessStatus_GetParamUlongValue",  ProcessStatus_GetParamUlongValue);
@@ -202,6 +206,7 @@ COSA_RegisterAdditionalDmApis
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Process_GetParamIntValue",  Process_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Process_GetParamUlongValue",  Process_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Process_GetParamStringValue",  Process_GetParamStringValue);
+#endif
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamBoolValue",  NetworkProperties_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamIntValue",  NetworkProperties_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NetworkProperties_GetParamUlongValue",  NetworkProperties_GetParamUlongValue);

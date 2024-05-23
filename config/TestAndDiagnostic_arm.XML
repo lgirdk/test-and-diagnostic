@@ -51,6 +51,7 @@
             <name>Diagnostics</name>
             <objectType>object</objectType>
             <objects>
+<?ifndef FEATURE_RESOURCE_OPTIMIZATION?>
                 <object>
                     <name>X_CISCO_COM_ARP</name>
                     <objectType>object</objectType>
@@ -98,6 +99,7 @@
                         </object>
                     </objects>
                 </object>
+<?endif?>
                 <object>
                     <name>X_RDKCENTRAL-COM_PingTest</name>
                     <objectType>object</objectType>
@@ -353,6 +355,7 @@
                         </object>
                     </objects>
                 </object>
+<?ifndef FEATURE_RESOURCE_OPTIMIZATION?>
                 <object>
                     <name>DownloadDiagnostics</name>
                     <objectType>object</objectType>
@@ -637,6 +640,7 @@
                         </parameter>
                     </parameters>
                 </object>
+<?endif?>
                  <object>
                     <name>X_RDK_SpeedTest</name>
                     <objectType>object</objectType>
@@ -884,6 +888,7 @@
                 </object>
             </objects>
         </object>
+<?ifndef FEATURE_RESOURCE_OPTIMIZATION?>
         <object>
             <name>DNS</name>
             <objectType>object</objectType>
@@ -1019,6 +1024,7 @@
                 </object>
             </objects>
         </object>
+<?endif?>
         <object>
             <name>SelfHeal</name>
             <objectType>object</objectType>

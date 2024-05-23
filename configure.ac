@@ -117,6 +117,18 @@ AC_ARG_ENABLE([device_prioritization],
 AM_CONDITIONAL([FEATURE_DEVICE_PRIORITIZATION], [test $DEVICE_PRIORITIZATION = yes])
 AC_SUBST(DEVICE_PRIORITIZATION_CFLAGS)
 
+AC_ARG_ENABLE([resourceoptimization],
+             AS_HELP_STRING([--enable-resourceoptimization],[enable resource optimization (default is no)]),
+             [
+              case "${enableval}" in
+               yes) RESOURCE_OPTIMIZATION_ENABLED=true;;
+               no)  RESOURCE_OPTIMIZATION_ENABLED=false;;
+               *) AC_MSG_ERROR([bad value ${enableval} for --enable-resourceoptimization]);;
+              esac
+             ],
+             [echo "resourceoptimization is disabled"])
+AM_CONDITIONAL(FEATURE_RESOURCE_OPTIMIZATION, test "x$RESOURCE_OPTIMIZATION_ENABLED" = xtrue)
+
 AC_CONFIG_FILES(
   source/LatencyMeasurement/ServiceMonitor/Makefile
 	source/TandDSsp/Makefile

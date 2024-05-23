@@ -192,6 +192,7 @@ CosaDmlDiagSetState
         ULONG                       ulDiagState
     );
 
+#if !defined (RESOURCE_OPTIMIZATION)
 PCOSA_DML_DIAG_ARP_TABLE
 CosaDmlDiagGetARPTable
     (
@@ -206,6 +207,8 @@ CosaDmlDiagGetARPTablePriv
         ANSC_HANDLE                 hContext,
         PULONG                      pulCount
     );
+#endif
+
 ANSC_STATUS CosaDmlInitializeRxTxStats
     (PCOSA_DML_DIAG_RXTX_STATS pRxTxStats);
 #endif
