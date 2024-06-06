@@ -224,7 +224,7 @@ check_component_status(){
             fi
         fi
 
-        if [ -e /usr/bin/wanmanager ]; then
+        if [ "$WANMANAGER_ENABLED" = "1" ]; then
             WANMANAGER_PID=$(busybox pidof wanmanager)
             if [ "$WANMANAGER_PID" = "" ]; then
                 echo_t "RDKB_PROCESS_CRASHED : WANMANAGER_process is not running, restart it"
