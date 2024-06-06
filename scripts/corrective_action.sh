@@ -39,6 +39,11 @@ else
 	LOW_MEM_THRESHOLD=100000
 fi
 
+if [ "$FIRMWARE_TYPE" = "OFW" ] && [ -e /usr/bin/wanmanager ]; then
+    WANMANAGER_ENABLED=1
+    DHCPcMonitoring="false"
+fi
+
 case $SELFHEAL_TYPE in
     "BASE")
         source $UTOPIA_PATH/log_env_var.sh
