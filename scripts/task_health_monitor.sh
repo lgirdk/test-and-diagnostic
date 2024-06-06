@@ -4421,11 +4421,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
                 echo_t "erouter ipv4 address is empty"
                 t2CountNotify "RF_ERROR_erouter_ipv4_loss"
                 /usr/bin/logger -p local0.notice -t NETWORK "$(date +'%a %b %d %T %Y') Gateway ipv4 address is empty"
-                if [ "$BOX_TYPE" = "MV3" ] ; then
-                    sysevent set dhcp_client_restart_mv3 $WAN_INTERFACE
-                else
-                    sysevent set dhcp_client-restart
-                fi
+                sysevent set dhcp_client-restart
             fi
         fi
         if [ "$LAST_EROUTER_MODE" != "1" ] ; then
