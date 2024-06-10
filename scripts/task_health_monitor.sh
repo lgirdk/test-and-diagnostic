@@ -80,6 +80,7 @@ case $BOX_TYPE in
     "SE501") SELFHEAL_TYPE="SYSTEMD";;
     "SR213") SELFHEAL_TYPE="SYSTEMD";;
     "WNXL11BWL") SELFHEAL_TYPE="SYSTEMD";;
+    "SCER11BEL") SELFHEAL_TYPE="SYSTEMD";;
     *)
         echo_t "RDKB_SELFHEAL : ERROR: Unknown BOX_TYPE '$BOX_TYPE', using SELFHEAL_TYPE='BASE'"
         SELFHEAL_TYPE="BASE";;
@@ -3985,7 +3986,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
             dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
-            if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ]; then
+            if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                 check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
                 check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
             else
