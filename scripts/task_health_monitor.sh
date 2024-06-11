@@ -4785,3 +4785,48 @@ esac
 self_heal_dual_cron
 self_heal_meshAgent
 self_heal_sedaemon
+
+#RDKB-55218 - workaround for ovs-vswitchd cpu spike.
+# Deleting and adding pgd interfaces in br106 and brlan1 will reduce cpu usage of ovs-vswitchd
+
+# Start monitoring the ip link status in the background
+ip monitor link > /tmp/check_promsc_mode.txt 2>/dev/null &
+monitor_pid=$!
+
+# Sleep for 5 seconds
+sleep 5
+
+# Kill the ip monitor process
+kill $monitor_pid 2>/dev/null
+wait $monitor_pid 2>/dev/null
+
+# Fetch pgd.*106 from br106
+br106_pgd_ports=$(ovs-vsctl list-ifaces br106 | grep -i pgd*)
+# Count occurrences of pgd.*106 in the ip monitor output
+br106_count=$(grep -o 'pgd.*106' /tmp/check_promsc_mode.txt | wc -l)
+
+# If the count is greater than 200, delete and add pgd interfaces
+if [ "$br106_count" -gt 200 ]; then
+    echo_t "ovs-vswitchd process is consuming more CPU. Deleting and adding pgd interfaces in br106"
+    for port in $br106_pgd_ports; do
+        ovs-vsctl del-port br106 "$port"
+        ovs-vsctl add-port br106 "$port"
+    done
+fi
+
+# Fetch pgd.*101 from brlan1
+brlan1_pgd_ports=$(ovs-vsctl list-ifaces brlan1 | grep -i pgd*)
+# Count occurrences of pgd.*101 in the ip monitor output
+brlan1_count=$(grep -o 'pgd.*101' /tmp/check_promsc_mode.txt | wc -l)
+
+# If the count is greater than 200, delete and add pgd interfaces
+if [ "$brlan1_count" -gt 200 ]; then
+    echo_t "ovs-vswitchd process is consuming more CPU. Deleting and adding pgd interfaces in brlan1"
+    for port in $brlan1_pgd_ports; do
+        ovs-vsctl del-port brlan1 "$port"
+        ovs-vsctl add-port brlan1 "$port"
+    done
+fi
+
+# Clean up the temporary file
+rm -f /tmp/check_promsc_mode.txt
