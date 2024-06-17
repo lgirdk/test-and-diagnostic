@@ -2791,7 +2791,7 @@ case $SELFHEAL_TYPE in
                 fi
             else
                 echo_t  "[RDKB_PLATFORM_ERROR] : WiFi initialization not done"
-                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ]; then
+		if [ "$BOX_TYPE" = "XB6" ] && ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm"] ); then
                     if [ -f "$thisREADYFILE" ]; then
                         echo_t  "[RDKB_PLATFORM_ERROR] : restarting the CcspWifiSsp"
                         systemctl stop ccspwifiagent
@@ -3567,7 +3567,7 @@ case $SELFHEAL_TYPE in
         if [ "$CHKIPV6_DAD_FAILED" != "" ]; then
             echo_t "link Local DAD failed"
             t2CountNotify "SYS_ERROR_linkLocalDad_failed"
-            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+	    if [ "$BOX_TYPE" = "XB6" ] && ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ); then
                 partner_id=$(syscfg get PartnerID)
                 if [ "$partner_id" != "comcast" ]; then
                     dibbler-client stop
@@ -3716,7 +3716,7 @@ if [ "$xle_device_mode" -ne "1" ]; then
                             echo "DADFAILED : BRLAN0_DADFAILED"
                             t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
 
-                            if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ] ; then
+			    if [ "$BOX_TYPE" = "XB6" ] && ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ); then
                                 echo "DADFAILED : Recovering device from DADFAILED state"
                                 # save global ipv6 address before disable it
                                 v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i "global" | awk '{print $2}')
@@ -3912,7 +3912,7 @@ if [ "$erouter0_globalv6_test" = "" ] && [ "$WAN_STATUS" = "started" ] && [ "$BO
                 ifconfig $WAN_INTERFACE up
             fi
             if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
+		    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "[RDKB_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                 dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
                 if [ -n "$dibbler_client_pid" ]; then
@@ -4008,7 +4008,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
             UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
             dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
-            if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
+	    if ( ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                 check_wan_dhcp_client_v4=$(ps w | grep "udhcpc" | grep "erouter")
                 check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
             else
@@ -4101,7 +4101,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
     case $SELFHEAL_TYPE in
         "BASE")
             if [ $wan_dhcp_client_v4 -eq 0 ] && [ "$MAPT_CONFIG" != "set" ]; then
-                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+		    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
                     V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                 elif [ "$WAN_TYPE" = "EPON" ]; then
                     echo "Calling epon_utility.sh to restart udhcpc "
@@ -4128,7 +4128,7 @@ if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "
 
             if [ $wan_dhcp_client_v6 -eq 0 ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+		if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start
@@ -4317,7 +4317,7 @@ case $SELFHEAL_TYPE in
 
             if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
                 echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
+		if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
                     /lib/rdk/dibbler-init.sh
                     sleep 2
                     /usr/sbin/dibbler-client start

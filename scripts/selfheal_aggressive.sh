@@ -41,7 +41,7 @@ WAN_ETH_SEL_MODE="1"
 WAN_DOCSIS_SEL_MODE="2"
 
 #Legacy Non WAN Manager Ethernet WAN Interface Prefixes/Names
-if [ "$MANUFACTURE" = "Technicolor" ]; then
+if [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ]; then
 ETHWAN_INTF_PREFIX1="eth"
 ETHWAN_INTF_PREFIX2=""
 elif [ "$MANUFACTURE" = "Arris" ]; then
@@ -738,7 +738,7 @@ self_heal_dibbler_server()
                             if [ "$BRLAN_CHKIPV6_DAD_FAILED" != "" ]; then
                                 echo "DADFAILED : BRLAN0_DADFAILED"
                                 t2CountNotify "SYS_ERROR_Dibbler_DAD_failed"
-                                if [ "$BOX_TYPE" = "XB6" -a "$MANUFACTURE" = "Technicolor" ]; then
+				if [ "$BOX_TYPE" = "XB6" ] && ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ); then
                                     echo "DADFAILED : Recovering device from DADFAILED state"
                                     # save global ipv6 address before disable it
                                     v6addr=$(ip -6 addr show dev $PRIVATE_LAN | grep -i global | awk '{print $2}')
@@ -886,7 +886,7 @@ self_heal_dhcp_clients()
                     if [ "$erouter0_up_check" = "" ] && [ "x$MAPT_CONFIG" != "xset" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : erouter0 is DOWN, making it UP"
                         ifconfig $WAN_INTERFACE up
-                        if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV4C_STATUS != "false" ]) || [ "$udhcpc_enable" = "true" ]; then
+                        if ( ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV4C_STATUS != "false" ]) || [ "$udhcpc_enable" = "true" ]; then
                         #Adding to kill ipv4 process to solve RDKB-27177
                         task_to_kill=`ps w | grep udhcpc | grep erouter | cut -f1 -d " "`
                         if [ "x$task_to_kill" = "x" ]; then
@@ -899,7 +899,7 @@ self_heal_dhcp_clients()
                     fi
                     fi
                     if ( [ "x$IPV6_STATUS_CHECK_GIPV6" != "x" ] || [ "x$IPV6_STATUS_CHECK_GIPV6" != "xstopped" ] ) && [ "$erouter_mode_check" -ne 1 ] && [ "$Unit_Activated" != "0" ]; then
-                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
+                    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" = "XB6" ] && [ $DHCPV6C_STATUS != "false" ]; then
                         echo_t "[RDKB_AGG_SELFHEAL] : Killing dibbler as Global IPv6 not attached"
                         dibbler_client_pid=$(ps w | grep -i dibbler-client | grep -v grep | awk '{print $1}')
                         if [ -n "$dibbler_client_pid" ]; then
@@ -1133,7 +1133,7 @@ self_heal_dhcp_clients()
         case $SELFHEAL_TYPE in
             "BASE")
                 if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ]; then
-                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+                    if ( [ "$MANUFACTURE" = "Technicolor" ] || [ "$MANUFACTURE" = "Sercomm" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
                         V4_EXEC_CMD="/sbin/udhcpc -i erouter0 -p /tmp/udhcpc.erouter0.pid -s /etc/udhcpc.script"
                     elif [ "$WAN_TYPE" = "EPON" ]; then
                         echo_t "Calling epon_utility.sh to restart udhcpc "
