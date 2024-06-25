@@ -388,8 +388,8 @@ Curr_AtomLoad_Avg=`rpcclient2 "cat /proc/loadavg" | sed '4q;d'`
 Load_Avg1=`echo $Curr_AtomLoad_Avg | awk  '{print $1}'`
 Load_Avg10=`echo $Curr_AtomLoad_Avg | awk  '{print $2}'`
 Load_Avg15=`echo $Curr_AtomLoad_Avg | awk  '{print $3}'`
-# Calculate value of AtomHighLoad threshold for an hour based on RESOURCE_MONITOR_INTERVAL
-AtomHighLoadCountThreshold=$((3600/$RESOURCE_MONITOR_INTERVAL))
+# Calculate value of AtomHighLoad threshold for 4 hours based on RESOURCE_MONITOR_INTERVAL
+AtomHighLoadCountThreshold=$((3600*4/$RESOURCE_MONITOR_INTERVAL))
 if [ "$AtomHighLoadCountThreshold" -eq 0 ]; then
     AtomHighLoadCountThreshold=1
 fi
