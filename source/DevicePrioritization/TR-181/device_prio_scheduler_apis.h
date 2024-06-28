@@ -37,6 +37,7 @@
 #define SYSCFG_PRIO_CLIENT_MAC_PREFIX       "DCPC_PrioClients_Mac"
 #define SYSCFG_PRIO_CLIENT_ACTION_PREFIX    "DCPC_PrioClients_Action"
 #define SYSCFG_PRIO_CLIENT_DSCP_PREFIX      "DCPC_PrioClients_DSCP"
+#define SYSCFG_PRIO_CLIENT_CONNMARK_PREFIX  "DCPC_PrioClients_Connmark"
 
 int clean_prev_syscfg_params();
 

@@ -27,6 +27,52 @@
 extern int sysevent_fd;
 extern token_t sysevent_token;
 
+#if 0
+void checkIfConnmarkIxists()
+{
+	char buf[16] = {0}, syscfg_param[64] = {0};
+    	int prio_clients_count = 0;
+    	unsigned int connmark = 0x800; // Starting bit
+    	char cConnMark[32] = {0};
+	snprintf(syscfg_param, sizeof(syscfg_param), "%s", SYSCFG_PRIO_CLIENT_COUNT);
+	if ( syscfg_get( NULL, syscfg_param, buf, sizeof(buf)) == 0 )
+	{
+		prio_clients_count = atoi(buf);
+        	if (prio_clients_count <= 0 ) {
+            		CcspTraceError(("%s:  No clients are prioratized %d, returning\n", __FUNCTION__, prio_clients_count));
+            		return ;
+        	}
+	}
+    	else {
+        	CcspTraceInfo(("%s: syscfg_get is empty for %s\n", __FUNCTION__, syscfg_param));
+        	return ;
+    	}   
+	for(int i=1; i<=prio_clients_count; i++) 
+	{
+        	memset(syscfg_param, 0, sizeof(syscfg_param));
+        	memset(buf, 0, sizeof(buf));
+        	snprintf(syscfg_param, sizeof(syscfg_param), "%s_%d", SYSCFG_PRIO_CLIENT_CONNMARK_PREFIX, i);
+        	syscfg_get( NULL, syscfg_param, buf, sizeof(buf));
+        	if (buf[0] == '\0')
+        	{
+            		if ( connmark == 0 ) {
+                		CcspTraceError(("Failure: Value exceeded 0xFFFFFFFF.\n"));  
+                		return;
+            		}            
+            		snprintf(syscfg_param, sizeof(syscfg_param), "%s_%d", SYSCFG_PRIO_CLIENT_CONNMARK_PREFIX, prio_clients_count);
+            		memset(cConnMark, 0, sizeof(cConnMark));
+            		snprintf(cConnMark, sizeof(cConnMark), "0x%X", connmark);
+            		if(syscfg_set_commit(NULL, syscfg_param, cConnMark) != 0)
+            		{
+                		CcspTraceError(("syscfg_set failed for %s\n", syscfg_param));
+                		return;
+            		}
+        	}
+        	connmark <<= 1; // Shift left by one position to enable the next bit
+    	}
+}
+
+#endif 
 int clean_prev_syscfg_params() {
     char buf[10] = {0}, syscfg_param[64] = {0};
     int prio_clients_count = 0;
@@ -70,6 +116,14 @@ int clean_prev_syscfg_params() {
             CcspTraceError(("%s: syscfg_unset %s\n", __FUNCTION__, syscfg_param));
             return -1;
         }
+
+        /*Delete connmark  from syscfg db*/
+        memset(syscfg_param, 0, sizeof(syscfg_param));
+        snprintf(syscfg_param, sizeof(syscfg_param), "%s_%d", SYSCFG_PRIO_CLIENT_CONNMARK_PREFIX, i);
+        if (syscfg_unset(NULL, syscfg_param) != 0) {
+            CcspTraceError(("%s: syscfg_unset %s\n", __FUNCTION__, syscfg_param));
+            return -1;
+        }
     }
 
     /*Delete prev prio clients count from syscfg db*/
@@ -105,8 +159,11 @@ void priomac_operation(char* priomac_str_bundle) {
     char mac_address[18];
     char dscp_str[5];
     char action[32];
+    char cConnMark[32] = {0};
+
     char syscfg_param[64] = {0};
     char buf[10] = {0};
+    unsigned int connmark = 0x800; // Starting bit
 
     if (0 != clean_prev_syscfg_params()) {
         CcspTraceWarning(("%s: clean_prev_syscfg_params() nothing to clean\n", __FUNCTION__));
@@ -134,10 +191,11 @@ void priomac_operation(char* priomac_str_bundle) {
 
     // Start parsing
     char *line = buffer;
-
-    while (1) {
+    while (1) 
+    {
         int num_fields = sscanf(line, "%[^,],%[^,],%31s", mac_address, dscp_str, action);
-        if (num_fields == 3) {
+        if (num_fields == 3) 
+        {
             /*Increment total number of prio clients count in current schedule*/
             prio_clients_count++;
 
@@ -151,7 +209,6 @@ void priomac_operation(char* priomac_str_bundle) {
             }
             memset(syscfg_param, 0, sizeof(syscfg_param));
             
-
             /*Set action in syscfg db*/
             snprintf(syscfg_param, sizeof(syscfg_param), "%s_%d", SYSCFG_PRIO_CLIENT_ACTION_PREFIX, prio_clients_count);
             if(syscfg_set_commit(NULL, syscfg_param, action) != 0)
@@ -170,16 +227,35 @@ void priomac_operation(char* priomac_str_bundle) {
                 free(buffer);
                 return;
             }
+
             memset(syscfg_param, 0, sizeof(syscfg_param));
 
-            CcspTraceInfo(("%s: 'Client %d' --> Mac:%s, Dscp:%s, Action:%s\n", 
-                            __FUNCTION__, prio_clients_count, mac_address, dscp_str, action));
-
-            memset(mac_address, 0, sizeof(mac_address));
-            memset(action, 0, sizeof(action));
-            memset(dscp_str, 0, sizeof(dscp_str));
-
+            CcspTraceInfo(("Connmark: 0x%X \n", connmark));
+            if ( connmark == 0 ) {
+                CcspTraceError(("Failure: Value exceeded 0xFFFFFFFF.\n"));  
+                free(buffer);
+                return;
+            }            
+            snprintf(syscfg_param, sizeof(syscfg_param), "%s_%d", SYSCFG_PRIO_CLIENT_CONNMARK_PREFIX, prio_clients_count);
+            memset(cConnMark, 0, sizeof(cConnMark));
+            snprintf(cConnMark, sizeof(cConnMark), "0x%X", connmark);
+            if(syscfg_set_commit(NULL, syscfg_param, cConnMark) != 0)
+            {
+                CcspTraceError(("syscfg_set failed for %s\n", syscfg_param));
+                free(buffer);
+                return;
+            }
         }
+
+        memset(syscfg_param, 0, sizeof(syscfg_param));
+
+        CcspTraceInfo(("%s: 'Client %d' --> Mac:%s, Dscp:%s, Action:%s\n", 
+                        __FUNCTION__, prio_clients_count, mac_address, dscp_str, action));
+
+        connmark <<= 1; // Shift left by one position to enable the next bit
+        memset(mac_address, 0, sizeof(mac_address));
+        memset(action, 0, sizeof(action));
+        memset(dscp_str, 0, sizeof(dscp_str));
 
         line = strchr(line, '\n'); // Move to the next newline character
         if (line == NULL)

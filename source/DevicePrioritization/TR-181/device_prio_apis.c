@@ -43,7 +43,6 @@ void DevicePrioInit()
 	DevicePrioRbusInit();
 	initDevicePrioInfo();
 	DevicePrio_SyseventInit();
-
 #ifdef RDK_SCHEDULER_ENABLED
 	// Init DevicePrio webconfig framework
     webConfigFrameworkInit();
