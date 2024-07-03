@@ -1552,6 +1552,16 @@ self_heal_sedaemon()
           systemctl start startse05xd.service
     fi
 }
+
+self_heal_conntrack()
+{
+    conntrack_max="`sysctl net.netfilter.nf_conntrack_max | cut -d "=" -f 2 `"
+    conntrack_count="`conntrack -C`"
+    if [ $conntrack_count -ge $conntrack_max ]; then
+        echo_t "[RDKB_AGG_SELFHEAL] : Conntrack Max Count reached. Conntrack count=$conntrack_count, nf_conntrack_max=$conntrack_max"
+    fi
+}
+
 # ARRIS XB6 => MODEL_NUM=TG3482G
 # Tech CBR  => MODEL_NUM=CGA4131COM
 # Tech XB6  => MODEL_NUM=CGM4140COM
@@ -1611,6 +1621,7 @@ do
     MAPT_CONFIG=`sysevent get mapt_config_flag`
  
     START_TIME_SEC=$(cut -d. -f1 /proc/uptime)
+    self_heal_conntrack
     self_heal_peer_ping
 
     if [ -f /tmp/dhcpmgr_initialized ]; then
