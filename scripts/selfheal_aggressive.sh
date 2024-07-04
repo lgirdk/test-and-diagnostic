@@ -986,7 +986,7 @@ self_heal_dhcp_clients()
                     fi
                     ;;
             esac
-        elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
+        elif [ "$erouter0_globalv6_test" != "" ] && [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SCER11BEL" ]; then
                 echo_t "[RDKB_AGG_SELFHEAL] : Global IPv6 is present"
         else
                 if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
@@ -1002,7 +1002,7 @@ self_heal_dhcp_clients()
                 UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
                 dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
-                if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ]; then
+                if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                     check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
                     check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 else
@@ -1211,7 +1211,7 @@ self_heal_dhcp_clients()
 	;;
 	"SYSTEMD")
         if [ "$WAN_STATUS" = "started" ]; then
-            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ]; then
+            if [ "$BOX_TYPE" != "HUB4" ] && [ "$BOX_TYPE" != "SR300" ] && [ "$BOX_TYPE" != "SE501" ] && [ "$BOX_TYPE" != "SR213" ] && [ "$BOX_TYPE" != "WNXL11BWL" ] && [ "$BOX_TYPE" != "SCER11BEL" ]; then
                 if [ $wan_dhcp_client_v4 -eq 0 ] && [ "x$MAPT_CONFIG" != "xset" ] && [ $DHCPV4C_STATUS != "false" ]; then
                     if [ "$MANUFACTURE" = "Technicolor" ]; then
                         V4_EXEC_CMD="sysevent set dhcp_client-start"
@@ -1619,10 +1619,13 @@ do
     fi
 
     MAPT_CONFIG=`sysevent get mapt_config_flag`
- 
+
     START_TIME_SEC=$(cut -d. -f1 /proc/uptime)
+
     self_heal_conntrack
-    self_heal_peer_ping
+    if [ "$MULTI_CORE" = "yes" ]; then
+        self_heal_peer_ping
+    fi
 
     if [ -f /tmp/dhcpmgr_initialized ]; then
     self_heal_dnsmasq
