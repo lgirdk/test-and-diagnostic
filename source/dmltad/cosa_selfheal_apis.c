@@ -450,6 +450,7 @@ CosaDmlGetSelfHealCfg(
 	errno_t rc = -1;
 	ULONG entryCountIPv4 = 0;
 	ULONG entryCountIPv6 = 0;
+    FILE *fp = NULL;
 
 	get_logbackupcfg();
 	pConnTest = (PCOSA_DML_CONNECTIVITY_TEST)AnscAllocateMemory(sizeof(COSA_DML_CONNECTIVITY_TEST));
@@ -466,8 +467,19 @@ CosaDmlGetSelfHealCfg(
 #endif
 	    v_secure_system("/usr/ccsp/tad/resource_monitor.sh &");
             v_secure_system("/usr/ccsp/tad/selfheal_aggressive.sh &");
-            v_secure_system("/usr/ccsp/tad/task_health_monitor.sh &");
-	}  
+            rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
+            ERR_CHK(rc);
+            fp = v_secure_popen("r", "busybox pidof task_health_monitor.sh");
+            if(fp)
+            {
+                copy_command_output(fp, buf, sizeof(buf));
+                v_secure_pclose(fp);
+            }
+            if(strlen(buf) == 0)
+            {
+                v_secure_system("/usr/ccsp/tad/task_health_monitor.sh &");
+            }
+    }
 
 	rc = memset_s(buf,sizeof(buf),0,sizeof(buf));
 	ERR_CHK(rc);
