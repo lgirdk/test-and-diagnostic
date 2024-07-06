@@ -38,5 +38,13 @@ if [ "$SELFHEAL_ENABLE" = "true" ] && [ -f /tmp/.resource_monitor_started ]; the
 		t2CountNotify "SYS_SH_ResourceMonitor_restart"
                 $TAD_PATH/resource_monitor.sh &
         fi
+
+        SelfHealScript_PID=$(busybox pidof self_heal_connectivity_test.sh)
+        if [ -z "$SelfHealScript_PID" ]; then
+            echo_t "RDKB_PROCESS_CRASHED : self_heal_connectivity_test.sh is not running, need restart"
+            echo_t "Restarting self_heal_connectivity_test.sh monitor script"
+            t2CountNotify "SYS_SH_SelfHealConnectivity_restart"
+            $TAD_PATH/self_heal_connectivity_test.sh &
+        fi
 fi
 
