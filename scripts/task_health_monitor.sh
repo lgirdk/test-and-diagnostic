@@ -3787,7 +3787,7 @@ if [ "$xle_device_mode" -ne "1" ]; then #zebra for non xle
     if [ "$ZEBRA_PID" = "" ] && [ "$WAN_STATUS" = "started" ]; then
         if [ "$BR_MODE" = "0" ]; then
              echo_t "$BR_MODE cat zebra.conf file: "
-            filename ="/var/zebra.conf"
+            filename="/var/zebra.conf"
             cat "$filename";
             echo_t "RDKB_PROCESS_CRASHED : zebra is not running, restarting the zebra"
             t2CountNotify "SYS_SH_Zebra_restart"
