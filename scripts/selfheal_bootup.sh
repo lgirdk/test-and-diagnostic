@@ -275,7 +275,8 @@ db_clean_up_required()
 if [ "$backupenable" == "true" ]
 then   
 
-if [ "$WAN_TYPE" != "EPON" ]; then
+#Vantiva XER5 is a Ethernet Router , hence excluding CM_INTERFACE check.
+if [ "$WAN_TYPE" != "EPON" ] && [ "$MODEL_NUM" != "VTER11QEL" ]; then
 # Check for CM IP Address
 	ifConInfo=`ifconfig $CM_INTERFACE 2> /dev/null`
 	if [ -n "$ifConInfo" ]; then
@@ -556,7 +557,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 	   	    check_if_brlan0_hasip=`ifconfig brlan0 | grep "inet addr"`
 
                     # l2sd0.100 is an interface specific to intel platform. Not applicable for other soc vendors.
-                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ]
+                    if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "HUB4" ] || [ "$BOX_TYPE" = "SR300" ] || [ "$BOX_TYPE" = "SE501" ] || [ "$BOX_TYPE" = "SR213" ] || [ "$BOX_TYPE" = "WNXL11BWL" ] || [ "$BOX_TYPE" = "VNTXER5" ]
                     then
                         check_if_l2sd0_100_created="NotApplicable"
                         check_if_l2sd0_100_up="NotApplicable"
@@ -626,7 +627,7 @@ if [ "$WAN_TYPE" != "EPON" ]; then
 				check_if_brlan1_hasip=`ifconfig brlan1 | grep "inet addr"`
 			
 				# l2sd0.101 is an intel specific interface. Not applicable for other soc vendors.
-				if [ "$BOX_TYPE" = "XB6" ]
+				if [ "$BOX_TYPE" = "XB6" ] || [ "$BOX_TYPE" = "VNTXER5" ]
 				then
 					check_if_l2sd0_101_created="NotApplicable"
 					check_if_l2sd0_101_up="NotApplicable"

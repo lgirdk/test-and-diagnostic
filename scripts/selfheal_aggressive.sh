@@ -24,7 +24,7 @@ source /etc/waninfo.sh
 source /etc/utopia/service.d/event_handler_functions.sh
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
 
-if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "VTER11QEL" ]
 then
     DHCPV6_HANDLER="/usr/bin/service_dhcpv6_client"
 else
@@ -830,7 +830,7 @@ self_heal_dhcp_clients()
     DHCPV4C_STATUS=true
     DHCPV6C_STATUS=true
 
-    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
+    if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "VTER11QEL" ]
     then
         DHCPV6_HANDLER="/usr/bin/service_dhcpv6_client"
     else

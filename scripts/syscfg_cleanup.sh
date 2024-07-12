@@ -119,4 +119,8 @@ elif [ "$BOX_TYPE" = "XB6" ];then
 		echo "XB6 device, restaring PandM"
 
 	systemctl restart CcspPandMSsp.service
+
+elif [ "$BOX_TYPE" = "VNTXER5" ];then
+	echo "XER5 device, restarting PandM"
+	systemctl restart CcspPandMSsp.service
 fi

@@ -34,7 +34,7 @@ if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "TG4482A" ]; then
 fi
 
 DIBBLER_SERVER_CONF="/etc/dibbler/server.conf"
-if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ]
+if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGA4131COM" ] || [ "$MODEL_NUM" = "CGM4140COM" ] || [ "$MODEL_NUM" = "CGM4331COM" ] || [ "$MODEL_NUM" = "TG4482A" ] || [ "$MODEL_NUM" = "VTER11QEL" ]
 then
     DHCPV6_HANDLER="/usr/bin/service_dhcpv6_client"
 else
@@ -2296,10 +2296,11 @@ esac
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # Tech XB8  => MODEL_NUM=CGM4981COM
+# Vant XER5 => MODEL_NUM=VTER11QEL
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ] 
 then
 case $SELFHEAL_TYPE in
     "BASE")
@@ -3359,10 +3360,11 @@ fi
     # CMX  XB7  => MODEL_NUM=TG4482A
     # Tech CBR2 => MODEL_NUM=CGA4332COM
     # Tech XB8  => MODEL_NUM=CGM4981COM
+    # Vant XER5 => MODEL_NUM=VTER11QEL
     # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
     # Ref: RDKB-25546
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+	   [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
     then
     checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
     if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -3505,10 +3507,11 @@ if [ "$thisWAN_TYPE" != "EPON" ]; then
 		# Tech CBR2 => MODEL_NUM=CGA4332COM
 		# CMX  XB7  => MODEL_NUM=TG4482A
                 # Tech XB8  => MODEL_NUM=CGM4981COM
+		# Vant XER5 => MODEL_NUM=VTER11QEL
 		# This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 		# Ref: RDKB-25546
 		if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+		       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
 		then
                 checkIfDnsmasqIsZombie=$(ps | grep "dnsmasq" | grep "Z" | awk '{ print $1 }')
                 if [ "$checkIfDnsmasqIsZombie" != "" ] ; then
@@ -3593,12 +3596,13 @@ esac
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech XB8  => MODEL_NUM=CGM4981COM
+# Vant XER5 => MODEL_NUM=VTER11QEL
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$xle_device_mode" -ne "1" ]; then
 # for xle no need to check dibbler client and server
     if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+        [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
     then
     #Checking dibbler server is running or not RDKB_10683
     DIBBLER_PID=$(busybox pidof dibbler-server)
@@ -3833,10 +3837,11 @@ esac
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech XB8  => MODEL_NUM=CGM4981COM
+# Vant XER5 => MODEL_NUM=VTER11QEL
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] || [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ]
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] || [ "$MODEL_NUM" != "SG417DBCT" ] && [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
 then
 # Checking for WAN_INTERFACE ipv6 address
 DHCPV6_ERROR_FILE="/tmp/.dhcpv6SolicitLoopError"
@@ -4328,10 +4333,11 @@ fi
 # Tech CBR2 => MODEL_NUM=CGA4332COM
 # CMX  XB7  => MODEL_NUM=TG4482A
 # Tech XB8  => MODEL_NUM=CGM4981COM
+# Vant XER5 => MODEL_NUM=VTER11QEL
 # This critical processes checking is handled in selfheal_aggressive.sh for above platforms
 # Ref: RDKB-25546
 if [ "$MODEL_NUM" != "TG3482G" ] && [ "$MODEL_NUM" != "CGA4131COM" ] &&
-       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] 
+       [ "$MODEL_NUM" != "CGM4140COM" ] && [ "$MODEL_NUM" != "CGM4331COM" ] && [ "$MODEL_NUM" != "CGM4981COM" ] && [ "$MODEL_NUM" != "CGM601TCOM" ] && [ "$MODEL_NUM" != "SG417DBCT" ] &&  [ "$MODEL_NUM" != "TG4482A" ] && [ "$MODEL_NUM" != "CGA4332COM" ] && [ "$MODEL_NUM" != "VTER11QEL" ]
 then
 case $SELFHEAL_TYPE in
     "BASE")
@@ -4525,6 +4531,21 @@ fi
 
 if [ "$MODEL_NUM" = "TG3482G" ] || [ "$MODEL_NUM" = "CGM4140COM" ]; then
         MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
+        if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
+                echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "
+                vlantag_ath0=$( /usr/opensync/tools/ovsh s Port -w name==ath0 | egrep "tag" | egrep 100)
+                vlantag_ath1=$( /usr/opensync/tools/ovsh s Port -w name==ath1 | egrep "tag" | egrep 100)
+                if [[ ! -z "$vlantag_ath0" ]] || [[ ! -z "$vlantag_ath1" ]]; then
+                        echo_t "[RDKB_SELFHEAL] : Remove port vlan tag "
+                        ovs-vsctl remove port ath0 tag 100
+                        ovs-vsctl remove port ath1 tag 100
+                fi
+        fi
+fi
+
+if [ "$MODEL_NUM" = "VTER11QEL" ]; then 
+	MESH_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
         OPENSYNC_ENABLE=$(dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Opensync | grep "value" | cut -f3 -d":" | cut -f2 -d" ")
         if [ "$MESH_ENABLE" = "true" ] && [ "$OPENSYNC_ENABLE" = "true" ]; then
                 echo_t "[RDKB_SELFHEAL] : Mesh is enabled, test if vlan tag is NULL "

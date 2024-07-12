@@ -46,7 +46,7 @@ if [ "x$ST_CLIENT_TYPE" = 'x1' ]; then
                 echo "$(date +"[%Y-%m-%d %H:%M:%S]") Unsupported device model" >> "$LOG_FILE"
             fi
             ;;
-        "XB6")
+        "XB6" | "VNTXER5")
             # Execute speedtest-client-c for XB6/XB7/XB8
             echo "$(date +"[%Y-%m-%d %H:%M:%S]") Executing speedtest-client-c for XB6/XB7/XB8" >> "$LOG_FILE"
             if [ "$MANUFACTURE" = "Technicolor" ]; then

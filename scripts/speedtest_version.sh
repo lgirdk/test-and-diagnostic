@@ -35,7 +35,7 @@ case "$BOX_TYPE" in
             echo "Unsupported device model" > "$VERSION_LOG_FILE"
         fi
         ;;
-    "XB6" | "TCCBR" | "WNXL11BWL" | "SR213")
+    "XB6" | "TCCBR" | "WNXL11BWL" | "SR213" | "VNTXER5")
         # C speedtest client
         /usr/bin/speedtest-client -v > "$VERSION_LOG_FILE"
         ;;
