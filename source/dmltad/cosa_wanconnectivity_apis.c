@@ -640,6 +640,29 @@ ANSC_STATUS CosaDmlGetIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface,BO
 
 }
 
+ANSC_STATUS CosaDml_glblintfdb_delentry(ULONG InstanceNumber)
+{
+    pthread_mutex_lock(&gIntfAccessMutex);
+    PWANCNCTVTY_CHK_GLOBAL_INTF_INFO gIntfInfo = get_InterfaceList(InstanceNumber);
+    if (gIntfInfo &&  gIntfInfo->IPInterface.Configured)
+    {
+        if (gIntfInfo->IPv4DnsServerList)
+        {
+            free(gIntfInfo->IPv4DnsServerList);
+            gIntfInfo->IPv4DnsServerList = NULL;
+        }
+        if (gIntfInfo->IPv6DnsServerList)
+        {
+            free(gIntfInfo->IPv6DnsServerList);
+            gIntfInfo->IPv6DnsServerList = NULL;
+        }
+        memset(gIntfInfo, 0, sizeof(WANCNCTVTY_CHK_GLOBAL_INTF_INFO));
+    }
+    pthread_mutex_unlock(&gIntfAccessMutex);
+
+    return ANSC_STATUS_SUCCESS;
+}
+
 ANSC_STATUS CosaDml_glblintfdb_updateentry(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface)
 {
     if (!pIPInterface)

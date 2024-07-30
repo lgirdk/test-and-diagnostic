@@ -355,6 +355,7 @@ ANSC_STATUS CosaWanCnctvtyChk_UnSubscribeActiveGW(void);
 void handle_actv_status_event (BOOL new_status);
 ANSC_STATUS CosaWanCnctvtyChk_Remove_Intf (ULONG IntfIndex);
 ANSC_STATUS CosaDmlGetIntfCfg(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface,BOOL use_default);
+ANSC_STATUS CosaDml_glblintfdb_delentry(ULONG InstanceNumber);
 ANSC_STATUS CosaDml_glblintfdb_updateentry(PCOSA_DML_WANCNCTVTY_CHK_INTF_INFO pIPInterface);
 ANSC_STATUS CosaDml_glblintfdb_update_dnsentry(char *InterfaceName,unsigned int IPv4DnsServerCount,
                                                unsigned int IPv6DnsServerCount,

@@ -325,6 +325,9 @@ rbusError_t WANCNCTVTYCHK_SetHandler(rbusHandle_t handle, rbusProperty_t prop,
                                                             rbusSetHandlerOptions_t* opts)
 {
     (void)opts;
+    int rc = RBUS_ERROR_SUCCESS;
+    int index = 1;
+    BOOL newValue;
     char const* name = rbusProperty_GetName(prop);
     rbusValue_t value = rbusProperty_GetValue(prop);
     rbusValueType_t type = rbusValue_GetType(value);
@@ -335,7 +338,33 @@ rbusError_t WANCNCTVTYCHK_SetHandler(rbusHandle_t handle, rbusProperty_t prop,
         {
             return RBUS_ERROR_INVALID_INPUT;
         }
-        g_wanconnectivity_check_enable = rbusValue_GetBoolean(value);
+        newValue = rbusValue_GetBoolean(value);
+
+        if (newValue != g_wanconnectivity_check_enable) {
+            g_wanconnectivity_check_enable = newValue;
+            if (g_wanconnectivity_check_enable == FALSE) {
+                rc = CosaWanCnctvtyChk_UnReg_elements(FEATURE_ENABLED_DML);
+                if(rc)
+                {
+                    WANCHK_LOG_ERROR("RbusDML Enabled UnReg failure, reason = %d", rc);
+                    return RBUS_ERROR_BUS_ERROR;
+                }
+                while(index <= gIntfCount) {
+                    CosaWanCnctvtyChk_Remove_Intf(index);
+                    CosaDml_glblintfdb_delentry(index);
+                    index++;
+                }
+                gIntfCount = 0;
+            }
+            else {
+                rc = CosaWanCnctvtyChk_Reg_elements(FEATURE_ENABLED_DML);
+                if(rc)
+                {
+                   WANCHK_LOG_ERROR("RbusDML Enabled Reg failure, reason = %d", rc);
+                   return RBUS_ERROR_BUS_ERROR;
+                }
+            }
+        }
     }
     else
     {
