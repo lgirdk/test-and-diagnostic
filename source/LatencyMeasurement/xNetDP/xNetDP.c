@@ -166,6 +166,10 @@ struct option longopts[] =
 };
 
 #define MAX_LOG_BUFF_SIZE 2048
+
+//Enable ENABLE_95th_PERCENTILE macro to calculate 95th percentile
+//#define ENABLE_95th_PERCENTILE
+
 FILE *logFp = NULL;
 char log_buff[MAX_LOG_BUFF_SIZE] ;
 #define VALIDATION_SUCCESS 0
@@ -250,7 +254,14 @@ LatencyTable Ipv6HashLatencyTable[MAX_NUM_OF_CLIENTS];
 #define FILTER_BUF_SIZE 128
 #define PERCENTILE_CALCULATION_ENABLE 		"LatencyMeasure_PercentileCalc_Enable"
 bool PercentileCalculationEnable=0;
-int PercentileValue=95;
+
+#ifdef ENABLE_95th_PERCENTILE
+#define PERCENTILE_VALUE 95
+#else
+#define PERCENTILE_VALUE 99
+#endif
+
+int PercentileValue=PERCENTILE_VALUE;
 int print_Samples(long long arr[],long long age[], long long size);
 /****************percentile calculation code part***********************************/
 /*********************************************************************************
@@ -574,7 +585,7 @@ void UpdateReportingTable(int hashIndex)
                 dbg_log("hashIndex:%d,index:%d,atFirstInitTime:%d Num_of_Sample:%lld\n",hashIndex,index, hashLatencyTable[index].atFirstInitTime, hashLatencyTable[index].Num_of_Sample);
                 if(( hashLatencyTable[index].atFirstInitTime==0)&&( hashLatencyTable[index].Num_of_Sample<=MAX_SAMPLE &&  hashLatencyTable[index].Num_of_Sample>=MIN_SAMPLE))
                 {
-                    dbg_log("SynAck_95_PercentileLatency: \n");
+                    dbg_log("SynAck_%d_PercentileLatency: \n",PercentileValue);
                     /***** pecentaile calculation for wan******/
                     memcpy( hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Samples,hashLatencyTable[index].wanSamples,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     memcpy( hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Samples_age,hashLatencyTable[index].SamplesAges,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
@@ -582,13 +593,13 @@ void UpdateReportingTable(int hashIndex)
                     hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Percentile=PercentileValue;
                     hashLatencyTable[index].SynAckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE]);
                     /***** pecentaile calculation for lan******/
-                    dbg_log("Ack_95_PercentileLatency: \n");
+                    dbg_log("Ack_%d_PercentileLatency: \n",PercentileValue);
                     memcpy( hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Samples,hashLatencyTable[index].lanSamples,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     memcpy( hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Samples_age,hashLatencyTable[index].SamplesAges,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Number_of_Samples= hashLatencyTable[index].Num_of_Sample;
                     hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Percentile=PercentileValue;
                     hashLatencyTable[index].AckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE]);
-                    dbg_log("Index:%d Ack_Percentile_95:%lld SyncACk_Percentile_95::%lld\n",index,hashLatencyTable[index].AckPercentileLatency,hashLatencyTable[index].SynAckPercentileLatency);
+                    dbg_log("Index:%d Ack_Percentile_%d:%lld SyncACk_Percentile_%d::%lld\n",index,PercentileValue,hashLatencyTable[index].AckPercentileLatency,PercentileValue,hashLatencyTable[index].SynAckPercentileLatency);
                     if( hashLatencyTable[index].Num_of_Sample>=MAX_SAMPLE)
                     {
                         hashLatencyTable[index].atFirstInitTime=1;
@@ -601,16 +612,16 @@ void UpdateReportingTable(int hashIndex)
                 else if(( hashLatencyTable[index].Num_of_Sample>=ADD_MAX_SAMPLE)&&( hashLatencyTable[index].atFirstInitTime==1))
                 {
                     hashLatencyTable[index].NthMaxValue= hashLatencyTable[index].NthMaxValue+ hashLatencyTable[index].Num_of_Sample;
-                    dbg_log("SynAck_95_PercentileLatency: \n");
+                    dbg_log("SynAck_%d_PercentileLatency: \n",PercentileValue);
                     Remove_OldSample_Add_NewSample(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE],hashLatencyTable[index].wanSamples,hashLatencyTable[index].SamplesAges, hashLatencyTable[index].NthMaxValue);
                     hashLatencyTable[index].Percentile_info[WAN_PERCENTILE].Percentile=PercentileValue;
                     hashLatencyTable[index].SynAckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[WAN_PERCENTILE]);
                     /***** pecentaile calculation for lan******/
-                    dbg_log("Ack_95_PercentileLatency: \n");
+                    dbg_log("Ack_%d_PercentileLatency: \n",PercentileValue);
                     Remove_OldSample_Add_NewSample(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE],hashLatencyTable[index].lanSamples,hashLatencyTable[index].SamplesAges, hashLatencyTable[index].NthMaxValue);
                     hashLatencyTable[index].Percentile_info[LAN_PERCENTILE].Percentile=PercentileValue;
                     hashLatencyTable[index].AckPercentileLatency=Calculate_Percentile(&hashLatencyTable[index].Percentile_info[LAN_PERCENTILE]);
-                    dbg_log("index:%d Ack_Percentile_95:%lld SynACk_Percentile_95::%lld\n",index,hashLatencyTable[index].AckPercentileLatency, hashLatencyTable[index].SynAckPercentileLatency);
+                    dbg_log("index:%d Ack_Percentile_%d:%lld SynACk_Percentile_%d::%lld\n",index,PercentileValue,hashLatencyTable[index].AckPercentileLatency,PercentileValue,hashLatencyTable[index].SynAckPercentileLatency);
                     memset(hashLatencyTable[index].wanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     memset(hashLatencyTable[index].lanSamples,0,sizeof(long long)* hashLatencyTable[index].Num_of_Sample);
                     hashLatencyTable[index].Num_of_Sample=0;
