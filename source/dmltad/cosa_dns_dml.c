@@ -996,6 +996,16 @@ NSLookupDiagnostics_Validate
                 pNSLookupDiagInfo->DiagnosticState = DSLH_DIAG_STATE_TYPE_None;
                 return FALSE;
             }
+        if(isValidIPv4Address(pNSLookupDiagInfo->DNSServer))
+        {
+            rc = strcpy_s(pNSLookupDiagInfo->IfAddr, sizeof(pNSLookupDiagInfo->IfAddr) ,CosaGetInterfaceAddrByName("Device.DeviceInfo.X_COMCAST-COM_WAN_IP"));
+            ERR_CHK(rc);
+        }
+        else if(isValidIPv6Address(pNSLookupDiagInfo->DNSServer))
+        {
+            rc = strcpy_s(pNSLookupDiagInfo->IfAddr, sizeof(pNSLookupDiagInfo->IfAddr) ,CosaGetInterfaceAddrByName("Device.DeviceInfo.X_COMCAST-COM_WAN_IPv6"));
+            ERR_CHK(rc);
+        }	
     }
 
     if ( TRUE )
