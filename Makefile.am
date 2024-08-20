@@ -49,14 +49,6 @@ libdiagnostic_la_SOURCES = \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_states.c \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_tdo_base.c \
         source/diagnostic/BbhmDiagIpTraceroute/bbhm_diagit_tdo_operation.c \
-        source/diagnostic/bbhm_diag_lib.c
-
-if !FEATURE_RESOURCE_OPTIMIZATION
-libdiagnostic_la_SOURCES += \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_action.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_base.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_interface.c \
-        source/diagnostic/BbhmDiagDownload/bbhm_download_operation.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_base.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_interface.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_operation.c \
@@ -67,6 +59,14 @@ libdiagnostic_la_SOURCES += \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_xsink_base.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_xsink_operation.c \
         source/diagnostic/BbhmDiagNSLookup/bbhm_diagns_xsink_states.c \
+        source/diagnostic/bbhm_diag_lib.c
+
+if !FEATURE_RESOURCE_OPTIMIZATION
+libdiagnostic_la_SOURCES += \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_action.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_base.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_interface.c \
+        source/diagnostic/BbhmDiagDownload/bbhm_download_operation.c \
         source/diagnostic/BbhmDiagUpload/bbhm_upload_action.c \
         source/diagnostic/BbhmDiagUpload/bbhm_upload_base.c \
         source/diagnostic/BbhmDiagUpload/bbhm_upload_interface.c \

@@ -888,7 +888,6 @@
                 </object>
             </objects>
         </object>
-<?ifndef FEATURE_RESOURCE_OPTIMIZATION?>
         <object>
             <name>DNS</name>
             <objectType>object</objectType>
@@ -1024,7 +1023,6 @@
                 </object>
             </objects>
         </object>
-<?endif?>
         <object>
             <name>SelfHeal</name>
             <objectType>object</objectType>

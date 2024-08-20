@@ -231,7 +231,6 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_GetParamStringValue",  SpeedTestServer_GetParamStringValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "SpeedTestServer_SetParamStringValue",  SpeedTestServer_SetParamStringValue);
 
-#if !defined (RESOURCE_OPTIMIZATION)
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamBoolValue",  NSLookupDiagnostics_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamIntValue",  NSLookupDiagnostics_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "NSLookupDiagnostics_GetParamUlongValue",  NSLookupDiagnostics_GetParamUlongValue);
@@ -252,7 +251,6 @@ COSA_Init
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamIntValue",  Result_GetParamIntValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamUlongValue",  Result_GetParamUlongValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "Result_GetParamStringValue",  Result_GetParamStringValue);
-#endif
 
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_GetParamBoolValue",  LogBackup_GetParamBoolValue);
     pPlugInfo->RegisterFunction(pPlugInfo->hContext, "LogBackup_SetParamBoolValue",  LogBackup_SetParamBoolValue);

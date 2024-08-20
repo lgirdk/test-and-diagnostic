@@ -166,8 +166,8 @@ CosaDiagInitialize
     PCOSA_DATAMODEL_DIAG            pMyObject            = (PCOSA_DATAMODEL_DIAG )hThisObject;
     PDSLH_PING_INFO                 pDiagPingInfo        = (PDSLH_PING_INFO      )NULL;
     PDSLH_TRACEROUTE_INFO           pDiagTracerouteInfo  = (PDSLH_TRACEROUTE_INFO)NULL;
-#if !defined (RESOURCE_OPTIMIZATION)
     PDSLH_NSLOOKUP_INFO             pDiagNSLookInfo      = (PDSLH_NSLOOKUP_INFO  )NULL;
+#if !defined (RESOURCE_OPTIMIZATION)
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo        = (PDSLH_TR143_DOWNLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo          = (PDSLH_TR143_UPLOAD_DIAG_INFO)NULL;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo         = (PDSLH_TR143_UDP_ECHO_CONFIG)NULL;
@@ -201,7 +201,6 @@ CosaDiagInitialize
         pMyObject->hDiagTracerouteInfo = (ANSC_HANDLE)pDiagTracerouteInfo;
     }
 
-#if !defined (RESOURCE_OPTIMIZATION)
     pDiagNSLookInfo = AnscAllocateMemory(sizeof(DSLH_NSLOOKUP_INFO));
 
     if ( !pDiagNSLookInfo )
@@ -218,6 +217,7 @@ CosaDiagInitialize
         pMyObject->hDiagNSLookInfo = (ANSC_HANDLE)pDiagNSLookInfo;
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     /* Init Download diagnostics configurations */
     pDownloadInfo = AnscAllocateMemory(sizeof(DSLH_TR143_DOWNLOAD_DIAG_INFO));
 
@@ -402,12 +402,12 @@ CosaDiagRemove
         AnscFreeMemory((ANSC_HANDLE)pMyObject->hDiagTracerouteInfo);
     }
 
-#if !defined (RESOURCE_OPTIMIZATION)
     if ( pMyObject->hDiagNSLookInfo )
     {
         AnscFreeMemory((ANSC_HANDLE)pMyObject->hDiagNSLookInfo);
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     if ( pMyObject->hDiagDownloadInfo )
     {
         AnscFreeMemory((ANSC_HANDLE)pMyObject->hDiagDownloadInfo);

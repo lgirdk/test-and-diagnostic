@@ -60,9 +60,9 @@
 #include "bbhm_diagit_interface.h"
 #include "bbhm_diagit_exported_api.h"
 
-#if !defined (RESOURCE_OPTIMIZATION)
 #include "bbhm_diagns_interface.h"
 #include "bbhm_diagns_exported_api.h"
+#if !defined (RESOURCE_OPTIMIZATION)
 #include "bbhm_download_interface.h"
 #include "bbhm_download_exported_api.h"
 #include "bbhm_upload_interface.h"
@@ -78,8 +78,8 @@
 extern PBBHM_DIAG_IP_PING_OBJECT       g_DiagIpPingObj;
 extern PBBHM_DIAG_IP_TRACEROUTE_OBJECT g_DiagIpTracerouteObj;
 
-#if !defined (RESOURCE_OPTIMIZATION)
 extern PBBHM_DIAG_NS_LOOKUP_OBJECT     g_DiagNSLookupObj;
+#if !defined (RESOURCE_OPTIMIZATION)
 extern PBBHM_DOWNLOAD_DIAG_OBJECT      g_DiagDownloadObj;
 extern PBBHM_UPLOAD_DIAG_OBJECT        g_DiagUploadObj;
 extern PBBHM_UDP_ECHOSRV_OBJECT        g_UdpechoObj;
@@ -99,8 +99,8 @@ COSA_Diag_Init
     PBBHM_DIAG_IP_PING_OBJECT       pDiagIpPingObj       = (PBBHM_DIAG_IP_PING_OBJECT      )NULL;
     PBBHM_DIAG_IP_TRACEROUTE_OBJECT pDiagIpTracerouteObj = (PBBHM_DIAG_IP_TRACEROUTE_OBJECT)NULL;
 
-#if !defined (RESOURCE_OPTIMIZATION)
     PBBHM_DIAG_NS_LOOKUP_OBJECT     pDiagNSLookupObj     = (PBBHM_DIAG_NS_LOOKUP_OBJECT    )NULL;
+#if !defined (RESOURCE_OPTIMIZATION)
     PBBHM_DOWNLOAD_DIAG_OBJECT      pDiagDownloadObj     = (PBBHM_DOWNLOAD_DIAG_OBJECT     )NULL;
     PBBHM_UPLOAD_DIAG_OBJECT        pDiagUploadObj       = (PBBHM_UPLOAD_DIAG_OBJECT       )NULL;
     PBBHM_UDP_ECHOSRV_OBJECT        pUdpechoObj          = (PBBHM_UDP_ECHOSRV_OBJECT       )NULL;
@@ -124,7 +124,6 @@ COSA_Diag_Init
                 (ANSC_HANDLE)NULL
             );
 
-#if !defined (RESOURCE_OPTIMIZATION)
     pDiagNSLookupObj =
         (PBBHM_DIAG_NS_LOOKUP_OBJECT)BbhmCreateDiagnosticNSLookup
             (
@@ -133,6 +132,7 @@ COSA_Diag_Init
                 (ANSC_HANDLE)NULL
             );
 
+#if !defined (RESOURCE_OPTIMIZATION)
     pDiagDownloadObj = 
         (PBBHM_DOWNLOAD_DIAG_OBJECT)BbhmCreateDownloadDiag
             (
@@ -168,12 +168,12 @@ COSA_Diag_Init
         pDiagIpTracerouteObj->Engage((ANSC_HANDLE)pDiagIpTracerouteObj);
     }
 
-#if !defined (RESOURCE_OPTIMIZATION)
     if ( pDiagNSLookupObj )
     {
         pDiagNSLookupObj->Engage((ANSC_HANDLE)pDiagNSLookupObj);
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     if ( pDiagDownloadObj )
     {
         pDiagDownloadObj->Engage((ANSC_HANDLE)pDiagDownloadObj);
@@ -244,7 +244,6 @@ COSA_Diag_GetResults
 
             break;
 
-#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_NSLookup:
 
             if ( !g_DiagNSLookupObj )
@@ -265,6 +264,7 @@ COSA_Diag_GetResults
 
             break;
 
+#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_Download: 
 
             if ( !g_DiagDownloadObj )
@@ -393,8 +393,8 @@ COSA_Diag_ScheduleDiagnostic
     PDSLH_PING_INFO                 pPingInfo          = (PDSLH_PING_INFO      )hDiagInfo;
     PDSLH_TRACEROUTE_INFO           pTracerouteInfo    = (PDSLH_TRACEROUTE_INFO)hDiagInfo;
 
-#if !defined (RESOURCE_OPTIMIZATION)
 	PDSLH_NSLOOKUP_INFO				pNSLookupInfo	   = (PDSLH_NSLOOKUP_INFO  )hDiagInfo;
+#if !defined (RESOURCE_OPTIMIZATION)
     PDSLH_TR143_DOWNLOAD_DIAG_INFO  pDownloadInfo  = (PDSLH_TR143_DOWNLOAD_DIAG_INFO)hDiagInfo;
     PDSLH_TR143_UPLOAD_DIAG_INFO    pUploadInfo    = (PDSLH_TR143_UPLOAD_DIAG_INFO)hDiagInfo;
     PDSLH_TR143_UDP_ECHO_CONFIG     pUdpEchoInfo       = (PDSLH_TR143_UDP_ECHO_CONFIG)hDiagInfo;
@@ -455,7 +455,6 @@ COSA_Diag_ScheduleDiagnostic
 
             break;
 
-#if !defined (RESOURCE_OPTIMIZATION)
 	    case DSLH_DIAGNOSTIC_TYPE_NSLookup:
 
             if ( !g_DiagNSLookupObj )
@@ -483,6 +482,7 @@ COSA_Diag_ScheduleDiagnostic
 
             break;
 
+#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_Download:
 
             if ( !g_DiagDownloadObj )
@@ -610,7 +610,6 @@ COSA_Diag_SetDiagParams
 
             break;
 
-#if !defined (RESOURCE_OPTIMIZATION)
 	    case DSLH_DIAGNOSTIC_TYPE_NSLookup:
 
             if ( !g_DiagNSLookupObj )
@@ -629,6 +628,7 @@ COSA_Diag_SetDiagParams
 
             break;
 
+#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_Download:
 
             if ( !g_DiagDownloadObj )
@@ -736,7 +736,6 @@ COSA_Diag_SetDiagState
     
                 break;
     
-#if !defined (RESOURCE_OPTIMIZATION)
             case DSLH_DIAGNOSTIC_TYPE_NSLookup:
     
                 if ( !g_DiagNSLookupObj )
@@ -755,6 +754,7 @@ COSA_Diag_SetDiagState
     
                 break;
     
+#if !defined (RESOURCE_OPTIMIZATION)
             case DSLH_DIAGNOSTIC_TYPE_Download:
     
                 if ( !g_DiagDownloadObj )
@@ -845,7 +845,6 @@ COSA_Diag_CancelDiagnostic
             }
             break;
 
-#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_NSLookup:
 
             if ( !g_DiagNSLookupObj )
@@ -858,6 +857,7 @@ COSA_Diag_CancelDiagnostic
             }
             break;
 
+#if !defined (RESOURCE_OPTIMIZATION)
         case DSLH_DIAGNOSTIC_TYPE_Download:
 
             if ( !g_DiagDownloadObj )
@@ -943,13 +943,13 @@ COSA_Diag_Unload
         g_DiagIpTracerouteObj->Remove((ANSC_HANDLE)g_DiagIpTracerouteObj);
     }
 
-#if !defined (RESOURCE_OPTIMIZATION)
     if ( g_DiagNSLookupObj )
     {
         g_DiagNSLookupObj->Cancel((ANSC_HANDLE)g_DiagNSLookupObj);
         g_DiagNSLookupObj->Remove((ANSC_HANDLE)g_DiagNSLookupObj);
     }
 
+#if !defined (RESOURCE_OPTIMIZATION)
     if ( g_DiagDownloadObj )
     {
         g_DiagDownloadObj->Cancel((ANSC_HANDLE)g_DiagDownloadObj);
