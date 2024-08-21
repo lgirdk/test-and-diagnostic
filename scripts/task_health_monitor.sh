@@ -4821,6 +4821,11 @@ self_heal_meshAgent
 self_heal_meshAgent_hung
 self_heal_sedaemon
 
+#checking MAPT is enabled or not
+if [ "$(syscfg get MAPT_Enable)" = "true" ]; then
+    echo_t "[RDKB_SELFHEAL] : MAPT is enabled!"
+fi
+
 #RDKB-55218 - workaround for ovs-vswitchd cpu spike.
 # Deleting and adding pgd interfaces in br106 and brlan1 will reduce cpu usage of ovs-vswitchd
 
