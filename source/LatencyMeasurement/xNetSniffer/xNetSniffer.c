@@ -58,7 +58,7 @@ Licensed under a BSD-3 style license reproduced in LICENSE
 // structure for message queue
 
 struct mesg_buffer {
-    u_char mesg_type;
+    long mesg_type;
     u_int   th_flag;
     u_int   th_seq;                
     u_int   th_ack; 

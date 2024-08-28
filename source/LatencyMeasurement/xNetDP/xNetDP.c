@@ -81,7 +81,7 @@ enum ip_family
 };
 
 typedef struct mesg_buffer {
-    u_char mesg_type;
+    long mesg_type;
     u_int   th_flag;
     u_int   th_seq;                
     u_int   th_ack; 
