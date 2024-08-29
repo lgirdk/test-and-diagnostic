@@ -20,27 +20,9 @@
 
 #This script is used to execute speedtest-client binary to retrieve version
 VERSION_LOG_FILE=/tmp/.speedtest-client-version.log
-. /etc/device.properties
 
-case "$BOX_TYPE" in
-    "XB3")
-        if [ "$MODEL_NUM" = "TG1682G" ]; then
-            # C speedtest client
-            rpcclient "$ATOM_ARPING_IP" "/usr/bin/speedtest-client -v" > "$VERSION_LOG_FILE"
-        elif [ "$MODEL_NUM" = "DPC3941" ] || [ "$MODEL_NUM" = "DPC3941B" ]; then
-            # C speedtest client
-            rpcclient "$ATOM_ARPING_IP" "sh /etc/measurement-client-download.sh &"
-        else
-            # Unsupported speedtest client
-            echo "Unsupported device model" > "$VERSION_LOG_FILE"
-        fi
-        ;;
-    "XB6" | "TCCBR" | "WNXL11BWL" | "SR213" | "VNTXER5")
-        # C speedtest client
-        /usr/bin/speedtest-client -v > "$VERSION_LOG_FILE"
-        ;;
-    *)
-        # Unsupported speedtest client
-        echo "Unsupported device model" > "$VERSION_LOG_FILE"
-        ;;
-esac
+if [ -f /usr/bin/speedtest-client ]; then
+    /usr/bin/speedtest-client -v > "$VERSION_LOG_FILE"
+else
+    echo "Unsupported device model" > "$VERSION_LOG_FILE"
+fi
