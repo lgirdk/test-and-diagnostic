@@ -69,6 +69,7 @@
 #include "ccsp_base_api.h"
 #include <rbus/rbus.h>
 #include "sysevent/sysevent.h"
+#include "rdk_debug.h"
 
 /* supporting only primary and secondary now*/
 #define MAX_INTF_NAME_SIZE 64

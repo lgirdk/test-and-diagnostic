@@ -16,12 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ##########################################################################
+if UNIT_TEST_DOCKER_SUPPORT
+SUBDIRS = test
+else
 if FEATURE_DEVICE_PRIORITIZATION
 SUBDIRS = DevicePrioritization LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker
 else
-SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker 
+SUBDIRS = LatencyMeasurement TandDSsp dmltad util xle_selfheal ImageHealthChecker
+endif
 endif
 
-if WITH_GTEST_SUPPORT
-SUBDIRS += test
-endif

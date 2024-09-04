@@ -57,6 +57,12 @@
 
 #include "ccsp_trace.h"
 
+#ifdef UNIT_TEST_DOCKER_SUPPORT
+#define STATIC
+#else
+#define STATIC static
+#endif
+
 extern ANSC_HANDLE bus_handle;
 extern COSAGetParamValueByPathNameProc g_GetParamValueByPathNameProc;
 
@@ -92,8 +98,8 @@ int commonSyseventGet(char* key, char* value, int valLen){
 extern diag_obj_t *diag_ping_load(void);
 extern diag_obj_t *diag_tracert_load(void);
 
-static diag_obj_t *diag_ping;
-static diag_obj_t *diag_tracert;
+STATIC diag_obj_t *diag_ping;
+STATIC diag_obj_t *diag_tracert;
 diag_pingtest_stat_t diag_pingtest_stat;
 
 static diag_err_t diag_init_blocksize (void);
