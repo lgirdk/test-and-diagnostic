@@ -114,7 +114,9 @@ static BridgeMap_t BridgeMap[] =
   #define WIFI_PRIVATE_2G "ath0"
   #define WIFI_PRIVATE_5G "ath1"
   #define WIFI_XB6_COMBINED "host0"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "moca0"
+#endif
   #define ETHERNET_LAN_0 "eth0"
   #define ETHERNET_LAN_1 "eth1"
 #endif // TXB6
@@ -123,7 +125,9 @@ static BridgeMap_t BridgeMap[] =
 && defined(RDK_ONEWIFI)
   #define WIFI_PRIVATE_2G "wl0.1"
   #define WIFI_PRIVATE_5G "wl1.1"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "moca0"
+#endif
   #define ETHERNET_LAN_0 "eth0"
   #define ETHERNET_LAN_1 "eth1"
   #define ETHERNET_LAN_2 "eth2"
@@ -134,7 +138,9 @@ static BridgeMap_t BridgeMap[] =
 && !defined(RDK_ONEWIFI)
   #define WIFI_PRIVATE_2G "wl0.1"
   #define WIFI_PRIVATE_5G "wl1.1"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "moca0"
+#endif
   #define ETHERNET_LAN_0 "eth0"
   #define ETHERNET_LAN_1 "eth1"
   #define ETHERNET_LAN_2 "eth2"
@@ -144,7 +150,9 @@ static BridgeMap_t BridgeMap[] =
   #define WIFI_PRIVATE_2G "wl0.1"
   #define WIFI_PRIVATE_5G "wl1.1"
   #define WIFI_PRIVATE_6G "wl2.1"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "moca0"
+#endif
   #define ETHERNET_LAN_0 "eth0"
   #define ETHERNET_LAN_1 "eth1"
   #define ETHERNET_LAN_2 "eth2"
@@ -155,7 +163,9 @@ static BridgeMap_t BridgeMap[] =
   #define WIFI_PRIVATE_2G "wl0"
   #define WIFI_PRIVATE_5G "wl1"
   #define WIFI_PRIVATE_6G "wl2"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "moca0"
+#endif
   #define ETHERNET_LAN_0 "eth0"
   #define ETHERNET_LAN_1 "eth1"
   #define ETHERNET_LAN_2 "eth2"
@@ -190,14 +200,18 @@ static BridgeMap_t BridgeMap[] =
   #define WIFI_PRIVATE_2G "ath0"
   #define WIFI_PRIVATE_5G "ath1"
   #define WIFI_XB6_COMBINED "host0"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "nmoca0"
+#endif
   #define ETHERNET_LAN_0 "nsgmii1.100"
 #endif // ARRISXB6
 
 #if defined(CS_XB7)
   #define WIFI_PRIVATE_2G "wlan0.0"
   #define WIFI_PRIVATE_5G "wlan2.0"
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
   #define MOCA "nmoca0"
+#endif
   #define ETHERNET_LAN_0 "nsgmii0"
   #define ETHERNET_LAN_1 "nrgmii2"
   #define ETHERNET_LAN_2 "sw_2"
@@ -217,7 +231,9 @@ static PortMap_t PortMap[] =
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
     {WIFI_XB6_COMBINED,    "CombinedPrivateAndOther"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"}
 #endif // TXB6
@@ -226,7 +242,9 @@ static PortMap_t PortMap[] =
 && defined(RDK_ONEWIFI)
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"},
     {ETHERNET_LAN_2,       "EthernetLan2"},
@@ -237,7 +255,9 @@ static PortMap_t PortMap[] =
 && !defined(RDK_ONEWIFI)
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"},
     {ETHERNET_LAN_2,       "EthernetLan2"}
@@ -247,7 +267,9 @@ static PortMap_t PortMap[] =
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
     {WIFI_PRIVATE_6G,      "6GHzPrivate"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"},
     {ETHERNET_LAN_2,       "EthernetLan2"},
@@ -258,7 +280,9 @@ static PortMap_t PortMap[] =
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
     {WIFI_PRIVATE_6G,      "6GHzPrivate"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"},
     {ETHERNET_LAN_2,       "EthernetLan2"},
@@ -293,14 +317,18 @@ static PortMap_t PortMap[] =
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
     {WIFI_XB6_COMBINED,    "CombinedPrivateAndOther"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"}
 #endif // ARRISXB6
 
 #if defined(CS_XB7)
     {WIFI_PRIVATE_2G,      "2.4GHzPrivate"},
     {WIFI_PRIVATE_5G,      "5GHzPrivate"},
+#if !defined (NO_MOCA_FEATURE_SUPPORT)
     {MOCA,                 "MoCA"},
+#endif
     {ETHERNET_LAN_0,       "EthernetLan0"},
     {ETHERNET_LAN_1,       "EthernetLan1"},
     {ETHERNET_LAN_2,       "EthernetLan2"},
