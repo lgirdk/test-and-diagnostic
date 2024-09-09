@@ -279,6 +279,19 @@ self_heal_meshAgent()
     fi
 }
 
+self_heal_meshAgent_hung() {
+    cmd_mesh="dmcli eRT getv Device.DeviceInfo.X_RDKCENTRAL-COM_xOpsDeviceMgmt.Mesh.Enable"
+    eval "$cmd_mesh" > /dev/null &
+    local cmd_pid=$!
+    sleep 5
+    process_info=$(ps | grep $cmd_pid | grep -v grep)
+    if [ -n "$process_info" ]; then
+       kill $cmd_pid
+       echo_t "[RDKB_SELFHEAL] :meshAgent is hung, defer restart"
+       # systemctl restart meshAgent
+    fi
+}
+
 self_heal_dual_cron()
 {
     CRONTAB_DIR="/var/spool/cron/crontabs/"
@@ -4805,6 +4818,7 @@ esac
 
 self_heal_dual_cron
 self_heal_meshAgent
+self_heal_meshAgent_hung
 self_heal_sedaemon
 
 #RDKB-55218 - workaround for ovs-vswitchd cpu spike.
