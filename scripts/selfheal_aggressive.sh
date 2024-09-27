@@ -1002,7 +1002,7 @@ self_heal_dhcp_clients()
                 UDHCPC_Enable=$(syscfg get UDHCPEnable_v2)
                 dibbler_client_enable=$(syscfg get dibbler_client_enable_v2)
 
-                if ( [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
+		if ( ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ] ) || [ "$WAN_TYPE" = "EPON" ] || [ "$BOX_TYPE" = "VNTXER5" ] || [ "$BOX_TYPE" = "SCER11BEL" ]; then
                     check_wan_dhcp_client_v4=$(ps ww | grep "udhcpc" | grep "erouter")
                     check_wan_dhcp_client_v6=$(ps w | grep "dibbler-client" | grep -v "grep")
                 else
@@ -1160,7 +1160,7 @@ self_heal_dhcp_clients()
 
                 if [ $wan_dhcp_client_v6 -eq 0 ]; then
                     echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-                    if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ]; then
+		    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ]; then
                         /lib/rdk/dibbler-init.sh
                         sleep 2
                         /usr/sbin/dibbler-client start
@@ -1270,7 +1270,7 @@ self_heal_dhcp_clients()
 		fi
 		if [ $wan_dhcp_client_v6 -eq 0 ] && [ $DHCPV6C_STATUS != "false" ]; then
             echo_t "DHCP_CLIENT : Restarting DHCP Client for v6"
-            if [ "$MANUFACTURE" = "Technicolor" ] && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
+	    if ( [ "$MANUFACTURE" = "Sercomm" ] || [ "$MANUFACTURE" = "Technicolor" ] ) && [ "$BOX_TYPE" != "XB3" ] && [ ! -f /tmp/dhcpmgr_initialized ]; then
                 /lib/rdk/dibbler-init.sh
                 sleep 2
                 /usr/sbin/dibbler-client start
