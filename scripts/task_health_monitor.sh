@@ -2514,8 +2514,12 @@ case $SELFHEAL_TYPE in
                 echo_t "RDKB_PROCESS_CRASHED : lighttpd is not running, restarting it"
                 t2CountNotify "SYS_SH_lighttpdCrash"
                 #lighttpd -f $LIGHTTPD_CONF
-                rm /tmp/webgui.lock
-                sh /etc/webgui.sh
+                if [ "$FIRMWARE_TYPE" = "OFW" ]; then
+                    sh /etc/start_lighttpd.sh restart
+                else
+                    rm /tmp/webgui.lock
+                    sh /etc/webgui.sh
+                fi
             fi
         fi
     ;;
